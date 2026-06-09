@@ -2584,7 +2584,7 @@ struct TVG_API Animation
      * @retval Result::InvalidArguments If the @p begin is higher than @p end.
      * @retval Result::NonSupport When it's not animatable.
      *
-     * @note Animation allows a range from 0.0 to the total frame. @p end should not be higher than @p begin.
+     * @note Animation allows a range from 0.0 to the total frame. @p end should not be lower than @p begin.
      * @note If a marker has been specified, its range will be disregarded.
      *
      * @see LottieAnimation::segment(const char* marker)
