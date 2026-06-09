@@ -2883,7 +2883,7 @@ TVG_API Tvg_Result tvg_animation_get_duration(Tvg_Animation animation, float* du
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
  * @retval TVG_RESULT_INVALID_ARGUMENT If the @p begin is higher than @p end.
  *
- * @note Animation allows a range from 0.0 to the total frame. @p end should not be higher than @p begin.
+ * @note Animation allows a range from 0.0 to the total frame. @p end should not be lower than @p begin.
  * @note If a marker has been specified, its range will be disregarded.
  *
  * @see tvg_lottie_animation_set_marker()
