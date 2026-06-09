@@ -113,6 +113,8 @@ enum struct ColorSpace : uint8_t
     ABGR8888S,     ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
     ARGB8888S,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
     Grayscale8,    ///< Single channel, 1 byte per pixel 8-bit grayscale.
+    BGR888,        ///< The channels are joined in the order: blue, green, red. @note Experimental API
+    RGB888,        ///< The channels are joined in the order: red, green, blue. @note Experimental API
     Unknown = 255  ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
 };
 

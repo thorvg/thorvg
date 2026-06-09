@@ -142,6 +142,8 @@ typedef enum
     TVG_COLORSPACE_ABGR8888S,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. (since 0.13)
     TVG_COLORSPACE_ARGB8888S,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. (since 0.13)
     TVG_COLORSPACE_GRAYSCALE8,     ///< Single channel, 1 byte per pixel 8-bit grayscale. (since 1.1)
+    TVG_COLORSPACE_BGR888,         ///< The channels are joined in the order: blue, green, red. @note Experimental API
+    TVG_COLORSPACE_RGB888,         ///< The channels are joined in the order: red, green, blue. @note Experimental API
     TVG_COLORSPACE_UNKNOWN = 255,  ///< Unknown channel data. This is reserved for an initial ColorSpace value. (since 1.0)
 } Tvg_Colorspace;
 
