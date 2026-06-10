@@ -1207,6 +1207,7 @@ static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
         auto width = glyph->width * 0.5f;
         auto pos = ctx.follow->position(ctx.cursor.x + width + ctx.firstMargin, angle);
         matrix.e11 = matrix.e22 = ctx.capScale;
+        if (ctx.perpendicular) rotate(&matrix, rad2deg(angle));
         matrix.e13 = pos.x - width * matrix.e11;
         matrix.e23 = pos.y - width * matrix.e21;
     } else {
@@ -1261,6 +1262,7 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
     RenderText ctx(text, doc);
     ctx.follow = (text->follow && ((uint32_t)text->follow->maskIdx < layer->masks.count)) ? text->follow : nullptr;
     ctx.firstMargin = ctx.follow ? ctx.follow->prepare(layer->masks[ctx.follow->maskIdx], frameNo, ctx.scale, tween, exps) : 0.0f;
+    ctx.perpendicular = ctx.follow && ctx.follow->perpendicular(frameNo, tween, exps);
     auto lineWrapped = false;
 
     //text string
