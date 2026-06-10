@@ -61,6 +61,14 @@ Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
 /* External Class Implementation                                        */
 /************************************************************************/
 
+void LottieTextFollowPath::rewind()
+{
+    pts = path.pts.data;
+    cmds = path.cmds.data;
+    cmdsCnt = path.cmds.count;
+    currentLen = 0.0f;
+}
+
 float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale, Tween& tween, LottieExpressions* exps)
 {
     this->mask = mask;
@@ -68,11 +76,8 @@ float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale
     path.clear();
     mask->pathset(frameNo, path, &m, tween, exps);
 
-    pts = path.pts.data;
-    cmds = path.cmds.data;
-    cmdsCnt = path.cmds.count;
+    rewind();
     totalLen = tvg::length(cmds, cmdsCnt, pts, path.pts.count);
-    currentLen = 0.0f;
     start = pts;
 
     return firstMargin(frameNo, tween, exps) / scale;
@@ -85,10 +90,6 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
         //shape is closed -> wrapping
         if (path.cmds.last() == PathCommand::Close) {
             while (lenSearched < 0.0f) lenSearched += totalLen;
-            pts = path.pts.data;
-            cmds = path.cmds.data;
-            cmdsCnt = path.cmds.count;
-            currentLen = 0.0f;
         //linear interpolation
         } else {
             if (cmds >= path.cmds.data + path.cmds.count - 1) return *start;
@@ -125,10 +126,6 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
         //shape is closed -> wrapping
         if (path.cmds.last() == PathCommand::Close) {
             while (lenSearched > totalLen) lenSearched -= totalLen;
-            pts = path.pts.data;
-            cmds = path.cmds.data;
-            cmdsCnt = path.cmds.count;
-            currentLen = 0.0f;
         //linear interpolation
         } else {
             while (cmdsCnt > 1) shift();
@@ -158,12 +155,7 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
     }
 
     //reset required if text partially crosses curve start
-    if (lenSearched < currentLen) {
-        pts = path.pts.data;
-        cmds = path.cmds.data;
-        cmdsCnt = path.cmds.count;
-        currentLen = 0.0f;
-    }
+    if (lenSearched < currentLen) rewind();
 
     auto length = [&]() -> float {
         switch (*cmds) {
