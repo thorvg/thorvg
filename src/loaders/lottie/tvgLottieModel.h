@@ -501,6 +501,7 @@ private:
     float totalLen;
     float currentLen;
     Point split(float dLen, float lenSearched, float& angle);
+    void rewind();
 
 public:
     LottieFloat firstMargin = 0.0f;
