@@ -59,6 +59,7 @@ struct RenderText
     Scene* lineScene;
     float capScale, firstMargin;
     LottieTextFollowPath* follow;
+    bool perpendicular = false;
 
     RenderText(LottieText* text, const TextDocument& doc) : p(doc.text), nChars(strlen(p)), scale(doc.size), textScene(Scene::gen()), lineScene(Scene::gen())
     {
