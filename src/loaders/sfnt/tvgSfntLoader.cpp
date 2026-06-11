@@ -595,8 +595,10 @@ void SfntLoader::copy(const FontMetrics& in, FontMetrics& out)
 {
     release(out);
     out = in;
-    if (in.engine) out.engine = tvg::calloc<SfntMetrics>(1, sizeof(SfntMetrics));
-    *static_cast<SfntMetrics*>(out.engine) = *static_cast<SfntMetrics*>(in.engine);
+    if (in.engine) {
+        out.engine = tvg::calloc<SfntMetrics>(1, sizeof(SfntMetrics));
+        *static_cast<SfntMetrics*>(out.engine) = *static_cast<SfntMetrics*>(in.engine);
+    }
 }
 
 void SfntLoader::metrics(const FontMetrics& fm, TextMetrics& out)
