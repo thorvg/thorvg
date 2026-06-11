@@ -54,32 +54,46 @@ jobs:
         run: |
           set -euo pipefail
 
-          install_thorvg_source() {
-            local src_dir="$1"
-            local build_dir="$2"
+          run_phase() (
+            ref="$1"
+            prefix="$2"
+            shift 2
 
-            meson setup "$build_dir" "$src_dir" --wipe -Dengines=all -Dloaders=all -Dsavers=all -Dextra=lottie_exp,openmp
-            ninja -C "$build_dir"
-            sudo ninja -C "$build_dir" install
-            sudo ldconfig
-          }
+            rm -rf "$prefix"
 
-          cd "$GITHUB_WORKSPACE/thorvg"
-          PR_REF="$(git rev-parse HEAD)"
+            cd "$GITHUB_WORKSPACE/thorvg"
+            git checkout "$ref"
+            meson setup "$GITHUB_WORKSPACE/build-thorvg" . --wipe \
+              --prefix "$prefix" \
+              --libdir lib \
+              -Dengines=all \
+              -Dloaders=all \
+              -Dextra=lottie_exp,openmp
+            ninja -C "$GITHUB_WORKSPACE/build-thorvg"
+            ninja -C "$GITHUB_WORKSPACE/build-thorvg" install
+
+            cd "$GITHUB_WORKSPACE/tvg-pixel-inspector"
+            export PKG_CONFIG_PATH="$prefix/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+            export LD_LIBRARY_PATH="$prefix/lib:${LD_LIBRARY_PATH:-}"
+
+            echo "pkg-config thorvg version: $(pkg-config --modversion thorvg-1)"
+            echo "pkg-config thorvg libdir: $(pkg-config --variable=libdir thorvg-1)"
+
+            meson setup build --wipe
+            ninja -C build
+
+            log_file="$GITHUB_WORKSPACE/pixel-inspector-$(basename "$prefix").log"
+            if ! ./build/src/tvg-pixel-inspector "$@" > "$log_file" 2>&1; then
+              echo "pixel-inspector failed. Last 50 log lines:"
+              tail -50 "$log_file"
+            fi
+          )
+
+          PR_REF="$(git -C "$GITHUB_WORKSPACE/thorvg" rev-parse HEAD)"
           echo "test_ref=PR merge ($PR_REF)"
 
-          # Update reference pngs
-          git checkout "$THORVG_PIXEL_REFERENCE_REF"
-          install_thorvg_source "$GITHUB_WORKSPACE/thorvg" "$GITHUB_WORKSPACE/build-reference"
-          cd "$GITHUB_WORKSPACE/tvg-pixel-inspector"
-          bash ./build_and_run.sh --update-reference
-
-          # Run tests against PR merge
-          cd "$GITHUB_WORKSPACE/thorvg"
-          git checkout "$PR_REF"
-          install_thorvg_source "$GITHUB_WORKSPACE/thorvg" "$GITHUB_WORKSPACE/build-pr"
-          cd "$GITHUB_WORKSPACE/tvg-pixel-inspector"
-          bash ./build_and_run.sh
+          run_phase "$THORVG_PIXEL_REFERENCE_REF" "$GITHUB_WORKSPACE/install-reference" --update-reference
+          run_phase "$PR_REF" "$GITHUB_WORKSPACE/install-pr"
 
       - name: Export report tabs to PDFs
         if: always()
