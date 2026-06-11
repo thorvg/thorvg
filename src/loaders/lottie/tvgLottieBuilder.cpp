@@ -994,6 +994,14 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
         if (free) tvg::free(src);
     }
 
+    //text on the path
+    if (text->follow && ((uint32_t)text->follow->maskIdx < layer->masks.count)) {
+        auto path = text->pooling();
+        path->reset();
+        layer->masks[text->follow->maskIdx]->pathset(frameNo, to<ShapeImpl>(path)->rs.path, nullptr, tween, exps);
+        to<TextImpl>(paint)->layout(to<ShapeImpl>(path)->rs.path, text->follow->firstMargin(frameNo, tween, exps));
+    }
+
     //text build
     auto len = strlen(doc.text);
     auto buf = tvg::malloc<char>(len + 1);
