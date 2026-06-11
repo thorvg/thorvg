@@ -55,6 +55,7 @@ struct SfntLoader : public FontLoader
     bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
     void transform(Paint* paint, FontMetrics& fm, float italicShear) override;
     bool get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out) override;
+    bool get(FontMetrics& fm, char* text, uint32_t len, const RenderPath& path, float offset, RenderPath& out) override;
     void copy(const FontMetrics& in, FontMetrics& out) override;
     void release(FontMetrics& fm) override;
     void metrics(const FontMetrics& fm, TextMetrics& out) override;
@@ -73,6 +74,7 @@ private:
     void wrapChar(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
     void wrapWord(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out, bool smart);
     void wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
+    void wrapOnPath(FontMetrics& fm, const char* utf8, const char* end, const RenderPath& path, float offset, RenderPath& out);
     SfntGlyphMetrics* request(uint32_t code);
     void clear();
 };

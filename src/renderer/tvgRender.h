@@ -322,6 +322,7 @@ struct RenderPath
         return curr;
     }
 
+    Point pointAt(float at, float& angle) const;
     bool bounds(const Matrix* m, BBox& box);
     void addCircle(float cx, float cy, float rx, float ry, bool cw);
     void addRect(float x, float y, float w, float h, float rx, float ry, bool cw);

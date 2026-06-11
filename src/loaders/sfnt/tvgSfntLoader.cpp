@@ -484,6 +484,50 @@ void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
 
+void SfntLoader::wrapOnPath(FontMetrics& fm, const char* utf8, const char* end, const RenderPath& path, float offset, RenderPath& out)
+{
+    SfntGlyphMetrics* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
+    auto ascent = reader->metrics.hhea.ascent;
+    auto cursor = offset;
+
+    while (utf8 < end) {
+        auto code = _codepoints(&utf8, end);
+        if (code == LINE_FEED_GLYPH_IDX) {
+            cursor = offset;
+            ++fm.lines;
+            ltgm = nullptr;
+            continue;
+        }
+        auto rtgm = request(code);
+        if (!rtgm) continue;
+
+        Point offset{};
+        if (ltgm) reader->positioning(ltgm->idx, rtgm->idx, offset);
+
+        auto advance = (rtgm->advance + offset.x) * fm.spacing.x;
+        auto half = advance * 0.5f;
+
+        //sample the path at the center of the glyph
+        auto angle = 0.0f;
+        auto pos = path.pointAt(cursor + half / fm.scale, angle) * fm.scale;
+
+        //place the glyph along the path
+        auto cosA = cosf(angle);
+        auto sinA = sinf(angle);
+        out.cmds.push(rtgm->path.cmds);
+        out.pts.grow(rtgm->path.pts.count);
+        ARRAY_FOREACH(p, rtgm->path.pts) {
+            auto x = p->x - half;
+            out.pts.push({x * cosA - p->y * sinA + pos.x, x * sinA + p->y * cosA + pos.y - ascent});
+        }
+        cursor += advance / fm.scale;
+
+        //store the base glyph width for italic transform
+        if (!ltgm) static_cast<SfntMetrics*>(fm.engine)->baseGlyph = rtgm;
+        ltgm = rtgm;
+    }
+}
+
 SfntReader* SfntLoader::gen(uint8_t* data, uint32_t size)
 {
     // type checking
@@ -581,6 +625,23 @@ bool SfntLoader::get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out)
     else if (fm.wrap == TextWrap::Smart) wrapWord(fm, box, text, end, out, true);
     else if (fm.wrap == TextWrap::Ellipsis) wrapEllipsis(fm, box, text, end, out);
     else return false;
+
+    return true;
+}
+
+bool SfntLoader::get(FontMetrics& fm, char* text, uint32_t len, const RenderPath& path, float offset, RenderPath& out)
+{
+    out.clear();
+
+    fm.lines = 1;
+
+    if (!text || fm.fontSize == 0.0f) return false;
+
+    fm.scale = reader->metrics.unitsPerEm / (fm.fontSize * FontLoader::DPI);
+    fm.size = {};
+    if (!fm.engine) fm.engine = tvg::calloc<SfntMetrics>(1, sizeof(SfntMetrics));
+
+    wrapOnPath(fm, text, text + len, path, offset, out);
 
     return true;
 }
