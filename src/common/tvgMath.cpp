@@ -440,6 +440,18 @@ void Bezier::bounds(BBox& box, const Point& start, const Point& ctrl1, const Poi
         auto a = -1.0f * start + 3.0f * ctrl1 - 3.0f * ctrl2 + end;
         auto b = start - 2.0f * ctrl1 + ctrl2;
         auto c = -1.0f * start + ctrl1;
+        if (tvg::zero(a)) {
+            if (tvg::zero(b)) return;
+            auto t = -c / (2.0f * b);
+            if (t > 0.0f && t < 1.0f) {
+                auto s = 1.0f - t;
+                auto q = s * s * s * start + 3.0f * s * s * t * ctrl1 + 3.0f * s * t * t * ctrl2 + t * t * t * end;
+                if (q < min) min = q;
+                if (q > max) max = q;
+            }
+            return;
+        }
+
         auto h = b * b - a * c;
         if (h <= 0.0f) return;
         h = sqrtf(h);
