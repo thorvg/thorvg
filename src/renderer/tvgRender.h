@@ -667,6 +667,9 @@ static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
             return sizeof(uint32_t);
         case ColorSpace::Grayscale8:
             return sizeof(uint8_t);
+        case ColorSpace::BGR888:
+        case ColorSpace::RGB888:
+            return 3;
         case ColorSpace::Unknown:
         default:
             TVGERR("RENDERER", "Unsupported Channel Size! = %d", (int)cs);

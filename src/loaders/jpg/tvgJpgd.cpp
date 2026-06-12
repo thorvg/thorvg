@@ -2486,10 +2486,9 @@ unsigned char* jpgdDecompress(jpeg_decoder* decoder)
 {
     if (!decoder || decoder->begin_decoding() != JPGD_SUCCESS) return nullptr;
 
-    auto channel = 4; //OPTIMIZE: jpg is 3 channel format, not really need 4 channel components.
+    constexpr auto channel = 3;  //jpg has no alpha channel, decompress in 24bits rgb
     auto width = decoder->get_width();
     auto height = decoder->get_height();
-    //auto actual_comps = decoder->get_num_components();
     const auto stride = width * channel;
     auto ret = tvg::malloc<uint8_t>(stride * height);
     auto dst = ret;
@@ -2500,15 +2499,18 @@ unsigned char* jpgdDecompress(jpeg_decoder* decoder)
             tvg::free(ret);
             return nullptr;
         }
+        //the decoder emits 4 bytes per pixel scanlines, repack to 24bits
         if (decoder->get_num_components() == 3) {
-            memcpy(dst, src, stride);
-            dst += stride;
+            for (int x = 0; x < width; x++, src += 4, dst += channel) {
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
+            }
         } else if (decoder->get_num_components() == 1) {
-            for (int x = 0; x < width; x++, src++, dst += 4) {
+            for (int x = 0; x < width; x++, src++, dst += channel) {
                 dst[0] = *src;
                 dst[1] = *src;
                 dst[2] = *src;
-                dst[3] = 255;
             }
         }
     }

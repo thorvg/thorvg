@@ -644,6 +644,16 @@ uint8_t* WebPDecodeRGBA(const uint8_t* data, size_t data_size,
   return Decode(MODE_rgbA, data, data_size, width, height, NULL);
 }
 
+uint8_t* WebPDecodeRGB(const uint8_t* data, size_t data_size,
+                       int* width, int* height) {
+  return Decode(MODE_RGB, data, data_size, width, height, NULL);
+}
+
+uint8_t* WebPDecodeBGR(const uint8_t* data, size_t data_size,
+                       int* width, int* height) {
+  return Decode(MODE_BGR, data, data_size, width, height, NULL);
+}
+
 int WebPGetInfo(const uint8_t* data, size_t data_size,
                 int* width, int* height) {
   WebPBitstreamFeatures features;

@@ -103,10 +103,10 @@ bool JpgLoader::read()
     TJPF format;
     if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
         format = TJPF_BGR;
-        surface.cs = ColorSpace::RGB888;
+        surface.cs = ColorSpace::BGR888;
     } else {
         format = TJPF_RGB;
-        surface.cs = ColorSpace::BGR888;
+        surface.cs = ColorSpace::RGB888;
     }
 
     auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[format]);
@@ -125,7 +125,7 @@ bool JpgLoader::read()
     surface.stride = w;
     surface.w = w;
     surface.h = h;
-    surface.channelSize = 24;
+    surface.channelSize = 3;
     surface.premultiplied = true;
 
     clear();

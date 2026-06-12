@@ -38,14 +38,12 @@ void JpgLoader::clear()
 
 void JpgLoader::run(unsigned tid)
 {
-    //TODO: Reimplement jpgdDecompress() to comply with BGR8888 24bits.
-    //TODO: Optimize decompressor to properyly support both RGB/BGR8888 channels.
-    surface.cs = ColorSpace::ABGR8888;
+    surface.cs = ColorSpace::RGB888;    //jpgdDecompress() decodes in the 24bits rgb. see tvgJpgd.cpp
     surface.buf8 = jpgdDecompress(decoder);
     surface.stride = static_cast<uint32_t>(w);
     surface.w = static_cast<uint32_t>(w);
     surface.h = static_cast<uint32_t>(h);
-    surface.channelSize = 24;
+    surface.channelSize = 3;
     surface.premultiplied = true;
 
     clear();

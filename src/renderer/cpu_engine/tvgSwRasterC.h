@@ -193,3 +193,20 @@ static bool inline cRasterARGBtoABGR(RenderSurface* surface)
     //exactly same with ABGRtoARGB
     return cRasterABGRtoARGB(surface);
 }
+
+
+static bool inline cRasterRGBtoBGR(RenderSurface* surface)
+{
+    TVGLOG("SW_ENGINE", "Convert ColorSpace RGB - BGR [Size: %d x %d]", surface->w, surface->h);
+
+    auto buffer = surface->buf8;
+    for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride * 3) {
+        auto p = buffer;
+        for (uint32_t x = 0; x < surface->w; ++x, p += 3) {
+            auto tmp = p[0];
+            p[0] = p[2];
+            p[2] = tmp;
+        }
+    }
+    return true;
+}

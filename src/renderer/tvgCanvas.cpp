@@ -121,7 +121,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 {
 #ifdef THORVG_CPU_ENGINE_SUPPORT
     if (cs == ColorSpace::Unknown) return Result::InvalidArguments;
-    if (cs == ColorSpace::Grayscale8) return Result::NonSupport;
+    if (cs == ColorSpace::Grayscale8 || cs == ColorSpace::BGR888 || cs == ColorSpace::RGB888) return Result::NonSupport;
 
     if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
         return Result::InsufficientCondition;

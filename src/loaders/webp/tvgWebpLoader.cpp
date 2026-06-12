@@ -35,21 +35,20 @@ void WebpLoader::clear()
 
 void WebpLoader::run(unsigned tid)
 {
-    // TODO: support non-alpha channel colorspaces (RGB/BGR)
-
-    // static loader WebPDecodeRGBA/WebPDecodeBGRA returns a premultiplied version.
+    //decode in 24bits when the image has no alpha channel.
+    //the alpha versions (WebPDecodeRGBA/WebPDecodeBGRA) return a premultiplied data.
     if (surface.cs == ColorSpace::ARGB8888 || surface.cs == ColorSpace::ARGB8888S) {
-        surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
-        surface.cs = ColorSpace::ARGB8888;
+        surface.buf8 = hasAlpha ? WebPDecodeBGRA(data, size, nullptr, nullptr) : WebPDecodeBGR(data, size, nullptr, nullptr);
+        surface.cs = hasAlpha ? ColorSpace::ARGB8888 : ColorSpace::BGR888;
     } else  {
-        surface.buf8 = WebPDecodeRGBA(data, size, nullptr, nullptr);
-        surface.cs = ColorSpace::ABGR8888;
+        surface.buf8 = hasAlpha ? WebPDecodeRGBA(data, size, nullptr, nullptr) : WebPDecodeRGB(data, size, nullptr, nullptr);
+        surface.cs = hasAlpha ? ColorSpace::ABGR8888 : ColorSpace::RGB888;
     }
 
     surface.stride = static_cast<uint32_t>(w);
     surface.w = static_cast<uint32_t>(w);
     surface.h = static_cast<uint32_t>(h);
-    surface.channelSize = sizeof(uint32_t);
+    surface.channelSize = hasAlpha ? 4 : 3;
     surface.premultiplied = true;
 
     clear();

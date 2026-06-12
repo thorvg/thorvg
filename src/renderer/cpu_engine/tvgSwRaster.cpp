@@ -330,6 +330,107 @@ static ImageScaleFilter _scaleMethod(const SwImage& image)
 }
 
 
+//unpack an opaque 24bits pixel to a 32bits word.
+//the 24bits source must be pre-aligned to the surface channel order. see rasterConvertCS()
+static inline uint32_t _unpack888(const uint8_t* p)
+{
+    return 0xff000000 | (p[2] << 16) | (p[1] << 8) | p[0];
+}
+
+
+//unpack the two adjacent 24bits pixels with a single load
+static inline void _unpack888x2(const uint8_t* p, uint32_t& c1, uint32_t& c2)
+{
+    uint64_t v;
+    memcpy(&v, p, sizeof(v));
+    c1 = 0xff000000 | uint32_t(v & 0xffffff);
+    c2 = 0xff000000 | uint32_t((v >> 24) & 0xffffff);
+}
+
+
+//Nearest Interpolation
+static uint32_t _interpNoScaler888(const uint8_t* img, uint32_t stride, TVG_UNUSED uint32_t w, TVG_UNUSED uint32_t h, float sx, float sy, TVG_UNUSED int32_t miny, TVG_UNUSED int32_t maxy, TVG_UNUSED int32_t n)
+{
+    return _unpack888(img + (uint32_t(sx) + uint32_t(sy) * stride) * 3);
+}
+
+
+//Bilinear Interpolation
+static uint32_t _interpUpScaler888(const uint8_t* img, uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, TVG_UNUSED int32_t miny, TVG_UNUSED int32_t maxy, TVG_UNUSED int32_t n)
+{
+    auto rx = (size_t)(sx);
+    auto ry = (size_t)(sy);
+    auto rx2 = rx + 1;
+    if (rx2 >= w) rx2 = w - 1;
+    auto ry2 = ry + 1;
+    if (ry2 >= h) ry2 = h - 1;
+
+    auto dx = (sx > 0.0f) ? static_cast<uint8_t>((sx - rx) * 255.0f) : 0;
+    auto dy = (sy > 0.0f) ? static_cast<uint8_t>((sy - ry) * 255.0f) : 0;
+
+    uint32_t c1, c2, c3, c4;
+
+    //interior: each horizontal pair is adjacent in memory, fetch it with a single load
+    if (rx2 == rx + 1 && rx + 3 <= stride) {
+        _unpack888x2(img + (rx + ry * stride) * 3, c1, c2);
+        _unpack888x2(img + (rx + ry2 * stride) * 3, c3, c4);
+    //the right edge
+    } else {
+        c1 = _unpack888(img + (rx + ry * stride) * 3);
+        c2 = _unpack888(img + (rx2 + ry * stride) * 3);
+        c3 = _unpack888(img + (rx + ry2 * stride) * 3);
+        c4 = _unpack888(img + (rx2 + ry2 * stride) * 3);
+    }
+
+    return INTERPOLATE(INTERPOLATE(c4, c3, dx), INTERPOLATE(c2, c1, dx), dy);
+}
+
+
+//2n x 2n Mean Kernel
+static uint32_t _interpDownScaler888(const uint8_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
+{
+    size_t c[3] = {0, 0, 0};
+
+    int32_t minx = (int32_t)sx - n;
+    if (minx < 0) minx = 0;
+
+    int32_t maxx = (int32_t)sx + n;
+    if (maxx >= (int32_t)w) maxx = w;
+
+    int32_t inc = (n / 2) + 1;
+    n = 0;
+
+    auto src = img + (minx + miny * stride) * 3;
+
+    for (auto y = miny; y < maxy; y += inc) {
+        auto p = src;
+        for (auto x = minx; x < maxx; x += inc, p += inc * 3) {
+            c[0] += p[0];
+            c[1] += p[1];
+            c[2] += p[2];
+            ++n;
+        }
+        src += (stride * inc) * 3;
+    }
+
+    c[0] /= n;
+    c[1] /= n;
+    c[2] /= n;
+
+    return 0xff000000 | (c[2] << 16) | (c[1] << 8) | c[0];
+}
+
+
+using ImageScaleFilter888 = uint32_t (*)(const uint8_t* img, uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, int32_t miny, int32_t maxy, int32_t n);
+
+
+static ImageScaleFilter888 _scaleMethod888(const SwImage& image)
+{
+    if (image.filter == FilterMethod::Bilinear) return image.scale < DOWN_SCALE_TOLERANCE ? _interpDownScaler888 : _interpUpScaler888;
+    return _interpNoScaler888;
+}
+
+
 /************************************************************************/
 /* Rect                                                                 */
 /************************************************************************/
@@ -947,14 +1048,32 @@ static bool _rasterScaledImage(SwSurface* surface, const SwImage& image, const M
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto buffer = surface->buf32 + (bbox.min.y * surface->stride + bbox.min.x);
-        for (auto y = bbox.min.y; y < bbox.max.y; ++y, buffer += surface->stride) {
-            SCALED_IMAGE_RANGE_Y(y)
-            auto dst = buffer;
-            for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
-                SCALED_IMAGE_RANGE_X
-                auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                if (opacity < 255) src = ALPHA_BLEND(src, opacity);
-                *dst = src + ALPHA_BLEND(*dst, IA(src));
+        //opaque 24bits channels image
+        if (image.channelSize == 3) {
+            auto scaleMethod888 = _scaleMethod888(image);
+            for (auto y = bbox.min.y; y < bbox.max.y; ++y, buffer += surface->stride) {
+                SCALED_IMAGE_RANGE_Y(y)
+                auto dst = buffer;
+                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                    SCALED_IMAGE_RANGE_X
+                    auto src = scaleMethod888(image.buf8, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
+                    if (opacity == 255) *dst = src;
+                    else {
+                        src = ALPHA_BLEND(src, opacity);
+                        *dst = src + ALPHA_BLEND(*dst, IA(src));
+                    }
+                }
+            }
+        } else {
+            for (auto y = bbox.min.y; y < bbox.max.y; ++y, buffer += surface->stride) {
+                SCALED_IMAGE_RANGE_Y(y)
+                auto dst = buffer;
+                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                    SCALED_IMAGE_RANGE_X
+                    auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
+                    if (opacity < 255) src = ALPHA_BLEND(src, opacity);
+                    *dst = src + ALPHA_BLEND(*dst, IA(src));
+                }
             }
         }
     } else if (surface->channelSize == sizeof(uint8_t)) {
@@ -1036,17 +1155,35 @@ static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage& image, c
 
 static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
-    auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
-
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto dbuffer = &surface->buf32[bbox.min.y * surface->stride + bbox.min.x];
-        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
-            rasterTranslucentPixel32(dbuffer, sbuffer, w, opacity);
+        //opaque 24bits channels image
+        if (image.channelSize == 3) {
+            auto sbuffer = image.buf8 + ((bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox)) * 3;
+            for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride * 3) {
+                auto src = sbuffer;
+                if (opacity == 255) {
+                    for (auto dst = dbuffer; dst < dbuffer + w; ++dst, src += 3) {
+                        *dst = _unpack888(src);
+                    }
+                } else {
+                    for (auto dst = dbuffer; dst < dbuffer + w; ++dst, src += 3) {
+                        auto tmp = ALPHA_BLEND(_unpack888(src), opacity);
+                        *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
+                    }
+                }
+            }
+        } else {
+            auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
+            for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
+                rasterTranslucentPixel32(dbuffer, sbuffer, w, opacity);
+            }
         }
     //8bits grayscale
     //32 -> 8 direct converting seems an avoidable stage. maybe draw to a masking image after an intermediate scene. Can get rid of this?
     } else if (surface->channelSize == sizeof(uint8_t)) {
+        auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
         auto dbuffer = &surface->buf8[bbox.min.y * surface->stride + bbox.min.x];
         for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
             auto src = sbuffer;
@@ -1745,6 +1882,13 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
     //TODO: Support SIMD accelerations
     auto from = surface->cs;
 
+    //24bits channels stay 24bits, only align the channel order with the target colorspace
+    if (from == ColorSpace::RGB888 || from == ColorSpace::BGR888) {
+        auto match = (to == ColorSpace::ARGB8888 || to == ColorSpace::ARGB8888S) ? ColorSpace::BGR888 : ColorSpace::RGB888;
+        if (from == match) return true;
+        surface->cs = match;
+        return cRasterRGBtoBGR(surface);
+    }
     if (((from == ColorSpace::ABGR8888) || (from == ColorSpace::ABGR8888S)) && ((to == ColorSpace::ARGB8888) || (to == ColorSpace::ARGB8888S))) {
         surface->cs = to;
         return cRasterABGRtoARGB(surface);
@@ -1754,6 +1898,22 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
         return cRasterARGBtoABGR(surface);
     }
     return false;
+}
+
+
+uint32_t* rasterConvert888(const SwImage& image)
+{
+    auto buf32 = tvg::malloc<uint32_t>(sizeof(uint32_t) * image.w * image.h);
+    if (!buf32) return nullptr;
+
+    auto dst = buf32;
+    for (uint32_t y = 0; y < image.h; ++y) {
+        auto src = image.buf8 + (y * image.stride) * 3;
+        for (uint32_t x = 0; x < image.w; ++x, ++dst, src += 3) {
+            *dst = _unpack888(src);
+        }
+    }
+    return buf32;
 }
 
 

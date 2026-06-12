@@ -44,10 +44,13 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
     this->h = (float)h;
     this->copy = copy;
 
+    auto channelSize = CHANNEL_SIZE(cs);
+
     if (copy) {
-        surface.buf32 = tvg::malloc<uint32_t>(sizeof(uint32_t) * w * h);
-        if (!surface.buf32) return false;
-        memcpy((void*)surface.buf32, data, sizeof(uint32_t) * w * h);
+        auto size = channelSize * w * h;
+        surface.buf8 = tvg::malloc<uint8_t>(size);
+        if (!surface.buf8) return false;
+        memcpy(surface.buf8, data, size);
     }
     else surface.buf32 = const_cast<uint32_t*>(data);
 
@@ -56,8 +59,8 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
     surface.w = w;
     surface.h = h;
     surface.cs = cs;
-    surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = (cs == ColorSpace::ABGR8888 || cs == ColorSpace::ARGB8888) ? true : false;
+    surface.channelSize = channelSize;
+    surface.premultiplied = (cs == ColorSpace::ABGR8888 || cs == ColorSpace::ARGB8888 || cs == ColorSpace::BGR888 || cs == ColorSpace::RGB888);
 
     return true;
 }

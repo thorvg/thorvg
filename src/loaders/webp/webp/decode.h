@@ -57,6 +57,14 @@ WEBP_EXTERN(uint8_t*) WebPDecodeRGBA(const uint8_t* data, size_t data_size,
 WEBP_EXTERN(uint8_t*) WebPDecodeBGRA(const uint8_t* data, size_t data_size,
                                      int* width, int* height);
 
+// Same as WebPDecodeRGBA, but returning R, G, B, R, G, B... ordered data.
+WEBP_EXTERN(uint8_t*) WebPDecodeRGB(const uint8_t* data, size_t data_size,
+                                    int* width, int* height);
+
+// Same as WebPDecodeRGBA, but returning B, G, R, B, G, R... ordered data.
+WEBP_EXTERN(uint8_t*) WebPDecodeBGR(const uint8_t* data, size_t data_size,
+                                    int* width, int* height);
+
 
 //------------------------------------------------------------------------------
 // Output colorspaces and buffer

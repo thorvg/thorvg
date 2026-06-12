@@ -35,23 +35,21 @@ void WebpLoader::run(unsigned tid)
     WebPDecoderConfig config;
     if (!WebPInitDecoderConfig(&config)) return;
 
-    // request premultiplied image data
+    // decode in 24bits when the image has no alpha channel, otherwise request premultiplied image data
     if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
         config.output.colorspace = hasAlpha ? MODE_bgrA : MODE_BGR;
-        if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
-        surface.buf8 = config.output.u.RGBA.rgba;
-        surface.cs = hasAlpha ? ColorSpace::ARGB8888 : ColorSpace::RGB888;
+        surface.cs = hasAlpha ? ColorSpace::ARGB8888 : ColorSpace::BGR888;
     } else {
         config.output.colorspace = hasAlpha ? MODE_rgbA : MODE_RGB;
-        if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
-        surface.buf8 = config.output.u.RGBA.rgba;
-        surface.cs = hasAlpha ? ColorSpace::ABGR8888 : ColorSpace::BGR888;
+        surface.cs = hasAlpha ? ColorSpace::ABGR8888 : ColorSpace::RGB888;
     }
+    if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
 
+    surface.buf8 = config.output.u.RGBA.rgba;
     surface.stride = (uint32_t)w;
     surface.w = (uint32_t)w;
     surface.h = (uint32_t)h;
-    surface.channelSize = hasAlpha ? 32 : 24;
+    surface.channelSize = hasAlpha ? 4 : 3;
     surface.premultiplied = true;
 }
 

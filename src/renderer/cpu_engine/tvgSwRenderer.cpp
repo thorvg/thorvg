@@ -183,10 +183,22 @@ struct SwImageTask : SwTask
 {
     SwImage image;
     RenderSurface* source;                //Image source
+    uint32_t* conv = nullptr;             //32bits conversion of the 24bits source. see convert()
 
     ~SwImageTask()
     {
         imageFree(image);
+        tvg::free(conv);
+    }
+
+    //raster paths other than the plain direct/scaled ones can't sample 24bits sources. convert once and reuse.
+    bool convert()
+    {
+        if (!conv && !(conv = rasterConvert888(image))) return false;
+        image.buf32 = conv;
+        image.stride = image.w;
+        image.channelSize = sizeof(uint32_t);
+        return true;
     }
 
     bool clip(SwRle* target) override
@@ -381,6 +393,12 @@ bool SwRenderer::renderImage(RenderData data)
     task->done();
 
     if (task->valid) {
+        //the plain direct/scaled paths sample 24bits sources natively. the others demand the 32bits conversion.
+        auto& image = task->image;
+        if (image.channelSize == 3 && (image.rle || !(image.direct || image.scaled) || surface->blender || (surface->compositor && surface->compositor->method != MaskMethod::None) || surface->channelSize == sizeof(uint8_t))) {
+            if (!task->convert()) return false;
+        }
+
         auto raster = [&](SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity) {
             if (bbox.invalid() || bbox.x() >= surface->w || bbox.y() >= surface->h) return true;
 

@@ -530,6 +530,7 @@ void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32
 void rasterUnpremultiply(RenderSurface* surface);
 void rasterPremultiply(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
+uint32_t* rasterConvert888(const SwImage& image);
 uint32_t rasterUnpremultiply(uint32_t data);
 
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
