@@ -49,6 +49,10 @@
     #include "tvgLottieLoader.h"
 #endif
 
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    #include "tvgMediaLoader.h"
+#endif
+
 #include "tvgRawLoader.h"
 
 uintptr_t HASH_KEY(const char* data)
@@ -69,6 +73,24 @@ static Inlist<tvg::Loader> _activeLoaders;
 static tvg::Loader* _find(FileType type)
 {
     switch (type) {
+        case FileType::Svg: {
+#ifdef THORVG_SVG_LOADER_SUPPORT
+            return new SvgLoader;
+#endif
+            break;
+        }
+        case FileType::Lot: {
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+            return new LottieLoader;
+#endif
+            break;
+        }
+        case FileType::Sfnt: {
+#ifdef THORVG_SFNT_LOADER_SUPPORT
+            return new SfntLoader;
+#endif
+            break;
+        }
         case FileType::Png: {
 #ifdef THORVG_PNG_LOADER_SUPPORT
             return new PngLoader;
@@ -87,26 +109,14 @@ static tvg::Loader* _find(FileType type)
 #endif
             break;
         }
-        case FileType::Svg: {
-#ifdef THORVG_SVG_LOADER_SUPPORT
-            return new SvgLoader;
-#endif
-            break;
-        }
-        case FileType::Sfnt: {
-#ifdef THORVG_SFNT_LOADER_SUPPORT
-            return new SfntLoader;
-#endif
-            break;
-        }
-        case FileType::Lot: {
-#ifdef THORVG_LOTTIE_LOADER_SUPPORT
-            return new LottieLoader;
-#endif
-            break;
-        }
         case FileType::Raw: {
             return new RawLoader;
+            break;
+        }
+        case FileType::Media: {
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+            return MediaLoader::gen();
+#endif
             break;
         }
         default: {
@@ -121,16 +131,12 @@ static tvg::Loader* _find(FileType type)
             format = "SVG";
             break;
         }
-        case FileType::Sfnt: {
-            format = "SFNT";
-            break;
-        }
         case FileType::Lot: {
             format = "LOT";
             break;
         }
-        case FileType::Raw: {
-            format = "RAW";
+        case FileType::Sfnt: {
+            format = "SFNT";
             break;
         }
         case FileType::Png: {
@@ -143,6 +149,18 @@ static tvg::Loader* _find(FileType type)
         }
         case FileType::Webp: {
             format = "WEBP";
+            break;
+        }
+        case FileType::Raw: {
+            format = "RAW";
+            break;
+        }
+        case FileType::Gif: {
+            format = "GIF";
+            break;
+        }
+        case FileType::Media: {
+            format = "MEDIA";
             break;
         }
         default: {
@@ -163,10 +181,11 @@ static tvg::Loader* _findByPath(const char* filename)
 
     if (!strcmp(ext, "svg")) return _find(FileType::Svg);
     if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(FileType::Lot);
+    if (!strcmp(ext, "ttf") || !strcmp(ext, "otf")) return _find(FileType::Sfnt);
     if (!strcmp(ext, "png")) return _find(FileType::Png);
     if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
     if (!strcmp(ext, "webp")) return _find(FileType::Webp);
-    if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc") || !strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Sfnt);
+    if (!strcmp(ext, "mp4")) return _find(FileType::Media);  // TODO: add common media formats
     return nullptr;
 }
 #endif
@@ -178,12 +197,13 @@ static FileType _convert(const char* mimeType)
     auto type = FileType::Unknown;
 
     if (!strcmp(mimeType, "svg") || !strcmp(mimeType, "svg+xml")) type = FileType::Svg;
-    else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Sfnt;
     else if (!strcmp(mimeType, "lot") || !strcmp(mimeType, "lottie+json")) type = FileType::Lot;
-    else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
+    else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Sfnt;
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
     else if (!strcmp(mimeType, "jpg") || !strcmp(mimeType, "jpeg")) type = FileType::Jpg;
     else if (!strcmp(mimeType, "webp")) type = FileType::Webp;
+    else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
+    else if (!strcmp(mimeType, "mp4")) type = FileType::Media;  // TODO: add common media formats
     else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType);
 
     return type;

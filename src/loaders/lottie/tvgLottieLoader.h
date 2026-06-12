@@ -89,7 +89,7 @@ struct LottieLoader : AnimLoader, Task
     float totalFrame() override;
     float curFrame() override;
     float duration() override;
-    void sync() override;
+    bool sync() override;
 
     //Marker Supports
     uint32_t markersCnt();
