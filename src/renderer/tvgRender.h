@@ -87,6 +87,7 @@ struct RenderSurface
         cs = rhs->cs;
         channelSize = rhs->channelSize;
         premultiplied = rhs->premultiplied;
+        alphaIgnored = rhs->alphaIgnored;
     }
 };
 
