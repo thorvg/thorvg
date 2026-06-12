@@ -79,6 +79,7 @@ bool WebpLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     if (WebPGetFeatures(data, size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
+    surface.alphaIgnored = !features.has_alpha;
     freeData = true;
     return true;
 #else
@@ -102,6 +103,7 @@ bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOp
     if (WebPGetFeatures(this->data, size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
+    surface.alphaIgnored = !features.has_alpha;
     this->size = size;
 
     return true;

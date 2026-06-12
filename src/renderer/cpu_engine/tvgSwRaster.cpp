@@ -950,11 +950,24 @@ static bool _rasterScaledImage(SwSurface* surface, const SwImage& image, const M
         for (auto y = bbox.min.y; y < bbox.max.y; ++y, buffer += surface->stride) {
             SCALED_IMAGE_RANGE_Y(y)
             auto dst = buffer;
-            for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
-                SCALED_IMAGE_RANGE_X
-                auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                if (opacity < 255) src = ALPHA_BLEND(src, opacity);
-                *dst = src + ALPHA_BLEND(*dst, IA(src));
+            if (opacity == 255) {
+                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                    SCALED_IMAGE_RANGE_X
+                    auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
+                    if (image.alphaIgnored) *dst = src;
+                    else *dst = src + ALPHA_BLEND(*dst, IA(src));
+                }
+            } else {
+                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                    SCALED_IMAGE_RANGE_X
+                    auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
+                    if (image.alphaIgnored) {
+                        *dst = INTERPOLATE(src, *dst, opacity);
+                    } else {
+                        src = ALPHA_BLEND(src, opacity);
+                        *dst = src + ALPHA_BLEND(*dst, IA(src));
+                    }
+                }
             }
         }
     } else if (surface->channelSize == sizeof(uint8_t)) {
@@ -1042,7 +1055,8 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const R
     if (surface->channelSize == sizeof(uint32_t)) {
         auto dbuffer = &surface->buf32[bbox.min.y * surface->stride + bbox.min.x];
         for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
-            rasterTranslucentPixel32(dbuffer, sbuffer, w, opacity);
+            if (image.alphaIgnored) rasterPixel32(dbuffer, sbuffer, w, opacity);
+            else rasterTranslucentPixel32(dbuffer, sbuffer, w, opacity);
         }
     //8bits grayscale
     //32 -> 8 direct converting seems an avoidable stage. maybe draw to a masking image after an intermediate scene. Can get rid of this?
