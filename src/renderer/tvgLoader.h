@@ -152,6 +152,11 @@ struct ImageLoader : Loader
     }
 };
 
+struct MediaLoader : Loader
+{
+    //TODO:
+};
+
 struct AnimLoader : ImageLoader
 {
     float segmentBegin = 0.0f;
