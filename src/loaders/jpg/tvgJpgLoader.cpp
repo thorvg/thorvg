@@ -45,6 +45,7 @@ void JpgLoader::run(unsigned tid)
     surface.h = static_cast<uint32_t>(h);
     surface.channelSize = sizeof(uint32_t);
     surface.premultiplied = true;
+    surface.alphaIgnored = true;
 
     clear();
 }

@@ -72,6 +72,7 @@ struct RenderSurface
     ColorSpace cs = ColorSpace::Unknown;
     uint8_t channelSize = 0;
     bool premultiplied = false;         //Alpha-premultiplied
+    bool alphaIgnored = false;          // If true, the alpha channel can be ignored.
 
     RenderSurface()
     {
@@ -86,6 +87,7 @@ struct RenderSurface
         cs = rhs->cs;
         channelSize = rhs->channelSize;
         premultiplied = rhs->premultiplied;
+        alphaIgnored = rhs->alphaIgnored;
     }
 };
 
