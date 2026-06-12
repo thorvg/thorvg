@@ -45,6 +45,10 @@ if webp_loader
     endif
 endif
 
+if media_loader
+    subdir('media')
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(

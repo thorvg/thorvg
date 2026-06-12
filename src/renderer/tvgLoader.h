@@ -78,6 +78,8 @@ struct Loader
     {
         if (type == FileType::Lot) return false;
         if (type == FileType::Gif) return false;
+        if (type == FileType::Media) return false;
+
         return true;
     }
 
