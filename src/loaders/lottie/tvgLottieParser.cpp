@@ -349,12 +349,26 @@ bool LottieParser::getValue(RGB32& color)
 }
 
 
-void LottieParser::getInterpolatorPoint(Point& pt)
+void LottieParser::getInterpolatorPoint(Point pt[DimCnt])
 {
+    auto getField = [&](float& x, float& y) {
+        if (peekType() != kArrayType) {
+            x = y = getFloat();
+            return;
+        }
+        enterArray();
+        if (!nextArrayValue()) return;
+        x = getFloat();
+        if (nextArrayValue()) {
+            y = getFloat();
+            while (nextArrayValue()) getFloat();
+        } else y = x;
+    };
+
     enterObject();
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("x")) getValue(pt.x);
-        else if (KEY_AS("y")) getValue(pt.y);
+        if (KEY_AS("x")) getField(pt[DimX].x, pt[DimY].x);
+        else if (KEY_AS("y")) getField(pt[DimX].y, pt[DimY].y);
     }
 }
 
@@ -418,7 +432,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
 template<typename T>
 void LottieParser::parseKeyFrame(T& prop)
 {
-    Point inTangent, outTangent;
+    Point inTangent[DimCnt], outTangent[DimCnt];
     const char* interpolatorKey = nullptr;
     auto& frame = prop.newFrame();
     auto interpolator = false;
@@ -458,7 +472,10 @@ void LottieParser::parseKeyFrame(T& prop)
     }
 
     if (interpolator) {
-        frame.interpolator = getInterpolator(interpolatorKey, inTangent, outTangent);
+        frame.setInterpolator(getInterpolator(interpolatorKey, inTangent[DimX], outTangent[DimX]), DimX);
+        if (inTangent[DimY] != inTangent[DimX] || outTangent[DimY] != outTangent[DimX]) {
+            frame.setInterpolator(getInterpolator(nullptr, inTangent[DimY], outTangent[DimY]), DimY);
+        }
     }
 }
 
