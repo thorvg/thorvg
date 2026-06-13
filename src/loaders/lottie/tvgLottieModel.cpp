@@ -585,6 +585,7 @@ LottieLayer::~LottieLayer()
 
     delete(transform);
     delete(audioCtrl);
+    delete(srcRect);
     tvg::free(name);
 }
 

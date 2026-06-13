@@ -23,6 +23,8 @@
 
 #include "tvgMath.h"
 #include "tvgCompressor.h"
+#include "tvgPaint.h"
+#include "tvgScene.h"
 #include "tvgLottieModel.h"
 #include "tvgLottieExpressions.h"
 #include "tvgLock.h"
@@ -467,6 +469,33 @@ static jerry_value_t _effect(const jerry_call_info_t* info, const jerry_value_t 
 }
 
 
+static jerry_value_t _sourceRectAtTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
+    auto rect = static_cast<LottieLayer*>(data->data)->srcRect;
+
+    auto x = rect ? rect->min.x : 0.0f;
+    auto y = rect ? rect->min.y : 0.0f;
+    auto w = rect ? rect->max.x - rect->min.x : 0.0f;
+    auto h = rect ? rect->max.y - rect->min.y : 0.0f;
+
+    auto obj = jerry_object();
+    auto top = jerry_number(y);
+    auto left = jerry_number(x);
+    auto width = jerry_number(w);
+    auto height = jerry_number(h);
+    jerry_object_set_sz(obj, "top", top);
+    jerry_object_set_sz(obj, "left", left);
+    jerry_object_set_sz(obj, EXP_WIDTH, width);
+    jerry_object_set_sz(obj, EXP_HEIGHT, height);
+    jerry_value_free(top);
+    jerry_value_free(left);
+    jerry_value_free(width);
+    jerry_value_free(height);
+    return obj;
+}
+
+
 static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer, LottieLayer* comp, LottieExpression* exp)
 {
     auto width = jerry_number(layer->w);
@@ -550,6 +579,11 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
     jerry_object_set_sz(context, "toComp", toComp);
     jerry_object_set_native_ptr(toComp, nullptr, layer);
     jerry_value_free(toComp);
+
+    auto sourceRect = jerry_function_external(_sourceRectAtTime);
+    jerry_object_set_sz(context, "sourceRectAtTime", sourceRect);
+    jerry_object_set_native_ptr(sourceRect, &freeCb, _expcontent(exp, frameNo, layer));
+    jerry_value_free(sourceRect);
 
     //content("name"), #look for the named property from a layer
     auto data = _expcontent(exp, frameNo, layer, 2);
@@ -1666,6 +1700,29 @@ void LottieExpressions::update(float curTime)
     auto time = jerry_number(curTime);
     jerry_object_set_sz(context.global, EXP_TIME, time);
     jerry_value_free(time);
+}
+
+
+void LottieExpressions::bounds(LottieLayer* layer)
+{
+    BBox box;
+    box.init();
+    auto ret = false;
+    auto identity = tvg::identity();
+    Point pt4[4];
+
+    for (auto child : to<SceneImpl>(layer->scene)->paints) {
+        if (!PAINT(child)->bounds(pt4, &identity, false)) continue;
+        for (int i = 0; i < 4; ++i) {
+            box.min = {std::min(box.min.x, pt4[i].x), std::min(box.min.y, pt4[i].y)};
+            box.max = {std::max(box.max.x, pt4[i].x), std::max(box.max.y, pt4[i].y)};
+        }
+        ret = true;
+    }
+    if (ret) {
+        if (!layer->srcRect) layer->srcRect = new BBox;
+        *layer->srcRect = box;
+    }
 }
 
 Point LottieExpressions::toPoint2d(jerry_value_t obj)
