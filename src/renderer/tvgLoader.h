@@ -27,6 +27,7 @@
 #include "tvgCommon.h"
 #include "tvgRender.h"
 #include "tvgInlist.h"
+#include "tvgStr.h"
 #include "tvgAccessor.h"
 
 namespace tvg
@@ -73,16 +74,28 @@ struct Loader
         tvg::free(hashpath);
     }
 
-    void cache(uintptr_t data)
+    bool allowCache()
     {
-        hashkey = data;
-        cached = true;
+        if (type == FileType::Lot) return false;
+        if (type == FileType::Gif) return false;
+        return true;
     }
 
-    void cache(char* data)
+    bool cache(uintptr_t data)
     {
-        hashpath = data;
+        if (!allowCache()) return false;
+        hashkey = data;
         cached = true;
+        return true;
+    }
+
+    bool cache(const char* path)
+    {
+        if (!allowCache()) return false;
+
+        hashpath = tvg::duplicate(path);
+        cached = true;
+        return true;
     }
 
     virtual bool open(const char* path, const LoaderOps* ops) { return false; }

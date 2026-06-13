@@ -22,7 +22,6 @@
 
 #include <atomic>
 #include "tvgInlist.h"
-#include "tvgStr.h"
 #include "tvgLoaderMgr.h"
 #include "tvgLock.h"
 
@@ -264,23 +263,13 @@ tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool*
 #ifdef THORVG_FILE_IO_SUPPORT
     *invalid = false;
 
-    // TODO: make lottie sharable.
-    auto allowCache = true;
-    auto ext = fileext(filename);
-    if (ext && (!strcmp(ext, "json") || !strcmp(ext, "lot"))) allowCache = false;
-
-    if (allowCache) {
-        if (auto loader = _findFromCache(filename)) return loader;
-    }
+    if (auto loader = _findFromCache(filename)) return loader;
 
     if (auto loader = _findByPath(filename)) {
         if (loader->open(filename, ops)) {
-            if (allowCache) {
-                loader->cache(duplicate(filename));
-                {
-                    ScopedLock lock(_key);
-                    _activeLoaders.back(loader);
-                }
+            if (loader->cache(filename)) {
+                ScopedLock lock(_key);
+                _activeLoaders.back(loader);
             }
             return loader;
         }
@@ -290,12 +279,9 @@ tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool*
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
         if (auto loader = _find(static_cast<FileType>(i))) {
             if (loader->open(filename, ops)) {
-                if (allowCache) {
-                    loader->cache(duplicate(filename));
-                    {
-                        ScopedLock lock(_key);
-                        _activeLoaders.back(loader);
-                    }
+                if (loader->cache(filename)) {
+                    ScopedLock lock(_key);
+                    _activeLoaders.back(loader);
                 }
                 return loader;
             }
@@ -316,15 +302,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
 {
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
-    auto allowCache = !copy;
-
-    // TODO: make lottie shareable.
-    if (allowCache) {
-        auto type = _convert(mimeType);
-        if (type == FileType::Lot) allowCache = false;
-    }
-
-    if (allowCache) {
+    if (!copy) {
         if (auto loader = _findFromCache(data, size, mimeType)) return loader;
     }
 
@@ -332,8 +310,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     if (mimeType) {
         if (auto loader = _findByType(mimeType)) {
             if (loader->open(data, size, ops, copy)) {
-                if (allowCache) {
-                    loader->cache(HASH_KEY(data));
+                if (!copy && loader->cache(HASH_KEY(data))) {
                     ScopedLock lock(_key);
                     _activeLoaders.back(loader);
                 }
@@ -347,17 +324,15 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     // Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
         auto loader = _find(static_cast<FileType>(i));
-        if (loader) {
-            if (loader->open(data, size, ops, copy)) {
-                if (allowCache) {
-                    loader->cache(HASH_KEY(data));
-                    ScopedLock lock(_key);
-                    _activeLoaders.back(loader);
-                }
-                return loader;
+        if (!loader) continue;
+        if (loader->open(data, size, ops, copy)) {
+            if (!copy && loader->cache(HASH_KEY(data))) {
+                ScopedLock lock(_key);
+                _activeLoaders.back(loader);
             }
-            delete (loader);
+            return loader;
         }
+        delete (loader);
     }
     return nullptr;
 }
@@ -374,8 +349,7 @@ tvg::Loader* LoaderMgr::loader(const uint32_t* data, uint32_t w, uint32_t h, Col
     // function is dedicated for raw images only
     auto loader = new RawLoader;
     if (loader->open(data, w, h, cs, copy)) {
-        if (!copy) {
-            loader->cache(HASH_KEY((const char*)data));
+        if (!copy && loader->cache(HASH_KEY((const char*)data))) {
             ScopedLock lock(_key);
             _activeLoaders.back(loader);
         }
