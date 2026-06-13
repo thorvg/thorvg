@@ -25,6 +25,12 @@
 #include <math.h>
 #include <string.h>
 
+#ifdef __EMSCRIPTEN__
+static constexpr uint32_t WASM_STAGE_BUFFER_CACHE = 4 * 1024 * 1024;
+static constexpr uint32_t WASM_STAGE_AUX_BUFFER_CACHE = 2 * 1024 * 1024;
+static constexpr uint32_t WASM_STAGE_INDEX_BUFFER_CACHE = 4 * 1024 * 1024;
+#endif
+
 /************************************************************************/
 /* GlGpuBuffer Implementation                                           */
 /************************************************************************/
@@ -162,34 +168,39 @@ uint32_t GlStageBuffer::reserveIndex(uint32_t size, void** dst)
 
 bool GlStageBuffer::flushToGPU()
 {
-    if ((mStageBuffer.empty() && mAuxBuffer.empty()) || mIndexBuffer.empty()) {
-        mStageBuffer.clear();
-        mAuxBuffer.clear();
-        mIndexBuffer.clear();
-        return false;
+    auto valid = !((mStageBuffer.empty() && mAuxBuffer.empty()) || mIndexBuffer.empty());
+    if (valid) {
+        if (!mStageBuffer.empty()) {
+            mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+            mGpuBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
+            mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+        }
+
+        if (!mAuxBuffer.empty()) {
+            mGpuAuxBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+            mGpuAuxBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mAuxBuffer.count, mAuxBuffer.data);
+            mGpuAuxBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+        }
+
+        mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
+        mGpuIndexBuffer.updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, mIndexBuffer.count, mIndexBuffer.data);
+        mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
     }
 
-    if (!mStageBuffer.empty()) {
-        mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-        mGpuBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
-        mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    }
-
-    if (!mAuxBuffer.empty()) {
-        mGpuAuxBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-        mGpuAuxBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mAuxBuffer.count, mAuxBuffer.data);
-        mGpuAuxBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    }
-
-    mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-    mGpuIndexBuffer.updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, mIndexBuffer.count, mIndexBuffer.data);
-    mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-
+#ifdef __EMSCRIPTEN__
+    if (mStageBuffer.reserved > WASM_STAGE_BUFFER_CACHE) mStageBuffer.reset();
+    else mStageBuffer.clear();
+    if (mAuxBuffer.reserved > WASM_STAGE_AUX_BUFFER_CACHE) mAuxBuffer.reset();
+    else mAuxBuffer.clear();
+    if (mIndexBuffer.reserved > WASM_STAGE_INDEX_BUFFER_CACHE) mIndexBuffer.reset();
+    else mIndexBuffer.clear();
+#else
     mStageBuffer.clear();
     mAuxBuffer.clear();
     mIndexBuffer.clear();
+#endif
 
-    return true;
+    return valid;
 }
 
 

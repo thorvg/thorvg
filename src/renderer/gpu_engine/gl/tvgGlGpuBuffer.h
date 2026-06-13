@@ -77,4 +77,3 @@ private:
 };
 
 #endif /* _TVG_GL_GPU_BUFFER_H_ */
-
