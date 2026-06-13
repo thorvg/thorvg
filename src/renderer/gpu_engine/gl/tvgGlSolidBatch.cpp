@@ -22,7 +22,7 @@
 
 #include "tvgGlRenderer.h"
 
-void GlSolidBatch::draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion)
+void GlSolidBatch::draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds)
 {
     auto pass = renderer.currentPass();
     auto buffer = &sdata.geometry.fill;
@@ -31,27 +31,35 @@ void GlSolidBatch::draw(GlRenderer& renderer, GlShape& sdata, const RenderColor&
     auto indexCount = buffer->index.count;
     if (vertexCount == 0 || indexCount == 0) return;
 
-    if (!appendable(renderer, pass, viewRegion)) {
-        emitSingle(renderer, pass, sdata, color, depth, viewRegion, vertexCount, indexCount);
+    if (!appendable(renderer, pass, viewBounds)) {
+        if (task) {
+            auto viewport = task->getViewport();
+            viewport.intersect(this->viewBounds);
+            task->setViewport(viewport);
+        }
+        emitSingle(renderer, pass, sdata, color, depth, viewRegion, viewBounds, vertexCount, indexCount);
         return;
     }
 
     auto batchColor = GlSolidBatch::solidColor(sdata, color, RenderUpdateFlag::Color);
     if (!promoted) {
         if (promote(renderer, pass, batchColor, depth, viewRegion, buffer, vertexCount, indexCount)) return;
-        emitSingle(renderer, pass, sdata, color, depth, viewRegion, vertexCount, indexCount);
+        auto viewport = task->getViewport();
+        viewport.intersect(this->viewBounds);
+        task->setViewport(viewport);
+        emitSingle(renderer, pass, sdata, color, depth, viewRegion, viewBounds, vertexCount, indexCount);
         return;
     }
 
     append(renderer, batchColor, viewRegion, buffer, vertexCount, indexCount, depth);
 }
 
-bool GlSolidBatch::appendable(const GlRenderer& renderer, const GlRenderPass* pass, const RenderRegion& viewRegion) const
+bool GlSolidBatch::appendable(const GlRenderer& renderer, const GlRenderPass* pass, const RenderRegion& viewBounds) const
 {
     if (this->pass != pass) return false;
     if (pass->lastTask() != task) return false;
     if (task->getProgram() != renderer.mPrograms[GlRenderer::RT_Color]) return false;
-    if (!(task->getViewport() == viewRegion)) return false;
+    if (!(this->viewBounds == viewBounds)) return false;
     return true;
 }
 
@@ -76,7 +84,7 @@ void GlSolidBatch::buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint
         out[i] = src->index[i] + baseVertex;
 }
 
-void GlSolidBatch::emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount)
+void GlSolidBatch::emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount, uint32_t indexCount)
 {
     auto drawTask = new GlRenderTask(renderer.mPrograms[GlRenderer::RT_Color]);
     drawTask->setViewMatrix(pass->getViewMatrix());
@@ -91,6 +99,7 @@ void GlSolidBatch::emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape&
     this->pass = pass;
     task = drawTask;
     shape = &sdata;
+    this->viewBounds = viewBounds;
     this->color = color;
     flag = RenderUpdateFlag::Color;
     this->depth = depth;
