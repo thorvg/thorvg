@@ -1401,11 +1401,15 @@ bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* s
     auto target = layer->matteTarget;
     if (!target || target->type == LottieLayer::Null) return true;
 
-    updateLayer(comp, scene, target, frameNo);
+    if (target->matteSrc) updateLayer(comp, scene, target, frameNo);
 
     if (target->scene) {
-        layer->scene->mask(target->scene, layer->matteType);
-    } else if (layer->matteType == MaskMethod::Alpha || layer->matteType == MaskMethod::Luma) {
+        auto mask = target->matteSrc ? target->scene : target->scene->duplicate();
+        if (mask) layer->scene->mask(mask, layer->matteType);
+        return true;
+    }
+
+    if (layer->matteType == MaskMethod::Alpha || layer->matteType == MaskMethod::Luma) {
         //matte target is not exist. alpha blending definitely bring an invisible result
         Paint::rel(layer->scene);
         layer->scene = nullptr;
@@ -1680,6 +1684,28 @@ static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
             //precomp referencing
             if (child->matteTarget->rid) _buildReference(comp, child->matteTarget);
         }
+
+        // Handle Set Matte effect
+        if (child->matteType == MaskMethod::None) {
+            ARRAY_FOREACH(ep, child->effects) {
+                auto effect = *ep;
+                if (effect->type != LottieEffect::SetMatte || !effect->enable) continue;
+                auto matteEffect = static_cast<LottieFxSetMatte*>(effect);
+                auto matteLayer = matteEffect->matteLayer(0);
+                if (matteLayer >= 0) {
+                    auto target = parent->layerByIdx(matteLayer);
+                    if (target && target != child) {
+                        child->matteTarget = target;
+                        child->matteType = MaskMethod::Alpha;
+                        if (matteEffect->composite(0) == 0) target->matteSrc = true;
+                        _buildHierarchy(parent, target);
+                        if (target->rid) _buildReference(comp, target);
+                    }
+                }
+                break;
+            }
+        }
+
         _buildHierarchy(parent, child);
 
         //attach the necessary font data
