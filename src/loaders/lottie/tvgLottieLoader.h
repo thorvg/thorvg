@@ -51,9 +51,8 @@ struct LottieCustomSlot
     ~LottieCustomSlot();
 };
 
-class LottieLoader : public AnimLoader, public Task
+struct LottieLoader : AnimLoader, Task
 {
-public:
     const char* content = nullptr;      //lottie file data
     uint32_t size = 0;                  //lottie data size
     float frameNo = 0.0f;               //current frame number
