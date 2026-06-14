@@ -26,18 +26,8 @@
 #include "tvgLodePng.h"
 #include "tvgTaskScheduler.h"
 
-
-class PngLoader : public ImageLoader, public Task
+struct PngLoader : ImageLoader, Task
 {
-private:
-    LodePNGState state;
-    unsigned char* data = nullptr;
-    uint32_t size = 0;
-    bool freeData = false;
-
-    void run(unsigned tid) override;
-
-public:
     PngLoader();
     ~PngLoader();
 
@@ -46,6 +36,14 @@ public:
     bool read() override;
 
     RenderSurface* bitmap() override;
+
+private:
+    LodePNGState state;
+    unsigned char* data = nullptr;
+    uint32_t size = 0;
+    bool freeData = false;
+
+    void run(unsigned tid) override;
 };
 
 #endif //_TVG_PNG_LOADER_H_

@@ -27,17 +27,8 @@
 #include "tvgTaskScheduler.h"
 #include "tvgJpgd.h"
 
-class JpgLoader : public ImageLoader, public Task
+struct JpgLoader : ImageLoader, Task
 {
-private:
-    jpeg_decoder* decoder = nullptr;
-    char* data = nullptr;
-    bool freeData = false;
-
-    void clear();
-    void run(unsigned tid) override;
-
-public:
     JpgLoader();
     ~JpgLoader();
 
@@ -47,6 +38,14 @@ public:
     bool close() override;
 
     RenderSurface* bitmap() override;
+
+private:
+    jpeg_decoder* decoder = nullptr;
+    char* data = nullptr;
+    bool freeData = false;
+
+    void clear();
+    void run(unsigned tid) override;
 };
 
 #endif //_TVG_JPG_LOADER_H_
