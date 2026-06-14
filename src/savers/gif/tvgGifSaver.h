@@ -29,8 +29,14 @@
 namespace tvg
 {
 
-class GifSaver : public SaveModule, public Task
+struct GifSaver : SaveModule, Task
 {
+    ~GifSaver();
+
+    bool save(Paint* paint, Paint* bg, const char* filename, uint32_t quality) override;
+    bool save(Animation* animation, Paint* bg, const char* filename, uint32_t quality, uint32_t fps) override;
+    bool close() override;
+
 private:
     uint32_t* buffer = nullptr;
     Animation* animation = nullptr;
@@ -40,13 +46,6 @@ private:
     float fps = 0.0f;
 
     void run(unsigned tid) override;
-
-public:
-    ~GifSaver();
-
-    bool save(Paint* paint, Paint* bg, const char* filename, uint32_t quality) override;
-    bool save(Animation* animation, Paint* bg, const char* filename, uint32_t quality, uint32_t fps) override;
-    bool close() override;
 };
 
 }

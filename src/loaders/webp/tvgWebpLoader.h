@@ -23,17 +23,8 @@
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 
-class WebpLoader : public ImageLoader, public Task
+struct WebpLoader : ImageLoader, Task
 {
-private:
-    uint8_t* data = nullptr;
-    uint32_t size = 0;
-    bool freeData = false;
-
-    void clear();
-    void run(unsigned tid) override;
-
-public:
     WebpLoader();
     ~WebpLoader();
 
@@ -43,6 +34,14 @@ public:
     bool close() override;
 
     RenderSurface* bitmap() override;
+
+private:
+    uint8_t* data = nullptr;
+    uint32_t size = 0;
+    bool freeData = false;
+
+    void clear();
+    void run(unsigned tid) override;
 };
 
 #endif //_TVG_WEBP_LOADER_H_
