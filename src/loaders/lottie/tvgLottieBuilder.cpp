@@ -1302,6 +1302,11 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
 
         // draw matched glyphs
         if (glyph) {
+            auto advance = (glyph->width + doc.tracking) * ctx.capScale;
+            if (doc.bbox.size.x > 0.0f && ctx.cursor.x > 0.0f && (ctx.cursor.x + advance) * ctx.scale > doc.bbox.size.x) {
+                lineWrapped = true;
+                continue;
+            }
             if (text->alignOp.group == LottieText::AlignOption::Group::Chars || text->alignOp.group == LottieText::AlignOption::Group::All) {
                 ctx.textScene->add(ctx.lineScene);
                 ctx.lineScene = Scene::gen();
@@ -1309,8 +1314,7 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             }
             auto shape = textShape(text, frameNo, doc, glyph, ctx);
             if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
-            if (doc.bbox.size.x > 0.0f && ctx.cursor.x * ctx.scale >= doc.bbox.size.x) lineWrapped = true;
-            else ctx.cursor.x += (glyph->width + doc.tracking) * ctx.capScale;
+            ctx.cursor.x += advance;
             ctx.p += glyph->len;
             ctx.idx += glyph->len;
         } else {
