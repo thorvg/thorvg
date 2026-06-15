@@ -6,12 +6,12 @@ permissions:
   contents: read
 
 env:
-  THORVG_PIXEL_REFERENCE_REF: v1.0.6
+  THORVG_PIXEL_GOLDEN_REF: v1.0.6
   WGPU_NATIVE_VERSION: v27.0.4.0
 
 jobs:
   pixel_test:
-    name: reference vs PR merge
+    name: golden vs PR merge
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -92,7 +92,7 @@ jobs:
           PR_REF="$(git -C "$GITHUB_WORKSPACE/thorvg" rev-parse HEAD)"
           echo "test_ref=PR merge ($PR_REF)"
 
-          run_phase "$THORVG_PIXEL_REFERENCE_REF" "$GITHUB_WORKSPACE/install-reference" --update-reference
+          run_phase "$THORVG_PIXEL_GOLDEN_REF" "$GITHUB_WORKSPACE/install-golden" --update-golden
           run_phase "$PR_REF" "$GITHUB_WORKSPACE/install-pr"
 
       - name: Export report tabs to PDFs
@@ -100,7 +100,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          REPORT_HTML="$GITHUB_WORKSPACE/tvg-pixel-inspector/artifacts/reporter.html"
+          REPORT_DIR="$GITHUB_WORKSPACE/tvg-pixel-inspector/output"
+          REPORT_HTML="$REPORT_DIR/reporter.html"
           if [ -f "$REPORT_HTML" ]; then
             BACKENDS="$(grep -oE 'data-tab="[a-z]+"' "$REPORT_HTML" | sed -E 's/.*"(.*)".*/\1/' | grep -vx 'all' || true)"
             if [ -z "$BACKENDS" ]; then
@@ -108,7 +109,7 @@ jobs:
             fi
 
             for BACKEND in $BACKENDS; do
-              REPORT_PDF="$GITHUB_WORKSPACE/tvg-pixel-inspector/artifacts/reporter.$BACKEND.pdf"
+              REPORT_PDF="$REPORT_DIR/reporter.$BACKEND.pdf"
               google-chrome \
                 --headless \
                 --disable-gpu \
@@ -126,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: thorvg-pixel-report
-          path: tvg-pixel-inspector/artifacts/reporter.*.pdf
+          path: tvg-pixel-inspector/output/reporter.*.pdf
           if-no-files-found: warn
 
       - name: Write pixel report summary
@@ -137,7 +138,7 @@ jobs:
           import pathlib
           import re
 
-          report_html = pathlib.Path("tvg-pixel-inspector/artifacts/reporter.html")
+          report_html = pathlib.Path("tvg-pixel-inspector/output/reporter.html")
           report_txt = pathlib.Path("pixel-report.txt")
 
           if not report_html.exists():
