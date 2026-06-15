@@ -694,7 +694,7 @@ bool SwRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
     auto task = static_cast<SwShapeTask*>(data);
     task->done();
 
-    return shapeStrokeBBox(task->shape, task->rshape, pt4, m, task->renderer->mpool);
+    return shapeStrokeBBox(task->rshape, pt4, m);
 }
 
 

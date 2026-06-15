@@ -554,14 +554,17 @@ void shapeDelFill(SwShape& shape)
 }
 
 
-bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool)
+bool shapeStrokeBBox(const RenderShape* rshape, Point* pt4, const Matrix& m)
 {
     if (rshape->strokeWidth() > 0.0f) {
-        auto outline = _genOutline(rshape, mpool, 0, rshape->trimpath());
+        SwMpool mpool(0);
+        SwStroke stroke{};
+
+        auto outline = _genOutline(rshape, &mpool, 0, rshape->trimpath());
         if (!outline) return false;
 
-        strokeReset(shape.stroke, rshape, m, mpool, 0);
-        strokeParseOutline(shape.stroke, *outline, mpool, 0);
+        strokeReset(&stroke, rshape, m, &mpool, 0);
+        strokeParseOutline(&stroke, *outline, &mpool, 0);
 
         auto func = [](SwStrokeBorder* border, const Matrix& m, Point& min, Point& max) {
             ARRAY_FOREACH(pts, border->pts)
@@ -576,8 +579,8 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
 
         Point min = {FLT_MAX, FLT_MAX};
         Point max = {-FLT_MAX, -FLT_MAX};
-        func(shape.stroke->borders[0], m, min, max);
-        func(shape.stroke->borders[1], m, min, max);
+        func(stroke.borders[0], m, min, max);
+        func(stroke.borders[1], m, min, max);
 
         pt4[0] = min;
         pt4[1] = {max.x, min.y};
