@@ -37,6 +37,15 @@ constexpr uint32_t SW_AA_COVERAGE_BITS = 8;
 constexpr auto AA_COVERAGE_QUANTUM = 1.0f / static_cast<float>(1u << SW_AA_COVERAGE_BITS);
 constexpr auto MAX_PIXEL_SPAN = 1.41421356237f;
 
+uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius)
+{
+    if (pixelRadius < FLOAT_EPSILON) return 2;
+    static constexpr auto PX_TOLERANCE = 0.25f;
+    // Sagitta-based formula Approximation: 1 - cos(θ/2) ≈ (θ/2)²/2, so θ ≈ 2 * sqrt(2 * s/r)
+    auto segmentAngle = 2.0f * sqrtf(2.0f * PX_TOLERANCE / pixelRadius);
+    return static_cast<uint32_t>(ceilf(fabsf(arcAngle) / segmentAngle)) + 1;
+}
+
 bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
 {
     auto d1 = tvg::cross(p - a, p - b);
