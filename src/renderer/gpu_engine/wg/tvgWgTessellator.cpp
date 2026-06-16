@@ -241,7 +241,7 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = tvg::arcSegmentsCnt(arcAngle, radius() * mQualityScale);
+    auto count = gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale);
 
     auto c = mBuffer->vbuffer.count;  mBuffer->vbuffer.push(center);
     auto pi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(prev);
@@ -268,7 +268,7 @@ void WgStroker::round(const Point &prev, const Point& curr, const Point& center)
 
 void WgStroker::roundPoint(const Point &p)
 {
-    auto count = tvg::arcSegmentsCnt(2.0f * MATH_PI, radius() * mQualityScale);
+    auto count = gpuArcSegmentsCnt(2.0f * MATH_PI, radius() * mQualityScale);
     auto c = mBuffer->vbuffer.count; mBuffer->vbuffer.push(p);
     auto step = 2.0f * MATH_PI / (count - 1);
 

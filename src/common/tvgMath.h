@@ -385,20 +385,12 @@ enum class Orientation
     CounterClockwise,
 };
 
-
 static inline Orientation orientation(const Point& p1, const Point& p2, const Point& p3)
 {
     auto val = cross(p2 - p1, p3 - p1);
     if (zero(val)) return Orientation::Linear;
     else return val > 0 ? Orientation::Clockwise : Orientation::CounterClockwise;
 }
-
-
-static inline void log(const Point& pt)
-{
-    TVGLOG("COMMON", "Point: [%f %f]", pt.x, pt.y);
-}
-
 
 static inline bool closed(const Point& lhs, const Point& rhs, float tolerance)
 {
@@ -407,15 +399,13 @@ static inline bool closed(const Point& lhs, const Point& rhs, float tolerance)
     return (dx * dx + dy * dy) < (tolerance * tolerance);
 }
 
-
 /************************************************************************/
 /* Line functions                                                       */
 /************************************************************************/
 
 struct Line
 {
-    Point pt1;
-    Point pt2;
+    Point pt1, pt2;
 
     void split(float at, Line& left, Line& right) const;
     float length() const;
@@ -452,34 +442,81 @@ struct BBox
     }
 };
 
-
-static inline uint32_t arcSegmentsCnt(float arcAngle, float pixelRadius) 
-{
-    if (pixelRadius < FLOAT_EPSILON) return 2;
-    static constexpr auto PX_TOLERANCE = 0.25f;
-    // Sagitta-based formula Approximation: 1 - cos(θ/2) ≈ (θ/2)²/2, so θ ≈ 2 * sqrt(2 * s/r)
-    auto segmentAngle = 2.0f * sqrtf(2.0f * PX_TOLERANCE / pixelRadius);
-    return static_cast<uint32_t>(ceilf(fabsf(arcAngle) / segmentAngle)) + 1;
-}
-
-
 /************************************************************************/
 /* Bezier functions                                                     */
 /************************************************************************/
 
 struct Bezier
 {
-    Point start;
-    Point ctrl1;
-    Point ctrl2;
-    Point end;
+    Point start, ctrl1, ctrl2, end;
 
     Bezier() {}
     Bezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3):
         start(p0), ctrl1(p1), ctrl2(p2), end(p3) {}
-    // Constructor that approximates a quarter-circle segment of arc between 'start' and 'end' points 
+
+    // Constructor that approximates a quarter-circle segment of arc between 'start' and 'end' points
     // using a cubic Bezier curve with a given 'radius'.
-    Bezier(const Point& start, const Point& end, float radius);
+    Bezier(const Point& st, const Point& ed, float radius)
+    {
+        // Calculate the angle between the start and end points
+        auto angle = tvg::atan(ed - st);
+
+        // Calculate the control points of the cubic bezier curve
+        auto c = radius * PATH_KAPPA;  // c = radius * (4/3) * tan(pi/8)
+
+        start = {st.x, st.y};
+        ctrl1 = {st.x + radius * cos(angle), st.y + radius * sin(angle)};
+        ctrl2 = {ed.x - c * cos(angle), ed.y - c * sin(angle)};
+        end = {ed.x, ed.y};
+    }
+
+    float angle(float t) const
+    {
+        if (t < 0 || t > 1) return 0;
+        return rad2deg(tvg::atan(tangent(t)));
+    }
+
+    Bezier operator*(const Matrix& m)
+    {
+        return Bezier{start * m, ctrl1 * m, ctrl2 * m, end * m};
+    }
+
+    Point tangent(float t) const
+    {
+        // derivate
+        // p'(t) = 3 * (-(1-2t+t^2) * p0 + (1 - 4 * t + 3 * t^2) * p1 + (2 * t - 3 *
+        // t^2) * p2 + t^2 * p3)
+        auto mt = 1.0f - t;
+        auto d = t * t;
+        auto a = -mt * mt;
+        auto b = 1.0f - 4.0f * t + 3.0f * d;
+        auto c = 2.0f * t - 3.0f * d;
+        auto pt = Point{a * start.x + b * ctrl1.x + c * ctrl2.x + d * end.x, a * start.y + b * ctrl1.y + c * ctrl2.y + d * end.y};
+
+        return pt * 3.0f;
+    }
+
+    Point at(float t) const
+    {
+        Point cur;
+        auto it = 1.0f - t;
+
+        auto ax = start.x * it + ctrl1.x * t;
+        auto bx = ctrl1.x * it + ctrl2.x * t;
+        auto cx = ctrl2.x * it + end.x * t;
+        ax = ax * it + bx * t;
+        bx = bx * it + cx * t;
+        cur.x = ax * it + bx * t;
+
+        float ay = start.y * it + ctrl1.y * t;
+        float by = ctrl1.y * it + ctrl2.y * t;
+        float cy = ctrl2.y * it + end.y * t;
+        ay = ay * it + by * t;
+        by = by * it + cy * t;
+        cur.y = ay * it + by * t;
+
+        return cur;
+    }
 
     void split(float t, Bezier& left);
     void split(Bezier& left, Bezier& right) const;
@@ -488,13 +525,8 @@ struct Bezier
     float lengthApprox() const;
     float at(float at, float length) const;
     float atApprox(float at, float length) const;
-    Point at(float t) const;
-    Point tangent(float t) const;
-    float angle(float t) const;
     bool flatten(float tolerance) const;
     uint32_t segments(float scale = 1.0f) const;
-
-    Bezier operator*(const Matrix& m);
 
     static void bounds(BBox& box, const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end);
 };
@@ -509,8 +541,10 @@ static inline T lerp(const T &start, const T &end, float t)
     return static_cast<T>(start + (end - start) * t);
 }
 
-uint8_t lerp(const uint8_t &start, const uint8_t &end, float t);
-
+static inline uint8_t lerp(const uint8_t& start, const uint8_t& end, float t)
+{
+    return static_cast<uint8_t>(clamp(static_cast<int>(start + (end - start) * t), 0, 255));
+}
 }
 
 #endif  //_TVG_MATH_H_

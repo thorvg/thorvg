@@ -243,7 +243,7 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = arcSegmentsCnt(arcAngle, radius() * mQualityScale);
+    auto count = gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale);
 
     auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
@@ -270,7 +270,7 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
 
 void Stroker::roundPoint(const Point &p)
 {
-    auto count = arcSegmentsCnt(2.0f * MATH_PI, radius() * mQualityScale);
+    auto count = gpuArcSegmentsCnt(2.0f * MATH_PI, radius() * mQualityScale);
     auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
     auto step = 2.0f * MATH_PI / (count - 1);
 
