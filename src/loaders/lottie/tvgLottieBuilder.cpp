@@ -1040,8 +1040,9 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     //layout
     auto ascent = (text->font && text->font->ascent > 0.0f && doc.bbox.size.y > 0.0f) ? (metrics.ascent - text->font->ascent * doc.size) : 0.0f;
     paint->layout(doc.bbox.size.x, doc.bbox.size.y);
-    paint->translate(doc.bbox.pos.x, doc.bbox.pos.y - ascent);
     if (doc.bbox.size.x > 0.0f) paint->wrap(TextWrap::Word);
+    auto baselineY = (tvg::zero(doc.bbox.pos.y) && doc.bbox.size.y > 0.0f) ? -metrics.ascent : doc.bbox.pos.y - ascent;
+    paint->translate(doc.bbox.pos.x, baselineY);
 
     //align the text to the base line, or top within the box
     auto valign = (doc.bbox.size.y > 0.0f) ? 0.0f : metrics.ascent / (metrics.ascent - metrics.descent);
