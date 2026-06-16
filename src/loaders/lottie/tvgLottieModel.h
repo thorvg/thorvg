@@ -273,6 +273,7 @@ struct LottieObject
         RoundedCorner,
         OffsetPath,
         PuckerBloat,
+        ZigZag,
         TextRange,
         Audio
     };
@@ -1034,6 +1035,18 @@ struct LottiePuckerBloat : LottieObject
     }
 
     LottieFloat amount = 0.0f;
+};
+
+struct LottieZigZag : LottieObject
+{
+    LottieZigZag()
+    {
+        LottieObject::type = LottieObject::ZigZag;
+    }
+
+    LottieFloat amplitude = 0.0f;
+    LottieInteger frequency = 0;
+    LottieInteger point = 1; //1: corner, 2: smooth
 };
 
 struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>

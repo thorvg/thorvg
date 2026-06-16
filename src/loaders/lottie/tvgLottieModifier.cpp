@@ -596,3 +596,162 @@ void LottiePuckerBloatModifier::ellipse(const RenderPath& in, RenderPath& out, T
 {
     path(in, out, nullptr);
 }
+
+/************************************************************************/
+/* LottieZigZagModifier                                                 */
+/************************************************************************/
+
+LottieZigZagModifier::Vertex LottieZigZagModifier::ridge(const Point& at, const Point& dir, float sign, float inAmp, float outAmp) const
+{
+    auto len = tvg::length(dir);
+    if (len < FLT_EPSILON) return {at, at, at};
+    auto pos = at + tvg::normal({}, dir) * (sign * amp);
+    auto unit = dir / len;
+    return {pos, pos - unit * inAmp, pos + unit * outAmp};
+}
+
+void LottieZigZagModifier::corner(uint32_t cur, float sign, const Array<Point>& verts, Array<Vertex>& ridges) const
+{
+    auto curIdx = cur % verts.count;
+    auto prevIdx = (curIdx == 0) ? verts.count - 1 : curIdx - 1;
+    auto nextIdx = (curIdx + 1) % verts.count;
+    auto dir = verts[nextIdx] - verts[prevIdx];
+    auto outAmp = 0.0f, inAmp = 0.0f;
+    if (point == Smooth) {
+        outAmp = tvg::length(verts[nextIdx] - verts[curIdx]) / ((freq + 1) * 2);
+        inAmp = tvg::length(verts[prevIdx] - verts[curIdx]) / ((freq + 1) * 2);
+    }
+    ridges.push(ridge(verts[curIdx], dir, sign, inAmp, outAmp));
+}
+
+
+float LottieZigZagModifier::segment(uint32_t idx, float sign, const Array<Point>& verts, const Array<Point>& ins, const Array<Point>& outs, Array<Vertex>& ridges) const
+{
+    if (freq == 0) return sign;
+    auto i0 = idx;
+    auto i1 = (idx + 1) % verts.count;
+    Point p0 = verts[i0], p1 = outs[i0], p2 = ins[i1], p3 = verts[i1];
+    auto sAmp = (point == Smooth) ? tvg::length(p3 - p0) / ((freq + 1) * 2) : 0.0f;
+    Bezier bz{p0, p1, p2, p3};
+    for (int k = 0; k < freq; ++k) {
+        auto t = float(k + 1) / float(freq + 1);
+        ridges.push(ridge(bz.at(t), bz.tangent(t), sign, sAmp, sAmp));
+        sign = -sign;
+    }
+    return sign;
+}
+
+
+void LottieZigZagModifier::flush(bool closed, Array<Point>& verts, Array<Point>& ins, Array<Point>& outs, Array<Vertex>& ridges, RenderPath& dst) const
+{
+    if (verts.count == 0) return;
+
+    //collapse closing duplicate vertex
+    if (closed && verts.count > 1 && tvg::zero(verts.last() - verts[0])) {
+        ins[0] = ins.last();
+        verts.pop();
+        ins.pop();
+        outs.pop();
+    }
+    if (verts.count < 2) return;
+
+    auto segCount = closed ? verts.count : verts.count - 1;
+
+    ridges.clear();
+    ridges.reserve((segCount + 1) * (freq + 1));
+
+    auto sign = 1.0f;
+    corner(0, sign, verts, ridges);
+    for (uint32_t i = 0; i < segCount; ++i) {
+        sign = segment(i, -sign, verts, ins, outs, ridges);
+        corner(i + 1, sign, verts, ridges);
+    }
+
+    if (ridges.count == 0) return;
+    dst.moveTo(ridges[0].v);
+    for (uint32_t i = 1; i < ridges.count; ++i) {
+        dst.cubicTo(ridges[i - 1].out, ridges[i].in, ridges[i].v);
+    }
+    if (closed) dst.close();
+}
+
+
+RenderPath& LottieZigZagModifier::modify(const RenderPath& in, RenderPath& out, Matrix* transform)
+{
+    auto& path = (next) ? RenderPath::scratch() : out;
+    auto pivot = path.pts.count;
+    path.cmds.reserve(path.cmds.count + in.cmds.count * (freq + 2));
+    path.pts.reserve(path.pts.count + in.pts.count * (freq + 2));
+
+    Array<Point> verts, ins, outs;
+    Array<Vertex> ridges;
+    auto closed = false;
+
+    for (uint32_t iCmd = 0, iPt = 0; iCmd < in.cmds.count; ++iCmd) {
+        switch (in.cmds[iCmd]) {
+            case PathCommand::MoveTo: {
+                flush(closed, verts, ins, outs, ridges, path);
+                verts.clear();
+                ins.clear();
+                outs.clear();
+                closed = false;
+                auto first = in.pts[iPt++];
+                verts.push(first);
+                ins.push(first);
+                outs.push(first);
+                break;
+            }
+            case PathCommand::CubicTo: {
+                outs.last() = in.pts[iPt];
+                ins.push(in.pts[iPt + 1]);
+                verts.push(in.pts[iPt + 2]);
+                outs.push(in.pts[iPt + 2]);
+                iPt += 3;
+                break;
+            }
+            case PathCommand::LineTo: {
+                outs.last() = verts.last();
+                ins.push(in.pts[iPt]);
+                verts.push(in.pts[iPt]);
+                outs.push(in.pts[iPt]);
+                ++iPt;
+                break;
+            }
+            case PathCommand::Close: {
+                closed = true;
+                break;
+            }
+            default: break;
+        }
+    }
+    flush(closed, verts, ins, outs, ridges, path);
+
+    if (transform) {
+        for (auto i = pivot; i < path.pts.count; ++i) {
+            path.pts[i] *= *transform;
+        }
+    }
+
+    return path;
+}
+
+void LottieZigZagModifier::path(const RenderPath& in, RenderPath& out, Matrix* transform)
+{
+    auto& result = modify(in, out, transform);
+    if (next) next->path(result, out, nullptr);
+}
+
+void LottieZigZagModifier::polystar(const RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
+{
+    path(in, out, nullptr);
+}
+
+void LottieZigZagModifier::rect(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED float, TVG_UNUSED bool)
+{
+    path(in, out, nullptr);
+}
+
+void LottieZigZagModifier::ellipse(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED bool)
+{
+    path(in, out, nullptr);
+}
