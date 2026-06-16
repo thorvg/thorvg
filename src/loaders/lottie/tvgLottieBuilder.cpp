@@ -1035,7 +1035,7 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     paint->text(buf);
     paint->layout(doc.bbox.size.x, doc.bbox.size.y);
     paint->translate(doc.bbox.pos.x, doc.bbox.pos.y);
-    if (doc.bbox.size.x > 0.0f) paint->wrap(TextWrap::Word);
+    if (doc.bbox.size.x > 0.0f) paint->wrap(TextWrap::Smart);
 
     //align the text to the base line, or top within the box
     TextMetrics metrics;
