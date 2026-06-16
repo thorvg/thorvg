@@ -788,6 +788,16 @@ void LottieBuilder::updatePuckerBloat(TVG_UNUSED LottieGroup* parent, LottieObje
     ctx->update(new LottiePuckerBloatModifier(puckerBloat->amount(frameNo, tween, exps)));
 }
 
+void LottieBuilder::updateZigZag(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+{
+    auto zigzag = static_cast<LottieZigZag*>(*child);
+    auto amplitude = zigzag->amplitude(frameNo, tween, exps);
+    if (tvg::zero(amplitude)) return;
+    auto frequency = zigzag->frequency(frameNo, tween, exps);
+    auto point = (LottieZigZagModifier::PointType)zigzag->point(frameNo, tween, exps);
+    ctx->update(new LottieZigZagModifier(amplitude, frequency, point));
+}
+
 void LottieBuilder::updateRepeater(TVG_UNUSED LottieGroup* parent, LottieObject** child, float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
 {
     auto repeater = static_cast<LottieRepeater*>(*child);
@@ -897,6 +907,10 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                 }
                 case LottieObject::PuckerBloat: {
                     updatePuckerBloat(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
+                case LottieObject::ZigZag: {
+                    updateZigZag(parent, child, frameNo, contexts, ctx);
                     break;
                 }
                 default: break;

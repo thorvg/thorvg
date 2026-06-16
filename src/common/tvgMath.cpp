@@ -402,10 +402,8 @@ Point Bezier::at(float t) const
 }
 
 
-float Bezier::angle(float t) const
+Point Bezier::tangent(float t) const
 {
-    if (t < 0 || t > 1) return 0;
-
     //derivate
     // p'(t) = 3 * (-(1-2t+t^2) * p0 + (1 - 4 * t + 3 * t^2) * p1 + (2 * t - 3 *
     // t^2) * p2 + t^2 * p3)
@@ -419,7 +417,14 @@ float Bezier::angle(float t) const
     pt.x *= 3;
     pt.y *= 3;
 
-    return rad2deg(tvg::atan(pt));
+    return pt;
+}
+
+
+float Bezier::angle(float t) const
+{
+    if (t < 0 || t > 1) return 0;
+    return rad2deg(tvg::atan(tangent(t)));
 }
 
 

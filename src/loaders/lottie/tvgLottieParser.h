@@ -97,6 +97,7 @@ private:
     LottieRepeater* parseRepeater();
     LottieOffsetPath* parseOffsetPath();
     LottiePuckerBloat* parsePuckerBloat();
+    LottieZigZag* parseZigZag();
     LottieFont* parseFont();
     void parseFontData(LottieFont* font, const char* data);
     LottieMarker* parseMarker();
