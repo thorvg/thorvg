@@ -130,7 +130,7 @@ bool LottieParser::getValue(TextDocument& doc)
         else if (KEY_AS("lh")) doc.height = getFloat();
         else if (KEY_AS("ls")) doc.shift = getFloat();
         else if (KEY_AS("fc")) getValue(doc.color);
-        else if (KEY_AS("ps")) getValue(doc.bbox.pos);
+        else if (KEY_AS("ps")) doc.positioned = getValue(doc.bbox.pos);
         else if (KEY_AS("sz")) getValue(doc.bbox.size);
         else if (KEY_AS("sc")) getValue(doc.stroke.color);
         else if (KEY_AS("sw")) doc.stroke.width = getFloat();
