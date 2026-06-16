@@ -42,6 +42,7 @@ bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Po
 RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix);
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3);
 bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform);
+uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius);
 
 // Conservative triangle-fan safety check
 // The fill is emitted as (v0,v1,v2), (v0,v2,v3), (v0,v3,v4), ...
