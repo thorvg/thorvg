@@ -489,6 +489,7 @@ struct Bezier
     float at(float at, float length) const;
     float atApprox(float at, float length) const;
     Point at(float t) const;
+    Point tangent(float t) const;
     float angle(float t) const;
     bool flatten(float tolerance) const;
     uint32_t segments(float scale = 1.0f) const;
