@@ -31,6 +31,7 @@
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
 #include "tvgGlSolidBatch.h"
+#include "tvgGlStencilCoverBatch.h"
 
 struct GlRenderer : RenderMethod
 {
@@ -197,7 +198,7 @@ private:
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
-    void drawClip(Array<RenderData>& clips);
+    void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
 
     GlRenderPass* currentPass();
 
@@ -230,6 +231,7 @@ private:
     Array<GlCompositor*> mComposeStack;
     TextureMgr mTextures;
     GlSolidBatch mSolidBatch;
+    GlStencilCoverBatch mStencilCoverBatch;
 
     //Disposed resources. They should be released on synced call.
     struct {

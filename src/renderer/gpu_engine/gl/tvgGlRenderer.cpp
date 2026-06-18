@@ -60,6 +60,7 @@ void GlRenderer::clearDisposes()
     delete (*p);
     mRenderPassStack.clear();
     mSolidBatch.clear();
+    mStencilCoverBatch.clear();
 }
 
 
@@ -188,44 +189,21 @@ RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegi
     return {{x, yGl}, {x + w, yGl + h}};
 }
 
-static GlRenderTask* drawStencilCover(GlProgram* stencilProgram, GlRenderTask* coverTask, const GlGeometry& geometry,
-                                      GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, int32_t depth,
-                                      const Matrix& viewMatrix, const RenderRegion& viewRegion)
-{
-    auto stencilTask = new GlRenderTask(stencilProgram);
-    stencilTask->setViewMatrix(viewMatrix);
-    stencilTask->setDrawDepth(depth);
-    stencilTask->setViewport(viewRegion);
-    geometry.draw(stencilTask, gpuBuffer, flag);
-
-    auto bbox = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? geometry.strokeBounds : geometry.fillBounds;
-
-    float vertex[] = {
-        float(bbox.min.x), float(bbox.min.y),
-        float(bbox.min.x), float(bbox.max.y),
-        float(bbox.max.x), float(bbox.min.y),
-        float(bbox.max.x), float(bbox.max.y)};
-    coverTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), gpuBuffer->push(vertex, sizeof(vertex))});
-    coverTask->setDrawRange(gpuBuffer->pushIndex((void*)RECT_INDEX, sizeof(RECT_INDEX)), RECT_INDEX_COUNT);
-    return stencilTask;
-}
-
 static GlRenderTask* drawPrimitiveGeometry(GlProgram* stencilProgram, GlRenderTask* task, const GlGeometry& geometry,
+                                           GlStencilCoverBatch& batch, GlRenderPass* pass,
                                            GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, GlStencilMode stencilMode,
-                                           int32_t depth, const Matrix& viewMatrix, const RenderRegion& viewRegion)
+                                           int32_t depth, const Matrix& viewMatrix, const RenderRegion& passViewport, const RenderColor* color,
+                                           const RenderRegion& viewBounds, RenderRegion& stencilBounds, const GlGeometryBuffer*& stencilBuffer, uint32_t*& stencilIndices, bool& merge)
 {
     if (stencilMode == GlStencilMode::None) {
+        stencilBuffer = nullptr;
+        stencilIndices = nullptr;
+        merge = false;
         geometry.draw(task, gpuBuffer, flag);
         return nullptr;
     }
 
-    return drawStencilCover(stencilProgram, task, geometry, gpuBuffer, flag, depth, viewMatrix, viewRegion);
-}
-
-static void addPrimitiveTask(GlRenderPass* pass, GlRenderTask* task, GlRenderTask* stencilTask, GlStencilMode stencilMode)
-{
-    if (stencilTask) pass->addRenderTask(new GlStencilCoverTask(stencilTask, task, stencilMode));
-    else pass->addRenderTask(task);
+    return batch.prepare(stencilProgram, pass, task, geometry, gpuBuffer, flag, stencilMode, depth, viewMatrix, passViewport, color, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
 }
 
 static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, RenderUpdateFlag flag)
@@ -278,16 +256,22 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
-    auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
+    // geometry.viewport carries the fast-tracked clip bounds; the pass
+    // viewport can still be the full framebuffer.
+    auto viewBounds = sdata.geometry.viewport;
+    viewBounds.intersect(vp);
+    if (viewBounds.invalid()) return;
 
-    bbox.intersect(vp);
+    auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
+    auto bbox = stroke ? gpuTransformBounds(sdata.geometry.strokeBounds, sdata.geometry.matrix) : sdata.geometry.fillBounds;
+    bbox.intersect(viewBounds);
     if (bbox.invalid()) return;
 
     auto viewRegion = viewportRegion(vp, bbox);
     auto stencilMode = sdata.geometry.getStencilMode(flag);
 
     if (!blendShape && stencilMode == GlStencilMode::None && sdata.clips.empty()) {
-        mSolidBatch.draw(*this, sdata, c, depth, viewRegion);
+        mSolidBatch.draw(*this, sdata, c, depth, viewRegion, viewportRegion(vp, viewBounds));
         return;
     }
 
@@ -308,24 +292,37 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
             a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
         }
     }
-    task->setVertexColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f);
+    RenderColor color = {c.r, c.g, c.b, a};
+    if (stencilMode == GlStencilMode::None) task->setVertexColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     task->setViewport(viewRegion);
 
-    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, viewRegion);
+    RenderRegion stencilBounds{};
+    const GlGeometryBuffer* stencilBuffer = nullptr;
+    uint32_t* stencilIndices = nullptr;
+    bool merge = false;
+    auto pass = currentPass();
+    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, vp, &color, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
     // Keep BlendRegion on the existing solid-shape blend UBO slot.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
 
-    addPrimitiveTask(currentPass(), task, stencilTask, stencilMode);
+    if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, stencilBounds, stencilBuffer, stencilIndices);
+    else pass->addRenderTask(task);
 }
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
     if (!sdata.geometry.drawable(flag)) return;
 
-    auto blendShape = (mBlendMethod != BlendMethod::Normal);
     auto vp = currentPass()->getViewport();
-    auto bbox = blendShape ? sdata.geometry.getBounds() : sdata.geometry.viewport;
-    bbox.intersect(vp);
+    // geometry.viewport carries the fast-tracked clip bounds; the pass
+    // viewport can still be the full framebuffer.
+    auto viewBounds = sdata.geometry.viewport;
+    viewBounds.intersect(vp);
+    if (viewBounds.invalid()) return;
+
+    auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
+    auto bbox = stroke ? gpuTransformBounds(sdata.geometry.strokeBounds, sdata.geometry.matrix) : sdata.geometry.fillBounds;
+    bbox.intersect(viewBounds);
     if (bbox.invalid()) return;
 
     const Fill::ColorStop* stops = nullptr;
@@ -369,7 +366,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     task->setViewport(viewRegion);
 
     GlStencilMode stencilMode = sdata.geometry.getStencilMode(flag);
-    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, viewRegion);
+    RenderRegion stencilBounds{};
+    const GlGeometryBuffer* stencilBuffer = nullptr;
+    uint32_t* stencilIndices = nullptr;
+    bool merge = false;
+    auto pass = currentPass();
+    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, vp, nullptr, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
 
     // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
@@ -484,12 +486,21 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
-    addPrimitiveTask(currentPass(), task, stencilTask, stencilMode);
+    if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, stencilBounds, stencilBuffer, stencilIndices);
+    else pass->addRenderTask(task);
 }
 
 
-void GlRenderer::drawClip(Array<RenderData>& clips)
+void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds)
 {
+    if (viewBounds.invalid()) return;
+
+    // Clip is a render boundary even if every clip is skipped below.
+    mStencilCoverBatch.clear();
+
+    // Clip masks must stay inside the target paint view bounds. Fast-tracked
+    // Lottie clips narrow geometry.viewport while the pass viewport remains
+    // full-size; using the pass viewport here can affect neighboring animations.
     uint32_t identityVertexOffset = 0;
     uint32_t identityIndexOffset = 0;
     auto identityReady = false;
@@ -501,8 +512,9 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         clipDepths[i] = currentPass()->nextDrawDepth();
     }
 
-    const auto& vp = currentPass()->getViewport();
+    const auto& passViewport = currentPass()->getViewport();
     const auto& viewMatrix = currentPass()->getViewMatrix();
+    const auto viewRegion = viewportRegion(passViewport, viewBounds);
 
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto sdata = static_cast<GlShape*>(clips[i]);
@@ -520,19 +532,16 @@ void GlRenderer::drawClip(Array<RenderData>& clips)
         clipTask->setViewMatrix(_viewMatrix(sdata->geometry, viewMatrix, flag));
         sdata->geometry.draw(clipTask, &mGpuBuffer, flag);
 
-        auto bbox = sdata->geometry.viewport;
-        bbox.intersect(vp);
-
-        auto x = bbox.sx() - vp.sx();
-        auto y = vp.sh() - (bbox.sy() - vp.sy()) - bbox.sh();
-        clipTask->setViewport({{x, y}, {x + bbox.sw(), y + bbox.sh()}});
+        auto clipBounds = sdata->geometry.getBounds();
+        clipBounds.intersect(viewBounds);
+        clipTask->setViewport(viewportRegion(passViewport, clipBounds));
 
         auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
 
         maskTask->setDrawDepth(clipDepths[i]);
         maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
         maskTask->setDrawRange(identityIndexOffset, RECT_INDEX_COUNT);
-        maskTask->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
+        maskTask->setViewport(viewRegion);
 
         currentPass()->addRenderTask(new GlClipTask(clipTask, maskTask));
     }
@@ -765,7 +774,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
 void GlRenderer::endRenderPass(RenderCompositor* cmp)
 {
     auto glCmp = static_cast<GlCompositor*>(cmp);
-    
+
     // setup masking and blending render pass configurations
     if ((glCmp->flags & (tvg::Blending | tvg::Masking)) == (tvg::Blending | tvg::Masking)) {
         // rearrange render tree
@@ -1058,7 +1067,7 @@ bool GlRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
 
     uint32_t index = mRenderPassStack.count - 1;
     if (index >= mComposePool.count) mComposePool.push( new GlRenderTargetPool(surface.w, surface.h));
-    
+
     if (glCmp->bbox.valid()) mRenderPassStack.push(new GlRenderPass(mComposePool[index]->getRenderTarget(glCmp->bbox)));
     else mRenderPassStack.push(new GlRenderPass(nullptr));
 
@@ -1144,11 +1153,9 @@ bool GlRenderer::renderImage(void* data)
     if (bbox.invalid()) return true;
     if (!sdata->geometry.drawable(RenderUpdateFlag::Image)) return true;
 
-    auto x = bbox.sx() - vp.sx();
-    auto y = bbox.sy() - vp.sy();
     auto drawDepth = currentPass()->nextDrawDepth();
 
-    if (!sdata->clips.empty()) drawClip(sdata->clips);
+    if (!sdata->clips.empty()) drawClip(sdata->clips, bbox);
 
     auto task = new GlRenderTask(mPrograms[RT_Image]);
     task->setDrawDepth(drawDepth);
@@ -1172,11 +1179,9 @@ bool GlRenderer::renderImage(void* data)
     // texture id
     task->addBindResource(GlBindingResource{0, sdata->texId, task->getProgram()->getUniformLocation("uTexture")});
 
-    y = vp.sh() - y - bbox.sh();
-    auto x2 = x + bbox.sw();
-    auto y2 = y + bbox.sh();
-
-    task->setViewport({{x, y}, {x2, y2}});
+    auto taskBounds = bbox;
+    taskBounds.intersect(vp);
+    task->setViewport(viewportRegion(vp, taskBounds));
 
     currentPass()->addRenderTask(task);
 
@@ -1203,7 +1208,7 @@ bool GlRenderer::renderShape(RenderData data)
     if (sdata->validFill) drawDepth1 = currentPass()->nextDrawDepth();
     if (sdata->validStroke) drawDepth2 = currentPass()->nextDrawDepth();
 
-    if (!sdata->clips.empty()) drawClip(sdata->clips);
+    if (!sdata->clips.empty()) drawClip(sdata->clips, bbox);
 
     auto processFill = [&]() {
         if (sdata->validFill) {
