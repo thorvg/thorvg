@@ -12,6 +12,7 @@ source_file = [
    'tvgGlShader.h',
    'tvgGlShaderSrc.h',
    'tvgGlSolidBatch.h',
+   'tvgGlStencilCoverBatch.h',
    'tvgGl.cpp',
    'tvgGlEffect.cpp',
    'tvgGlGeometry.cpp',
@@ -25,6 +26,7 @@ source_file = [
    'tvgGlRenderTask.cpp',
    'tvgGlShader.cpp',
    'tvgGlShaderSrc.cpp',
+   'tvgGlStencilCoverBatch.cpp',
    'tvgGlTessellator.cpp',
    'tvgGlTessellator.h',
 ]

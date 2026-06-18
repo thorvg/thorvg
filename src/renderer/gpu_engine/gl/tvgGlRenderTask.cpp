@@ -94,7 +94,8 @@ void GlRenderTask::run()
         }
     }
 
-    GL_CHECK(glDrawElements(GL_TRIANGLES, mIndexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mIndexOffset)));
+    if (mUseDrawArrays) GL_CHECK(glDrawArrays(mArrayMode, mArrayOffset, mIndexCount));
+    else GL_CHECK(glDrawElements(GL_TRIANGLES, mIndexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mIndexOffset)));
 
     // setup attribute layout
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {
@@ -128,6 +129,7 @@ void GlRenderTask::addBindResource(const GlBindingResource &binding)
 
 void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
 {
+    mUseDrawArrays = false;
     mIndexOffset = offset;
     mIndexCount = count;
 }
@@ -146,16 +148,19 @@ void GlRenderTask::setViewport(const RenderRegion &viewport)
 /************************************************************************/
 
 GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode)
- :GlRenderTask(nullptr), mStencilTask(stencil), mCoverTask(cover), mStencilMode(mode)
- {
-
- }
+ :GlRenderTask(nullptr), mStencilMode(mode)
+{
+    mStencilTasks.push(stencil);
+    mCoverTasks.push(cover);
+}
 
 
 GlStencilCoverTask::~GlStencilCoverTask()
 {
-    delete mStencilTask;
-    delete mCoverTask;
+    ARRAY_FOREACH(p, mStencilTasks) delete(*p);
+    ARRAY_FOREACH(p, mCoverTasks) delete(*p);
+    mStencilTasks.clear();
+    mCoverTasks.clear();
 }
 
 
@@ -175,7 +180,7 @@ void GlStencilCoverTask::run()
     }
     GL_CHECK(glColorMask(0, 0, 0, 0));
 
-    mStencilTask->run();
+    ARRAY_FOREACH(p, mStencilTasks) (*p)->run();
 
     if (mStencilMode == GlStencilMode::FillEvenOdd) {
         GL_CHECK(glStencilFunc(GL_NOTEQUAL, 0x00, 0x01));
@@ -187,7 +192,7 @@ void GlStencilCoverTask::run()
 
     GL_CHECK(glColorMask(1, 1, 1, 1));
 
-    mCoverTask->run();
+    ARRAY_FOREACH(p, mCoverTasks) (*p)->run();
 
     GL_CHECK(glDisable(GL_STENCIL_TEST));
 }
@@ -195,8 +200,8 @@ void GlStencilCoverTask::run()
 
 void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
 {
-    mCoverTask->normalizeDrawDepth(maxDepth);
-    mStencilTask->normalizeDrawDepth(maxDepth);
+    ARRAY_FOREACH(p, mCoverTasks) (*p)->normalizeDrawDepth(maxDepth);
+    ARRAY_FOREACH(p, mStencilTasks) (*p)->normalizeDrawDepth(maxDepth);
 }
 
 
