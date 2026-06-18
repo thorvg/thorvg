@@ -25,6 +25,11 @@
 #include <math.h>
 #include <string.h>
 
+// Release oversized CPU staging buffers after upload; keep smaller buffers for reuse.
+static constexpr uint32_t STAGE_BUFFER_RESET_THRESHOLD = 16 * 1024 * 1024;
+static constexpr uint32_t STAGE_AUX_BUFFER_RESET_THRESHOLD = 8 * 1024 * 1024;
+static constexpr uint32_t STAGE_INDEX_BUFFER_RESET_THRESHOLD = 16 * 1024 * 1024;
+
 /************************************************************************/
 /* GlGpuBuffer Implementation                                           */
 /************************************************************************/
@@ -162,34 +167,33 @@ uint32_t GlStageBuffer::reserveIndex(uint32_t size, void** dst)
 
 bool GlStageBuffer::flushToGPU()
 {
-    if ((mStageBuffer.empty() && mAuxBuffer.empty()) || mIndexBuffer.empty()) {
-        mStageBuffer.clear();
-        mAuxBuffer.clear();
-        mIndexBuffer.clear();
-        return false;
+    auto valid = !((mStageBuffer.empty() && mAuxBuffer.empty()) || mIndexBuffer.empty());
+    if (valid) {
+        if (!mStageBuffer.empty()) {
+            mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+            mGpuBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
+            mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+        }
+
+        if (!mAuxBuffer.empty()) {
+            mGpuAuxBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
+            mGpuAuxBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mAuxBuffer.count, mAuxBuffer.data);
+            mGpuAuxBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
+        }
+
+        mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
+        mGpuIndexBuffer.updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, mIndexBuffer.count, mIndexBuffer.data);
+        mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
     }
 
-    if (!mStageBuffer.empty()) {
-        mGpuBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-        mGpuBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mStageBuffer.count, mStageBuffer.data);
-        mGpuBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    }
+    if (mStageBuffer.reserved > STAGE_BUFFER_RESET_THRESHOLD) mStageBuffer.reset();
+    else mStageBuffer.clear();
+    if (mAuxBuffer.reserved > STAGE_AUX_BUFFER_RESET_THRESHOLD) mAuxBuffer.reset();
+    else mAuxBuffer.clear();
+    if (mIndexBuffer.reserved > STAGE_INDEX_BUFFER_RESET_THRESHOLD) mIndexBuffer.reset();
+    else mIndexBuffer.clear();
 
-    if (!mAuxBuffer.empty()) {
-        mGpuAuxBuffer.bind(GlGpuBuffer::Target::ARRAY_BUFFER);
-        mGpuAuxBuffer.updateBufferData(GlGpuBuffer::Target::ARRAY_BUFFER, mAuxBuffer.count, mAuxBuffer.data);
-        mGpuAuxBuffer.unbind(GlGpuBuffer::Target::ARRAY_BUFFER);
-    }
-
-    mGpuIndexBuffer.bind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-    mGpuIndexBuffer.updateBufferData(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER, mIndexBuffer.count, mIndexBuffer.data);
-    mGpuIndexBuffer.unbind(GlGpuBuffer::Target::ELEMENT_ARRAY_BUFFER);
-
-    mStageBuffer.clear();
-    mAuxBuffer.clear();
-    mIndexBuffer.clear();
-
-    return true;
+    return valid;
 }
 
 
