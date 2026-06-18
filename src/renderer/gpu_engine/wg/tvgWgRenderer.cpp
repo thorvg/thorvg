@@ -23,7 +23,6 @@
 #include "tvgTaskScheduler.h"
 #include "tvgWgRenderer.h"
 
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -114,9 +113,12 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
     #ifdef __EMSCRIPTEN__
         .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
         .presentMode = WGPUPresentMode_Fifo
-    #elif __linux__
-    #else
+    #elif defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) || (defined(_WIN32) && !defined(__CYGWIN__))
+        // Use Immediate only where it is known to be supported on desktop surfaces.
         .presentMode = WGPUPresentMode_Immediate
+    #else
+        // Use the WebGPU default present mode (Fifo).
+        .presentMode = WGPUPresentMode_Undefined
     #endif
     };
     wgpuSurfaceConfigure(surface, &surfaceConfiguration);
