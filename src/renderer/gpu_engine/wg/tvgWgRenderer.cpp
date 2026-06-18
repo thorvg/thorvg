@@ -97,21 +97,21 @@ void WgRenderer::clearTargets()
 
 }
 
-
-bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height)
+bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height, ColorSpace cs)
 {
     this->surface = surface;
     if (width == 0 || height == 0 || !surface) return false;
+    auto straightAlpha = ((cs == ColorSpace::ABGR8888S) || (cs == ColorSpace::ARGB8888S));
 
     // setup surface configuration
-    WGPUSurfaceConfiguration surfaceConfiguration {
+    WGPUSurfaceConfiguration surfaceConfiguration{
         .device = context.device,
         .format = context.format,
         .usage = WGPUTextureUsage_RenderAttachment,
         .width = width,
         .height = height,
-    #ifdef __EMSCRIPTEN__
-        .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
+        .alphaMode = straightAlpha ? WGPUCompositeAlphaMode_Unpremultiplied : WGPUCompositeAlphaMode_Premultiplied,
+#ifdef __EMSCRIPTEN__
         .presentMode = WGPUPresentMode_Fifo
     #elif defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) || (defined(_WIN32) && !defined(__CYGWIN__))
         // Use Immediate only where it is known to be supported on desktop surfaces.
@@ -124,7 +124,6 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
     wgpuSurfaceConfigure(surface, &surfaceConfiguration);
     return true;
 }
-
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -379,8 +378,9 @@ bool WgRenderer::sync()
         (wgpuTextureGetHeight(dstTexture) == mRenderTargetRoot.height)) {
         WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
         WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
+        auto unpremultiplyBlit = ((mTargetSurface.cs == ColorSpace::ABGR8888S) || (mTargetSurface.cs == ColorSpace::ARGB8888S));
         // show root offscreen buffer
-        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView);
+        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView, unpremultiplyBlit);
         mContext.submitCommandEncoder(commandEncoder);
         mContext.releaseCommandEncoder(commandEncoder);
         mContext.releaseTextureView(dstTextureView);
@@ -399,8 +399,11 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
 
     if (w == 0 || h == 0) return false;
 
+    auto contextChanged = (mContext.device != device) || (mContext.instance != instance);
+    auto targetChanged = (mTargetSurface.w != w) || (mTargetSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target));
+
     // device or instance was changed, need to recreate all instances
-    if ((mContext.device != device) || (mContext.instance != instance)) {
+    if (contextChanged) {
         release();
         mContext.initialize(instance, device);
         mRenderTargetPool.initialize(mContext, w, h);
@@ -408,7 +411,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
         mCompositor.initialize(mContext, w, h);
 
     // update render targets dimensions
-    } else if ((mTargetSurface.w != w) || (mTargetSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
+    } else if (targetChanged) {
         mRenderTargetPool.release(mContext);
         mRenderTargetRoot.release(mContext);
         clearTargets();
@@ -420,7 +423,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     // configure surface (must be called after context creation)
     if (type == 0) {
         surface = (WGPUSurface)target;
-        surfaceConfigure(surface, mContext, w, h);
+        if (!surfaceConfigure(surface, mContext, w, h, cs)) return false;
     } else {
         targetTexture = (WGPUTexture)target;
     }

@@ -242,7 +242,7 @@ WgCanvas::~WgCanvas()
 Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
 {
 #ifdef THORVG_WG_ENGINE_SUPPORT
-    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+    if (cs != ColorSpace::ABGR8888 && cs != ColorSpace::ABGR8888S) return Result::NonSupport;
 
     if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
         return Result::InsufficientCondition;

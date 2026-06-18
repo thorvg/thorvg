@@ -634,7 +634,7 @@ TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op);
  * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
  * @param[in] w The width of the target.
  * @param[in] h The height of the target.
- * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c TVG_COLORSPACE_ABGR8888S as @c WGPUTextureFormat_RGBA8Unorm.
+ * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888 and @c TVG_COLORSPACE_ABGR8888S.
  * @param[in] type @c 0: surface, @c 1: texture are used as pesentable target.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
