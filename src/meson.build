@@ -10,6 +10,11 @@ else
 endif
 
 cc = meson.get_compiler('cpp')
+
+if host_machine.system() == 'windows'
+    compiler_flags += ['-DNOMINMAX']
+endif
+
 if cc.get_id() == 'clang-cl'
     if simd_type == 'avx'
         compiler_flags += ['/clang:-mavx']
@@ -29,9 +34,7 @@ if cc.get_id() == 'clang-cl'
                            '/clang:-fno-stack-protector', '/clang:-fno-unwind-tables' ,
                            '/clang:-fno-asynchronous-unwind-tables']
     endif
-elif (cc.get_id() == 'msvc')
-    compiler_flags += ['-DNOMINMAX']
-else
+elif (cc.get_id() != 'msvc')
     if simd_type == 'avx'
         compiler_flags += ['-mavx']
     endif
