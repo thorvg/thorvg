@@ -63,10 +63,6 @@ using namespace tvg;
     #define TVG_FALLTHROUGH
 #endif
 
-#if defined(_MSC_VER) && defined(__clang__)
-    #define strncpy strncpy_s
-#endif
-
 void* operator new(std::size_t size);
 void operator delete(void* ptr) noexcept;
 
