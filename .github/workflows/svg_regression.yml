@@ -1,4 +1,4 @@
-name: Regression
+name: SVG Regression
 
 # on: [push, pull_request] - enable when testing
 on:
@@ -157,7 +157,7 @@ jobs:
       - name: Check results
         run: |
           export PATH=$PATH:~/.local/bin/
-          python3 "${GITHUB_WORKSPACE}/.github/workflows/regression_check.py"
+          python3 "${GITHUB_WORKSPACE}/.github/workflows/svg_regression_check.py"
 
           if [[ -f "fail_ci.txt" ]]; then
             (

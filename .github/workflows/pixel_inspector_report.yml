@@ -1,8 +1,8 @@
-name: Pixel Test Comment
+name: Pixel Inspector Report
 
 on:
   workflow_run:
-    workflows: ["Pixel Test"]
+    workflows: ["Pixel Inspector"]
     types: [completed]
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const reportHeader = '## Pixel Test Report';
+            const reportHeader = '## Pixel Inspector Report';
             const workflowRun = context.payload.workflow_run;
             const summaryPath = path.join('ci-report', 'pixel-report.txt');
 

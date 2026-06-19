@@ -1,4 +1,4 @@
-name: Pixel Test
+name: Pixel Inspector
 
 on: pull_request
 
@@ -10,7 +10,7 @@ env:
   WGPU_NATIVE_VERSION: v27.0.4.0
 
 jobs:
-  pixel_test:
+  pixel_inspector:
     name: golden vs PR merge
     runs-on: ubuntu-latest
     timeout-minutes: 60
