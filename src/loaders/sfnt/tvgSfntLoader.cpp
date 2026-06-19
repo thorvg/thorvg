@@ -486,24 +486,21 @@ void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf
 
 SfntReader* SfntLoader::gen(uint8_t* data, uint32_t size)
 {
-    // type checking
-    auto type = uint32_t(data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
-
-    if (type == 0x00010000 || type == 0x74727565) {  // ttf (scalable font)
+    if (size > 4) {
+        auto type = uint32_t(data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
+        if (type == 0x00010000 || type == 0x74727565) {  // ttf (scalable font)
 #ifdef THORVG_TTF_LOADER_SUPPORT
-        return new TtfReader(data, size);
-#else
-        TVGLOG("SFNT", "TrueType (TTF) is not supported");
+            return new TtfReader(data, size);
 #endif
-    } else if (type == 0x4F54544F) {  // otf (OTTO)
+            TVGLOG("SFNT", "TrueType (TTF) is not supported");
+        } else if (type == 0x4F54544F) {  // otf (OTTO)
 #ifdef THORVG_OTF_LOADER_SUPPORT
-        return new OtfReader(data, size);
-#else
-        TVGLOG("SFNT", "OpenType (OTF) is not supported");
+            return new OtfReader(data, size);
 #endif
-    } else {
-        TVGERR("SFNT", "Invalid SFNT format!");
+            TVGLOG("SFNT", "OpenType (OTF) is not supported");
+        }
     }
+    TVGERR("SFNT", "Invalid SFNT format!");
     return nullptr;
 }
 
