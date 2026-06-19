@@ -746,7 +746,7 @@ struct LottieColorStop : LottieProperty
         auto fromCnt = fill->colorStops(&from);
 
         const Fill::ColorStop* to;
-        auto toCnt = fill->colorStops(&to);
+        auto toCnt = dup->colorStops(&to);
 
         if (fromCnt != toCnt) TVGLOG("LOTTIE", "Tweening has different numbers of color data in consecutive frames.");
 
@@ -757,6 +757,8 @@ struct LottieColorStop : LottieProperty
             const_cast<Fill::ColorStop*>(from)->b = tvg::lerp(from->b, to->b, tween.progress);
             const_cast<Fill::ColorStop*>(from)->a = tvg::lerp(from->a, to->a, tween.progress);
         }
+
+        delete (dup);
 
         return Result::Success;
     }
