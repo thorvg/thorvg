@@ -1291,6 +1291,24 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
+TVG_API Tvg_Result tvg_lottie_animation_to(Tvg_Animation animation, float to)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tweenTo(to);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_lottie_animation_go(Tvg_Animation animation, float progress)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tween(progress);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
 TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uint8_t value)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT

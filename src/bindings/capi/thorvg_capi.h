@@ -3178,6 +3178,42 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation,
 TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float from, float to, float progress);
 
 /**
+ * @brief Sets the target frame for dynamic tweening.
+ *
+ * This method starts a dynamic interpolation from the current animation frame
+ * toward @p to. Use tvg_lottie_animation_tween_go() to update the interpolation progress.
+ *
+ * @param[in] animation The Lottie animation object.
+ * @param[in] to The target frame number of the interpolation.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
+ *
+ * @note The dynamic tweening set by this method is discarded when @ref tvg_animation_set_frame()
+ *       or @ref tvg_lottie_animation_tween() is called.
+ *
+ * @see tvg_lottie_animation_tween_go()
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_tween_to(Tvg_Animation animation, float to);
+
+/**
+ * @brief Updates the current tween toward the target frame.
+ *
+ * This method advances the interpolation started by tweenTo() using the
+ * given @p progress value.
+ *
+ * @param[in] animation The Lottie animation object.
+ * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If @ref tvg_lottie_animation_tween_to() has not been called.
+ *
+ * @see tvg_lottie_animation_tween_to()
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_tween_go(Tvg_Animation animation, float progress);
+
+/**
  * @brief Sets the quality level for Lottie effects.
  *
  * This function controls the rendering quality of effects like blur, shadows, etc.
