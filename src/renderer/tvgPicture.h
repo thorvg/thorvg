@@ -155,7 +155,7 @@ struct PictureImpl : Picture
     Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
     {
         if (!data || w <= 0 || h <= 0 || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
-        if (vector || bitmap) return Result::InsufficientCondition;
+        if (vector) return Result::InsufficientCondition;
         return load(LoaderMgr::loader(data, w, h, cs, copy));
     }
 
@@ -306,15 +306,10 @@ struct PictureImpl : Picture
     {
         if (!loader) return Result::NonSupport;
 
-        // fonts are not expected in the picture
-        if (loader->type == FileType::Sfnt) {
-            LoaderMgr::retrieve(loader);
-            return Result::InvalidArguments;
-        }
-
         //Same resource has been loaded.
         if (this->loader == loader) {
             this->loader->sharing--;  //make it sure the reference counting.
+            if (bitmap) impl.mark(RenderUpdateFlag::Image);  // force the bitmap updated
             return Result::Success;
         } else if (this->loader) {
             LoaderMgr::retrieve(this->loader);
