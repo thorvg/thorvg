@@ -1612,6 +1612,7 @@ struct TVG_API Picture : Paint
      *
      * @retval Result::InvalidArguments In case no data are provided or the @p size is zero or less.
      * @retval Result::NonSupport When trying to load a file with an unknown extension.
+     * @retval Result::InsufficientCondition If a vector asset has already been loaded into the picture.
      *
      * @warning It's the user responsibility to release the @p data memory.
      *
@@ -1698,6 +1699,8 @@ struct TVG_API Picture : Paint
      * @param[in] h The height of the image in pixels.
      * @param[in] cs Specifies how the 32-bit color values should be interpreted.
      * @param[in] copy If @c true, the data is copied into the engine's local buffer. If @c false, the data is not copied.
+     *
+     * @note If the memory data pointed to by @p data is modified, calling this API will re-upload the updated content to the canvas.
      *
      * @since 0.9
      */
