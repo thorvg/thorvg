@@ -39,6 +39,7 @@
 #endif
 
 struct LottieComposition;
+struct LottieLayer;
 
 struct LottieStroke
 {
@@ -302,6 +303,7 @@ struct LottieObject
 struct LottieGlyph
 {
     Array<LottieObject*> children;   //glyph shapes.
+    LottieLayer* layer = nullptr;    //character precomp
     float width;
     char* code = nullptr;
     char* family = nullptr;
@@ -315,13 +317,7 @@ struct LottieGlyph
         return len > 0;
     }
 
-    ~LottieGlyph()
-    {
-        for (auto& p : children) delete (p);
-        tvg::free(code);
-        tvg::free(family);
-        tvg::free(style);
-    }
+    ~LottieGlyph();
 };
 
 
