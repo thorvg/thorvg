@@ -936,9 +936,11 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
     }
 
     //clip the layer viewport
-    auto clipper = precomp->statical.pooling(true);
-    clipper->transform(precomp->cache.matrix);
-    precomp->scene->clip(clipper);
+    if (precomp->w > 0.0f && precomp->h > 0.0f) {
+        auto clipper = precomp->statical.pooling(true);
+        clipper->transform(precomp->cache.matrix);
+        precomp->scene->clip(clipper);
+    }
 }
 
 
@@ -1109,6 +1111,14 @@ Shape* LottieBuilder::textShape(LottieText* text, float frameNo, const TextDocum
 }
 
 
+Scene* LottieBuilder::textPrecomp(LottieComposition* comp, float frameNo, LottieGlyph* glyph)
+{
+    auto scene = Scene::gen();
+    updateLayer(comp, scene, glyph->layer, frameNo);
+    return scene;
+}
+
+
 bool LottieBuilder::updateTextRange(LottieText* text, float frameNo, Shape* shape, const TextDocument& doc, RenderText& ctx)
 {
     if (text->ranges.empty()) return false;
@@ -1193,9 +1203,9 @@ bool LottieBuilder::updateTextRange(LottieText* text, float frameNo, Shape* shap
 }
 
 
-static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
+static void _commit(LottieGlyph* glyph, Paint* paint, const RenderText& ctx)
 {
-    auto& matrix = shape->transform();
+    auto& matrix = paint->transform();
 
     if (ctx.follow) {
         tvg::identity(&matrix);
@@ -1210,8 +1220,8 @@ static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
         matrix.e13 = ctx.cursor.x;
         matrix.e23 = ctx.cursor.y;
     }
-    shape->transform(matrix);
-    ctx.textScene->add(shape);
+    paint->transform(matrix);
+    ctx.textScene->add(paint);
 }
 
 static LottieGlyph* _searchGlyph(const LottieFont* font, const char* p, const TextDocument& doc, float& capScale)
@@ -1252,7 +1262,7 @@ static float _nextWordWidth(const LottieText* text, const TextDocument& doc, con
     return w;
 }
 
-void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc)
+void LottieBuilder::updateLocalFont(LottieComposition* comp, LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc)
 {
     RenderText ctx(text, doc);
     ctx.follow = (text->follow && ((uint32_t)text->follow->maskIdx < layer->masks.count)) ? text->follow : nullptr;
@@ -1326,8 +1336,13 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                 ctx.lineScene = Scene::gen();
                 ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
             }
-            auto shape = textShape(text, frameNo, doc, glyph, ctx);
-            if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
+            if (glyph->layer) {
+                auto scene = textPrecomp(comp, frameNo, glyph);
+                _commit(glyph, scene, ctx);
+            } else {
+                auto shape = textShape(text, frameNo, doc, glyph, ctx);
+                if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
+            }
             ctx.cursor.x += advance;
             ctx.p += glyph->len;
             ctx.idx += glyph->len;
@@ -1338,7 +1353,7 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
     }
 }
 
-void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
+void LottieBuilder::updateText(LottieComposition* comp, LottieLayer* layer, float frameNo)
 {
     if (layer->children.empty()) return;
 
@@ -1347,7 +1362,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
     if (!doc.text) return;
 
     if (text->font && text->font->origin == LottieFont::Origin::Local && !text->font->chars.empty()) {
-        updateLocalFont(layer, frameNo, text, doc);
+        updateLocalFont(comp, layer, frameNo, text, doc);
     } else {
         updateURLFont(layer, frameNo, text, doc);
     }
@@ -1585,7 +1600,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
             break;
         }
         case LottieLayer::Text: {
-            updateText(layer, frameNo);
+            updateText(comp, layer, frameNo);
             break;
         }
         default: {
@@ -1776,6 +1791,14 @@ void LottieBuilder::build(LottieComposition* comp)
     comp->root->scene = Scene::gen();
 
     _buildComposition(comp, comp->root);
+
+    //resolve character precomp
+    ARRAY_FOREACH(f, comp->fonts) {
+        ARRAY_FOREACH(g, (*f)->chars) {
+            auto glyph = *g;
+            if (glyph->layer && glyph->layer->rid) _buildReference(comp, glyph->layer);
+        }
+    }
 
     //viewport clip
     auto clip = Shape::gen();

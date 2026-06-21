@@ -200,6 +200,7 @@ private:
     void appendCircle(LottieEllipse* ellipse, Shape* shape, Point& center, Point& radius, bool clockwise, RenderContext* ctx);
     bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx, RenderFragment fragment);
     Shape* textShape(LottieText* text, float frameNo, const TextDocument& doc, LottieGlyph* glyph, const RenderText& ctx);
+    Scene* textPrecomp(LottieComposition* comp, float frameNo, LottieGlyph* glyph);
 
     void updateStrokeEffect(LottieLayer* layer, LottieFxStroke* effect, float frameNo);
     void updateEffect(LottieLayer* layer, float frameNo, uint8_t quality);
@@ -210,9 +211,9 @@ private:
     void updateSolid(LottieLayer* layer);
     void updateImage(LottieGroup* layer);
     void updateURLFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc);
-    void updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc);
+    void updateLocalFont(LottieComposition* comp, LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc);
     bool updateTextRange(LottieText* text, float frameNo, Shape* shape, const TextDocument& doc, RenderText& ctx);
-    void updateText(LottieLayer* layer, float frameNo);
+    void updateText(LottieComposition* comp, LottieLayer* layer, float frameNo);
     void updateMasks(LottieLayer* layer, float frameNo);
     void updateTransform(LottieLayer* layer, float frameNo);
     void updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts);

@@ -1216,10 +1216,17 @@ void LottieParser::parseChars(Array<LottieGlyph*>& glyphs)
             else if (KEY_AS("w")) glyph->width = getFloat();
             else if (KEY_AS("fFamily")) glyph->family = getStringCopy();
             else if (KEY_AS("data"))
-            {   //glyph shapes
-                enterObject();
-                while (auto key = nextObjectKey()) {
-                    if (KEY_AS("shapes")) parseShapes(glyph->children);
+            {
+                auto layer = parseLayer(comp->root);
+                if (layer->rid) {
+                    //character precomp
+                    layer->type = LottieLayer::Precomp;
+                    glyph->layer = layer;
+                } else {
+                    //glyph shapes
+                    layer->children.move(glyph->children);
+                    context.layer = nullptr;
+                    delete(layer);
                 }
             } else skip();
         }
@@ -1652,7 +1659,7 @@ LottieLayer* LottieParser::parseLayer(LottieLayer* precomp)
     layer->prepare(&color);
 
     layer->effect = !layer->effects.empty();
-    precomp->effect |= layer->effect;
+    if (precomp) precomp->effect |= layer->effect;
 
     return layer;
 }
