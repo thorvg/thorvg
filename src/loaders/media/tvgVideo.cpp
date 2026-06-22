@@ -93,6 +93,12 @@ Result Video::loop(bool on) noexcept
     return loader->loop(on);
 }
 
+bool Video::loop() const noexcept
+{
+    FETCH_LOADER(false);
+    return loader->looping;
+}
+
 Picture* Video::picture() const noexcept
 {
     return pImpl->picture;
