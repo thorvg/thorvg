@@ -324,8 +324,7 @@ bool LottieParser::getValue(Point3& pt)
     pt.y = getFloat();
     pt.z = getFloat();
 
-    while (nextArrayValue())
-        getFloat();  // drop
+    while (nextArrayValue()) getFloat();  // drop
 
     return true;
 }
@@ -512,11 +511,10 @@ bool LottieParser::parseCommon(LottieObject* obj, const char* key)
 {
     if (KEY_AS("nm")) {
         obj->id = djb2Encode(getString());
-        return true;
     } else if (KEY_AS("hd")) {
         obj->hidden = getBool();
-        return true;
     } else return false;
+    return true;
 }
 
 
@@ -524,23 +522,19 @@ bool LottieParser::parseCommon(LottieObject* obj, LottieProperty& prop, const ch
 {
     if (KEY_AS("ix")) {
         prop.ix = getInt();
-        return true;
     } else if (KEY_AS("x") && expressions) {
         getExpression(getStringCopy(), comp, context.layer, context.parent, &prop);
-        return true;
     } else if (KEY_AS("sid")) {
         registerSlot(obj, getString(), prop);
-        return true;
     } else return false;
+    return true;
 }
 
 
 bool LottieParser::parseDirection(LottieShape* shape, const char* key)
 {
     if (KEY_AS("d")) {
-        if (getInt() == 3) {
-            shape->clockwise = false;       //default is true
-        }
+        if (getInt() == 3) shape->clockwise = false;       //default is true
         return true;
     }
     return false;
