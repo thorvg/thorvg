@@ -1,7 +1,8 @@
 compiler_flags += ['-DTHORVG_WEB_MEDIA_SUPPORT=1']
 
 source_file = [
-   'tvgWebMediaLoader.h'
+   'tvgWebMediaLoader.h',
+   'tvgWebMediaLoader.cpp'
 ]
 
 media_dep += [declare_dependency(
