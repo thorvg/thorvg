@@ -759,7 +759,9 @@ static jerry_value_t _content(const jerry_call_info_t* info, const jerry_value_t
 {
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto group = static_cast<LottieGroup*>(data->obj);
-    auto target = group->content(_idByName(args[0]));
+
+    //either name or index
+    auto target = jerry_value_is_string(args[0]) ? group->content(_idByName(args[0])) : group->child(jerry_value_as_int32(args[0]) - 1);
     if (!target) return jerry_undefined();
 
     //find the a path property(sh) in the group layer?
