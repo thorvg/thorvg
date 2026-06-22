@@ -1271,7 +1271,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         sdata->texFilter = filter;
         sdata->texStamp = mTextures.stamp;
         sdata->geometry = GlGeometry();
-    }
+    } else if (flags & RenderUpdateFlag::Image) TextureMgr::upload(sdata->texId, image, filter);
 
     sdata->texColorSpace = image->cs;
     sdata->texFlipY = 1;
