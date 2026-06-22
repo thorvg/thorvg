@@ -4,6 +4,8 @@ system = host_machine.system()
 media_dep = []
 if system == 'linux'
     subdir('linux')
+elif system == 'android'
+    subdir('android')
 elif system == 'darwin' or system == 'ios'
     subdir('apple')
 elif system == 'emscripten'

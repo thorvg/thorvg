@@ -36,6 +36,13 @@
     {
         return new GstMediaLoader;
     }
+#elif defined(THORVG_ANDROID_MEDIA_SUPPORT)
+    #include "tvgAndroidMediaLoader.h"
+
+    MediaLoader* MediaLoader::gen()
+    {
+        return new AndroidMediaLoader;
+    }
 #elif defined(THORVG_WEB_MEDIA_SUPPORT)
     #include "tvgWebMediaLoader.h"
 
