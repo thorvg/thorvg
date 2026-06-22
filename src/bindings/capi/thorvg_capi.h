@@ -91,6 +91,13 @@ typedef struct _Tvg_Animation* Tvg_Animation;
 typedef struct _Tvg_Accessor* Tvg_Accessor;
 
 /**
+ * @brief A structure representing a video playback controller object.
+ *
+ * @note Experimental API
+ */
+typedef struct _Tvg_Video* Tvg_Video;
+
+/**
  * @brief Enumeration specifying the result from the APIs.
  *
  * All ThorVG APIs could potentially return one of the values in the list.
@@ -3228,6 +3235,175 @@ typedef void (*Tvg_Audio_Resolver)(const Tvg_Audio_Info* info, void* data);
 TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animation, Tvg_Audio_Resolver resolver, void* data);
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
+
+/**
+ * @defgroup ThorVGCapi_Video Video
+ * @brief A module for controlling video playback.
+ *
+ * The module enables control of video playback features.
+ *
+ * @{
+ */
+
+/**
+ * @brief Creates a new video playback.
+ *
+ * @return Tvg_Video A new video object.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Video tvg_video_new(void);
+
+/**
+ * @brief Releases the given video object and its resources.
+ *
+ * @param[in] video The video object to release.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_del(Tvg_Video video);
+
+/**
+/**
+ * @brief Retrieves the picture instance associated with this video object.
+ *
+ * This function provides access to the internal picture used by the video object
+ * for rendering video frames. After obtaining the picture, it can be added to a canvas
+ * enabling control over video frames with this Video object.
+ *
+ * @param[in] video The video object.
+ *
+ * @return A picture instance representing the visual content of the video.
+ *
+ * @warning The picture instance is owned by the video object and should not be deleted manually.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Paint tvg_video_get_picture(Tvg_Video video);
+
+/**
+ * @brief Starts or resumes playback.
+ *
+ * @param[in] video The video object.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_play(Tvg_Video video);
+
+/**
+ * @brief Pauses playback while keeping the current position.
+ *
+ * @param[in] video The video object.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_pause(Tvg_Video video);
+
+/**
+ * @brief Stops playback and rewinds to the start.
+ *
+ * @param[in] video The video object.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_stop(Tvg_Video video);
+
+/**
+ * @brief Sets the playback position.
+ *
+ * @param[in] video The video object.
+ * @param[in] seconds The target playback position in seconds.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_seek(Tvg_Video video, float seconds);
+
+/**
+ * @brief Enables or disables repeated playback.
+ *
+ * @param[in] video The video object.
+ * @param[in] on @c true to repeat playback, @c false to play once.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_loop(Tvg_Video video, bool on);
+
+/**
+ * @brief Retrieves whether repeated playback is enabled.
+ *
+ * @param[in] video The video object.
+ *
+ * @return @c true if repeated playback is enabled, @c false otherwise.
+ *
+ * @note Experimental API
+ */
+TVG_API bool tvg_video_get_loop(Tvg_Video video);
+
+/**
+ * @brief Sets the audio volume level.
+ *
+ * @param[in] video The video object.
+ * @param[in] volume The audio volume level in the range [0.0, 1.0].
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_set_volume(Tvg_Video video, float volume);
+
+/**
+ * @brief Mutes or unmutes the audio without changing the volume level.
+ *
+ * @param[in] video The video object.
+ * @param[in] on @c true to mute the audio, @c false to unmute.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_video_mute(Tvg_Video video, bool on);
+
+/**
+ * @brief Retrieves the current playback position.
+ *
+ * @param[in] video The video object.
+ *
+ * @return The current playback position in seconds.
+ *
+ * @note Experimental API
+ */
+TVG_API float tvg_video_get_time(Tvg_Video video);
+
+/**
+ * @brief Retrieves the total duration of the video.
+ *
+ * @param[in] video The video object.
+ *
+ * @return The total duration in seconds.
+ *
+ * @note Experimental API
+ */
+TVG_API float tvg_video_get_duration(Tvg_Video video);
+
+/**
+ * @brief Retrieves the current audio volume level.
+ *
+ * @param[in] video The video object.
+ *
+ * @return The current audio volume level in the range [0.0, 1.0].
+ *
+ * @note Experimental API
+ */
+TVG_API float tvg_video_get_volume(Tvg_Video video);
+
+/**
+ * @brief Retrieves whether the audio is currently muted.
+ *
+ * @param[in] video The video object.
+ *
+ * @return @c true if the audio is muted, @c false otherwise.
+ *
+ * @note Experimental API
+ */
+TVG_API bool tvg_video_get_muted(Tvg_Video video);
+
+/** @} */  // end addtogroup ThorVGCapi_Video
 
 /** \} */   // end defgroup ThorVGCapi
 

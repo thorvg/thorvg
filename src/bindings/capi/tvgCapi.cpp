@@ -27,6 +27,9 @@
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
 #include <thorvg_lottie.h>
 #endif
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+#include <thorvg_media.h>
+#endif
 
 using namespace std;
 using namespace tvg;
@@ -1305,6 +1308,139 @@ TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animati
     }, data);
 #endif
     return TVG_RESULT_NOT_SUPPORTED;
+}
+
+/************************************************************************/
+/* Video API                                                            */
+/************************************************************************/
+
+TVG_API Tvg_Video tvg_video_new()
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    return (Tvg_Video)Video::gen();
+#endif
+    return nullptr;
+}
+
+TVG_API Tvg_Result tvg_video_del(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (!video) return TVG_RESULT_INVALID_ARGUMENT;
+    delete (reinterpret_cast<Video*>(video));
+    return TVG_RESULT_SUCCESS;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Paint tvg_video_get_picture(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Paint) reinterpret_cast<Video*>(video)->picture();
+#endif
+    return nullptr;
+}
+
+TVG_API Tvg_Result tvg_video_play(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Result) reinterpret_cast<Video*>(video)->play();
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_video_pause(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Result) reinterpret_cast<Video*>(video)->pause();
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_video_stop(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Result) reinterpret_cast<Video*>(video)->stop();
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_video_seek(Tvg_Video video, float seconds)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Result) reinterpret_cast<Video*>(video)->seek(seconds);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_video_loop(Tvg_Video video, bool on)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Result) reinterpret_cast<Video*>(video)->loop(on);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API bool tvg_video_get_loop(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return reinterpret_cast<Video*>(video)->loop();
+#endif
+    return false;
+}
+
+TVG_API Tvg_Result tvg_video_set_volume(Tvg_Video video, float volume)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Result) reinterpret_cast<Video*>(video)->volume(volume);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_video_mute(Tvg_Video video, bool on)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return (Tvg_Result) reinterpret_cast<Video*>(video)->mute(on);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API float tvg_video_get_time(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return reinterpret_cast<Video*>(video)->time();
+#endif
+    return 0.0f;
+}
+
+TVG_API float tvg_video_get_duration(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return reinterpret_cast<Video*>(video)->duration();
+#endif
+    return 0.0f;
+}
+
+TVG_API float tvg_video_get_volume(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return reinterpret_cast<Video*>(video)->volume();
+#endif
+    return 0.0f;
+}
+
+TVG_API bool tvg_video_get_muted(Tvg_Video video)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (video) return reinterpret_cast<Video*>(video)->muted();
+#endif
+    return false;
 }
 
 #ifdef __cplusplus
