@@ -86,6 +86,11 @@ typedef struct _Tvg_Saver* Tvg_Saver;
 typedef struct _Tvg_Animation* Tvg_Animation;
 
 /**
+ * @brief A structure representing a video playback controller object.
+ */
+typedef struct _Tvg_Video* Tvg_Video;
+
+/**
  * @brief A structure representing an object that enables iterating through a scene's descendents.
  */
 typedef struct _Tvg_Accessor* Tvg_Accessor;
@@ -2916,6 +2921,47 @@ TVG_API Tvg_Result tvg_animation_get_segment(Tvg_Animation animation, float* beg
 TVG_API Tvg_Result tvg_animation_del(Tvg_Animation animation);
 
 /** \} */   // end defgroup ThorVGCapi_Animation
+
+/**
+ * @defgroup ThorVGCapi_Video Video
+ * @brief A module for experimental video playback control.
+ *
+ * \{
+ */
+
+/************************************************************************/
+/* Video API                                                            */
+/************************************************************************/
+
+TVG_API Tvg_Video tvg_video_new(void);
+
+TVG_API Tvg_Result tvg_video_del(Tvg_Video video);
+
+TVG_API Tvg_Paint tvg_video_get_picture(Tvg_Video video);
+
+TVG_API Tvg_Result tvg_video_play(Tvg_Video video);
+
+TVG_API Tvg_Result tvg_video_pause(Tvg_Video video);
+
+TVG_API Tvg_Result tvg_video_stop(Tvg_Video video);
+
+TVG_API Tvg_Result tvg_video_seek(Tvg_Video video, float seconds);
+
+TVG_API Tvg_Result tvg_video_set_loop(Tvg_Video video, bool on);
+
+TVG_API Tvg_Result tvg_video_get_time(Tvg_Video video, float* seconds);
+
+TVG_API Tvg_Result tvg_video_get_duration(Tvg_Video video, float* seconds);
+
+TVG_API Tvg_Result tvg_video_set_volume(Tvg_Video video, float volume);
+
+TVG_API Tvg_Result tvg_video_get_volume(Tvg_Video video, float* volume);
+
+TVG_API Tvg_Result tvg_video_set_mute(Tvg_Video video, bool on);
+
+TVG_API Tvg_Result tvg_video_get_muted(Tvg_Video video, bool* muted);
+
+/** \} */   // end defgroup ThorVGCapi_Video
 
 /**
  * @defgroup ThorVGCapi_Accesssor Accessor
