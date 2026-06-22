@@ -25,53 +25,27 @@
 
 #include "tvgMediaLoader.h"
 
+struct AvfImpl;
+
 struct AvfMediaLoader : MediaLoader
 {
-    AvfMediaLoader() :
-        MediaLoader(FileType::Media) {}
-    ~AvfMediaLoader(){};
+    AvfImpl* pImpl;
 
-    Result play() override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
+    AvfMediaLoader();
+    ~AvfMediaLoader();
 
-    Result pause() override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
+    bool open(const char* path, const LoaderOps* ops) override;
+    bool read() override;
+    bool close() override;
+    RenderSurface* bitmap() override;
 
-    Result stop() override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result seek(float seconds) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result loop(bool on) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result volume(float volume) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result mute(bool on) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
+    Result play() override;
+    Result pause() override;
+    Result stop() override;
+    Result seek(float seconds) override;
+    Result loop(bool on) override;
+    Result volume(float volume) override;
+    Result mute(bool on) override;
 };
 
 #endif  //_TVG_AVF_LOADER_H_
