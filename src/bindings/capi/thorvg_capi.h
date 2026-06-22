@@ -91,6 +91,13 @@ typedef struct _Tvg_Animation* Tvg_Animation;
 typedef struct _Tvg_Accessor* Tvg_Accessor;
 
 /**
+ * @brief A structure representing a video playback controller object.
+ *
+ * @note Experimental API
+ */
+typedef struct _Tvg_Video* Tvg_Video;
+
+/**
  * @brief Enumeration specifying the result from the APIs.
  *
  * All ThorVG APIs could potentially return one of the values in the list.
@@ -3228,6 +3235,109 @@ typedef void (*Tvg_Audio_Resolver)(const Tvg_Audio_Info* info, void* data);
 TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animation, Tvg_Audio_Resolver resolver, void* data);
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
+
+
+/**
+* \defgroup ThorVGCapi_Video Video (Experimental)
+* \brief A module for controlling host-decoded video playback.
+*
+* The module enables control of host-decoded video playback.
+*
+* \{
+*/
+
+/*!
+* \brief Creates a new video playback controller.
+*
+* \return A new Tvg_Video object, or @c nullptr on failure.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Video tvg_video_new(void);
+
+/*!
+* \brief Releases a video object and its resources.
+*
+* \param[in] video The Tvg_Video object to release.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_del(Tvg_Video video);
+
+/*!
+* \brief Retrieves the picture that displays the video frames.
+*
+* The picture is owned by the video; add it to a canvas to render the frames.
+*
+* \param[in] video A Tvg_Video object.
+*
+* \return The associated picture (as a Tvg_Paint), or @c nullptr.
+*
+* \note Experimental API
+*/
+TVG_API Tvg_Paint tvg_video_get_picture(Tvg_Video video);
+
+/*!
+* \brief Starts or resumes playback. \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_play(Tvg_Video video);
+
+/*!
+* \brief Pauses playback. \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_pause(Tvg_Video video);
+
+/*!
+* \brief Stops playback and rewinds to the start. \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_stop(Tvg_Video video);
+
+/*!
+* \brief Sets the playback position in seconds. \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_seek(Tvg_Video video, float seconds);
+
+/*!
+* \brief Enables or disables repeated playback. \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_loop(Tvg_Video video, bool on);
+
+/*!
+* \brief Retrieves whether repeated playback is enabled. \note Experimental API
+*/
+TVG_API bool tvg_video_get_loop(Tvg_Video video);
+
+/*!
+* \brief Sets the audio volume level in the range [0.0, 1.0]. \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_set_volume(Tvg_Video video, float volume);
+
+/*!
+* \brief Mutes or unmutes the audio without changing the volume level. \note Experimental API
+*/
+TVG_API Tvg_Result tvg_video_mute(Tvg_Video video, bool on);
+
+/*!
+* \brief Retrieves the current playback position in seconds. \note Experimental API
+*/
+TVG_API float tvg_video_get_time(Tvg_Video video);
+
+/*!
+* \brief Retrieves the total duration in seconds. \note Experimental API
+*/
+TVG_API float tvg_video_get_duration(Tvg_Video video);
+
+/*!
+* \brief Retrieves the current audio volume level [0.0, 1.0]. \note Experimental API
+*/
+TVG_API float tvg_video_get_volume(Tvg_Video video);
+
+/*!
+* \brief Retrieves whether the audio is currently muted. \note Experimental API
+*/
+TVG_API bool tvg_video_get_muted(Tvg_Video video);
+
+/** \} */   // end addtogroup ThorVGCapi_Video
 
 /** \} */   // end defgroup ThorVGCapi
 
