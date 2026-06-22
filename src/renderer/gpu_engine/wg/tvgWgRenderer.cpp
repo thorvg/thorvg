@@ -182,7 +182,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
     auto cacheStale = renderDataPicture->imageTexture && (renderDataPicture->imageStamp != mTextures.stamp);
     auto updateGeometry = !data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image));
-    auto refreshTexture = ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
+    auto refreshTexture = ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image | RenderUpdateFlag::Media)) != RenderUpdateFlag::None);
     auto sourceChanged = (renderDataPicture->imageSource != surface);
     auto filterChanged = (renderDataPicture->imageFilter != filter);
     auto needsImage = !renderDataPicture->imageTexture || sourceChanged || filterChanged || refreshTexture || cacheStale;

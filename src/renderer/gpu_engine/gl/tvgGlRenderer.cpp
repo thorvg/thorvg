@@ -1262,6 +1262,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
 
+    auto refreshTexture = ((flags & RenderUpdateFlag::Media) != RenderUpdateFlag::None);
     auto sourceChanged = (sdata->texSource != image) || (sdata->texFilter != filter);
     if (sdata->texId == 0 || sourceChanged || cacheStale) {
         auto ownsTexture = sdata->texId && (sdata->texStamp == mTextures.stamp);
@@ -1271,7 +1272,7 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         sdata->texFilter = filter;
         sdata->texStamp = mTextures.stamp;
         sdata->geometry = GlGeometry();
-    }
+    } else if (refreshTexture) TextureMgr::upload(sdata->texId, image, filter);
 
     sdata->texColorSpace = image->cs;
     sdata->texFlipY = 1;

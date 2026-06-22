@@ -208,7 +208,7 @@ struct SwImageTask : SwTask
         image.channelSize = source->channelSize;
         image.alphaIgnored = source->alphaIgnored;
 
-        auto updateImage = flags[0] & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform);
+        auto updateImage = flags[0] & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform | RenderUpdateFlag::Media);
         auto updateColor = flags[0] & (RenderUpdateFlag::Color);
 
         //Invisible shape turned to visible by alpha.
