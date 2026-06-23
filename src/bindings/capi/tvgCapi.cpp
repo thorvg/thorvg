@@ -999,10 +999,9 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
-
-TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics)
+TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics, const char** next)
 {
-    if (text && metrics) return (Tvg_Result) reinterpret_cast<Text*>(text)->metrics(ch, *reinterpret_cast<GlyphMetrics*>(metrics));
+    if (text && metrics) return (Tvg_Result) reinterpret_cast<Text*>(text)->metrics(ch, *reinterpret_cast<GlyphMetrics*>(metrics), next);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
