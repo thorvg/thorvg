@@ -26,6 +26,10 @@ test_file = [
     'testText.cpp'
 ]
 
+if media_loader
+    test_file += ['testVideo.cpp']
+endif
+
 if gl_engine
     test_egl_dep = dependency('egl', required: false)
 

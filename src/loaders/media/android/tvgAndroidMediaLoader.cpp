@@ -18,12 +18,14 @@
 
 #include <algorithm>
 #include <chrono>
+#include <fcntl.h>
 #include <math.h>
 #include <media/NdkMediaCodec.h>
 #include <media/NdkMediaExtractor.h>
 #include <media/NdkMediaFormat.h>
-#include <string>
+#include <sys/stat.h>
 #include <thread>
+#include <unistd.h>
 
 #include "tvgAndroidMediaLoader.h"
 
@@ -35,10 +37,19 @@ static constexpr auto USEC = 1000000LL;
 static constexpr auto COLOR_YUV420_PLANAR = 19;
 static constexpr auto COLOR_YUV420_SEMIPLANAR = 21;
 
+struct SourceInfo
+{
+    int32_t w = 0;
+    int32_t h = 0;
+    int32_t stride = 0;
+    int32_t slice = 0;
+    int32_t rotation = 0;
+    int32_t color = COLOR_YUV420_SEMIPLANAR;
+};
+
 struct AndroidImpl
 {
     AndroidMediaLoader* loader = nullptr;
-    std::string path;
     AMediaFormat* format = nullptr;
     AMediaExtractor* extractor = nullptr;
     AMediaCodec* codec = nullptr;
@@ -49,17 +60,12 @@ struct AndroidImpl
     tvg::StrictKey codecKey;
     uint32_t* frame = nullptr;
     uint32_t* surfaceData = nullptr;
-    float latestTime = 0.0f;
     int64_t startedUs = 0;
     int64_t durationUs = 0;
     int64_t decodedUs = -1;
+    int64_t publishFromUs = 0;
     int32_t track = -1;
-    int32_t width = 0;
-    int32_t height = 0;
-    int32_t stride = 0;
-    int32_t slice = 0;
-    int32_t rotation = 0;
-    int32_t color = COLOR_YUV420_SEMIPLANAR;
+    SourceInfo src;
     bool frameUpdated = false;
     bool inputDone = false;
     bool outputDone = false;
@@ -116,41 +122,62 @@ static void _clear(AndroidImpl* impl)
     tvg::free(impl->surfaceData);
     impl->frame = nullptr;
     impl->surfaceData = nullptr;
-    impl->path.clear();
+    impl->src = {};
     impl->ready = false;
     impl->frameUpdated = false;
 }
 
-static void _readFormat(AndroidImpl* impl, AMediaFormat* format)
+static void _readFormat(SourceInfo& src, AMediaFormat* format)
 {
     auto v = 0;
-    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &v) && v > 0) impl->width = v;
-    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &v) && v > 0) impl->height = v;
-    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_STRIDE, &v) && v > 0) impl->stride = v;
-    else impl->stride = impl->width;
-    if (AMediaFormat_getInt32(format, "slice-height", &v) && v > 0) impl->slice = v;
-    else impl->slice = impl->height;
-    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, &v)) impl->color = v;
-    if (AMediaFormat_getInt32(format, "rotation-degrees", &v)) impl->rotation = ((v % 360) + 360) % 360;
+    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &v) && v > 0) src.w = v;
+    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &v) && v > 0) src.h = v;
+    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_STRIDE, &v) && v > 0) src.stride = v;
+    else src.stride = src.w;
+    if (AMediaFormat_getInt32(format, "slice-height", &v) && v > 0) src.slice = v;
+    else src.slice = src.h;
+    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, &v)) src.color = v;
+    if (AMediaFormat_getInt32(format, "rotation-degrees", &v)) src.rotation = ((v % 360) + 360) % 360;
 }
 
-static bool _reset(AndroidImpl* impl, int64_t us)
+static bool _setDataSource(AMediaExtractor* extractor, const char* path)
 {
-    _closeCodec(impl);
+    if (!extractor || !path) return false;
 
+    auto fd = ::open(path, O_RDONLY);
+    if (fd < 0) return false;
+
+    struct stat statbuf;
+    auto ok = ::fstat(fd, &statbuf) == 0 && statbuf.st_size > 0 &&
+              AMediaExtractor_setDataSourceFd(extractor, fd, 0, statbuf.st_size) == AMEDIA_OK;
+    ::close(fd);
+    return ok;
+}
+
+static bool _startCodec(AndroidImpl* impl)
+{
     const char* mime = nullptr;
     if (!impl->format || !AMediaFormat_getString(impl->format, AMEDIAFORMAT_KEY_MIME, &mime)) return false;
-
-    impl->extractor = AMediaExtractor_new();
-    if (!impl->extractor || AMediaExtractor_setDataSource(impl->extractor, impl->path.c_str()) != AMEDIA_OK) return false;
-    if (AMediaExtractor_selectTrack(impl->extractor, static_cast<size_t>(impl->track)) != AMEDIA_OK) return false;
-    if (us > 0) AMediaExtractor_seekTo(impl->extractor, us, AMEDIAEXTRACTOR_SEEK_CLOSEST_SYNC);
 
     impl->codec = AMediaCodec_createDecoderByType(mime);
     if (!impl->codec) return false;
     if (AMediaCodec_configure(impl->codec, impl->format, nullptr, nullptr, 0) != AMEDIA_OK) return false;
     if (AMediaCodec_start(impl->codec) != AMEDIA_OK) return false;
 
+    impl->inputDone = false;
+    impl->outputDone = false;
+    impl->decodedUs = -1;
+    return true;
+}
+
+static bool _seek(AndroidImpl* impl, int64_t us)
+{
+    if (!impl->codec || !impl->extractor) return false;
+
+    if (AMediaCodec_flush(impl->codec) != AMEDIA_OK) return false;
+    if (AMediaExtractor_seekTo(impl->extractor, us, AMEDIAEXTRACTOR_SEEK_PREVIOUS_SYNC) != AMEDIA_OK) return false;
+
+    impl->publishFromUs = us;
     impl->inputDone = false;
     impl->outputDone = false;
     impl->decodedUs = -1;
@@ -180,12 +207,12 @@ static bool _feed(AndroidImpl* impl, int64_t timeout)
     return true;
 }
 
-static void _source(AndroidImpl* impl, uint32_t x, uint32_t y, uint32_t& sx, uint32_t& sy)
+static void _source(const SourceInfo& src, uint32_t x, uint32_t y, uint32_t& sx, uint32_t& sy)
 {
-    auto w = static_cast<uint32_t>(impl->width);
-    auto h = static_cast<uint32_t>(impl->height);
+    auto w = static_cast<uint32_t>(src.w);
+    auto h = static_cast<uint32_t>(src.h);
 
-    switch (impl->rotation) {
+    switch (src.rotation) {
         case 90: sx = y; sy = h - 1 - x; break;
         case 180: sx = w - 1 - x; sy = h - 1 - y; break;
         case 270: sx = w - 1 - y; sy = x; break;
@@ -207,7 +234,13 @@ static uint32_t _rgb(uint8_t yy, uint8_t uu, uint8_t vv)
 
 static bool _push(AndroidImpl* impl, const uint8_t* data, size_t size, int64_t time)
 {
-    if (impl->width <= 0 || impl->height <= 0 || impl->stride <= 0 || impl->slice <= 0) return false;
+    if (time < impl->publishFromUs) {
+        impl->decodedUs = time;
+        return true;
+    }
+
+    auto& src = impl->src;
+    if (src.w <= 0 || src.h <= 0 || src.stride <= 0 || src.slice <= 0) return false;
 
     // ponytail: CPU YUV420 path; add AHardwareBuffer import when renderers consume native buffers.
     auto dstW = impl->loader->surface.w;
@@ -218,26 +251,26 @@ static bool _push(AndroidImpl* impl, const uint8_t* data, size_t size, int64_t t
     if (!impl->frame) impl->frame = tvg::malloc<uint32_t>(bytes);
     if (!impl->frame) return false;
 
-    auto ySize = static_cast<size_t>(impl->stride) * static_cast<size_t>(impl->slice);
-    auto uvStride = impl->color == COLOR_YUV420_PLANAR ? impl->stride / 2 : impl->stride;
-    auto uvSize = static_cast<size_t>(uvStride) * static_cast<size_t>((impl->slice + 1) / 2);
+    auto ySize = static_cast<size_t>(src.stride) * static_cast<size_t>(src.slice);
+    auto uvStride = src.color == COLOR_YUV420_PLANAR ? src.stride / 2 : src.stride;
+    auto uvSize = static_cast<size_t>(uvStride) * static_cast<size_t>((src.slice + 1) / 2);
 
     for (auto y = 0U; y < dstH; ++y) {
         for (auto x = 0U; x < dstW; ++x) {
             auto sx = 0U;
             auto sy = 0U;
-            _source(impl, x, y, sx, sy);
-            if (sx >= static_cast<uint32_t>(impl->width) || sy >= static_cast<uint32_t>(impl->height)) continue;
+            _source(src, x, y, sx, sy);
+            if (sx >= static_cast<uint32_t>(src.w) || sy >= static_cast<uint32_t>(src.h)) continue;
 
-            auto yy = static_cast<size_t>(sy) * impl->stride + sx;
-            auto uv = ySize + static_cast<size_t>(sy / 2) * uvStride + (sx / 2) * (impl->color == COLOR_YUV420_PLANAR ? 1 : 2);
-            auto vv = impl->color == COLOR_YUV420_PLANAR ? ySize + uvSize + static_cast<size_t>(sy / 2) * uvStride + sx / 2 : uv + 1;
+            auto yy = static_cast<size_t>(sy) * src.stride + sx;
+            auto uv = ySize + static_cast<size_t>(sy / 2) * uvStride + (sx / 2) * (src.color == COLOR_YUV420_PLANAR ? 1 : 2);
+            auto vv = src.color == COLOR_YUV420_PLANAR ? ySize + uvSize + static_cast<size_t>(sy / 2) * uvStride + sx / 2 : uv + 1;
             if (yy >= size || uv >= size || vv >= size) continue;
             impl->frame[y * dstW + x] = _rgb(data[yy], data[uv], data[vv]);
         }
     }
 
-    impl->latestTime = static_cast<float>(time) / static_cast<float>(USEC);
+    impl->publishFromUs = 0;
     impl->decodedUs = time;
     impl->frameUpdated = true;
     return true;
@@ -254,7 +287,7 @@ static bool _drain(AndroidImpl* impl, int64_t target, int64_t timeout)
         if (idx == AMEDIACODEC_INFO_TRY_AGAIN_LATER) return progressed;
         if (idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
             if (auto format = AMediaCodec_getOutputFormat(impl->codec)) {
-                _readFormat(impl, format);
+                _readFormat(impl->src, format);
                 AMediaFormat_delete(format);
             }
             continue;
@@ -278,6 +311,8 @@ static bool _drain(AndroidImpl* impl, int64_t target, int64_t timeout)
 
 static bool _decode(AndroidImpl* impl, int64_t target, bool wait)
 {
+    if (impl->decodedUs >= target) return true;
+
     auto timeout = wait ? 2000LL : 0LL;
 
     for (auto i = 0; i < (wait ? 1000 : 20); ++i) {
@@ -309,7 +344,7 @@ static void _work(AndroidImpl* impl)
 
         if (!paused) {
             tvg::ScopedLock lock(impl->codecKey);
-            if (!impl->codec || impl->outputDone || (looping && impl->decodedUs > target + 50000)) _reset(impl, target);
+            if ((impl->outputDone || (looping && impl->decodedUs > target + 50000)) && !_seek(impl, target)) continue;
             _decode(impl, target, false);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(4));
@@ -363,10 +398,16 @@ bool AndroidMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     }
 
     auto extractor = AMediaExtractor_new();
-    if (!extractor || AMediaExtractor_setDataSource(extractor, path) != AMEDIA_OK) {
+    if (!extractor || !_setDataSource(extractor, path)) {
         if (extractor) AMediaExtractor_delete(extractor);
         return false;
     }
+
+    auto fail = [&]() {
+        if (extractor) AMediaExtractor_delete(extractor);
+        _clear(pImpl);
+        return false;
+    };
 
     for (auto i = 0U; i < AMediaExtractor_getTrackCount(extractor); ++i) {
         auto format = AMediaExtractor_getTrackFormat(extractor, i);
@@ -378,21 +419,23 @@ bool AndroidMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
         }
         if (format) AMediaFormat_delete(format);
     }
-    AMediaExtractor_delete(extractor);
 
-    if (!pImpl->format) return false;
+    if (!pImpl->format) return fail();
+    if (AMediaExtractor_selectTrack(extractor, static_cast<size_t>(pImpl->track)) != AMEDIA_OK) return fail();
 
     auto duration = int64_t(0);
-    if (!AMediaFormat_getInt64(pImpl->format, AMEDIAFORMAT_KEY_DURATION, &duration) || duration <= 0) return false;
+    if (!AMediaFormat_getInt64(pImpl->format, AMEDIAFORMAT_KEY_DURATION, &duration) || duration <= 0) return fail();
 
-    pImpl->path = path;
+    pImpl->extractor = extractor;
+    extractor = nullptr;
     pImpl->durationUs = duration;
-    _readFormat(pImpl, pImpl->format);
+    _readFormat(pImpl->src, pImpl->format);
 
-    if (pImpl->width <= 0 || pImpl->height <= 0) return false;
+    auto& src = pImpl->src;
+    if (src.w <= 0 || src.h <= 0) return fail();
 
-    w = static_cast<float>((pImpl->rotation == 90 || pImpl->rotation == 270) ? pImpl->height : pImpl->width);
-    h = static_cast<float>((pImpl->rotation == 90 || pImpl->rotation == 270) ? pImpl->width : pImpl->height);
+    w = static_cast<float>((src.rotation == 90 || src.rotation == 270) ? src.h : src.w);
+    h = static_cast<float>((src.rotation == 90 || src.rotation == 270) ? src.w : src.h);
     totalTime = static_cast<float>(duration) / static_cast<float>(USEC);
     curTime = 0.0f;
     return true;
@@ -418,7 +461,7 @@ bool AndroidMediaLoader::read()
 
     {
         tvg::ScopedLock lock(pImpl->codecKey);
-        if (!_reset(pImpl, 0) || !_decode(pImpl, 0, true)) {
+        if (!_startCodec(pImpl) || !_seek(pImpl, 0) || !_decode(pImpl, 0, true)) {
             pImpl->ready = false;
             _closeCodec(pImpl);
             return false;
@@ -451,9 +494,6 @@ RenderSurface* AndroidMediaLoader::bitmap()
     pImpl->frameUpdated = false;
     std::swap(pImpl->frame, pImpl->surfaceData);
     surface.data = pImpl->surfaceData;
-    surface.cs = ColorSpace::ARGB8888S;
-    surface.premultiplied = false;
-    curTime = pImpl->latestTime;
     return &surface;
 }
 
@@ -492,7 +532,7 @@ Result AndroidMediaLoader::stop()
     }
 
     tvg::ScopedLock lock(pImpl->codecKey);
-    return (_reset(pImpl, 0) && _decode(pImpl, 0, true)) ? Result::Success : Result::InsufficientCondition;
+    return (_seek(pImpl, 0) && _decode(pImpl, 0, true)) ? Result::Success : Result::InsufficientCondition;
 }
 
 Result AndroidMediaLoader::seek(float seconds)
@@ -509,7 +549,7 @@ Result AndroidMediaLoader::seek(float seconds)
     }
 
     tvg::ScopedLock lock(pImpl->codecKey);
-    return (_reset(pImpl, target) && _decode(pImpl, target, true)) ? Result::Success : Result::InsufficientCondition;
+    return (_seek(pImpl, target) && _decode(pImpl, target, true)) ? Result::Success : Result::InsufficientCondition;
 }
 
 Result AndroidMediaLoader::loop(bool on)
