@@ -11,7 +11,7 @@ env:
 
 jobs:
   pixel_inspector:
-    name: golden vs PR merge
+    name: Golden vs PR
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -21,14 +21,14 @@ jobs:
       LIBGL_ALWAYS_SOFTWARE: 1
 
     steps:
-      - name: Checkout ThorVG PR merge
+      - name: Checkout ThorVG PR
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
           path: thorvg
           fetch-depth: 0
 
-      - name: Checkout pixel inspector
+      - name: Checkout Pixel-Inspector
         uses: actions/checkout@v4
         with:
           repository: thorvg/thorvg.pixel-inspector
