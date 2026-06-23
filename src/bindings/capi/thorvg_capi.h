@@ -2820,6 +2820,8 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
  * @param[in] text A Tvg_Paint pointer to the text object.
  * @param[in] ch A pointer to a UTF-8 encoded character.
  * @param[out] metrics A pointer to a @ref Tvg_Glyph_Metrics structure to be filled with the resulting values.
+ * @param[out] next An optional pointer that receives the position immediately
+ *                  following the processed UTF-8 character.
  *
  * @return TVG_RESULT_INSUFFICIENT_CONDITION if no font or size has been set yet.
  * @return TVG_RESULT_INVALID_ARGUMENT if the given character is invalid or not supported.
@@ -2828,7 +2830,7 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
  * @note Currently, ThorVG only supports horizontal text layout.
  * @note Experimental API
  */
-TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics);
+TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics, const char** next);
 
 
 /**

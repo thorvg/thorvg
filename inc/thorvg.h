@@ -2172,6 +2172,8 @@ struct TVG_API Text : Paint
      *
      * @param[in] ch A pointer to a UTF-8 encoded character.
      * @param[out] metrics A reference to a @ref GlyphMetrics structure to be filled with the resulting values.
+     * @param[out] next An optional pointer that receives the position immediately
+     *                  following the processed UTF-8 character.
      *
      * @return Result::InsufficientCondition if no font or size has been set yet.
      * @return Result::InvalidArguments if the given character is invalid or not supported.
@@ -2180,7 +2182,7 @@ struct TVG_API Text : Paint
      * @note Currently, ThorVG only supports horizontal text layout.
      * @note Experimental API
      */
-    Result metrics(const char* ch, GlyphMetrics& metrics) const noexcept;
+    Result metrics(const char* ch, GlyphMetrics& metrics, const char** next = nullptr) const noexcept;
 
     /**
      * @brief Loads a scalable font data (ttf) from a file.

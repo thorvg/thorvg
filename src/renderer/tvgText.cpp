@@ -163,10 +163,9 @@ Result Text::metrics(TextMetrics& metrics) const noexcept
     return to<TextImpl>(this)->metrics(metrics);
 }
 
-
-Result Text::metrics(const char* ch, GlyphMetrics& metrics) const noexcept
+Result Text::metrics(const char* ch, GlyphMetrics& metrics, const char** next) const noexcept
 {
-    return to<TextImpl>(this)->metrics(ch, metrics);
+    return to<TextImpl>(this)->metrics(ch, metrics, next);
 }
 
 

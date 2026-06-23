@@ -608,7 +608,7 @@ void SfntLoader::metrics(const FontMetrics& fm, TextMetrics& out)
     out.linegap = reader->metrics.hhea.linegap * scale;
 }
 
-bool SfntLoader::metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out)
+bool SfntLoader::metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out, const char** next)
 {
     auto code = _codepoints(&ch, ch + strlen(ch));
     auto glyph = request(code);
@@ -629,5 +629,7 @@ bool SfntLoader::metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& ou
     }
     out.min = glyph->bbox.min * scale;
     out.max = glyph->bbox.max * scale;
+
+    if (next) *next = ch;
     return true;
 }

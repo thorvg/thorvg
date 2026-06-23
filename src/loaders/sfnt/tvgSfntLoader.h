@@ -58,7 +58,7 @@ struct SfntLoader : public FontLoader
     void copy(const FontMetrics& in, FontMetrics& out) override;
     void release(FontMetrics& fm) override;
     void metrics(const FontMetrics& fm, TextMetrics& out) override;
-    bool metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out) override;
+    bool metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out, const char** next) override;
 
     static SfntReader* gen(uint8_t* data, uint32_t size);
 
