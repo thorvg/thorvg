@@ -68,9 +68,9 @@ void WgRenderer::disposeObjects()
         if (renderData->type() == Type::Shape) {
             mRenderDataShapePool.free(mContext, (WgRenderDataShape*)renderData);
         } else {
-            auto* renderDataPicture = (WgRenderDataPicture*)renderData;
-            renderDataPicture->releaseTexture(mTextures, mContext);
-            mRenderDataPicturePool.free(mContext, renderDataPicture);
+            auto rdp = (WgRenderDataPicture*)renderData;
+            rdp->releaseTexture(mTextures, mContext);
+            mRenderDataPicturePool.free(mContext, rdp);
         }
     }
     mDisposeRenderDatas.clear();
@@ -130,83 +130,78 @@ bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint3
 
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
-    auto renderDataShape = data ? (WgRenderDataShape*)data : mRenderDataShapePool.allocate(mContext);
+    auto rds = data ? (WgRenderDataShape*)data : mRenderDataShapePool.allocate(mContext);
 
     // update geometry
     if (!data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke))) {
-        renderDataShape->updateMeshes(rshape, flags, transform);
+        rds->updateMeshes(rshape, flags, transform);
     }
 
     // update transform
     if ((!data) || (flags & RenderUpdateFlag::Transform)) {
-        renderDataShape->transform = transform;
-        renderDataShape->updateAABB();
+        rds->transform = transform;
+        rds->updateAABB();
     }
 
     // update paint settings
     if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) {
-        renderDataShape->renderSettingsShape.update(mContext, mTargetSurface.cs, opacity);
-        renderDataShape->renderSettingsStroke.update(mContext, mTargetSurface.cs, opacity);
-        renderDataShape->fillRule = rshape.rule;
+        rds->renderSettingsShape.update(mContext, mTargetSurface.cs, opacity);
+        rds->renderSettingsStroke.update(mContext, mTargetSurface.cs, opacity);
+        rds->fillRule = rshape.rule;
     }
 
     // setup fill settings
-    renderDataShape->viewport = vport;
-    renderDataShape->updateVisibility(rshape, opacity);
+    rds->viewport = vport;
+    rds->updateVisibility(rshape, opacity);
     // update shape render settings
-    if (!renderDataShape->renderSettingsShape.skip) {
+    if (!rds->renderSettingsShape.skip) {
         if (rshape.fill && (!data || (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)))) {
             bool updateColorRamp = !data || ((flags & RenderUpdateFlag::Gradient) != RenderUpdateFlag::None);
-            renderDataShape->renderSettingsShape.update(mContext, rshape.fill, &transform, updateColorRamp);
+            rds->renderSettingsShape.update(mContext, rshape.fill, &transform, updateColorRamp);
         } else if (!data || (flags & RenderUpdateFlag::Color)) {
-            renderDataShape->renderSettingsShape.update(mContext, rshape.color);
+            rds->renderSettingsShape.update(mContext, rshape.color);
         }
     }
     // update strokes render settings
-    if (rshape.stroke && !renderDataShape->renderSettingsStroke.skip) {
+    if (rshape.stroke && !rds->renderSettingsStroke.skip) {
         if (rshape.stroke->fill && (!data || (flags & (RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)))) {
             bool updateColorRamp = !data || ((flags & RenderUpdateFlag::GradientStroke) != RenderUpdateFlag::None);
-            renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->fill, nullptr, updateColorRamp);
+            rds->renderSettingsStroke.update(mContext, rshape.stroke->fill, nullptr, updateColorRamp);
         } else if (!data || (flags & RenderUpdateFlag::Stroke)) {
-            renderDataShape->renderSettingsStroke.update(mContext, rshape.stroke->color);
+            rds->renderSettingsStroke.update(mContext, rshape.stroke->color);
         }
     }
 
-    if (flags & RenderUpdateFlag::Clip) renderDataShape->updateClips(clips);
+    if (flags & RenderUpdateFlag::Clip) rds->updateClips(clips);
 
-    return renderDataShape;
+    return rds;
 }
 
 RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
-    auto renderDataPicture = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
-    auto cacheStale = renderDataPicture->imageTexture && (renderDataPicture->imageStamp != mTextures.stamp);
-    auto updateGeometry = !data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image));
-    auto refreshTexture = ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
-    auto sourceChanged = (renderDataPicture->imageSource != surface);
-    auto filterChanged = (renderDataPicture->imageFilter != filter);
-    auto needsImage = !renderDataPicture->imageTexture || sourceChanged || filterChanged || refreshTexture || cacheStale;
+    auto rdp = data ? (WgRenderDataPicture*)data : mRenderDataPicturePool.allocate(mContext);
 
     // update paint settings
-    renderDataPicture->viewport = vport;
-    renderDataPicture->transform = transform;
-    if (!data || (flags & (RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) {
-        renderDataPicture->renderSettings.update(mContext, surface->cs, opacity);
-    }
+    rdp->viewport = vport;
+    rdp->transform = transform;
+    if (!data || (flags & (RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) rdp->renderSettings.update(mContext, surface->cs, opacity);
 
-    // update image data
-    if (updateGeometry) {
-        renderDataPicture->updateSurface(surface, transform);
-    }
+    auto updateSurface = !data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image));
+    if (updateSurface) rdp->updateSurface(surface, transform);
+
+    // reload texture
+    auto cacheStale = rdp->imageTexture && (rdp->imageStamp != mTextures.stamp);
+    auto refreshTexture = ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
+    auto needsImage = !rdp->imageTexture || (rdp->imageSource != surface) || (rdp->imageFilter != filter) || refreshTexture || cacheStale;
     if (needsImage) {
-        renderDataPicture->releaseTexture(mTextures, mContext);
+        rdp->releaseTexture(mTextures, mContext);
         auto* entry = mTextures.retain(mContext, surface, filter, refreshTexture);
-        renderDataPicture->setImage(entry->texture, entry->bindGroup, surface, filter, mTextures.stamp);
+        rdp->setImage(entry->texture, entry->bindGroup, surface, filter, mTextures.stamp);
     }
 
-    if (flags & RenderUpdateFlag::Clip) renderDataPicture->updateClips(clips);
+    if (flags & RenderUpdateFlag::Clip) rdp->updateClips(clips);
 
-    return renderDataPicture;
+    return rdp;
 }
 
 
