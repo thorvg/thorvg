@@ -1253,9 +1253,9 @@ void GlRenderer::dispose(RenderData data)
 
 RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
-    //TODO: redefine GlImage.
     if (opacity == 0) return data;
 
+    //TODO: redefine GlImage?
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) sdata = new GlShape;
 
@@ -1263,12 +1263,10 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     if (flags == RenderUpdateFlag::None && !cacheStale) return data;
 
     sdata->validFill = false;
-
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
 
-    auto sourceChanged = (sdata->texSource != image) || (sdata->texFilter != filter);
-    if (sdata->texId == 0 || sourceChanged || cacheStale) {
+    if (cacheStale || sdata->texId == 0 || sdata->texSource != image || sdata->texFilter != filter) {
         auto ownsTexture = sdata->texId && (sdata->texStamp == mTextures.stamp);
         if (ownsTexture) disposeTexture(mTextures.release(sdata->texSource, sdata->texFilter, sdata->texId));
         sdata->texId = mTextures.retain(image, filter);
@@ -1276,6 +1274,8 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         sdata->texFilter = filter;
         sdata->texStamp = mTextures.stamp;
         sdata->geometry = GlGeometry();
+    } else if (flags & RenderUpdateFlag::Image) {
+        TextureMgr::upload(sdata->texId, image, filter);
     }
 
     sdata->texColorSpace = image->cs;
