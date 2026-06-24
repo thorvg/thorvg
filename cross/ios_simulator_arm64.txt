@@ -2,6 +2,7 @@
 
 [binaries]
 cpp = ['clang++', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk']
+objcpp = ['clang++', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk']
 ar = 'ar'
 strip = 'strip'
 
@@ -12,6 +13,8 @@ has_function_printf = true
 [built-in options]
 cpp_args = ['-mios-simulator-version-min=11.0']
 cpp_link_args = ['-mios-simulator-version-min=11.0']
+objcpp_args = ['-mios-simulator-version-min=11.0']
+objcpp_link_args = ['-mios-simulator-version-min=11.0']
 
 [host_machine]
 system = 'darwin'
@@ -20,4 +23,3 @@ kernel = 'xnu'
 cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
-
