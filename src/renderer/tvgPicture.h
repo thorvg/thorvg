@@ -70,15 +70,6 @@ struct PictureImpl : Picture
         auto pivot = Point{-origin.x * float(w), -origin.y * float(h)};
 
         if (bitmap) {
-            if (loader->type == FileType::Media) {
-                if (auto frame = loader->bitmap()) {
-                    bitmap = frame;
-                    flag = flag | RenderUpdateFlag::Image;
-                } else if (loader->sharing > 0) {
-                    // Update duplicated video pictures sharing this loader.
-                    flag = flag | RenderUpdateFlag::Image;
-                }
-            }
             if (bitmap->cs == ColorSpace::Unknown) {
                 TVGERR("RENDERER", "Unknown colorspace picture data");
                 return false;
