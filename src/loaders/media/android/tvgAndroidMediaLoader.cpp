@@ -44,10 +44,13 @@ static constexpr auto DECODE_WAIT_TRIES = 1000;
 static constexpr auto DECODE_TICK_TRIES = 20;
 static constexpr auto LOOP_REWIND_MARGIN_US = 50000LL;
 static constexpr auto RENDER_LEAD_US = 5000LL;
-static constexpr auto AUDIO_QUEUE_COUNT = 4;
+static constexpr auto AUDIO_QUEUE_COUNT = 16;
 static constexpr auto AUDIO_TICK_TRIES = 16;
 static constexpr auto COLOR_YUV420_PLANAR = 19;
 static constexpr auto COLOR_YUV420_SEMIPLANAR = 21;
+static constexpr auto PCM_16BIT = 2;
+static constexpr auto PCM_FLOAT = 4;
+static constexpr auto PCM_ENCODING_KEY = "pcm-encoding";
 
 struct SourceInfo
 {
@@ -65,6 +68,7 @@ struct AudioInfo
     int32_t sampleRate = 0;
     int32_t channels = 0;
     int32_t track = -1;
+    int32_t encoding = PCM_16BIT;
 };
 
 struct AudioBuffer
@@ -103,12 +107,16 @@ struct AndroidImpl
     SLPlayItf slPlay = nullptr;
     SLVolumeItf slVolume = nullptr;
     SLAndroidSimpleBufferQueueItf slQueue = nullptr;
+    std::thread audioThread;
+    std::condition_variable audioCv;
     std::chrono::steady_clock::time_point nextTick;
     std::chrono::steady_clock::time_point started;
     std::chrono::steady_clock::time_point audioClockAt;
 
     tvg::StrictKey key;
     tvg::StrictKey codecKey;
+    tvg::StrictKey audioCodecKey;
+    tvg::StrictKey audioWorkerKey;
     tvg::StrictKey audioKey;
     uint32_t* frame = nullptr;
     uint32_t* surfaceData = nullptr;
@@ -133,9 +141,12 @@ struct AndroidImpl
     bool audioInputDone = false;
     bool audioOutputDone = false;
     bool audioPlaying = false;
+    bool audioQuit = false;
     bool audioReady = false;
     bool ready = false;
 };
+
+static void _stopAudioWorker(AndroidImpl* impl);
 
 static int64_t _us(float seconds)
 {
@@ -168,6 +179,18 @@ static int64_t _audioTime(AndroidImpl* impl)
     return impl->audioClockUs;
 }
 
+static bool _audioCanDecode(AndroidImpl* impl)
+{
+    tvg::ScopedLock lock(impl->audioKey);
+    if (!impl->audioReady || impl->audioOutputDone) return false;
+    return impl->audioQueued < AUDIO_QUEUE_COUNT;
+}
+
+static void _notifyAudioWorker(AndroidImpl* impl)
+{
+    impl->audioCv.notify_one();
+}
+
 static int64_t _time(AndroidImpl* impl)
 {
     auto loader = impl->loader;
@@ -185,15 +208,18 @@ static void _audioDone(SLAndroidSimpleBufferQueueItf, void* context)
 {
     auto impl = static_cast<AndroidImpl*>(context);
 
-    tvg::ScopedLock lock(impl->audioKey);
-    if (impl->audioQueued > 0) {
-        auto idx = impl->audioRead;
-        auto& buffer = impl->audioData[idx];
-        impl->audioClockUs = std::max(impl->audioClockUs, buffer.pts + buffer.dur);
-        impl->audioClockAt = std::chrono::steady_clock::now();
-        impl->audioRead = (impl->audioRead + 1) % AUDIO_QUEUE_COUNT;
-        --impl->audioQueued;
+    {
+        tvg::ScopedLock lock(impl->audioKey);
+        if (impl->audioQueued > 0) {
+            auto idx = impl->audioRead;
+            auto& buffer = impl->audioData[idx];
+            impl->audioClockUs = std::max(impl->audioClockUs, buffer.pts + buffer.dur);
+            impl->audioClockAt = std::chrono::steady_clock::now();
+            impl->audioRead = (impl->audioRead + 1) % AUDIO_QUEUE_COUNT;
+            --impl->audioQueued;
+        }
     }
+    _notifyAudioWorker(impl);
 }
 
 static void _clearAudioQueue(AndroidImpl* impl)
@@ -302,28 +328,37 @@ fail:
 
 static void _closeAudio(AndroidImpl* impl)
 {
+    _stopAudioWorker(impl);
     _destroyAudioOutput(impl);
-    if (impl->audioCodec) {
-        AMediaCodec_stop(impl->audioCodec);
-        AMediaCodec_delete(impl->audioCodec);
-        impl->audioCodec = nullptr;
+
+    {
+        tvg::ScopedLock lock(impl->audioCodecKey);
+        if (impl->audioCodec) {
+            AMediaCodec_stop(impl->audioCodec);
+            AMediaCodec_delete(impl->audioCodec);
+            impl->audioCodec = nullptr;
+        }
+        if (impl->audioExtractor) {
+            AMediaExtractor_delete(impl->audioExtractor);
+            impl->audioExtractor = nullptr;
+        }
+        impl->audioInputDone = false;
     }
-    if (impl->audioExtractor) {
-        AMediaExtractor_delete(impl->audioExtractor);
-        impl->audioExtractor = nullptr;
-    }
+
     for (auto i = 0U; i < AUDIO_QUEUE_COUNT; ++i) {
         tvg::free(impl->audioData[i].data);
         impl->audioData[i] = {};
     }
-    impl->audio = {};
-    impl->audioClockUs = 0;
-    impl->audioQueuedUs = 0;
-    impl->audioTickUs = USEC / DEFAULT_FPS;
-    impl->audioInputDone = false;
-    impl->audioOutputDone = false;
-    impl->audioPlaying = false;
-    impl->audioReady = false;
+    {
+        tvg::ScopedLock lock(impl->audioKey);
+        impl->audio = {};
+        impl->audioClockUs = 0;
+        impl->audioQueuedUs = 0;
+        impl->audioTickUs = USEC / DEFAULT_FPS;
+        impl->audioOutputDone = false;
+        impl->audioPlaying = false;
+        impl->audioReady = false;
+    }
 }
 
 static void _closeCodec(AndroidImpl* impl)
@@ -382,6 +417,14 @@ static void _readFormat(SourceInfo& src, AMediaFormat* format)
     if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, &v) && v > 0) src.frameDurationUs = USEC / v;
 }
 
+static void _readAudioFormat(AudioInfo& audio, AMediaFormat* format)
+{
+    auto v = 0;
+    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_SAMPLE_RATE, &v) && v > 0) audio.sampleRate = v;
+    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &v) && v > 0) audio.channels = v;
+    if (AMediaFormat_getInt32(format, PCM_ENCODING_KEY, &v) && v > 0) audio.encoding = v;
+}
+
 static bool _setDataSource(AMediaExtractor* extractor, const char* path)
 {
     auto fd = ::open(path, O_RDONLY);
@@ -394,7 +437,7 @@ static bool _setDataSource(AMediaExtractor* extractor, const char* path)
     return ok;
 }
 
-static bool _startDecoder(AMediaExtractor* extractor, int32_t track, AMediaCodec*& codec)
+static bool _startDecoder(AMediaExtractor* extractor, int32_t track, AMediaCodec*& codec, bool audio = false)
 {
     if (!extractor || track < 0) return false;
 
@@ -406,6 +449,7 @@ static bool _startDecoder(AMediaExtractor* extractor, int32_t track, AMediaCodec
     }
 
     codec = AMediaCodec_createDecoderByType(mime);
+    if (audio) AMediaFormat_setInt32(format, PCM_ENCODING_KEY, PCM_16BIT);
     auto ok = codec &&
               AMediaCodec_configure(codec, format, nullptr, nullptr, 0) == AMEDIA_OK &&
               AMediaCodec_start(codec) == AMEDIA_OK;
@@ -440,6 +484,7 @@ static bool _seekAudio(AndroidImpl* impl, int64_t us)
 {
     if (!impl->audioCodec || !impl->audioExtractor) return false;
 
+    tvg::ScopedLock lock(impl->audioCodecKey);
     _clearAudioQueue(impl);
     if (AMediaCodec_flush(impl->audioCodec) != AMEDIA_OK) return false;
     if (AMediaExtractor_seekTo(impl->audioExtractor, us, AMEDIAEXTRACTOR_SEEK_PREVIOUS_SYNC) != AMEDIA_OK) return false;
@@ -449,13 +494,14 @@ static bool _seekAudio(AndroidImpl* impl, int64_t us)
         impl->audioClockUs = us;
         impl->audioQueuedUs = us;
         impl->audioClockAt = std::chrono::steady_clock::now();
+        impl->audioOutputDone = false;
     }
     impl->audioInputDone = false;
-    impl->audioOutputDone = false;
+    _notifyAudioWorker(impl);
     return true;
 }
 
-static bool _feed(AMediaCodec* codec, AMediaExtractor* extractor, bool& done, int64_t timeout)
+static bool _feed(AMediaCodec* codec, AMediaExtractor* extractor, bool& done, int64_t timeout, bool dropNegativePts = false)
 {
     if (done) return false;
 
@@ -465,6 +511,7 @@ static bool _feed(AMediaCodec* codec, AMediaExtractor* extractor, bool& done, in
     auto size = size_t(0);
     auto buffer = AMediaCodec_getInputBuffer(codec, static_cast<size_t>(idx), &size);
     auto sample = buffer ? AMediaExtractor_readSampleData(extractor, buffer, size) : -1;
+    auto time = int64_t(0);
 
     if (sample < 0) {
         AMediaCodec_queueInputBuffer(codec, static_cast<size_t>(idx), 0, 0, 0, AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
@@ -472,7 +519,19 @@ static bool _feed(AMediaCodec* codec, AMediaExtractor* extractor, bool& done, in
         return true;
     }
 
-    auto time = AMediaExtractor_getSampleTime(extractor);
+    time = AMediaExtractor_getSampleTime(extractor);
+    // MP4 AAC tracks can start with priming packets before media time 0.
+    while (dropNegativePts && time < 0) {
+        AMediaExtractor_advance(extractor);
+        sample = AMediaExtractor_readSampleData(extractor, buffer, size);
+        if (sample < 0) {
+            AMediaCodec_queueInputBuffer(codec, static_cast<size_t>(idx), 0, 0, 0, AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
+            done = true;
+            return true;
+        }
+        time = AMediaExtractor_getSampleTime(extractor);
+    }
+
     AMediaCodec_queueInputBuffer(codec, static_cast<size_t>(idx), 0, static_cast<size_t>(sample), time > 0 ? static_cast<uint64_t>(time) : 0, 0);
     AMediaExtractor_advance(extractor);
     return true;
@@ -590,33 +649,46 @@ static bool _queueAudio(AndroidImpl* impl, const uint8_t* data, size_t size, int
     tvg::ScopedLock lock(impl->audioKey);
     if (!impl->slQueue || impl->audioQueued >= AUDIO_QUEUE_COUNT) return false;
 
-    auto frameSize = static_cast<size_t>(impl->audio.channels) * sizeof(int16_t);
-    auto frames = size / frameSize;
-    auto dur = static_cast<int64_t>(frames) * USEC / impl->audio.sampleRate;
-    if (dur > 0 && pts + dur <= impl->audioClockUs) return true;
-    if (dur > 0 && pts < impl->audioClockUs) {
-        auto drop = static_cast<size_t>(((impl->audioClockUs - pts) * impl->audio.sampleRate + USEC - 1) / USEC);
-        if (drop >= frames) return true;
-        data += drop * frameSize;
-        size -= drop * frameSize;
-        pts += static_cast<int64_t>(drop) * USEC / impl->audio.sampleRate;
-        dur = static_cast<int64_t>(frames - drop) * USEC / impl->audio.sampleRate;
-    }
-
     auto idx = impl->audioWrite;
     auto& buffer = impl->audioData[idx];
-    if (size > buffer.cap) {
-        auto mem = tvg::realloc<uint8_t>(buffer.data, size);
+    auto frameSize = static_cast<size_t>(impl->audio.channels) * sizeof(int16_t);
+    auto frames = size / frameSize;
+    auto bytes = frames * frameSize;
+
+    if (impl->audio.encoding == PCM_FLOAT) {
+        auto samples = size / sizeof(float);
+        frames = samples / static_cast<size_t>(impl->audio.channels);
+        bytes = frames * static_cast<size_t>(impl->audio.channels) * sizeof(int16_t);
+    } else if (impl->audio.encoding != PCM_16BIT) return false;
+
+    if (bytes == 0) return true;
+    if (bytes > buffer.cap) {
+        auto mem = tvg::realloc<uint8_t>(buffer.data, bytes);
         if (!mem) return false;
         buffer.data = mem;
-        buffer.cap = size;
+        buffer.cap = bytes;
     }
 
-    memcpy(buffer.data, data, size);
+    if (impl->audio.encoding == PCM_FLOAT) {
+        auto samples = bytes / sizeof(int16_t);
+        auto out = reinterpret_cast<int16_t*>(buffer.data);
+        for (size_t i = 0; i < samples; ++i) {
+            auto v = 0.0f;
+            memcpy(&v, data + i * sizeof(float), sizeof(float));
+            if (v != v) v = 0.0f;
+            else if (v > 1.0f) v = 1.0f;
+            else if (v < -1.0f) v = -1.0f;
+            out[i] = static_cast<int16_t>(v * 32767.0f);
+        }
+    } else {
+        memcpy(buffer.data, data, bytes);
+    }
+
+    auto dur = static_cast<int64_t>(frames) * USEC / impl->audio.sampleRate;
     buffer.dur = dur;
     if (dur > 0) impl->audioTickUs = dur;
     buffer.pts = pts;
-    if ((*impl->slQueue)->Enqueue(impl->slQueue, buffer.data, static_cast<SLuint32>(size)) != SL_RESULT_SUCCESS) return false;
+    if ((*impl->slQueue)->Enqueue(impl->slQueue, buffer.data, static_cast<SLuint32>(bytes)) != SL_RESULT_SUCCESS) return false;
     impl->audioQueuedUs = std::max(impl->audioQueuedUs, pts + buffer.dur);
     impl->audioWrite = (impl->audioWrite + 1) % AUDIO_QUEUE_COUNT;
     ++impl->audioQueued;
@@ -625,7 +697,10 @@ static bool _queueAudio(AndroidImpl* impl, const uint8_t* data, size_t size, int
 
 static bool _drainAudio(AndroidImpl* impl, int64_t timeout)
 {
-    if (impl->audioOutputDone) return false;
+    {
+        tvg::ScopedLock lock(impl->audioKey);
+        if (impl->audioOutputDone) return false;
+    }
 
     auto progressed = false;
     while (true) {
@@ -634,7 +709,19 @@ static bool _drainAudio(AndroidImpl* impl, int64_t timeout)
 
         if (idx == AMEDIACODEC_INFO_TRY_AGAIN_LATER) return progressed;
         if (idx == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
-            if (auto format = AMediaCodec_getOutputFormat(impl->audioCodec)) AMediaFormat_delete(format);
+            if (auto format = AMediaCodec_getOutputFormat(impl->audioCodec)) {
+                auto audio = AudioInfo{};
+                {
+                    tvg::ScopedLock lock(impl->audioKey);
+                    audio = impl->audio;
+                }
+                _readAudioFormat(audio, format);
+                {
+                    tvg::ScopedLock lock(impl->audioKey);
+                    if (audio.sampleRate == impl->audio.sampleRate && audio.channels == impl->audio.channels) impl->audio.encoding = audio.encoding;
+                }
+                AMediaFormat_delete(format);
+            }
             continue;
         }
         if (idx < 0) return progressed;
@@ -649,6 +736,7 @@ static bool _drainAudio(AndroidImpl* impl, int64_t timeout)
 
         AMediaCodec_releaseOutputBuffer(impl->audioCodec, static_cast<size_t>(idx), false);
         if (info.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM) {
+            tvg::ScopedLock lock(impl->audioKey);
             impl->audioOutputDone = true;
             return progressed;
         }
@@ -662,7 +750,10 @@ static bool _drainAudio(AndroidImpl* impl, int64_t timeout)
 
 static bool _decodeAudio(AndroidImpl* impl, bool wait)
 {
-    if (!impl->audioReady || impl->audioOutputDone) return false;
+    {
+        tvg::ScopedLock lock(impl->audioKey);
+        if (!impl->audioReady || impl->audioOutputDone) return false;
+    }
 
     auto timeout = wait ? CODEC_TIMEOUT_US : 0LL;
     auto progressed = false;
@@ -671,13 +762,64 @@ static bool _decodeAudio(AndroidImpl* impl, bool wait)
             tvg::ScopedLock lock(impl->audioKey);
             if (impl->audioQueued >= AUDIO_QUEUE_COUNT) return progressed;
         }
-        auto fed = _feed(impl->audioCodec, impl->audioExtractor, impl->audioInputDone, timeout);
+        auto fed = _feed(impl->audioCodec, impl->audioExtractor, impl->audioInputDone, timeout, true);
         auto got = _drainAudio(impl, timeout);
         progressed |= fed || got;
-        if (impl->audioOutputDone) return progressed;
+        {
+            tvg::ScopedLock lock(impl->audioKey);
+            if (impl->audioOutputDone) return progressed;
+        }
         if (!fed && !got) return progressed;
     }
     return progressed;
+}
+
+static void _audioWork(AndroidImpl* impl)
+{
+    while (true) {
+        {
+            std::unique_lock<std::mutex> lock(impl->audioWorkerKey.mtx);
+            impl->audioCv.wait(lock, [&]() {
+                return impl->audioQuit || _audioCanDecode(impl);
+            });
+            if (impl->audioQuit) return;
+        }
+
+        auto progressed = false;
+        {
+            tvg::ScopedLock lock(impl->audioCodecKey);
+            progressed = _decodeAudio(impl, false);
+        }
+        if (!progressed) {
+            std::unique_lock<std::mutex> lock(impl->audioWorkerKey.mtx);
+            if (!impl->audioQuit) impl->audioCv.wait_for(lock, std::chrono::milliseconds(2));
+        }
+    }
+}
+
+static void _startAudioWorker(AndroidImpl* impl)
+{
+    if (impl->audioThread.joinable()) return;
+    {
+        std::unique_lock<std::mutex> lock(impl->audioWorkerKey.mtx);
+        impl->audioQuit = false;
+    }
+    impl->audioThread = std::thread(_audioWork, impl);
+    _notifyAudioWorker(impl);
+}
+
+static void _stopAudioWorker(AndroidImpl* impl)
+{
+    {
+        std::unique_lock<std::mutex> lock(impl->audioWorkerKey.mtx);
+        impl->audioQuit = true;
+    }
+    _notifyAudioWorker(impl);
+    if (impl->audioThread.joinable()) impl->audioThread.join();
+    {
+        std::unique_lock<std::mutex> lock(impl->audioWorkerKey.mtx);
+        impl->audioQuit = false;
+    }
 }
 
 static bool _decode(AndroidImpl* impl, int64_t target, bool wait)
@@ -699,7 +841,11 @@ static bool _prime(AndroidImpl* impl, int64_t us)
 {
     if (!_seek(impl, us) || !_decode(impl, us, true)) return false;
     if (impl->audioReady) {
-        if (_seekAudio(impl, us)) _decodeAudio(impl, true);
+        if (_seekAudio(impl, us)) {
+            tvg::ScopedLock lock(impl->audioCodecKey);
+            _decodeAudio(impl, true);
+            _notifyAudioWorker(impl);
+        }
         else _closeAudio(impl);
     }
     return true;
@@ -729,15 +875,28 @@ static bool _tick(AndroidImpl* impl)
     tvg::ScopedLock lock(impl->codecKey);
     if (looping && (impl->outputDone || impl->decodedUs > target + LOOP_REWIND_MARGIN_US)) {
         if (!_seek(impl, target)) return true;
-        if (impl->audioReady && !_seekAudio(impl, target)) _closeAudio(impl);
-    }
-    _decodeAudio(impl, false);
-    if (!looping && impl->audioReady && impl->audioOutputDone) {
-        tvg::ScopedLock lock(impl->audioKey);
-        if (impl->audioQueued == 0) {
-            target = impl->durationUs;
-            finish = true;
+        if (impl->audioReady) {
+            _setAudioState(impl, SL_PLAYSTATE_PAUSED);
+            if (_seekAudio(impl, target)) {
+                tvg::ScopedLock lock(impl->audioCodecKey);
+                _decodeAudio(impl, true);
+                _notifyAudioWorker(impl);
+                _setAudioState(impl, SL_PLAYSTATE_PLAYING);
+            } else {
+                _closeAudio(impl);
+            }
         }
+    }
+    auto audioDone = false;
+    auto audioQueued = 0U;
+    if (!looping && impl->audioReady) {
+        tvg::ScopedLock lock(impl->audioKey);
+        audioDone = impl->audioOutputDone;
+        audioQueued = impl->audioQueued;
+    }
+    if (audioDone && audioQueued == 0) {
+        target = impl->durationUs;
+        finish = true;
     }
     _decode(impl, target, false);
     if (finish && impl->outputDone) {
@@ -763,10 +922,6 @@ static void _work()
             if (impl->nextTick <= now) {
                 if (_tick(impl)) {
                     auto delay = impl->src.frameDurationUs;
-                    if (impl->audioReady) {
-                        tvg::ScopedLock lock(impl->audioKey);
-                        delay = std::min(delay, impl->audioTickUs);
-                    }
                     impl->nextTick = std::chrono::steady_clock::now() + std::chrono::microseconds(delay);
                 }
                 else impl->nextTick = std::chrono::steady_clock::time_point::max();
@@ -891,14 +1046,13 @@ bool AndroidMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
             pImpl->durationUs = duration;
             _readFormat(pImpl->src, format);
         } else if (format && mime && pImpl->audio.track < 0 && !strncmp(mime, "audio/", 6)) {
-            auto sampleRate = 0;
-            auto channels = 0;
-            if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_SAMPLE_RATE, &sampleRate) &&
-                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &channels) &&
-                sampleRate > 0 && channels > 0 && channels <= 2) {
+            auto audio = AudioInfo{};
+            _readAudioFormat(audio, format);
+            if (audio.sampleRate > 0 && audio.channels > 0 && audio.channels <= 2) {
                 pImpl->audio.track = static_cast<int32_t>(i);
-                pImpl->audio.sampleRate = sampleRate;
-                pImpl->audio.channels = channels;
+                pImpl->audio.sampleRate = audio.sampleRate;
+                pImpl->audio.channels = audio.channels;
+                pImpl->audio.encoding = audio.encoding;
             }
         }
         if (format) AMediaFormat_delete(format);
@@ -963,11 +1117,15 @@ bool AndroidMediaLoader::read()
             return false;
         }
         if (pImpl->audioExtractor) {
-            if (_startDecoder(pImpl->audioExtractor, pImpl->audio.track, pImpl->audioCodec) && _openAudioOutput(pImpl)) {
+            if (_startDecoder(pImpl->audioExtractor, pImpl->audio.track, pImpl->audioCodec, true) && _openAudioOutput(pImpl)) {
                 pImpl->audioInputDone = false;
                 pImpl->audioOutputDone = false;
                 pImpl->audioReady = true;
-                _decodeAudio(pImpl, true);
+                {
+                    tvg::ScopedLock lock(pImpl->audioCodecKey);
+                    _decodeAudio(pImpl, true);
+                }
+                _startAudioWorker(pImpl);
             }
             else _closeAudio(pImpl);
         }
@@ -1030,6 +1188,7 @@ Result AndroidMediaLoader::play()
 
     _refWorker(pImpl);
     _setAudioState(pImpl, SL_PLAYSTATE_PLAYING);
+    _notifyAudioWorker(pImpl);
     return Result::Success;
 }
 
@@ -1066,7 +1225,10 @@ Result AndroidMediaLoader::stop()
 
     tvg::ScopedLock lock(pImpl->codecKey);
     _setAudioState(pImpl, SL_PLAYSTATE_STOPPED);
-    if (_prime(pImpl, 0)) return Result::Success;
+    if (_prime(pImpl, 0)) {
+        _notifyAudioWorker(pImpl);
+        return Result::Success;
+    }
     _clear(pImpl);
     return Result::InsufficientCondition;
 }
@@ -1101,7 +1263,10 @@ Result AndroidMediaLoader::seek(float seconds)
         else _clear(pImpl);
     }
     if (ok && !wasPaused) _refWorker(pImpl);
-    if (ok && pImpl->audioReady && !wasPaused) _setAudioState(pImpl, SL_PLAYSTATE_PLAYING);
+    if (ok && pImpl->audioReady && !wasPaused) {
+        _setAudioState(pImpl, SL_PLAYSTATE_PLAYING);
+        _notifyAudioWorker(pImpl);
+    }
     return ok ? Result::Success : Result::InsufficientCondition;
 }
 
