@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <condition_variable>
 #include <fcntl.h>
 #include <math.h>
 #include <media/NdkMediaCodec.h>
@@ -27,6 +28,7 @@
 #include <thread>
 #include <unistd.h>
 
+#include "tvgArray.h"
 #include "tvgAndroidMediaLoader.h"
 
 /************************************************************************/
@@ -34,6 +36,11 @@
 /************************************************************************/
 
 static constexpr auto USEC = 1000000LL;
+static constexpr auto DEFAULT_FPS = 30;
+static constexpr auto CODEC_TIMEOUT_US = 2000LL;
+static constexpr auto DECODE_WAIT_TRIES = 1000;
+static constexpr auto DECODE_TICK_TRIES = 20;
+static constexpr auto LOOP_REWIND_MARGIN_US = 50000LL;
 static constexpr auto COLOR_YUV420_PLANAR = 19;
 static constexpr auto COLOR_YUV420_SEMIPLANAR = 21;
 
@@ -45,15 +52,28 @@ struct SourceInfo
     int32_t slice = 0;
     int32_t rotation = 0;
     int32_t color = COLOR_YUV420_SEMIPLANAR;
+    int64_t frameDurationUs = USEC / DEFAULT_FPS;
 };
+
+struct AndroidImpl;
+
+struct WorkerInfo
+{
+    std::thread thread;
+    std::condition_variable cv;
+    tvg::StrictKey key;
+    tvg::Array<AndroidImpl*> loaders;
+    bool quit = false;
+};
+
+static WorkerInfo _worker;
 
 struct AndroidImpl
 {
     AndroidMediaLoader* loader = nullptr;
-    AMediaFormat* format = nullptr;
     AMediaExtractor* extractor = nullptr;
     AMediaCodec* codec = nullptr;
-    std::thread worker;
+    std::chrono::steady_clock::time_point nextTick;
     std::chrono::steady_clock::time_point started;
 
     tvg::StrictKey key;
@@ -70,7 +90,6 @@ struct AndroidImpl
     bool inputDone = false;
     bool outputDone = false;
     bool ready = false;
-    bool quit = false;
 };
 
 static int64_t _us(float seconds)
@@ -114,14 +133,13 @@ static void _closeCodec(AndroidImpl* impl)
 static void _clear(AndroidImpl* impl)
 {
     _closeCodec(impl);
-    if (impl->format) {
-        AMediaFormat_delete(impl->format);
-        impl->format = nullptr;
-    }
     tvg::free(impl->frame);
     tvg::free(impl->surfaceData);
     impl->frame = nullptr;
     impl->surfaceData = nullptr;
+    impl->durationUs = 0;
+    impl->track = -1;
+    impl->publishFromUs = 0;
     impl->src = {};
     impl->ready = false;
     impl->frameUpdated = false;
@@ -138,6 +156,7 @@ static void _readFormat(SourceInfo& src, AMediaFormat* format)
     else src.slice = src.h;
     if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, &v)) src.color = v;
     if (AMediaFormat_getInt32(format, "rotation-degrees", &v)) src.rotation = ((v % 360) + 360) % 360;
+    if (AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, &v) && v > 0) src.frameDurationUs = USEC / v;
 }
 
 static bool _setDataSource(AMediaExtractor* extractor, const char* path)
@@ -156,13 +175,21 @@ static bool _setDataSource(AMediaExtractor* extractor, const char* path)
 
 static bool _startCodec(AndroidImpl* impl)
 {
+    if (!impl->extractor || impl->track < 0) return false;
+
+    auto format = AMediaExtractor_getTrackFormat(impl->extractor, static_cast<size_t>(impl->track));
     const char* mime = nullptr;
-    if (!impl->format || !AMediaFormat_getString(impl->format, AMEDIAFORMAT_KEY_MIME, &mime)) return false;
+    if (!format || !AMediaFormat_getString(format, AMEDIAFORMAT_KEY_MIME, &mime)) {
+        if (format) AMediaFormat_delete(format);
+        return false;
+    }
 
     impl->codec = AMediaCodec_createDecoderByType(mime);
-    if (!impl->codec) return false;
-    if (AMediaCodec_configure(impl->codec, impl->format, nullptr, nullptr, 0) != AMEDIA_OK) return false;
-    if (AMediaCodec_start(impl->codec) != AMEDIA_OK) return false;
+    auto ok = impl->codec &&
+              AMediaCodec_configure(impl->codec, format, nullptr, nullptr, 0) == AMEDIA_OK &&
+              AMediaCodec_start(impl->codec) == AMEDIA_OK;
+    AMediaFormat_delete(format);
+    if (!ok) return false;
 
     impl->inputDone = false;
     impl->outputDone = false;
@@ -313,9 +340,9 @@ static bool _decode(AndroidImpl* impl, int64_t target, bool wait)
 {
     if (impl->decodedUs >= target) return true;
 
-    auto timeout = wait ? 2000LL : 0LL;
+    auto timeout = wait ? CODEC_TIMEOUT_US : 0LL;
 
-    for (auto i = 0; i < (wait ? 1000 : 20); ++i) {
+    for (auto i = 0; i < (wait ? DECODE_WAIT_TRIES : DECODE_TICK_TRIES); ++i) {
         if (!impl->codec) return false;
         auto fed = _feed(impl, timeout);
         auto got = _drain(impl, target, timeout);
@@ -325,45 +352,95 @@ static bool _decode(AndroidImpl* impl, int64_t target, bool wait)
     return impl->decodedUs >= target;
 }
 
-static void _work(AndroidImpl* impl)
+static bool _tick(AndroidImpl* impl)
 {
-    while (true) {
-        auto target = int64_t(0);
-        auto paused = false;
-        auto looping = false;
+    auto target = int64_t(0);
+    auto paused = false;
+    auto looping = false;
 
-        {
-            tvg::ScopedLock lock(impl->key);
-            if (impl->quit) return;
-            target = _time(impl);
-            paused = impl->loader->paused;
-            looping = impl->loader->looping;
-            impl->loader->curTime = static_cast<float>(target) / static_cast<float>(USEC);
-            if (!looping && !paused && target >= impl->durationUs) impl->loader->paused = paused = true;
+    {
+        tvg::ScopedLock lock(impl->key);
+        target = _time(impl);
+        paused = impl->loader->paused;
+        looping = impl->loader->looping;
+        impl->loader->curTime = static_cast<float>(target) / static_cast<float>(USEC);
+        if (!looping && !paused && target >= impl->durationUs) impl->loader->paused = paused = true;
+    }
+
+    if (paused) return false;
+
+    tvg::ScopedLock lock(impl->codecKey);
+    if ((impl->outputDone || (looping && impl->decodedUs > target + LOOP_REWIND_MARGIN_US)) && !_seek(impl, target)) return true;
+    _decode(impl, target, false);
+    return true;
+}
+
+static void _work()
+{
+    std::unique_lock<std::mutex> lock(_worker.key.mtx);
+
+    while (!_worker.quit) {
+        auto now = std::chrono::steady_clock::now();
+        auto next = std::chrono::steady_clock::time_point::max();
+
+        for (auto i = 0U; i < _worker.loaders.count; ++i) {
+            auto impl = _worker.loaders[i];
+            if (impl->nextTick <= now) {
+                if (_tick(impl)) impl->nextTick = std::chrono::steady_clock::now() + std::chrono::microseconds(impl->src.frameDurationUs);
+                else impl->nextTick = std::chrono::steady_clock::time_point::max();
+            }
+            if (impl->nextTick < next) next = impl->nextTick;
         }
 
-        if (!paused) {
-            tvg::ScopedLock lock(impl->codecKey);
-            if ((impl->outputDone || (looping && impl->decodedUs > target + 50000)) && !_seek(impl, target)) continue;
-            _decode(impl, target, false);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(4));
+        if (next == std::chrono::steady_clock::time_point::max()) _worker.cv.wait(lock);
+        else _worker.cv.wait_until(lock, next);
     }
 }
 
-static void _stop(AndroidImpl* impl)
+static void _refWorker(AndroidImpl* impl)
 {
     {
-        tvg::ScopedLock lock(impl->key);
-        impl->quit = true;
+        tvg::ScopedLock lock(_worker.key);
+        for (auto i = 0U; i < _worker.loaders.count; ++i) {
+            if (_worker.loaders[i] == impl) {
+                impl->nextTick = std::chrono::steady_clock::now();
+                _worker.cv.notify_one();
+                return;
+            }
+        }
+        impl->nextTick = std::chrono::steady_clock::now();
+        auto start = _worker.loaders.empty();
+        _worker.loaders.push(impl);
+        if (start) {
+            _worker.quit = false;
+            _worker.thread = std::thread(_work);
+        }
     }
+    _worker.cv.notify_one();
+}
 
-    if (impl->worker.joinable()) impl->worker.join();
+static void _unrefWorker(AndroidImpl* impl)
+{
+    auto join = false;
+    auto notify = false;
 
     {
-        tvg::ScopedLock lock(impl->key);
-        impl->quit = false;
+        tvg::ScopedLock lock(_worker.key);
+        for (auto i = 0U; i < _worker.loaders.count; ++i) {
+            if (_worker.loaders[i] != impl) continue;
+            for (auto j = i + 1; j < _worker.loaders.count; ++j) _worker.loaders[j - 1] = _worker.loaders[j];
+            _worker.loaders.pop();
+            notify = true;
+            if (_worker.loaders.empty()) {
+                _worker.quit = true;
+                join = true;
+            }
+            break;
+        }
     }
+
+    if (notify) _worker.cv.notify_one();
+    if (join && _worker.thread.joinable()) _worker.thread.join();
 }
 
 /************************************************************************/
@@ -379,7 +456,7 @@ AndroidMediaLoader::AndroidMediaLoader() :
 
 AndroidMediaLoader::~AndroidMediaLoader()
 {
-    _stop(pImpl);
+    _unrefWorker(pImpl);
     {
         tvg::ScopedLock lock(pImpl->codecKey);
         _clear(pImpl);
@@ -391,7 +468,7 @@ bool AndroidMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
     if (!path) return false;
 
-    _stop(pImpl);
+    _unrefWorker(pImpl);
     {
         tvg::ScopedLock lock(pImpl->codecKey);
         _clear(pImpl);
@@ -413,30 +490,32 @@ bool AndroidMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
         auto format = AMediaExtractor_getTrackFormat(extractor, i);
         const char* mime = nullptr;
         if (format && AMediaFormat_getString(format, AMEDIAFORMAT_KEY_MIME, &mime) && !strncmp(mime, "video/", 6)) {
-            pImpl->format = format;
             pImpl->track = static_cast<int32_t>(i);
+            auto duration = int64_t(0);
+            if (!AMediaFormat_getInt64(format, AMEDIAFORMAT_KEY_DURATION, &duration) || duration <= 0) {
+                AMediaFormat_delete(format);
+                return fail();
+            }
+            pImpl->durationUs = duration;
+            _readFormat(pImpl->src, format);
+            AMediaFormat_delete(format);
             break;
         }
         if (format) AMediaFormat_delete(format);
     }
 
-    if (!pImpl->format) return fail();
+    if (pImpl->track < 0) return fail();
     if (AMediaExtractor_selectTrack(extractor, static_cast<size_t>(pImpl->track)) != AMEDIA_OK) return fail();
-
-    auto duration = int64_t(0);
-    if (!AMediaFormat_getInt64(pImpl->format, AMEDIAFORMAT_KEY_DURATION, &duration) || duration <= 0) return fail();
 
     pImpl->extractor = extractor;
     extractor = nullptr;
-    pImpl->durationUs = duration;
-    _readFormat(pImpl->src, pImpl->format);
 
     auto& src = pImpl->src;
     if (src.w <= 0 || src.h <= 0) return fail();
 
     w = static_cast<float>((src.rotation == 90 || src.rotation == 270) ? src.h : src.w);
     h = static_cast<float>((src.rotation == 90 || src.rotation == 270) ? src.w : src.h);
-    totalTime = static_cast<float>(duration) / static_cast<float>(USEC);
+    totalTime = static_cast<float>(pImpl->durationUs) / static_cast<float>(USEC);
     curTime = 0.0f;
     return true;
 }
@@ -444,7 +523,7 @@ bool AndroidMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 bool AndroidMediaLoader::read()
 {
     if (!Loader::read()) return true;
-    if (!pImpl->format || w == 0 || h == 0) return false;
+    if (pImpl->track < 0 || w == 0 || h == 0) return false;
 
     surface.cs = ColorSpace::ARGB8888S;
     surface.w = static_cast<uint32_t>(w);
@@ -461,14 +540,13 @@ bool AndroidMediaLoader::read()
 
     {
         tvg::ScopedLock lock(pImpl->codecKey);
-        if (!_startCodec(pImpl) || !_seek(pImpl, 0) || !_decode(pImpl, 0, true)) {
+        if (!_startCodec(pImpl) || !_decode(pImpl, 0, true)) {
             pImpl->ready = false;
             _closeCodec(pImpl);
             return false;
         }
     }
 
-    pImpl->worker = std::thread(_work, pImpl);
     return true;
 }
 
@@ -476,7 +554,7 @@ bool AndroidMediaLoader::close()
 {
     if (!Loader::close()) return false;
 
-    _stop(pImpl);
+    _unrefWorker(pImpl);
     {
         tvg::ScopedLock lock(pImpl->codecKey);
         _clear(pImpl);
@@ -499,23 +577,31 @@ RenderSurface* AndroidMediaLoader::bitmap()
 
 Result AndroidMediaLoader::play()
 {
-    tvg::ScopedLock lock(pImpl->key);
-    if (!pImpl->ready) return Result::InsufficientCondition;
+    {
+        tvg::ScopedLock lock(pImpl->key);
+        if (!pImpl->ready) return Result::InsufficientCondition;
 
-    if (curTime >= totalTime) curTime = 0.0f;
-    pImpl->startedUs = _us(curTime);
-    pImpl->started = std::chrono::steady_clock::now();
-    paused = false;
+        if (curTime >= totalTime) curTime = 0.0f;
+        pImpl->startedUs = _us(curTime);
+        pImpl->started = std::chrono::steady_clock::now();
+        paused = false;
+    }
+
+    _refWorker(pImpl);
     return Result::Success;
 }
 
 Result AndroidMediaLoader::pause()
 {
-    tvg::ScopedLock lock(pImpl->key);
-    if (!pImpl->ready) return Result::InsufficientCondition;
+    {
+        tvg::ScopedLock lock(pImpl->key);
+        if (!pImpl->ready) return Result::InsufficientCondition;
 
-    curTime = static_cast<float>(_time(pImpl)) / static_cast<float>(USEC);
-    paused = true;
+        curTime = static_cast<float>(_time(pImpl)) / static_cast<float>(USEC);
+        paused = true;
+    }
+
+    _unrefWorker(pImpl);
     return Result::Success;
 }
 
@@ -530,6 +616,8 @@ Result AndroidMediaLoader::stop()
         pImpl->started = std::chrono::steady_clock::now();
         paused = true;
     }
+
+    _unrefWorker(pImpl);
 
     tvg::ScopedLock lock(pImpl->codecKey);
     return (_seek(pImpl, 0) && _decode(pImpl, 0, true)) ? Result::Success : Result::InsufficientCondition;
