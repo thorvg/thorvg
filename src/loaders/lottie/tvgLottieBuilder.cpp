@@ -1295,9 +1295,14 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             ctx.cursor = {0.0f, (++ctx.line * doc.height + ctx.totalLineSpace) / ctx.scale};
             continue;
         }
+        /* all lowercase letters are converted to uppercase in the "t" text field, making the "ca" value irrelevant, thus AllCaps is nothing to do.
+           So only convert lowercase letters to uppercase (for 'SmallCaps' an extra scaling factor applied) */
+        auto glyph = _searchGlyph(text->font, ctx.p, doc, ctx.capScale);
+        auto advance = glyph ? (glyph->width + doc.tracking) * ctx.capScale : 0.0f;
+
         if (*ctx.p == ' ') {
             // if next word overflows the box, break at this space
-            if (doc.bbox.size.x > 0.0f && (ctx.cursor.x + _nextWordWidth(text, doc, ctx.p + 1)) * ctx.scale >= doc.bbox.size.x) {
+            if (doc.bbox.size.x > 0.0f && (ctx.cursor.x + advance + _nextWordWidth(text, doc, ctx.p + 1)) * ctx.scale >= doc.bbox.size.x) {
                 ++ctx.p;
                 lineWrapped = true;
                 continue;
@@ -1310,13 +1315,9 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
                 ctx.lineScene->translate(ctx.cursor.x, ctx.cursor.y);
             }
         }
-        /* all lowercase letters are converted to uppercase in the "t" text field, making the "ca" value irrelevant, thus AllCaps is nothing to do.
-           So only convert lowercase letters to uppercase (for 'SmallCaps' an extra scaling factor applied) */
-        auto glyph = _searchGlyph(text->font, ctx.p, doc, ctx.capScale);
 
         // draw matched glyphs
         if (glyph) {
-            auto advance = (glyph->width + doc.tracking) * ctx.capScale;
             if (doc.bbox.size.x > 0.0f && ctx.cursor.x > 0.0f && (ctx.cursor.x + advance) * ctx.scale > doc.bbox.size.x) {
                 lineWrapped = true;
                 continue;
