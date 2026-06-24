@@ -21,10 +21,10 @@
 #include <condition_variable>
 #include <fcntl.h>
 #include <math.h>
+#include <aaudio/AAudio.h>
 #include <media/NdkMediaCodec.h>
 #include <media/NdkMediaExtractor.h>
 #include <media/NdkMediaFormat.h>
-#include <SLES/OpenSLES_Android.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <thread>
@@ -75,6 +75,9 @@ struct AudioBuffer
 {
     uint8_t* data = nullptr;
     size_t cap = 0;
+    size_t size = 0;
+    size_t frames = 0;
+    size_t offset = 0;
     int64_t pts = 0;
     int64_t dur = 0;
 };
@@ -100,13 +103,7 @@ struct AndroidImpl
     AMediaExtractor* audioExtractor = nullptr;
     AMediaCodec* codec = nullptr;
     AMediaCodec* audioCodec = nullptr;
-    SLObjectItf slEngineObj = nullptr;
-    SLEngineItf slEngine = nullptr;
-    SLObjectItf slMixObj = nullptr;
-    SLObjectItf slPlayerObj = nullptr;
-    SLPlayItf slPlay = nullptr;
-    SLVolumeItf slVolume = nullptr;
-    SLAndroidSimpleBufferQueueItf slQueue = nullptr;
+    AAudioStream* audioStream = nullptr;
     std::thread audioThread;
     std::condition_variable audioCv;
     std::chrono::steady_clock::time_point nextTick;
@@ -129,6 +126,7 @@ struct AndroidImpl
     int64_t audioClockUs = 0;
     int64_t audioQueuedUs = 0;
     int64_t audioTickUs = USEC / DEFAULT_FPS;
+    float audioGain = 1.0f;
     uint32_t audioQueued = 0;
     uint32_t audioRead = 0;
     uint32_t audioWrite = 0;
@@ -156,6 +154,13 @@ static int64_t _us(float seconds)
 static uint8_t _clamp(int32_t v)
 {
     return static_cast<uint8_t>(std::min(255, std::max(0, v)));
+}
+
+static int16_t _clampI16(float v)
+{
+    if (v > 32767.0f) return 32767;
+    if (v < -32768.0f) return -32768;
+    return static_cast<int16_t>(v);
 }
 
 static void _updateAudioClock(AndroidImpl* impl, std::chrono::steady_clock::time_point now)
@@ -204,70 +209,126 @@ static int64_t _time(AndroidImpl* impl)
     return us;
 }
 
-static void _audioDone(SLAndroidSimpleBufferQueueItf, void* context)
+static aaudio_data_callback_result_t _audioData(AAudioStream*, void* context, void* audioData, int32_t numFrames)
 {
     auto impl = static_cast<AndroidImpl*>(context);
+    auto out = static_cast<int16_t*>(audioData);
+    auto remaining = static_cast<size_t>(numFrames);
+    auto channels = static_cast<size_t>(impl->audio.channels);
+    auto wrote = size_t(0);
+    auto notify = false;
 
-    {
-        tvg::ScopedLock lock(impl->audioKey);
-        if (impl->audioQueued > 0) {
+    std::unique_lock<std::mutex> lock(impl->audioKey.mtx, std::try_to_lock);
+    if (lock.owns_lock() && channels > 0) {
+        auto now = std::chrono::steady_clock::now();
+        auto gain = impl->audioGain;
+
+        while (remaining > 0 && impl->audioQueued > 0) {
             auto idx = impl->audioRead;
             auto& buffer = impl->audioData[idx];
-            impl->audioClockUs = std::max(impl->audioClockUs, buffer.pts + buffer.dur);
-            impl->audioClockAt = std::chrono::steady_clock::now();
-            impl->audioRead = (impl->audioRead + 1) % AUDIO_QUEUE_COUNT;
-            --impl->audioQueued;
+            auto available = buffer.frames > buffer.offset ? buffer.frames - buffer.offset : 0;
+            if (available == 0) {
+                impl->audioRead = (impl->audioRead + 1) % AUDIO_QUEUE_COUNT;
+                --impl->audioQueued;
+                notify = true;
+                continue;
+            }
+
+            auto frames = std::min(remaining, available);
+            auto samples = frames * channels;
+            auto src = reinterpret_cast<int16_t*>(buffer.data) + buffer.offset * channels;
+            auto dst = out + wrote * channels;
+
+            if (gain <= 0.0f) memset(dst, 0, samples * sizeof(int16_t));
+            else if (gain >= 1.0f) memcpy(dst, src, samples * sizeof(int16_t));
+            else {
+                for (auto i = 0U; i < samples; ++i) dst[i] = _clampI16(static_cast<float>(src[i]) * gain);
+            }
+
+            buffer.offset += frames;
+            wrote += frames;
+            remaining -= frames;
+
+            auto playedUs = static_cast<int64_t>(buffer.pts + static_cast<int64_t>(buffer.offset) * USEC / impl->audio.sampleRate);
+            auto endUs = static_cast<int64_t>(buffer.pts + buffer.dur);
+            impl->audioClockUs = std::max(impl->audioClockUs, std::min(playedUs, endUs));
+            impl->audioClockAt = now;
+
+            if (buffer.offset >= buffer.frames) {
+                buffer.offset = 0;
+                impl->audioRead = (impl->audioRead + 1) % AUDIO_QUEUE_COUNT;
+                --impl->audioQueued;
+                notify = true;
+            }
         }
+
+        if (remaining > 0) {
+            memset(out + wrote * channels, 0, remaining * channels * sizeof(int16_t));
+            impl->audioClockUs += static_cast<int64_t>(remaining) * USEC / impl->audio.sampleRate;
+            impl->audioClockAt = now;
+        }
+    } else {
+        memset(out, 0, static_cast<size_t>(numFrames) * std::max<size_t>(channels, 1) * sizeof(int16_t));
     }
-    _notifyAudioWorker(impl);
+
+    if (notify) _notifyAudioWorker(impl);
+    return AAUDIO_CALLBACK_RESULT_CONTINUE;
 }
 
 static void _clearAudioQueue(AndroidImpl* impl)
 {
-    if (impl->slQueue) (*impl->slQueue)->Clear(impl->slQueue);
+    if (impl->audioStream) AAudioStream_requestFlush(impl->audioStream);
 
     tvg::ScopedLock lock(impl->audioKey);
     impl->audioQueued = 0;
     impl->audioRead = 0;
     impl->audioWrite = 0;
     impl->audioQueuedUs = impl->audioClockUs;
+    for (auto i = 0U; i < AUDIO_QUEUE_COUNT; ++i) impl->audioData[i].offset = 0;
 }
 
-static void _setAudioState(AndroidImpl* impl, SLuint32 state)
+enum class AudioState
 {
-    if (!impl->slPlay) return;
+    Stopped,
+    Paused,
+    Playing
+};
+
+static void _setAudioState(AndroidImpl* impl, AudioState state)
+{
+    if (!impl->audioStream) return;
     {
         tvg::ScopedLock lock(impl->audioKey);
         _updateAudioClock(impl, std::chrono::steady_clock::now());
     }
-    if ((*impl->slPlay)->SetPlayState(impl->slPlay, state) == SL_RESULT_SUCCESS) {
+
+    auto ok = false;
+    if (state == AudioState::Playing) {
+        auto res = AAudioStream_requestStart(impl->audioStream);
+        ok = res == AAUDIO_OK || res == AAUDIO_ERROR_INVALID_STATE;
+    } else {
+        auto res = AAudioStream_requestPause(impl->audioStream);
+        ok = res == AAUDIO_OK || res == AAUDIO_ERROR_INVALID_STATE || res == AAUDIO_ERROR_UNIMPLEMENTED;
+        if (state == AudioState::Stopped) AAudioStream_requestFlush(impl->audioStream);
+    }
+
+    if (ok) {
         tvg::ScopedLock lock(impl->audioKey);
-        impl->audioPlaying = state == SL_PLAYSTATE_PLAYING;
+        impl->audioPlaying = state == AudioState::Playing;
     }
 }
 
 static void _destroyAudioOutput(AndroidImpl* impl)
 {
-    _setAudioState(impl, SL_PLAYSTATE_STOPPED);
+    _setAudioState(impl, AudioState::Stopped);
     _clearAudioQueue(impl);
 
-    if (impl->slPlayerObj) (*impl->slPlayerObj)->Destroy(impl->slPlayerObj);
-    if (impl->slMixObj) (*impl->slMixObj)->Destroy(impl->slMixObj);
-    if (impl->slEngineObj) (*impl->slEngineObj)->Destroy(impl->slEngineObj);
-
-    impl->slQueue = nullptr;
-    impl->slVolume = nullptr;
-    impl->slPlay = nullptr;
-    impl->slPlayerObj = nullptr;
-    impl->slMixObj = nullptr;
-    impl->slEngine = nullptr;
-    impl->slEngineObj = nullptr;
+    if (impl->audioStream) AAudioStream_close(impl->audioStream);
+    impl->audioStream = nullptr;
 }
 
 static void _syncAudioVolume(AndroidImpl* impl)
 {
-    if (!impl->slVolume) return;
-
     auto volume = 0.0f;
     auto muted = false;
     {
@@ -276,54 +337,49 @@ static void _syncAudioVolume(AndroidImpl* impl)
         muted = impl->loader->muted;
     }
 
-    (*impl->slVolume)->SetMute(impl->slVolume, (muted || volume <= 0.0f) ? SL_BOOLEAN_TRUE : SL_BOOLEAN_FALSE);
-    if (volume > 0.0f) {
-        auto level = volume >= 1.0f ? 0 : static_cast<SLmillibel>(2000.0f * log10f(std::max(volume, 0.0001f)));
-        (*impl->slVolume)->SetVolumeLevel(impl->slVolume, level);
-    }
+    tvg::ScopedLock lock(impl->audioKey);
+    impl->audioGain = muted ? 0.0f : std::min(1.0f, std::max(0.0f, volume));
 }
 
 static bool _openAudioOutput(AndroidImpl* impl)
 {
-    auto mask = static_cast<SLuint32>(0);
-    if (impl->audio.channels == 1) mask = SL_SPEAKER_FRONT_CENTER;
-    else if (impl->audio.channels == 2) mask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
-    if (!mask || impl->audio.sampleRate <= 0) return false;
+    if (impl->audio.channels <= 0 || impl->audio.channels > 2 || impl->audio.sampleRate <= 0) return false;
 
-    if (slCreateEngine(&impl->slEngineObj, 0, nullptr, 0, nullptr, nullptr) != SL_RESULT_SUCCESS) return false;
-    if ((*impl->slEngineObj)->Realize(impl->slEngineObj, SL_BOOLEAN_FALSE) != SL_RESULT_SUCCESS) goto fail;
-    if ((*impl->slEngineObj)->GetInterface(impl->slEngineObj, SL_IID_ENGINE, &impl->slEngine) != SL_RESULT_SUCCESS) goto fail;
-    if ((*impl->slEngine)->CreateOutputMix(impl->slEngine, &impl->slMixObj, 0, nullptr, nullptr) != SL_RESULT_SUCCESS) goto fail;
-    if ((*impl->slMixObj)->Realize(impl->slMixObj, SL_BOOLEAN_FALSE) != SL_RESULT_SUCCESS) goto fail;
+    AAudioStreamBuilder* builder = nullptr;
+    if (AAudio_createStreamBuilder(&builder) != AAUDIO_OK || !builder) return false;
 
-    {
-        SLDataLocator_AndroidSimpleBufferQueue queue = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, AUDIO_QUEUE_COUNT};
-        SLDataFormat_PCM pcm = {SL_DATAFORMAT_PCM,
-                                static_cast<SLuint32>(impl->audio.channels),
-                                static_cast<SLuint32>(impl->audio.sampleRate * 1000),
-                                SL_PCMSAMPLEFORMAT_FIXED_16,
-                                SL_PCMSAMPLEFORMAT_FIXED_16,
-                                mask,
-                                SL_BYTEORDER_LITTLEENDIAN};
-        SLDataSource src = {&queue, &pcm};
-        SLDataLocator_OutputMix output = {SL_DATALOCATOR_OUTPUTMIX, impl->slMixObj};
-        SLDataSink sink = {&output, nullptr};
-        const SLInterfaceID ids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_VOLUME};
-        const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_OUTPUT);
+    AAudioStreamBuilder_setSharingMode(builder, AAUDIO_SHARING_MODE_SHARED);
+    AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_NONE);
+    AAudioStreamBuilder_setSampleRate(builder, impl->audio.sampleRate);
+    AAudioStreamBuilder_setChannelCount(builder, impl->audio.channels);
+    AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
+    AAudioStreamBuilder_setBufferCapacityInFrames(builder, impl->audio.sampleRate / 2);
+    AAudioStreamBuilder_setDataCallback(builder, _audioData, impl);
 
-        if ((*impl->slEngine)->CreateAudioPlayer(impl->slEngine, &impl->slPlayerObj, &src, &sink, 2, ids, req) != SL_RESULT_SUCCESS) goto fail;
-        if ((*impl->slPlayerObj)->Realize(impl->slPlayerObj, SL_BOOLEAN_FALSE) != SL_RESULT_SUCCESS) goto fail;
-        if ((*impl->slPlayerObj)->GetInterface(impl->slPlayerObj, SL_IID_PLAY, &impl->slPlay) != SL_RESULT_SUCCESS) goto fail;
-        if ((*impl->slPlayerObj)->GetInterface(impl->slPlayerObj, SL_IID_VOLUME, &impl->slVolume) != SL_RESULT_SUCCESS) goto fail;
-        if ((*impl->slPlayerObj)->GetInterface(impl->slPlayerObj, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &impl->slQueue) != SL_RESULT_SUCCESS) goto fail;
-        if ((*impl->slQueue)->RegisterCallback(impl->slQueue, _audioDone, impl) != SL_RESULT_SUCCESS) goto fail;
+    auto res = AAudioStreamBuilder_openStream(builder, &impl->audioStream);
+    AAudioStreamBuilder_delete(builder);
+    if (res != AAUDIO_OK || !impl->audioStream) {
+        _destroyAudioOutput(impl);
+        return false;
     }
+    if (AAudioStream_getFormat(impl->audioStream) != AAUDIO_FORMAT_PCM_I16) {
+        _destroyAudioOutput(impl);
+        return false;
+    }
+    if (AAudioStream_getChannelCount(impl->audioStream) != impl->audio.channels) {
+        _destroyAudioOutput(impl);
+        return false;
+    }
+    if (AAudioStream_getSampleRate(impl->audioStream) != impl->audio.sampleRate) {
+        _destroyAudioOutput(impl);
+        return false;
+    }
+    auto capacity = AAudioStream_getBufferCapacityInFrames(impl->audioStream);
+    if (capacity > 0) AAudioStream_setBufferSizeInFrames(impl->audioStream, capacity);
+
     _syncAudioVolume(impl);
     return true;
-
-fail:
-    _destroyAudioOutput(impl);
-    return false;
 }
 
 static void _closeAudio(AndroidImpl* impl)
@@ -647,7 +703,7 @@ static bool _drain(AndroidImpl* impl, int64_t target, int64_t timeout)
 static bool _queueAudio(AndroidImpl* impl, const uint8_t* data, size_t size, int64_t pts)
 {
     tvg::ScopedLock lock(impl->audioKey);
-    if (!impl->slQueue || impl->audioQueued >= AUDIO_QUEUE_COUNT) return false;
+    if (!impl->audioStream || impl->audioQueued >= AUDIO_QUEUE_COUNT) return false;
 
     auto idx = impl->audioWrite;
     auto& buffer = impl->audioData[idx];
@@ -685,10 +741,12 @@ static bool _queueAudio(AndroidImpl* impl, const uint8_t* data, size_t size, int
     }
 
     auto dur = static_cast<int64_t>(frames) * USEC / impl->audio.sampleRate;
+    buffer.size = bytes;
+    buffer.frames = frames;
+    buffer.offset = 0;
     buffer.dur = dur;
     if (dur > 0) impl->audioTickUs = dur;
     buffer.pts = pts;
-    if ((*impl->slQueue)->Enqueue(impl->slQueue, buffer.data, static_cast<SLuint32>(bytes)) != SL_RESULT_SUCCESS) return false;
     impl->audioQueuedUs = std::max(impl->audioQueuedUs, pts + buffer.dur);
     impl->audioWrite = (impl->audioWrite + 1) % AUDIO_QUEUE_COUNT;
     ++impl->audioQueued;
@@ -868,7 +926,7 @@ static bool _tick(AndroidImpl* impl)
     }
 
     if (paused) {
-        _setAudioState(impl, SL_PLAYSTATE_PAUSED);
+        _setAudioState(impl, AudioState::Paused);
         return false;
     }
 
@@ -876,12 +934,12 @@ static bool _tick(AndroidImpl* impl)
     if (looping && (impl->outputDone || impl->decodedUs > target + LOOP_REWIND_MARGIN_US)) {
         if (!_seek(impl, target)) return true;
         if (impl->audioReady) {
-            _setAudioState(impl, SL_PLAYSTATE_PAUSED);
+            _setAudioState(impl, AudioState::Paused);
             if (_seekAudio(impl, target)) {
                 tvg::ScopedLock lock(impl->audioCodecKey);
                 _decodeAudio(impl, true);
                 _notifyAudioWorker(impl);
-                _setAudioState(impl, SL_PLAYSTATE_PLAYING);
+                _setAudioState(impl, AudioState::Playing);
             } else {
                 _closeAudio(impl);
             }
@@ -900,7 +958,7 @@ static bool _tick(AndroidImpl* impl)
     }
     _decode(impl, target, false);
     if (finish && impl->outputDone) {
-        _setAudioState(impl, SL_PLAYSTATE_PAUSED);
+        _setAudioState(impl, AudioState::Paused);
         tvg::ScopedLock lock(impl->key);
         impl->loader->paused = true;
         impl->loader->curTime = impl->loader->totalTime;
@@ -1179,7 +1237,7 @@ Result AndroidMediaLoader::play()
 
     if (restart) {
         tvg::ScopedLock lock(pImpl->codecKey);
-        if (pImpl->audioReady) _setAudioState(pImpl, SL_PLAYSTATE_STOPPED);
+        if (pImpl->audioReady) _setAudioState(pImpl, AudioState::Stopped);
         if (!_prime(pImpl, 0)) {
             _clear(pImpl);
             return Result::InsufficientCondition;
@@ -1187,7 +1245,7 @@ Result AndroidMediaLoader::play()
     }
 
     _refWorker(pImpl);
-    _setAudioState(pImpl, SL_PLAYSTATE_PLAYING);
+    _setAudioState(pImpl, AudioState::Playing);
     _notifyAudioWorker(pImpl);
     return Result::Success;
 }
@@ -1199,7 +1257,7 @@ Result AndroidMediaLoader::pause()
         if (!pImpl->ready) return Result::InsufficientCondition;
     }
 
-    _setAudioState(pImpl, SL_PLAYSTATE_PAUSED);
+    _setAudioState(pImpl, AudioState::Paused);
     {
         tvg::ScopedLock lock(pImpl->key);
         curTime = static_cast<float>(_time(pImpl)) / static_cast<float>(USEC);
@@ -1224,7 +1282,7 @@ Result AndroidMediaLoader::stop()
     _unrefWorker(pImpl);
 
     tvg::ScopedLock lock(pImpl->codecKey);
-    _setAudioState(pImpl, SL_PLAYSTATE_STOPPED);
+    _setAudioState(pImpl, AudioState::Stopped);
     if (_prime(pImpl, 0)) {
         _notifyAudioWorker(pImpl);
         return Result::Success;
@@ -1251,7 +1309,7 @@ Result AndroidMediaLoader::seek(float seconds)
     auto ok = false;
     {
         tvg::ScopedLock lock(pImpl->codecKey);
-        if (pImpl->audioReady) _setAudioState(pImpl, SL_PLAYSTATE_PAUSED);
+        if (pImpl->audioReady) _setAudioState(pImpl, AudioState::Paused);
         ok = _prime(pImpl, target);
         if (ok) {
             tvg::ScopedLock lock(pImpl->key);
@@ -1264,7 +1322,7 @@ Result AndroidMediaLoader::seek(float seconds)
     }
     if (ok && !wasPaused) _refWorker(pImpl);
     if (ok && pImpl->audioReady && !wasPaused) {
-        _setAudioState(pImpl, SL_PLAYSTATE_PLAYING);
+        _setAudioState(pImpl, AudioState::Playing);
         _notifyAudioWorker(pImpl);
     }
     return ok ? Result::Success : Result::InsufficientCondition;

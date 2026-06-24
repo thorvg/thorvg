@@ -6,7 +6,7 @@ source_file = [
 ]
 
 media_dep += [declare_dependency(
-    dependencies : [cc.find_library('mediandk'), cc.find_library('OpenSLES')],
+    dependencies : [cc.find_library('mediandk'), cc.find_library('aaudio')],
     include_directories : include_directories('.'),
     sources : source_file
 )]
