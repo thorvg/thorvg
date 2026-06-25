@@ -919,11 +919,12 @@ bool GlRenderer::clear()
     return true;
 }
 
-
-bool GlRenderer::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs)
+Result GlRenderer::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs)
 {
+    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+
     //assume the context zero is invalid
-    if (!context || w == 0 || h == 0) return false;
+    if (!context || w == 0 || h == 0) return Result::InvalidArguments;
 
     if (mContext) {
         currentContext();
@@ -947,7 +948,7 @@ bool GlRenderer::target(void* display, void* surface, void* context, int32_t id,
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
     mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
 
-    return ret;
+    return ret ? Result::Success : Result::InsufficientCondition;
 }
 
 

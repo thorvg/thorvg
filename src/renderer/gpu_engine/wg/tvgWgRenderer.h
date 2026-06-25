@@ -47,7 +47,7 @@ struct WgRenderer : RenderMethod
     bool sync() override;
     bool intersectsImage(RenderData data, const RenderRegion& region) override;
     bool intersectsShape(RenderData data, const RenderRegion& region) override;
-    bool target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0);
+    Result target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0);
 
     //composition
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;
