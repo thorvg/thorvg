@@ -1503,10 +1503,8 @@ void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 #endif
 }
 
-
-bool rasterCompositor(SwSurface* surface)
+Result rasterCompositor(SwSurface* surface)
 {
-    //See MaskMethod, Alpha:1, InvAlpha:2, Luma:3, InvLuma:4
     surface->alphas[0] = _alpha;
     surface->alphas[1] = _ialpha;
 
@@ -1520,9 +1518,9 @@ bool rasterCompositor(SwSurface* surface)
         surface->alphas[3] = _argbInvLuma;
     } else {
         TVGERR("SW_ENGINE", "Unsupported Colorspace(%d) is expected!", (int)surface->cs);
-        return false;
+        return Result::NonSupport;
     }
-    return true;
+    return Result::Success;
 }
 
 

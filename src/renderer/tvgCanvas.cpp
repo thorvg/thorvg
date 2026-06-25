@@ -120,26 +120,17 @@ SwCanvas::~SwCanvas()
 Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs) noexcept
 {
 #ifdef THORVG_CPU_ENGINE_SUPPORT
-    if (cs == ColorSpace::Unknown) return Result::InvalidArguments;
-    if (cs == ColorSpace::Grayscale8) return Result::NonSupport;
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
 
-    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
-        return Result::InsufficientCondition;
-    }
+    auto ret = static_cast<SwRenderer*>(pImpl->renderer)->target(buffer, stride, w, h, cs);
+    if (ret != Result::Success) return ret;
 
-    //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<SwRenderer*>(pImpl->renderer);
-    if (!renderer) return Result::MemoryCorruption;
-
-    if (!renderer->target(buffer, stride, w, h, cs)) return Result::InvalidArguments;
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
-    renderer->viewport(pImpl->vport);
+    pImpl->renderer->viewport(pImpl->vport);
+    pImpl->status = Status::Damaged;  // Paints must be updated again with this new target.
 
     //FIXME: The value must be associated with an individual canvas instance.
     ImageLoader::cs = static_cast<ColorSpace>(cs);
-
-    //Paints must be updated again with this new target.
-    pImpl->status = Status::Damaged;
 
     return Result::Success;
 #endif
@@ -180,22 +171,17 @@ GlCanvas::~GlCanvas()
 Result GlCanvas::target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs) noexcept
 {
 #ifdef THORVG_GL_ENGINE_SUPPORT
-    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
 
-    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
-        return Result::InsufficientCondition;
-    }
+    auto ret = static_cast<GlRenderer*>(pImpl->renderer)->target(display, surface, context, id, w, h, cs);
+    if (ret != Result::Success) return ret;
 
-    //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<GlRenderer*>(pImpl->renderer);
-    if (!renderer) return Result::MemoryCorruption;
-
-    if (!renderer->target(display, surface, context, id, w, h, cs)) return Result::Unknown;
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
-    renderer->viewport(pImpl->vport);
+    pImpl->renderer->viewport(pImpl->vport);
+    pImpl->status = Status::Damaged;  // Paints must be updated again with this new target.
 
-    //Paints must be updated again with this new target.
-    pImpl->status = Status::Damaged;
+    //FIXME: The value must be associated with an individual canvas instance.
+    ImageLoader::cs = static_cast<ColorSpace>(cs);
 
     return Result::Success;
 #endif
@@ -242,22 +228,17 @@ WgCanvas::~WgCanvas()
 Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
 {
 #ifdef THORVG_WG_ENGINE_SUPPORT
-    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
 
-    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) {
-        return Result::InsufficientCondition;
-    }
+    auto ret = static_cast<WgRenderer*>(pImpl->renderer)->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, cs, type);
+    if (ret != Result::Success) return ret;
 
-    //We know renderer type, avoid dynamic_cast for performance.
-    auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
-    if (!renderer) return Result::MemoryCorruption;
-
-    if (!renderer->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, cs, type)) return Result::Unknown;
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
-    renderer->viewport(pImpl->vport);
+    pImpl->renderer->viewport(pImpl->vport);
+    pImpl->status = Status::Damaged;  // Paints must be updated again with this new target.
 
-    //Paints must be updated again with this new target.
-    pImpl->status = Status::Damaged;
+    //FIXME: The value must be associated with an individual canvas instance.
+    ImageLoader::cs = static_cast<ColorSpace>(cs);
 
     return Result::Success;
 #endif
