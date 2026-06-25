@@ -389,15 +389,16 @@ bool WgRenderer::sync()
     return true;
 }
 
-
-bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
+Result WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
 {
+    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+
     if (!instance || !device || !target) {
         release();
-        return true;
+        return Result::Success;
     }
 
-    if (w == 0 || h == 0) return false;
+    if (w == 0 || h == 0) return Result::InvalidArguments;
 
     // device or instance was changed, need to recreate all instances
     if ((mContext.device != device) || (mContext.instance != instance)) {
@@ -430,7 +431,7 @@ bool WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, 
     mTargetSurface.h = h;
     mTargetSurface.cs = cs;
 
-    return true;
+    return Result::Success;
 }
 
 WgRenderer::~WgRenderer()

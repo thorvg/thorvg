@@ -278,10 +278,9 @@ bool SwRenderer::sync()
     return true;
 }
 
-
-bool SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs)
+Result SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs)
 {
-    if (!data || stride == 0 || w == 0 || h == 0 || w > stride) return false;
+    if (!data || stride == 0 || w == 0 || h == 0 || w > stride) return Result::InvalidArguments;
 
     clearCompositors();
 
