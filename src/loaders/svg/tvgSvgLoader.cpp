@@ -3804,7 +3804,10 @@ void SvgLoader::run(unsigned tid)
                 if (!ctx.cloneNodes.empty()) _clonePostponedNodes(&ctx.cloneNodes, ctx.doc);
 
                 _updateComposite(ctx.doc, ctx.doc);
-                if (defs) _updateComposite(ctx.doc, defs);
+                if (defs) {
+                    _updateComposite(ctx.doc, defs);
+                    _updateComposite(defs, defs);
+                }
 
                 _updateFilter(ctx.doc, ctx.doc);
                 if (defs) _updateFilter(ctx.doc, defs);
