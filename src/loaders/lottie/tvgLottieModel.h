@@ -506,6 +506,7 @@ private:
 
 public:
     LottieFloat firstMargin = 0.0f;
+    LottieInteger perpendicular = 0;
     LottieMask* mask;
     int8_t maskIdx = -1;
 

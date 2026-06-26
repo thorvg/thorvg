@@ -1354,6 +1354,7 @@ void LottieParser::parseTextFollowPath(LottieText* text)
     do {
         if (KEY_AS("m")) text->follow->maskIdx = getInt();
         else if (KEY_AS("f")) parseProperty(text->follow->firstMargin);
+        else if (KEY_AS("p")) parseProperty(text->follow->perpendicular);
         else skip();
     } while ((key = nextObjectKey()));
 }
