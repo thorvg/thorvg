@@ -73,11 +73,11 @@ namespace tvg
         Png = 0,
         Jpg,
         Webp,
+        Gif,
         Svg,
         Lot,
         Sfnt,
         Raw,
-        Gif,
         Unknown
     };
 
