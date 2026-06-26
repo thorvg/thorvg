@@ -608,6 +608,20 @@ TVG_API Tvg_Result tvg_glcanvas_set_target(Tvg_Canvas canvas, void* display, voi
 /* WgCanvas API                                                         */
 /************************************************************************/
 
+
+/**
+ * @brief Encapsulates the WebGPU context required for rendering.
+ *
+ * This structure contains the WebGPU objects used to initialize the rendering backend.
+ *
+ * @note Experimental API
+ */
+typedef struct {
+        void* instance;  // WGPUInstance, context for all other wgpu objects.
+        void* adapter;   // WGPUAdapter, the adapter associated with the rendering device.
+        void* device;    // WGPUDevice, a desired handle for the wgpu device.
+} Tvg_WgContext;
+
 /**
  * @brief Creates a new WebGPU Canvas object with optional rendering engine settings.
  *
@@ -629,13 +643,13 @@ TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op);
 /**
  * @brief Sets the drawing target for the rasterization.
  *
- * @param[in] device WGPUDevice, a desired handle for the wgpu device. If it is @c nullptr, ThorVG will assign an appropriate device internally.
+ * @param[in] device WGPUDevice, a desired handle for the wgpu device.
  * @param[in] instance WGPUInstance, context for all other wgpu objects.
  * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
  * @param[in] w The width of the target.
  * @param[in] h The height of the target.
- * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c TVG_COLORSPACE_ABGR8888S as @c WGPUTextureFormat_RGBA8Unorm.
- * @param[in] type @c 0: surface, @c 1: texture are used as pesentable target.
+ * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888 and @c TVG_COLORSPACE_ABGR8888S.
+ * @param[in] type @c 0: surface, @c 1: texture are used as presentable target.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
  * @retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
@@ -643,6 +657,23 @@ TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op);
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
+
+/**
+ * @brief Sets the drawing target for the rasterization.
+ *
+ * @param[in] context Tvg_WgContext context.
+ * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
+ * @param[in] w The width of the target.
+ * @param[in] h The height of the target.
+ * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888 and @c TVG_COLORSPACE_ABGR8888S.
+ * @param[in] type @c 0: surface, @c 1: texture are used as presentable target.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
+ * @retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_wgcanvas_set_target_with_context(Tvg_Canvas canvas, const Tvg_WgContext* context, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
 
 /** \} */   // end defgroup ThorVGCapi_WgCanvas
 
