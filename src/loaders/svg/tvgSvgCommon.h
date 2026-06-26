@@ -385,8 +385,11 @@ struct SvgClipNode
 
 struct SvgMaskNode
 {
+    Box box;
+    bool isPercentage[4];
     SvgMaskType type;
     bool userSpace;
+    bool maskContentUserSpace;
 };
 
 struct SvgCssStyleNode

@@ -52,6 +52,18 @@ typedef SvgStyleGradient* (*GradientFactoryMethod)(SvgParserContext* ctx, const 
 static bool _parseStyleAttr(void* data, const char* key, const char* value);
 static bool _parseStyleAttr(void* data, const char* key, const char* value, bool style);
 
+static constexpr struct {
+    const char* tag;
+    SvgParserLengthType type;
+    int sz;
+    size_t offset;
+} boxTags[] = {
+    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(Box, x)},
+    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(Box, y)},
+    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(Box, w)},
+    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(Box, h)}
+};
+
 static void _copyId(char** to, const char* from)
 {
     tvg::free(*to);
@@ -1240,6 +1252,28 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     return true;
 }
 
+static void _recalcBox(const SvgParserContext* ctx, Box* box, bool (&isPercentage)[4])
+{
+    auto array = (unsigned char*)box;
+    for (unsigned int i = 0; i < sizeof(boxTags) / sizeof(boxTags[0]); i++) {
+        if (!isPercentage[i]) continue;
+        if (boxTags[i].type == SvgParserLengthType::Horizontal) *(float*)(array + boxTags[i].offset) *= ctx->parser->global.w;
+        else *(float*)(array + boxTags[i].offset) *= ctx->parser->global.h;
+    }
+}
+
+static bool _parseBox(const char* key, const char* value, Box* box, bool (&isPercentage)[4])
+{
+    auto array = (unsigned char*)box;
+    int sz = strlen(key);
+    for (unsigned int i = 0; i < sizeof(boxTags) / sizeof(boxTags[0]); i++) {
+        if (boxTags[i].sz - 1 == sz && !strncmp(boxTags[i].tag, key, sz)) {
+            *(float*)(array + boxTags[i].offset) = _gradientToFloat(nullptr, value, isPercentage[i]);
+            return true;
+        }
+    }
+    return false;
+}
 
 static bool _attrParseMaskNode(void* data, const char* key, const char* value)
 {
@@ -1247,21 +1281,17 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
     auto node = ctx->parser->node;
     auto mask = &node->node.mask;
 
-    if (STR_AS(key, "style")) {
-        return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    } else if (STR_AS(key, "transform")) {
-        node->transform = _parseTransformationMatrix(value);
-    } else if (STR_AS(key, "id")) {
-        _copyId(&node->id, value);
-    } else if (STR_AS(key, "class")) {
-        _handleCssClassAttr(ctx, node, value);
-    } else if (STR_AS(key, "maskContentUnits")) {
-        if (STR_AS(value, "objectBoundingBox")) mask->userSpace = false;
-    } else if (STR_AS(key, "mask-type")) {
-        mask->type = _toMaskType(value);
-    } else {
-        return _parseStyleAttr(ctx, key, value, false);
-    }
+    if (_parseBox(key, value, &mask->box, mask->isPercentage)) return true;
+
+    if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
+    else if (STR_AS(key, "transform")) node->transform = _parseTransformationMatrix(value);
+    else if (STR_AS(key, "id")) _copyId(&node->id, value);
+    else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
+    else if (STR_AS(key, "maskUnits")) { if (STR_AS(value, "userSpaceOnUse")) mask->userSpace = true; }
+    else if (STR_AS(key, "maskContentUnits")) { if (STR_AS(value, "objectBoundingBox")) mask->maskContentUserSpace = false; }
+    else if (STR_AS(key, "mask-type")) mask->type = _toMaskType(value);
+    else return _parseStyleAttr(ctx, key, value, false);
+
     return true;
 }
 
@@ -1302,45 +1332,6 @@ static bool _attrParseSymbolNode(void* data, const char* key, const char* value)
     }
     return true;
 }
-
-
-static constexpr struct
-{
-    const char* tag;
-    SvgParserLengthType type;
-    int sz;
-    size_t offset;
-} boxTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(Box, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(Box, y)},
-    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(Box, w)},
-    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(Box, h)}
-};
-
-
-static bool _parseBox(const char* key, const char* value, Box* box, bool (&isPercentage)[4])
-{
-    auto array = (unsigned char*)box;
-    int sz = strlen(key);
-    for (unsigned int i = 0; i < sizeof(boxTags) / sizeof(boxTags[0]); i++) {
-        if (boxTags[i].sz - 1 == sz && !strncmp(boxTags[i].tag, key, sz)) {
-            *(float*)(array + boxTags[i].offset) = _gradientToFloat(nullptr, value, isPercentage[i]);
-            return true;
-        }
-    }
-    return false;
-}
-
-static void _recalcBox(const SvgParserContext* ctx, Box* box, bool (&isPercentage)[4])
-{
-    auto array = (unsigned char*)box;
-    for (unsigned int i = 0; i < sizeof(boxTags) / sizeof(boxTags[0]); i++) {
-        if (!isPercentage[i]) continue;
-        if (boxTags[i].type == SvgParserLengthType::Horizontal) *(float*)(array + boxTags[i].offset) *= ctx->parser->global.w;
-        else *(float*)(array + boxTags[i].offset) *= ctx->parser->global.h;
-    }
-}
-
 
 static bool _attrParseFilterNode(void* data, const char* key, const char* value)
 {
@@ -1471,10 +1462,14 @@ static SvgNode* _createMaskNode(SvgParserContext* ctx, SvgNode* parent, TVG_UNUS
     ctx->parser->node = _createNode(parent, SvgNodeType::Mask);
     if (!ctx->parser->node) return nullptr;
 
-    ctx->parser->node->node.mask.userSpace = true;
-    ctx->parser->node->node.mask.type = SvgMaskType::Luminance;
-
+    auto& mask = ctx->parser->node->node.mask;
+    mask.maskContentUserSpace = true;
+    mask.type = SvgMaskType::Luminance;
+    // default region per https://www.w3.org/TR/SVG11/masking.html#MaskElement (x/y=-10%, width/height=120%)
+    mask.box = {-0.1f, -0.1f, 1.2f, 1.2f};
+    mask.isPercentage[0] = mask.isPercentage[1] = mask.isPercentage[2] = mask.isPercentage[3] = true;
     func(buf, bufLength, _attrParseMaskNode, ctx);
+    if (mask.userSpace) _recalcBox(ctx, &mask.box, mask.isPercentage);
 
     return ctx->parser->node;
 }
