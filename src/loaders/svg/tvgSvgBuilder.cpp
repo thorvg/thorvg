@@ -1167,12 +1167,29 @@ static Matrix _patternContentTransform(const SvgPatternNode& pat, const Box& bbo
     return tvg::identity();
 }
 
-static void _patternTileGrid(const Box& cell, const Box& bbox, float& startX, float& startY, int& cols, int& rows)
+static Box _transformBounds(const Box& bounds, const Matrix& matrix)
 {
-    startX = cell.x + floorf((bbox.x - cell.x) / cell.w) * cell.w;
-    startY = cell.y + floorf((bbox.y - cell.y) / cell.h) * cell.h;
-    cols = (int)ceilf((bbox.x + bbox.w - startX) / cell.w);
-    rows = (int)ceilf((bbox.y + bbox.h - startY) / cell.h);
+    auto lt = Point{bounds.x, bounds.y} * matrix;
+    auto lb = Point{bounds.x, bounds.y + bounds.h} * matrix;
+    auto rt = Point{bounds.x + bounds.w, bounds.y} * matrix;
+    auto rb = Point{bounds.x + bounds.w, bounds.y + bounds.h} * matrix;
+
+    auto min = tvg::min(tvg::min(lt, lb), tvg::min(rt, rb));
+    auto max = tvg::max(tvg::max(lt, lb), tvg::max(rt, rb));
+
+    return {min.x, min.y, max.x - min.x, max.y - min.y};
+}
+
+static void _patternTileGrid(const Box& cell, const Box& bbox, const Matrix* transform, float& startX, float& startY, int& cols, int& rows)
+{
+    auto box = bbox;
+    Matrix inv;
+    if (transform && tvg::inverse(transform, &inv)) box = _transformBounds(bbox, inv);
+
+    startX = cell.x + floorf((box.x - cell.x) / cell.w) * cell.w;
+    startY = cell.y + floorf((box.y - cell.y) / cell.h) * cell.h;
+    cols = (int)ceilf((box.x + box.w - startX) / cell.w);
+    rows = (int)ceilf((box.y + box.h - startY) / cell.h);
 }
 
 static Paint* _applyPatternProperty(SvgParserContext& ctx, Shape* vg, SvgNode* node, SvgNode* patternNode, const Box& vBox, const string& svgPath)
@@ -1193,7 +1210,7 @@ static Paint* _applyPatternProperty(SvgParserContext& ctx, Shape* vg, SvgNode* n
 
     float startX, startY;
     int cols, rows;
-    _patternTileGrid(cell, bbox, startX, startY, cols, rows);
+    _patternTileGrid(cell, bbox, pat.transform, startX, startY, cols, rows);
 
     auto contentTransform = _patternContentTransform(pat, bbox, cell);
 
