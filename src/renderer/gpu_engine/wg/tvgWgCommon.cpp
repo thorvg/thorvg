@@ -259,5 +259,6 @@ void WgContext::submit()
 
 bool WgContext::invalid()
 {
-    return !instance || !device;
+    // instance is optional (only needed for surface configuration); view targets pass nullptr
+    return !device;
 }

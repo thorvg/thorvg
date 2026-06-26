@@ -246,6 +246,27 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
 }
 
 
+Result WgCanvas::targetView(void* device, void* commandEncoder, void* view, uint32_t w, uint32_t h, ColorSpace cs) noexcept
+{
+#ifdef THORVG_WG_ENGINE_SUPPORT
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
+
+    auto ret = static_cast<WgRenderer*>(pImpl->renderer)->targetView((WGPUDevice)device, (WGPUCommandEncoder)commandEncoder, (WGPUTextureView)view, w, h, cs);
+    if (ret != Result::Success) return ret;
+
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
+    pImpl->renderer->viewport(pImpl->vport);
+    pImpl->status = Status::Damaged;  // Paints must be updated again with this new target.
+
+    //FIXME: The value must be associated with an individual canvas instance.
+    ImageLoader::cs = static_cast<ColorSpace>(cs);
+
+    return Result::Success;
+#endif
+    return Result::NonSupport;
+}
+
+
 WgCanvas* WgCanvas::gen(EngineOption op) noexcept
 {
 #ifdef THORVG_WG_ENGINE_SUPPORT

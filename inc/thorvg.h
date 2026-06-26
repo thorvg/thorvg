@@ -2420,6 +2420,34 @@ struct TVG_API WgCanvas final : Canvas
     Result target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
 
     /**
+     * @brief Sets a caller-managed WebGPU texture view as the drawing target for the rasterization.
+     *
+     * ThorVG records all of its rendering commands into the caller-provided @p commandEncoder, with
+     * the final result blitted to the caller-provided @p view. ThorVG never submits the encoder; the
+     * caller retains full ownership of submission, allowing ThorVG draws to be interleaved with the
+     * caller's own WebGPU render graph. ThorVG takes its own reference to the handles and releases
+     * that reference once they are consumed, so the caller must keep them valid until Canvas::sync().
+     * The handles are expected to be refreshed by the caller every frame (the texture view typically
+     * changes per frame) before Canvas::draw().
+     *
+     * @param[in] device WGPUDevice, the handle for the wgpu device backing the encoder and view.
+     * @param[in] commandEncoder WGPUCommandEncoder, the caller-owned encoder ThorVG records into. Not submitted by ThorVG; ThorVG retains and releases its own reference but never the caller's.
+     * @param[in] view WGPUTextureView, the caller-owned destination view the result is blitted to.
+     * @param[in] w The width of the target.
+     * @param[in] h The height of the target.
+     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c ColorSpace::ABGR8888S as @c WGPUTextureFormat_RGBA8Unorm.
+     *
+     * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
+     * @retval Result::NonSupport In case the wg engine is not supported.
+     *
+     * @since 1.0
+     *
+     * @see Canvas::viewport()
+     * @see Canvas::sync()
+     */
+    Result targetView(void* device, void* commandEncoder, void* view, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
+
+    /**
      * @brief Creates a new WebGPU Canvas object with optional rendering engine settings.
      *
      * This method generates a WebGPU canvas instance that can be used for drawing vector graphics.

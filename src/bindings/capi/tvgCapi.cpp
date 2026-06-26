@@ -111,6 +111,13 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
 }
 
 
+TVG_API Tvg_Result tvg_wgcanvas_set_target_view(Tvg_Canvas canvas, void* device, void* command_encoder, void* view, uint32_t w, uint32_t h, Tvg_Colorspace cs)
+{
+    if (canvas) return (Tvg_Result) reinterpret_cast<WgCanvas*>(canvas)->targetView(device, command_encoder, view, w, h, static_cast<ColorSpace>(cs));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
 TVG_API Tvg_Result tvg_canvas_add(Tvg_Canvas canvas, Tvg_Paint paint)
 {
     if (canvas && paint) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->add((Paint*)paint);

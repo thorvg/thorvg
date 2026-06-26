@@ -644,6 +644,32 @@ TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op);
  */
 TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
 
+/**
+ * @brief Sets a caller-managed WebGPU texture view as the drawing target for the rasterization.
+ *
+ * ThorVG records all of its rendering commands into the caller-provided @p command_encoder, with the
+ * final result blitted to the caller-provided @p view. ThorVG never submits the encoder; the caller
+ * retains full ownership of submission, allowing ThorVG draws to be interleaved with the caller's own
+ * WebGPU render graph. ThorVG takes its own reference to the handles and releases that reference once
+ * they are consumed, so the caller must keep them valid until the canvas is synced. The handles are
+ * expected to be refreshed by the caller every frame (the texture view typically changes per frame)
+ * before drawing.
+ *
+ * @param[in] canvas The Tvg_Canvas object to set the target for.
+ * @param[in] device WGPUDevice, the handle for the wgpu device backing the encoder and view.
+ * @param[in] command_encoder WGPUCommandEncoder, the caller-owned encoder ThorVG records into. Not submitted by ThorVG; ThorVG retains and releases its own reference but never the caller's.
+ * @param[in] view WGPUTextureView, the caller-owned destination view the result is blitted to.
+ * @param[in] w The width of the target.
+ * @param[in] h The height of the target.
+ * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c TVG_COLORSPACE_ABGR8888S as @c WGPUTextureFormat_RGBA8Unorm.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
+ * @retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
+ *
+ * @since 1.0
+ */
+TVG_API Tvg_Result tvg_wgcanvas_set_target_view(Tvg_Canvas canvas, void* device, void* command_encoder, void* view, uint32_t w, uint32_t h, Tvg_Colorspace cs);
+
 /** \} */   // end defgroup ThorVGCapi_WgCanvas
 
 /************************************************************************/
