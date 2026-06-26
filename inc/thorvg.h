@@ -2399,9 +2399,23 @@ struct TVG_API WgCanvas final : Canvas
     ~WgCanvas() override;
 
     /**
+     * @brief Encapsulates the WebGPU context required for rendering.
+     *
+     * This structure contains the WebGPU objects used to initialize the rendering backend.
+     *
+     * @note Experimental API
+     */
+    struct Context
+    {
+        void* instance;  // WGPUInstance, context for all other wgpu objects.
+        void* adapter;   // WGPUAdapter, the adapter associated with the rendering device.
+        void* device;    // WGPUDevice, a desired handle for the wgpu device.
+    };
+
+    /**
      * @brief Sets the drawing target for the rasterization.
      *
-     * @param[in] device WGPUDevice, a desired handle for the wgpu device. If it is @c nullptr, ThorVG will assign an appropriate device internally.
+     * @param[in] device WGPUDevice, a desired handle for the wgpu device.
      * @param[in] instance WGPUInstance, context for all other wgpu objects.
      * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
      * @param[in] w The width of the target.
@@ -2418,6 +2432,26 @@ struct TVG_API WgCanvas final : Canvas
      * @see Canvas::sync()
      */
     Result target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
+
+    /**
+     * @brief Sets the drawing target for the rasterization.
+     *
+     * @param[in] context WebGPU context.
+     * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
+     * @param[in] w The width of the target.
+     * @param[in] h The height of the target.
+     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c ColorSpace::ABGR8888 and @c ColorSpace::ABGR8888S.
+     * @param[in] type @c 0: surface, @c 1: texture are used as pesentable target.
+     *
+     * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
+     * @retval Result::NonSupport In case the wg engine is not supported.
+     *
+     * @note Experimental API
+     *
+     * @see Canvas::viewport()
+     * @see Canvas::sync()
+     */
+    Result target(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
 
     /**
      * @brief Creates a new WebGPU Canvas object with optional rendering engine settings.

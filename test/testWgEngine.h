@@ -35,6 +35,7 @@ using namespace tvg;
 struct TestWgEngine
 {
     WGPUInstance instance = nullptr;
+    WGPUAdapter adapter = nullptr;
     WGPUDevice device = nullptr;
     WGPUTexture texture = nullptr;
     WGPUTextureFormat format = WGPUTextureFormat_BGRA8Unorm;
@@ -42,12 +43,11 @@ struct TestWgEngine
     uint32_t height;
     ColorSpace colorSpace;
 
-    TestWgEngine(uint32_t w = 100, uint32_t h = 100, ColorSpace cs = ColorSpace::ABGR8888S) : width(w), height(h), colorSpace(cs)
+    TestWgEngine(uint32_t w = 100, uint32_t h = 100, ColorSpace cs = ColorSpace::ABGR8888) : width(w), height(h), colorSpace(cs)
     {
         instance = wgpuCreateInstance(nullptr);
 
         // request adapter
-        WGPUAdapter adapter = nullptr;
         auto onAdapterRequestEnded = [](WGPURequestAdapterStatus, WGPUAdapter adapter, WGPUStringView, void* userdata1, void*) {
             *((WGPUAdapter*)userdata1) = adapter;
         };
@@ -105,7 +105,7 @@ struct TestWgEngine
 
     Result target(WgCanvas* canvas)
     {
-        return canvas->target(device, instance, texture, width, height, colorSpace, 1);
+        return canvas->target({instance, adapter, device}, texture, width, height, colorSpace, 1);
     }
 };
 

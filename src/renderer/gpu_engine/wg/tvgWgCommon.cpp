@@ -24,10 +24,11 @@
 #include "tvgWgCommon.h"
 #include "tvgArray.h"
 
-void WgContext::initialize(WGPUInstance instance, WGPUDevice device)
+void WgContext::initialize(const WgCanvas::Context& ctx)
 {
-    this->instance = instance;
-    this->device = device;
+    this->instance = (WGPUInstance)ctx.instance;
+    this->adapter = (WGPUAdapter)ctx.adapter;
+    this->device = (WGPUDevice)ctx.device;
 
     queue = wgpuDeviceGetQueue(device);
 

@@ -28,6 +28,7 @@
 
 struct WgContext {
     WGPUInstance instance{};
+    WGPUAdapter adapter{};
     WGPUDevice device{};
     WGPUQueue queue{};
     WGPUTextureFormat format = WGPUTextureFormat_BGRA8Unorm;
@@ -38,7 +39,7 @@ struct WgContext {
     WGPUSampler samplerLinearClamp;
     WgBindGroupLayouts layouts;
 
-    void initialize(WGPUInstance instance, WGPUDevice device);
+    void initialize(const WgCanvas::Context& ctx);
     void release();
     
     // create common objects

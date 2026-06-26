@@ -217,20 +217,23 @@ WgCanvas::WgCanvas() = default;
 WgCanvas::~WgCanvas()
 {
 #ifdef THORVG_WG_ENGINE_SUPPORT
-    auto renderer = static_cast<WgRenderer*>(pImpl->renderer);
-    renderer->target(nullptr, nullptr, nullptr, 0, 0, ColorSpace::Unknown);
+    static_cast<WgRenderer*>(pImpl->renderer)->target({}, nullptr, 0, 0, ColorSpace::Unknown);
 
     WgRenderer::term();
 #endif
 }
 
-
 Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
+{
+    return WgCanvas::target({instance, nullptr, device}, target, w, h, cs, type);
+}
+
+Result WgCanvas::target(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
 {
 #ifdef THORVG_WG_ENGINE_SUPPORT
     if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
 
-    auto ret = static_cast<WgRenderer*>(pImpl->renderer)->target((WGPUDevice)device, (WGPUInstance)instance, target, w, h, cs, type);
+    auto ret = static_cast<WgRenderer*>(pImpl->renderer)->target(context, target, w, h, cs, type);
     if (ret != Result::Success) return ret;
 
     pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
@@ -244,7 +247,6 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
 #endif
     return Result::NonSupport;
 }
-
 
 WgCanvas* WgCanvas::gen(EngineOption op) noexcept
 {
