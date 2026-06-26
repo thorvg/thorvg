@@ -389,25 +389,24 @@ bool WgRenderer::sync()
     return true;
 }
 
-Result WgRenderer::target(WGPUDevice device, WGPUInstance instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
+Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
 {
     if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
 
-    if (!instance || !device || !target) {
+    if (!ctx.instance || !ctx.device || !target) {
         release();
         return Result::Success;
     }
 
     if (w == 0 || h == 0) return Result::InvalidArguments;
 
-    // device or instance was changed, need to recreate all instances
-    if ((mContext.device != device) || (mContext.instance != instance)) {
+    // context has been changed, need to recreate all instances
+    if ((mContext.device != ctx.device) || (mContext.instance != ctx.instance) || mContext.adapter != ctx.adapter) {
         release();
-        mContext.initialize(instance, device);
+        mContext.initialize(ctx);
         mRenderTargetPool.initialize(mContext, w, h);
         mRenderTargetRoot.initialize(mContext, w, h);
         mCompositor.initialize(mContext, w, h);
-
     // update render targets dimensions
     } else if ((mTargetSurface.w != w) || (mTargetSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
         mRenderTargetPool.release(mContext);
