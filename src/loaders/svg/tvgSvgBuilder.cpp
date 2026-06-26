@@ -54,6 +54,10 @@ static Box _bounds(Paint* paint)
     return {x, y, w, h};
 }
 
+static Box _objectBoundingBox(const Box& ratio, const Box& bounds)
+{
+    return {bounds.x + ratio.x * bounds.w, bounds.y + ratio.y * bounds.h, ratio.w * bounds.w, ratio.h * bounds.h};
+}
 
 static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 {
@@ -239,7 +243,8 @@ static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const Svg
     if (compNode->transform) {
         m *= *compNode->transform;
     }
-    if (!compNode->node.clip.userSpace) {
+    auto userSpace = (type == SvgNodeType::Mask) ? compNode->node.mask.maskContentUserSpace : compNode->node.clip.userSpace;
+    if (!userSpace) {
         auto bbox = _bounds(paint);
         m *= {bbox.w, 0, bbox.x, 0, bbox.h, bbox.y, 0, 0, 1};
     }
@@ -309,18 +314,27 @@ static Paint* _applyComposition(SvgParserContext& ctx, Paint* paint, const SvgNo
         node->style->mask.applying = true;
 
         if (auto mask = _sceneBuildHelper(ctx, maskNode, vBox, svgPath, true, 0)) {
-            if (!maskNode->node.mask.userSpace) {
+            auto& maskData = maskNode->node.mask;
+            if (!maskData.maskContentUserSpace) {
                 Matrix finalTransform = _compositionTransform(paint, node, maskNode, SvgNodeType::Mask);
                 mask->transform(finalTransform);
             } else if (node->transform) {
                 mask->transform(*node->transform);
             }
-            scene->mask(mask, maskNode->node.mask.type == SvgMaskType::Luminance ? MaskMethod::Luma: MaskMethod::Alpha);
+            auto bbox = _bounds(paint);
+            auto clipper = Shape::gen();
+            if (maskData.userSpace) {
+                clipper->appendRect(maskData.box.x, maskData.box.y, maskData.box.w, maskData.box.h);
+                if (node->transform) clipper->transform(*node->transform);
+            } else {
+                auto box = _objectBoundingBox(maskData.box, bbox);
+                clipper->appendRect(box.x, box.y, box.w, box.h);
+            }
+            mask->clip(clipper);
+            scene->mask(mask, maskData.type == SvgMaskType::Luminance ? MaskMethod::Luma : MaskMethod::Alpha);
         }
-
         node->style->mask.applying = false;
     }
-
     return scene;
 }
 
@@ -328,12 +342,11 @@ static Paint* _applyFilter(SvgParserContext& ctx, Paint* paint, const SvgNode* n
 {
     auto filterNode = node->style->filter.node;
     if (!filterNode || filterNode->child.count == 0) return paint;
+
     auto& filter = filterNode->node.filter;
-
     auto scene = Scene::gen();
-
     auto bbox = _bounds(paint);
-    Box clipBox = filter.filterUserSpace ? filter.box : Box{bbox.x + filter.box.x * bbox.w, bbox.y + filter.box.y * bbox.h, filter.box.w * bbox.w, filter.box.h * bbox.h};
+    auto clipBox = filter.filterUserSpace ? filter.box : _objectBoundingBox(filter.box, bbox);
     auto primitiveUserSpace = filter.primitiveUserSpace;
     auto sx = paint->transform().e11;
     auto sy = paint->transform().e22;
