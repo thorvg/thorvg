@@ -2420,14 +2420,17 @@ struct TVG_API WgCanvas final : Canvas
      * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
      * @param[in] w The width of the target.
      * @param[in] h The height of the target.
-     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it only allows @c ColorSpace::ABGR8888S as @c WGPUTextureFormat_RGBA8Unorm.
+     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c ColorSpace::ABGR8888 and @c ColorSpace::ABGR8888S.
      * @param[in] type @c 0: surface, @c 1: texture are used as pesentable target.
      *
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the wg engine is not supported.
      *
+     * @warning Regardless of the value of @p cs, this target API uses the default alpha mode.
+     *
      * @since 1.0
      *
+     * @see WgCanvas::target(const Context&, void*, uint32_t, uint32_t, ColorSpace, int)
      * @see Canvas::viewport()
      * @see Canvas::sync()
      */
