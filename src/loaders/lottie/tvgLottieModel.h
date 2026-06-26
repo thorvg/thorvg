@@ -495,14 +495,7 @@ struct LottieTextFollowPath
 {
 private:
     RenderPath path;
-    PathCommand* cmds;
-    uint32_t cmdsCnt;
-    Point* pts;
-    Point* start;
     float totalLen;
-    float currentLen;
-    Point split(float dLen, float lenSearched, float& angle);
-    void rewind();
 
 public:
     LottieFloat firstMargin = 0.0f;
