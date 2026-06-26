@@ -654,6 +654,10 @@ TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op);
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
  * @retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
  *
+ * @warning Regardless of the value of @p cs, this target API uses the default alpha mode.
+ *
+ * @see tvg_wgcanvas_set_target_with_context()
+ *
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void* instance, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);

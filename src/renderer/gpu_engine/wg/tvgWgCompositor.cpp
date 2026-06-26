@@ -367,8 +367,7 @@ void WgCompositor::composeScene(WgContext& context, WgRenderTarget* src, WgRende
     drawMeshImage(context, &meshDataBlit);
 }
 
-
-void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView)
+void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView, bool premultiplied)
 {
     assert(!renderPassEncoder);
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{
@@ -387,7 +386,7 @@ void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRender
     const WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
     renderPassEncoder = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bindGroupTexture, 0, nullptr);
-    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.blit);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, premultiplied ? pipelines.blit : pipelines.blit_unpremultiplied);
     drawMeshImage(context, &meshDataBlit);
     wgpuRenderPassEncoderEnd(renderPassEncoder);
     wgpuRenderPassEncoderRelease(renderPassEncoder);

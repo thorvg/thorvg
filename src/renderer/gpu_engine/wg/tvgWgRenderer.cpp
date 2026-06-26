@@ -97,34 +97,48 @@ void WgRenderer::clearTargets()
 
 }
 
-
-bool WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height)
+void WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height, ColorSpace cs)
 {
     this->surface = surface;
-    if (width == 0 || height == 0 || !surface) return false;
 
     // setup surface configuration
-    WGPUSurfaceConfiguration surfaceConfiguration {
+    WGPUSurfaceConfiguration surfaceConfig{
         .device = context.device,
         .format = context.format,
         .usage = WGPUTextureUsage_RenderAttachment,
         .width = width,
         .height = height,
-    #ifdef __EMSCRIPTEN__
-        .alphaMode = WGPUCompositeAlphaMode_Premultiplied,
+#ifdef __EMSCRIPTEN__
+        .alphaMode = WGPUCompositeAlphaMode_Premultiplied,  // for v1.0 backward compat. this can be removed with old target() api.
         .presentMode = WGPUPresentMode_Fifo
-    #elif defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) || (defined(_WIN32) && !defined(__CYGWIN__))
+#elif defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) || (defined(_WIN32) && !defined(__CYGWIN__))
         // Use Immediate only where it is known to be supported on desktop surfaces.
         .presentMode = WGPUPresentMode_Immediate
-    #else
+#else
         // Use the WebGPU default present mode (Fifo).
         .presentMode = WGPUPresentMode_Undefined
-    #endif
+#endif
     };
-    wgpuSurfaceConfigure(surface, &surfaceConfiguration);
-    return true;
-}
 
+    // safe-guard for the system compatibility
+    if (context.adapter) {
+        auto premultiplied = (cs == ColorSpace::ABGR8888);
+        auto alphaMode = premultiplied ? WGPUCompositeAlphaMode_Premultiplied : WGPUCompositeAlphaMode_Unpremultiplied;
+        WGPUSurfaceCapabilities capabilities;
+        if (wgpuSurfaceGetCapabilities(surface, context.adapter, &capabilities) == WGPUStatus_Success) {
+            for (size_t i = 0; i < capabilities.alphaModeCount; ++i) {
+                if (capabilities.alphaModes[i] == alphaMode) {
+                    surfaceConfig.alphaMode = alphaMode;
+                    mTargetSurface.premultiplied = premultiplied;
+                    break;
+                }
+            }
+            wgpuSurfaceCapabilitiesFreeMembers(capabilities);
+        }
+    }
+
+    wgpuSurfaceConfigure(surface, &surfaceConfig);
+}
 
 /************************************************************************/
 /* External Class Implementation                                        */
@@ -380,7 +394,7 @@ bool WgRenderer::sync()
         WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
         WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
         // show root offscreen buffer
-        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView);
+        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView, mTargetSurface.premultiplied);
         mContext.submitCommandEncoder(commandEncoder);
         mContext.releaseCommandEncoder(commandEncoder);
         mContext.releaseTextureView(dstTextureView);
@@ -391,7 +405,7 @@ bool WgRenderer::sync()
 
 Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
 {
-    if (cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+    if (cs != ColorSpace::ABGR8888 && cs != ColorSpace::ABGR8888S) return Result::NonSupport;
 
     if (!ctx.instance || !ctx.device || !target) {
         release();
@@ -417,18 +431,15 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
         mCompositor.resize(mContext, w, h);
     }
 
-    // configure surface (must be called after context creation)
-    if (type == 0) {
-        surface = (WGPUSurface)target;
-        surfaceConfigure(surface, mContext, w, h);
-    } else {
-        targetTexture = (WGPUTexture)target;
-    }
-
     mTargetSurface.stride = w;
     mTargetSurface.w = w;
     mTargetSurface.h = h;
     mTargetSurface.cs = cs;
+    mTargetSurface.premultiplied = true;  // TODO: by default for v1 backward compat. properly addressed later v2 by aligning with actual alpha mode.
+
+    // configure surface (must be called after context creation)
+    if (type == 0) surfaceConfigure((WGPUSurface)target, mContext, w, h, cs);
+    else targetTexture = (WGPUTexture)target;
 
     return Result::Success;
 }

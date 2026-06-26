@@ -78,8 +78,6 @@ struct TestWgEngine
         requestDeviceCallback.userdata1 = &device;
         wgpuAdapterRequestDevice(adapter, &deviceDesc, requestDeviceCallback);
 
-        wgpuAdapterRelease(adapter);
-
         // create texture
         WGPUTextureDescriptor textureDesc = {};
         textureDesc.usage = WGPUTextureUsage_CopySrc | WGPUTextureUsage_CopyDst | WGPUTextureUsage_RenderAttachment;
@@ -100,6 +98,7 @@ struct TestWgEngine
         wgpuTextureRelease(texture);
         wgpuDeviceDestroy(device);
         wgpuDeviceRelease(device);
+        wgpuAdapterRelease(adapter);
         wgpuInstanceRelease(instance);
     }
 

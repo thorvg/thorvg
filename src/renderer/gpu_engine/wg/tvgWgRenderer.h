@@ -74,7 +74,7 @@ private:
     void releaseSurfaceTexture();
 
     void clearTargets();
-    bool surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height);
+    void surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height, ColorSpace cs);
 
     // render tree stacks
     WgRenderTarget mRenderTargetRoot;
