@@ -2,6 +2,7 @@
 
 [binaries]
 cpp = ['clang++', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk']
+objcpp = ['clang++', '-arch', 'arm64', '-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk']
 ar = 'ar'
 strip = 'strip'
 
@@ -12,6 +13,8 @@ has_function_printf = true
 [built-in options]
 cpp_args = ['-miphoneos-version-min=11.0']
 cpp_link_args = ['-miphoneos-version-min=11.0']
+objcpp_args = ['-miphoneos-version-min=11.0']
+objcpp_link_args = ['-miphoneos-version-min=11.0']
 
 [host_machine]
 system = 'darwin'
