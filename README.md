@@ -34,7 +34,7 @@
   <img width="550" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/logo/animated_brand.svg">
 </p>
 
-**Thor Vector Graphics** is a **production-ready** vector graphics engine designed for creating **interactive apps** and **creative tools**. It combines **high performance** with **lightweight efficiency**, as Thor embodies a dual meaning—_symbolizing both immense strength and lightning-fast agility_. Embracing the philosophy of _simplicity leads to reliability_, the ThorVG project provides **intuitive, user-friendly interfaces** while maintaining a **compact footprint** and **minimal overhead**. <br />
+**Thor Vector Graphics** is a **production-ready** vector graphics engine designed for creating **interactive apps** and **creative tools**. It combines **high performance** with **lightweight efficiency**, as Thor embodies a dual meaning—symbolizing both immense strength and lightning-fast agility. Embracing the philosophy of simplicity leads to reliability, the ThorVG project provides easy, **user-friendly interfaces** while maintaining a **compact footprint** and **minimal overhead**. <br />
 <br />
 The following primitives are supported by ThorVG: <br />
  
