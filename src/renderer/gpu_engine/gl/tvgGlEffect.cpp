@@ -109,6 +109,7 @@ GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget*
 struct GlDropShadow: GlGaussianBlur {
     float color[4];
     float offset[2];
+    float dummy1[2];  // padding for std140 block alignment
 };
 
 
