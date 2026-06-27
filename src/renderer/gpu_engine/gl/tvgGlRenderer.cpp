@@ -42,6 +42,17 @@ static constexpr float IDENTITY_VERTEX[] = {-1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f
 static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
 static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
 
+static bool _clipsRejectAll(const Array<RenderData>& clips)
+{
+    ARRAY_FOREACH(p, clips) {
+        auto clip = static_cast<GlShape*>(*p);
+        auto flag = (clip->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
+        if (!clip->geometry.drawable(flag)) return true;
+    }
+
+    return false;
+}
+
 void GlRenderer::disposeTexture(GLuint texId)
 {
     if (!texId) return;
@@ -495,15 +506,14 @@ void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBoun
 {
     if (viewBounds.invalid()) return;
 
-    // Clip is a render boundary even if every clip is skipped below.
+    // Clip is a render boundary.
     mStencilCoverBatch.clear();
 
     // Clip masks must stay inside the target paint view bounds. Fast-tracked
     // Lottie clips narrow geometry.viewport while the pass viewport remains
     // full-size; using the pass viewport here can affect neighboring animations.
-    uint32_t identityVertexOffset = 0;
-    uint32_t identityIndexOffset = 0;
-    auto identityReady = false;
+    auto identityVertexOffset = mGpuBuffer.push((void*)IDENTITY_VERTEX, sizeof(IDENTITY_VERTEX));
+    auto identityIndexOffset = mGpuBuffer.pushIndex((void*)RECT_INDEX, sizeof(RECT_INDEX));
 
     Array<int32_t> clipDepths(clips.count);
     clipDepths.count = clips.count;
@@ -519,13 +529,6 @@ void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBoun
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto sdata = static_cast<GlShape*>(clips[i]);
         auto flag = (sdata->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
-        if (!sdata->geometry.drawable(flag)) continue;
-
-        if (!identityReady) {
-            identityVertexOffset = mGpuBuffer.push((void*)IDENTITY_VERTEX, sizeof(IDENTITY_VERTEX));
-            identityIndexOffset = mGpuBuffer.pushIndex((void*)RECT_INDEX, sizeof(RECT_INDEX));
-            identityReady = true;
-        }
 
         auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
         clipTask->setDrawDepth(clipDepths[i]);
@@ -1153,6 +1156,7 @@ bool GlRenderer::renderImage(void* data)
     bbox.intersect(vp);
     if (bbox.invalid()) return true;
     if (!sdata->geometry.drawable(RenderUpdateFlag::Image)) return true;
+    if (!sdata->clips.empty() && _clipsRejectAll(sdata->clips)) return true;
 
     auto drawDepth = currentPass()->nextDrawDepth();
 
@@ -1204,6 +1208,7 @@ bool GlRenderer::renderShape(RenderData data)
     auto bbox = sdata->geometry.viewport;
     bbox.intersect(currentPass()->getViewport());
     if (bbox.invalid()) return true;
+    if (!sdata->clips.empty() && _clipsRejectAll(sdata->clips)) return true;
 
     int32_t drawDepth1 = 0, drawDepth2 = 0;
     if (sdata->validFill) drawDepth1 = currentPass()->nextDrawDepth();
