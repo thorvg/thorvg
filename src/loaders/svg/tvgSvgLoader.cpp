@@ -1240,12 +1240,16 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     return true;
 }
 
+static bool _parseBox(const char* key, const char* value, Box* box, bool (&isPercentage)[4]);
+static void _recalcBox(const SvgParserContext* ctx, Box* box, bool (&isPercentage)[4]);
 
 static bool _attrParseMaskNode(void* data, const char* key, const char* value)
 {
     auto ctx = (SvgParserContext*)data;
     auto node = ctx->parser->node;
     auto mask = &node->node.mask;
+
+    if (_parseBox(key, value, &mask->box, mask->isPercentage)) return true;
 
     if (STR_AS(key, "style")) {
         return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
@@ -1255,8 +1259,10 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
         _copyId(&node->id, value);
     } else if (STR_AS(key, "class")) {
         _handleCssClassAttr(ctx, node, value);
+    } else if (STR_AS(key, "maskUnits")) {
+        if (STR_AS(value, "userSpaceOnUse")) mask->userSpace = true;
     } else if (STR_AS(key, "maskContentUnits")) {
-        if (STR_AS(value, "objectBoundingBox")) mask->userSpace = false;
+        if (STR_AS(value, "objectBoundingBox")) mask->maskContentUserSpace = false;
     } else if (STR_AS(key, "mask-type")) {
         mask->type = _toMaskType(value);
     } else {
@@ -1471,10 +1477,16 @@ static SvgNode* _createMaskNode(SvgParserContext* ctx, SvgNode* parent, TVG_UNUS
     ctx->parser->node = _createNode(parent, SvgNodeType::Mask);
     if (!ctx->parser->node) return nullptr;
 
-    ctx->parser->node->node.mask.userSpace = true;
-    ctx->parser->node->node.mask.type = SvgMaskType::Luminance;
+    SvgMaskNode& mask = ctx->parser->node->node.mask;
+    mask.maskContentUserSpace = true;
+    mask.type = SvgMaskType::Luminance;
+    // default region per https://www.w3.org/TR/SVG11/masking.html#MaskElement (x/y=-10%, width/height=120%)
+    mask.box = {-0.1f, -0.1f, 1.2f, 1.2f};
+    mask.isPercentage[0] = mask.isPercentage[1] = mask.isPercentage[2] = mask.isPercentage[3] = true;
 
     func(buf, bufLength, _attrParseMaskNode, ctx);
+
+    if (mask.userSpace) _recalcBox(ctx, &mask.box, mask.isPercentage);
 
     return ctx->parser->node;
 }
