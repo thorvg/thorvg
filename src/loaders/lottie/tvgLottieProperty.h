@@ -625,7 +625,7 @@ struct LottiePathSet : LottieProperty
         }
 
         // apply modifiers
-        if (modifier) modifier->path(tmp, out, transform);
+        if (modifier) modifier->path(tmp, out, nullptr);
 
         return true;
     }
