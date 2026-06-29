@@ -1160,7 +1160,7 @@ bool GlRenderer::renderImage(void* data)
     bbox.intersect(vp);
     if (bbox.invalid()) return true;
     if (!sdata->geometry.drawable(RenderUpdateFlag::Image)) return true;
-    if (_skipRender(sdata->clips)) return true;
+    if (_skipRender(sdata->clips)) return true;  // TODO: move this in prepare() stage?
 
     auto drawDepth = currentPass()->nextDrawDepth();
 
@@ -1212,7 +1212,7 @@ bool GlRenderer::renderShape(RenderData data)
     auto bbox = sdata->geometry.viewport;
     bbox.intersect(currentPass()->getViewport());
     if (bbox.invalid()) return true;
-    if (_skipRender(sdata->clips)) return true;
+    if (_skipRender(sdata->clips)) return true;  // TODO: move this in prepare() stage?
 
     int32_t drawDepth1 = 0, drawDepth2 = 0;
     if (sdata->validFill) drawDepth1 = currentPass()->nextDrawDepth();
