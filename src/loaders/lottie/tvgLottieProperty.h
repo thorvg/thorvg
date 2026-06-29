@@ -750,7 +750,7 @@ struct LottieColorStop : LottieProperty
 
         if (fromCnt != toCnt) TVGLOG("LOTTIE", "Tweening has different numbers of color data in consecutive frames.");
 
-        for (uint32_t i = 0; i < std::min(fromCnt, toCnt); ++i) {
+        for (uint32_t i = 0; i < std::min(fromCnt, toCnt); ++i, ++from, ++to) {
             const_cast<Fill::ColorStop*>(from)->offset = tvg::lerp(from->offset, to->offset, tween.progress);
             const_cast<Fill::ColorStop*>(from)->r = tvg::lerp(from->r, to->r, tween.progress);
             const_cast<Fill::ColorStop*>(from)->g = tvg::lerp(from->g, to->g, tween.progress);
