@@ -91,6 +91,10 @@ void WgRenderer::clearTargets()
     if (surface) wgpuSurfaceUnconfigure(surface);
     targetTexture = nullptr;
     surface = nullptr;
+    if (externalView) wgpuTextureViewRelease(externalView);
+    if (externalCommandEncoder) wgpuCommandEncoderRelease(externalCommandEncoder);
+    externalView = nullptr;
+    externalCommandEncoder = nullptr;
     mTargetSurface.stride = 0;
     mTargetSurface.w = 0;
     mTargetSurface.h = 0;
@@ -273,16 +277,22 @@ bool WgRenderer::postRender()
     // flush stage data to gpu
     mCompositor.flush(mContext);
 
-    // create command encoder for drawing
-    WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
-
-    // run rendering (all the fun is here)
     WgSceneTask* sceneTaskRoot = mSceneTaskStack.last();
-    sceneTaskRoot->run(mContext, mCompositor, commandEncoder);
 
-    // execute and release command encoder
-    mContext.submitCommandEncoder(commandEncoder);
-    mContext.releaseCommandEncoder(commandEncoder);
+    if (externalCommandEncoder) {
+        // record into the caller-owned encoder; the caller owns submission
+        sceneTaskRoot->run(mContext, mCompositor, externalCommandEncoder);
+    } else {
+        // create command encoder for drawing
+        WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
+
+        // run rendering (all the fun is here)
+        sceneTaskRoot->run(mContext, mCompositor, commandEncoder);
+
+        // execute and release command encoder
+        mContext.submitCommandEncoder(commandEncoder);
+        mContext.releaseCommandEncoder(commandEncoder);
+    }
 
     // clear the render tasks tree
     mSceneTaskStack.pop();
@@ -378,6 +388,17 @@ bool WgRenderer::sync()
 
     disposeObjects();
 
+    if (externalView) {
+        if (externalCommandEncoder) {
+            mCompositor.blit(mContext, externalCommandEncoder, &mRenderTargetRoot, externalView, mTargetSurface.premultiplied);
+            wgpuCommandEncoderRelease(externalCommandEncoder);
+            externalCommandEncoder = nullptr;
+        }
+        wgpuTextureViewRelease(externalView);
+        externalView = nullptr;
+        return true;
+    }
+
     // if texture buffer used
     WGPUTexture dstTexture = targetTexture;
     if (surface) {
@@ -389,7 +410,7 @@ bool WgRenderer::sync()
     if (!dstTexture) return false;
 
     // insure that surface and offscreen target have the same size
-    if ((wgpuTextureGetWidth(dstTexture) == mRenderTargetRoot.width) && 
+    if ((wgpuTextureGetWidth(dstTexture) == mRenderTargetRoot.width) &&
         (wgpuTextureGetHeight(dstTexture) == mRenderTargetRoot.height)) {
         WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
         WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
@@ -440,6 +461,58 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
     // configure surface (must be called after context creation)
     if (type == 0) surfaceConfigure((WGPUSurface)target, mContext, w, h, cs);
     else targetTexture = (WGPUTexture)target;
+
+    return Result::Success;
+}
+
+Result WgRenderer::targetView(WGPUDevice device, WGPUCommandEncoder commandEncoder, WGPUTextureView view, uint32_t w, uint32_t h, ColorSpace cs)
+{
+    if (cs != ColorSpace::ABGR8888 && cs != ColorSpace::ABGR8888S) return Result::NonSupport;
+
+    // all handles null clears the target; any partial-null combination is an error
+    if (!device && !commandEncoder && !view) {
+        release();
+        return Result::Success;
+    }
+    if (!device || !commandEncoder || !view) return Result::InvalidArguments;
+
+    if (w == 0 || h == 0) return Result::InvalidArguments;
+
+    if (mContext.device != device) {
+        release();
+        // view targets drive a caller-owned encoder, so only the device is needed;
+        // instance/adapter stay null (no surface configuration in this path).
+        mContext.initialize({nullptr, nullptr, device});
+        mRenderTargetPool.initialize(mContext, w, h);
+        mRenderTargetRoot.initialize(mContext, w, h);
+        mCompositor.initialize(mContext, w, h);
+    } else if ((mTargetSurface.w != w) || (mTargetSurface.h != h)) {
+        mRenderTargetPool.release(mContext);
+        mRenderTargetRoot.release(mContext);
+        clearTargets();
+        mRenderTargetPool.initialize(mContext, w, h);
+        mRenderTargetRoot.initialize(mContext, w, h);
+        mCompositor.resize(mContext, w, h);
+    }
+
+    releaseSurfaceTexture();
+    if (surface) wgpuSurfaceUnconfigure(surface);
+    surface = nullptr;
+    targetTexture = nullptr;
+
+    // retain the caller-owned handles until they are consumed in sync()
+    wgpuCommandEncoderAddRef(commandEncoder);
+    wgpuTextureViewAddRef(view);
+    if (externalCommandEncoder) wgpuCommandEncoderRelease(externalCommandEncoder);
+    if (externalView) wgpuTextureViewRelease(externalView);
+    externalCommandEncoder = commandEncoder;
+    externalView = view;
+
+    mTargetSurface.stride = w;
+    mTargetSurface.w = w;
+    mTargetSurface.h = h;
+    mTargetSurface.cs = cs;
+    mTargetSurface.premultiplied = (cs == ColorSpace::ABGR8888);
 
     return Result::Success;
 }
