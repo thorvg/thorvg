@@ -562,7 +562,7 @@ struct TVG_API Paint
      * @param[out] pt4 An array of four points representing the bounding box. The array size must be 4.
      *
      * @retval Result::InsufficientCondition If the paint has not been updated by the canvas.
-     * 
+     *
      * @see Paint::bounds(float* x, float* y, float* w, float* h)
      * @see Canvas::update()
      *
@@ -740,7 +740,7 @@ struct TVG_API Paint
     /**
      * @brief Safely releases a Paint object.
      *
-     * This is the counterpart to the `gen()` API, and releases the given Paint object safely, 
+     * This is the counterpart to the `gen()` API, and releases the given Paint object safely,
      * handling @c nullptr and managing ownership properly.
      *
      * @param[in] paint A Paint object to release.
@@ -957,7 +957,7 @@ struct TVG_API Canvas
      *         This may occur if Canvas::target() has not been set or if draw() is called multiple times
      *         without calling Canvas::sync() in between.
      *
-     * @note Clearing the buffer is unnecessary if the canvas will be fully covered 
+     * @note Clearing the buffer is unnecessary if the canvas will be fully covered
      *       with opaque content. Skipping the clear can improve performance.
      * @note Drawing may be performed asynchronously if the thread count is greater than zero.
      *       To ensure the drawing process is complete, call sync() afterwards.
@@ -1371,7 +1371,7 @@ struct TVG_API Shape : Paint
      * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join, when the @c StrokeJoin::Miter join style is set. The default value is 4.
      *
      * @retval Result::InvalidArgument for @p miterlimit values less than zero.
-     * 
+     *
      * @since 0.11
      */
     Result strokeMiterlimit(float miterlimit) noexcept;
@@ -1472,7 +1472,7 @@ struct TVG_API Shape : Paint
     /**
      * @brief Retrieves the current fill rule used by the shape.
      *
-     * This function returns the fill rule, which determines how the interior 
+     * This function returns the fill rule, which determines how the interior
      * regions of the shape are calculated when it overlaps itself.
      *
      * @see Shape::fillRule(FillRule r)
@@ -1719,7 +1719,7 @@ struct TVG_API Picture : Paint
      *                 This can be used to maintain context or access external resources.
      *
      * @retval Result::InsufficientCondition If the picture is already loaded.
-     * 
+     *
      * @warning This function must be called before @ref Picture::load()
      *          Setting the resolver after loading will have no effect on asset resolution for that asset.
      * @note @p src will be either a font path or a font name. In the case of a font name, @p src will begin with "name:", e.g., "name:FreeSans-Medium".
@@ -1811,8 +1811,8 @@ struct TVG_API Scene : Paint
     /**
      * @brief Adds a paint object to the scene.
      *
-     * Appends a paint object to the scene. If the optional @p at parameter is provided, 
-     * the paint object is inserted immediately before the specified paint in the scene. 
+     * Appends a paint object to the scene. If the optional @p at parameter is provided,
+     * the paint object is inserted immediately before the specified paint in the scene.
      * If @p at is @c nullptr, the paint object is appended to the end of the scene.
      *
      * @param[in] target A pointer to the Paint object to be added to the scene.
@@ -2243,7 +2243,7 @@ struct TVG_API Text : Paint
      *
      * @note If the font data is currently in use, it will not be immediately unloaded.
      * @see Text::load(const char* filename)
-     * 
+     *
      * @since 0.15
      */
     static Result unload(const char* filename) noexcept;
@@ -2458,6 +2458,26 @@ struct TVG_API WgCanvas final : Canvas
      * @see Canvas::sync()
      */
     Result target(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
+
+    /**
+     * @brief Sets a caller-managed WebGPU texture view as the drawing target for the rasterization.
+     *
+     * @param[in] device WGPUDevice, the handle for the wgpu device backing the encoder and view.
+     * @param[in] commandEncoder WGPUCommandEncoder, the encoder ThorVG records into.
+     * @param[in] view WGPUTextureView, the destination view the result is blitted to.
+     * @param[in] w The width of the target.
+     * @param[in] h The height of the target.
+     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c ColorSpace::ABGR8888 and @c ColorSpace::ABGR8888S.
+     *
+     * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
+     * @retval Result::NonSupport In case the wg engine is not supported.
+     *
+     * @note Experimental API
+     *
+     * @see Canvas::viewport()
+     * @see Canvas::sync()
+     */
+    Result targetView(void* device, void* commandEncoder, void* view, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
 
     /**
      * @brief Creates a new WebGPU Canvas object with optional rendering engine settings.

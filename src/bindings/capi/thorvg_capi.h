@@ -679,6 +679,24 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
  */
 TVG_API Tvg_Result tvg_wgcanvas_set_target_with_context(Tvg_Canvas canvas, const Tvg_WgContext* context, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
 
+/**
+ * @brief Sets a caller-managed WebGPU texture view as the drawing target for the rasterization.
+ *
+ * @param[in] canvas The Tvg_Canvas object to set the target for.
+ * @param[in] device WGPUDevice, the handle for the wgpu device backing the encoder and view.
+ * @param[in] command_encoder WGPUCommandEncoder, the encoder ThorVG records into.
+ * @param[in] view WGPUTextureView, the destination view the result is blitted to.
+ * @param[in] w The width of the target.
+ * @param[in] h The height of the target.
+ * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888 and @c TVG_COLORSPACE_ABGR8888S.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
+ * @retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_wgcanvas_set_target_view(Tvg_Canvas canvas, void* device, void* command_encoder, void* view, uint32_t w, uint32_t h, Tvg_Colorspace cs);
+
 /** \} */   // end defgroup ThorVGCapi_WgCanvas
 
 /************************************************************************/
@@ -863,7 +881,7 @@ TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas canvas, int32_t x, int32_t
 /**
  * @brief Safely releases a Tv_Paint object.
  *
- * This is the counterpart to the `new()` API, and releases the given Paint object safely, 
+ * This is the counterpart to the `new()` API, and releases the given Paint object safely,
  * handling @c nullptr and managing ownership properly.
  *
  * @param[in] paint A paint object to release.
@@ -1039,7 +1057,7 @@ TVG_API Tvg_Result tvg_paint_translate(Tvg_Paint paint, float x, float y);
  *
  * @param[in] paint The paint object to be transformed.
  * @param[in] m The 3x3 augmented matrix.
- * 
+ *
  */
 TVG_API Tvg_Result tvg_paint_set_transform(Tvg_Paint paint, const Tvg_Matrix* m);
 
@@ -1660,7 +1678,7 @@ TVG_API Tvg_Result tvg_shape_set_fill_rule(Tvg_Paint paint, Tvg_Fill_Rule rule);
 /**
  * @brief Retrieves the current fill rule used by the shape.
  *
- * This function returns the fill rule, which determines how the interior 
+ * This function returns the fill rule, which determines how the interior
  * regions of the shape are calculated when it overlaps itself.
  *
  * @param[in] paint The shape object.
@@ -2264,8 +2282,8 @@ TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double si
 /**
  * @brief Adds a drop shadow effect to the scene.
  *
- * This function adds a drop shadow with a Gaussian blur to the scene. The shadow 
- * can be customized using color, opacity, angle, distance, blur radius (sigma), 
+ * This function adds a drop shadow with a Gaussian blur to the scene. The shadow
+ * can be customized using color, opacity, angle, distance, blur radius (sigma),
  * and quality parameters.
  *
  * @param[in] scene The scene object.
@@ -2319,7 +2337,7 @@ TVG_API Tvg_Result tvg_scene_add_effect_tint(Tvg_Paint scene, int black_r, int b
 /**
  * @brief Adds a tritone color effect to the scene.
  *
- * This function adds a tritone color effect to the given scene using three sets of RGB values 
+ * This function adds a tritone color effect to the given scene using three sets of RGB values
  * representing shadow, midtone, and highlight colors.
  *
  * @param[in] scene The scene object.
