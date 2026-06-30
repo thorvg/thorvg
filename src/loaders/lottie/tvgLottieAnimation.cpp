@@ -90,6 +90,20 @@ Result LottieAnimation::tween(float from, float to, float progress) noexcept
     return Result::Success;
 }
 
+Result LottieAnimation::tween(float progress) noexcept
+{
+    FETCH_LOADER(Result::InsufficientCondition);
+    if (!loader->tween(progress)) return Result::InsufficientCondition;
+    PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+    return Result::Success;
+}
+
+Result LottieAnimation::tweenTo(float to) noexcept
+{
+    FETCH_LOADER(Result::InsufficientCondition);
+    if (static_cast<LottieLoader*>(loader)->tweenTo(to)) return Result::Success;
+    return Result::InsufficientCondition;
+}
 
 uint32_t LottieAnimation::markersCnt() noexcept
 {

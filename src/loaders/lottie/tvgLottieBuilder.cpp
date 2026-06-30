@@ -29,7 +29,7 @@
 #include "tvgLottieModel.h"
 #include "tvgLottieBuilder.h"
 #include "tvgLottieExpressions.h"
-
+#include "tvgLottieTween.h"
 
 /************************************************************************/
 /* Internal Class Implementation                                        */
@@ -38,7 +38,7 @@
 static bool _buildComposition(LottieComposition* comp, LottieLayer* parent);
 static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx);
 
-static void _dimension3d(LottieTransform* transform, float frameNo, Matrix& m, float angle, Tween& tween, LottieExpressions* exps)
+static void _dimension3d(LottieTransform* transform, float frameNo, Matrix& m, float angle, LottieTween& tween, LottieExpressions* exps)
 {
     auto x = deg2rad(transform->ddd->rx(frameNo, tween, exps));
     auto y = deg2rad(transform->ddd->ry(frameNo, tween, exps));
@@ -86,7 +86,7 @@ static void _dimension3d(LottieTransform* transform, float frameNo, Matrix& m, f
     m.e22 = ri10 * ro01 + ri11 * ro11 + ri12 * ro21;
 }
 
-static void _rotate(LottieTransform* transform, float frameNo, Matrix& m, float angle, Tween& tween, LottieExpressions* exps)
+static void _rotate(LottieTransform* transform, float frameNo, Matrix& m, float angle, LottieTween& tween, LottieExpressions* exps)
 {
     if (transform->ddd) {
         _dimension3d(transform, frameNo, m, angle, tween, exps);
@@ -138,8 +138,7 @@ static void _skew(Matrix* m, float angleDeg, float axisDeg)
     m->e22 = B * e21 + (1.0f + A) * m->e22;
 }
 
-
-static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, uint8_t& opacity, bool autoOrient, Tween& tween, LottieExpressions* exps)
+static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, uint8_t& opacity, bool autoOrient, LottieTween& tween, LottieExpressions* exps)
 {
     tvg::identity(&matrix);
 
@@ -179,7 +178,7 @@ static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, u
 
 void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 {
-    if (!layer || (!tweening() && tvg::equal(layer->cache.frameNo, frameNo))) return;
+    if (!layer || (!tween.active && tvg::equal(layer->cache.frameNo, frameNo))) return;
 
     auto transform = layer->transform;
     auto parent = layer->parent;
@@ -273,8 +272,7 @@ void LottieBuilder::updateGroup(LottieGroup* parent, LottieObject** child, float
     updateChildren(group, frameNo, contexts);
 }
 
-
-static void _update(LottieStroke* stroke, float frameNo, RenderContext* ctx, Tween& tween, LottieExpressions* exps)
+static void _update(LottieStroke* stroke, float frameNo, RenderContext* ctx, LottieTween& tween, LottieExpressions* exps)
 {
     ctx->propagator->strokeWidth(stroke->width(frameNo, tween, exps));
     ctx->propagator->strokeCap(stroke->cap);
@@ -537,9 +535,8 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
 
     if (ctx->repeaters.empty()) {
         _draw(parent, path, ctx);
-        if (path->pathset(frameNo, to<ShapeImpl>(ctx->merging)->rs.path, ctx->transform, tween, exps, ctx->modifiers)) {
-            PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
-        }
+        path->pathset(frameNo, to<ShapeImpl>(ctx->merging)->rs.path, ctx->transform, tween, exps, ctx->modifiers);
+        PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
     } else {
         auto shape = path->pooling();
         shape->reset();
@@ -555,8 +552,7 @@ static void _close(Array<Point>& pts, const Point& p, bool round)
     pts.last() = p;
 }
 
-
-void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx, Tween& tween, LottieExpressions* exps)
+void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx, LottieTween& tween, LottieExpressions* exps)
 {
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
 
@@ -669,8 +665,7 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     if (ctx->modifiers) ctx->modifiers->polystar(to<ShapeImpl>(shape)->rs.path, to<ShapeImpl>(merging)->rs.path, outerRoundness, hasRoundness);
 }
 
-
-void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx, Tween& tween, LottieExpressions* exps)
+void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, float frameNo, Matrix* transform, Shape* merging, RenderContext* ctx, LottieTween& tween, LottieExpressions* exps)
 {
     static constexpr auto POLYGON_MAGIC_NUMBER = 0.25f;
 
@@ -941,16 +936,15 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
     precomp->scene->clip(clipper);
 }
 
-
-void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo, Tween& tween)
+void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo, LottieTween& tween)
 {
     //record & recover the tweening frame number before remapping
-    auto record = tween.frameNo;
-    tween.frameNo = precomp->remap(comp, record, exps);
+    auto record = tween.to;
+    tween.to = precomp->remap(comp, record, exps);
 
     updatePrecomp(comp, precomp, frameNo);
 
-    tween.frameNo = record;
+    tween.to = record;
 }
 
 
@@ -1090,9 +1084,8 @@ Shape* LottieBuilder::textShape(LottieText* text, float frameNo, const TextDocum
     ARRAY_FOREACH(p, glyph->children) {
         auto group = static_cast<LottieGroup*>(*p);
         ARRAY_FOREACH(p, group->children) {
-            if (static_cast<LottiePath*>(*p)->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, nullptr, tween, exps)) {
-                PAINT(shape)->mark(RenderUpdateFlag::Path);
-            }
+            static_cast<LottiePath*>(*p)->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, nullptr, tween, exps);
+            PAINT(shape)->mark(RenderUpdateFlag::Path);
         }
     }
     shape->fill(doc.color.r, doc.color.g, doc.color.b);
@@ -1573,7 +1566,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     switch (layer->type) {
         case LottieLayer::Precomp: {
-            if (!tweening()) updatePrecomp(comp, layer, frameNo);
+            if (!tween.active) updatePrecomp(comp, layer, frameNo);
             else updatePrecomp(comp, layer, frameNo, tween);
             break;
         }
@@ -1752,11 +1745,7 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
 
     comp->clamp(frameNo);
 
-    if (tweening()) {
-        comp->clamp(tween.frameNo);
-        //tweening is not necessary.
-        if (equal(frameNo, tween.frameNo)) offTween();
-    }
+    if (tween.active) comp->clamp(tween.to);
 
     if (exps && comp->expressions) exps->update(comp->timeAtFrame(frameNo));
 

@@ -87,9 +87,45 @@ struct TVG_API LottieAnimation final : Animation
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      *
+     * @see tweenTo(float)
+     *
      * @since 1.0
      */
     Result tween(float from, float to, float progress) noexcept;
+
+    /**
+     * @brief Sets the target frame for dynamic tweening.
+     *
+     * This method starts a dynamic interpolation from the current animation frame
+     * toward @p to. Use tween(float progress) to update the interpolation progress.
+     *
+     * @param[in] to The target frame number of the interpolation.
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     *
+     * @note The dynamic tweening set by this method is discarded when @ref Animation::frame()
+     *       or @ref LottieAnimation::tween(float,float,float) is called.
+     *
+     * @see tween(float)
+     * @note Experimental API
+     */
+    Result tweenTo(float to) noexcept;
+
+    /**
+     * @brief Updates the current tween toward the target frame.
+     *
+     * This method advances the interpolation started by tweenTo() using the
+     * given @p progress value.
+     *
+     * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     * @retval Result::InsufficientCondition If @ref tweenTo() has not been called.
+     *
+     * @see tweenTo()
+     * @note Experimental API
+     */
+    Result tween(float progress) noexcept;
 
     /**
      * @brief Gets the marker count of the animation.
