@@ -591,6 +591,7 @@ void GlGaussianBlurTask::run()
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->fbo));
 
     GL_CHECK(glDisable(GL_BLEND));
+    GL_CHECK(glDepthFunc(GL_ALWAYS));
     if (effect->direction == 0) {
         GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, mDstFbo->fbo));
         GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mDstCopyFbo1->resolvedFbo));
@@ -616,6 +617,7 @@ void GlGaussianBlurTask::run()
         vertTask->addBindResource({ 0, dstCopyTexId0, vertSrcTextureLoc });
         vertTask->run();
     }
+    GL_CHECK(glDepthFunc(GL_GREATER));
     GL_CHECK(glEnable(GL_BLEND));
 }
 
@@ -655,6 +657,7 @@ void GlEffectDropShadowTask::run()
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     
     GL_CHECK(glDisable(GL_BLEND));
+    GL_CHECK(glDepthFunc(GL_ALWAYS));
     // when sigma is 0, no blur is applied, and the original image is used directly as the shadow.
     if (!tvg::zero(effect->sigma)) {
         // horizontal blur
@@ -675,6 +678,7 @@ void GlEffectDropShadowTask::run()
     // run drop shadow effect
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, mDstFbo->fbo));
     GlRenderTask::run();
+    GL_CHECK(glDepthFunc(GL_GREATER));
     GL_CHECK(glEnable(GL_BLEND));
 }
 
@@ -701,6 +705,8 @@ void GlEffectColorTransformTask::run()
 
     // run transform
     GL_CHECK(glDisable(GL_BLEND));
+    GL_CHECK(glDepthFunc(GL_ALWAYS));
     GlRenderTask::run();
+    GL_CHECK(glDepthFunc(GL_GREATER));
     GL_CHECK(glEnable(GL_BLEND));
 }
