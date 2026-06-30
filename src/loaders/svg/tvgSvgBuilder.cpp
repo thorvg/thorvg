@@ -37,6 +37,7 @@
 
 static bool _appendClipShape(SvgParserContext& ctx, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform);
 static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth);
+static Paint* _applyPatternProperty(SvgParserContext& ctx, Shape* vg, SvgNode* node, SvgNode* patternNode, const Box& vBox, const string& svgPath);
 
 static inline bool _isGroupType(SvgNodeType type)
 {
@@ -57,6 +58,11 @@ static Box _bounds(Paint* paint)
 static Box _objectBoundingBox(const Box& ratio, const Box& bounds)
 {
     return {bounds.x + ratio.x * bounds.w, bounds.y + ratio.y * bounds.h, ratio.w * bounds.w, ratio.h * bounds.h};
+}
+
+static inline bool _validBox(const Box& b)
+{
+    return b.w > 0.0f && b.h > 0.0f;
 }
 
 static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
@@ -395,6 +401,32 @@ static Paint* _applyFilter(SvgParserContext& ctx, Paint* paint, const SvgNode* n
     return scene;
 }
 
+static void _applyStroke(SvgStyleProperty* style, Shape* vg, const Box& vBox, const Box& viewport)
+{
+    vg->strokeWidth(style->stroke.width);
+    vg->strokeCap(style->stroke.cap);
+    vg->strokeJoin(style->stroke.join);
+    vg->strokeMiterlimit(style->stroke.miterlimit);
+    vg->strokeDash(style->stroke.dash.array.data, style->stroke.dash.array.count, style->stroke.dash.offset);
+
+    if (style->stroke.paint.none) {
+        vg->strokeWidth(0.0f);
+    } else if (style->stroke.paint.gradient) {
+        auto bBox = style->stroke.paint.gradient->userSpace ? vBox : _bounds(vg);
+        if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
+            vg->strokeFill(_applyLinearGradientProperty(style->stroke.paint.gradient, bBox, viewport, style->stroke.opacity));
+        } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
+            vg->strokeFill(_applyRadialGradientProperty(style->stroke.paint.gradient, bBox, viewport, style->stroke.opacity));
+        }
+    } else if (style->stroke.paint.url) {
+        TVGLOG("SVG", "The stroke's url not supported.");
+    } else if (style->stroke.paint.curColor) {
+        vg->strokeFill(style->color.r, style->color.g, style->color.b, style->stroke.opacity);
+    } else {
+        vg->strokeFill(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
+    }
+}
+
 static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, const Box& vBox, const string& svgPath, bool clip)
 {
     SvgStyleProperty* style = node->style;
@@ -411,6 +443,20 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
             vg->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity));
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
             vg->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity));
+        }
+    } else if (style->fill.paint.pattern) {
+        if (auto patternPaint = _applyPatternProperty(ctx, vg, node, style->fill.paint.pattern, vBox, svgPath)) {
+            vg->fillRule(style->fill.fillRule);
+            vg->order(!style->paintOrder);
+            _applyStroke(style, vg, vBox, ctx.parser->global);
+            auto patternScene = Scene::gen();
+            patternScene->add(patternPaint);
+            patternScene->add(vg);
+            patternScene->opacity(style->opacity);
+            if (node->transform && !clip) patternScene->transform(*node->transform);
+            auto p = _applyFilter(ctx, patternScene, node, vBox, svgPath);
+            p = _applyComposition(ctx, p, node, vBox, svgPath);
+            return _applyBlend(p, node);
         }
     } else if (style->fill.paint.url) {
         TVGLOG("SVG", "The fill's url not supported.");
@@ -431,33 +477,7 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
         return vg;
     }
 
-    //Apply the stroke style property
-    vg->strokeWidth(style->stroke.width);
-    vg->strokeCap(style->stroke.cap);
-    vg->strokeJoin(style->stroke.join);
-    vg->strokeMiterlimit(style->stroke.miterlimit);
-    vg->strokeDash(style->stroke.dash.array.data, style->stroke.dash.array.count, style->stroke.dash.offset);
-
-    //If stroke property is nullptr then do nothing
-    if (style->stroke.paint.none) {
-        vg->strokeWidth(0.0f);
-    } else if (style->stroke.paint.gradient) {
-        auto bBox = style->stroke.paint.gradient->userSpace ? vBox : _bounds(vg);
-        if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-            vg->strokeFill(_applyLinearGradientProperty(style->stroke.paint.gradient, bBox, ctx.parser->global, style->stroke.opacity));
-        } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-            vg->strokeFill(_applyRadialGradientProperty(style->stroke.paint.gradient, bBox, ctx.parser->global, style->stroke.opacity));
-        }
-    } else if (style->stroke.paint.url) {
-        //TODO: Apply the color pointed by url
-        TVGLOG("SVG", "The stroke's url not supported.");
-    } else if (style->stroke.paint.curColor) {
-        //Apply the current style color
-        vg->strokeFill(style->color.r, style->color.g, style->color.b, style->stroke.opacity);
-    } else {
-        //Apply the stroke color
-        vg->strokeFill(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
-    }
+    _applyStroke(style, vg, vBox, ctx.parser->global);
 
     //apply transform after the local space shape bbox for gradient acquisition
     if (node->transform && !clip) vg->transform(*node->transform);
@@ -1064,7 +1084,7 @@ static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, cons
     ARRAY_FOREACH(p, node->child) {
         auto child = *p;
         Paint* paint = nullptr;
-        if (child->type == SvgNodeType::ClipPath || child->type == SvgNodeType::Filter) continue;
+        if (child->type == SvgNodeType::ClipPath || child->type == SvgNodeType::Filter || child->type == SvgNodeType::Pattern) continue;
         if (_isGroupType(child->type)) {
             if (child->type == SvgNodeType::Use) paint = _useBuildHelper(ctx, child, vBox, svgPath, depth + 1);
             else if (!(child->type == SvgNodeType::Symbol && node->type != SvgNodeType::Use)) paint = _sceneBuildHelper(ctx, child, vBox, svgPath, false, depth + 1);
@@ -1087,6 +1107,143 @@ static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, cons
     return (Scene*)_applyBlend(_applyComposition(ctx, _applyFilter(ctx, scene, node, vBox, svgPath), node, vBox, svgPath), node);
 }
 
+static Paint* _buildPatternChild(SvgParserContext& ctx, SvgNode* child, const Box& vBox, const string& svgPath)
+{
+    if (child->type == SvgNodeType::ClipPath || child->type == SvgNodeType::Filter || child->type == SvgNodeType::Pattern) return nullptr;
+    if (_isGroupType(child->type)) {
+        if (child->type == SvgNodeType::Use) return _useBuildHelper(ctx, child, vBox, svgPath, 0);
+        if (child->type != SvgNodeType::Symbol) return _sceneBuildHelper(ctx, child, vBox, svgPath, false, 0);
+        return nullptr;
+    }
+    if (child->type == SvgNodeType::Image) return _imageBuildHelper(ctx, child, vBox, svgPath);
+    if (child->type == SvgNodeType::Text) return _textBuildHelper(ctx, child, vBox, svgPath);
+    if (child->type == SvgNodeType::Mask) return nullptr;
+    return _shapeBuildHelper(ctx, child, vBox, svgPath);
+}
+
+static Paint* _buildBaseTile(SvgParserContext& ctx, SvgNode* patternNode, const Box& vBox, const string& svgPath)
+{
+    Paint* paint = nullptr;
+    Scene* tileScene = nullptr;
+    ARRAY_FOREACH(p, patternNode->child) {
+        auto child = _buildPatternChild(ctx, *p, vBox, svgPath);
+        if (!child) continue;
+        if (!paint && !tileScene) {
+            paint = child;
+            continue;
+        }
+        if (!tileScene) {
+            tileScene = Scene::gen();
+            tileScene->add(paint);
+            paint = nullptr;
+        }
+        tileScene->add(child);
+    }
+    if (tileScene) return tileScene;
+    return paint;
+}
+
+static bool _patternCellRect(const SvgPatternNode& pat, const Box& bbox, Box& cell)
+{
+    if (pat.patternUserSpace) {
+        cell = pat.box;
+    } else {
+        cell.x = bbox.x + pat.box.x * bbox.w;
+        cell.y = bbox.y + pat.box.y * bbox.h;
+        cell.w = pat.box.w * bbox.w;
+        cell.h = pat.box.h * bbox.h;
+    }
+    return _validBox(cell);
+}
+
+static Matrix _patternContentTransform(const SvgPatternNode& pat, const Box& bbox, const Box& cell)
+{
+    if (pat.hasViewBox) {
+        auto sx = cell.w / pat.vbox.w;
+        auto sy = cell.h / pat.vbox.h;
+        return {sx, 0, -pat.vbox.x * sx, 0, sy, -pat.vbox.y * sy, 0, 0, 1};
+    }
+    if (!pat.contentUserSpace) return {bbox.w, 0, 0, 0, bbox.h, 0, 0, 0, 1};
+    return tvg::identity();
+}
+
+static Box _transformBounds(const Box& bounds, const Matrix& matrix)
+{
+    auto lt = Point{bounds.x, bounds.y} * matrix;
+    auto lb = Point{bounds.x, bounds.y + bounds.h} * matrix;
+    auto rt = Point{bounds.x + bounds.w, bounds.y} * matrix;
+    auto rb = Point{bounds.x + bounds.w, bounds.y + bounds.h} * matrix;
+
+    auto min = tvg::min(tvg::min(lt, lb), tvg::min(rt, rb));
+    auto max = tvg::max(tvg::max(lt, lb), tvg::max(rt, rb));
+
+    return {min.x, min.y, max.x - min.x, max.y - min.y};
+}
+
+static void _patternTileGrid(const Box& cell, const Box& bbox, const Matrix* transform, float& startX, float& startY, int& cols, int& rows)
+{
+    auto box = bbox;
+    Matrix inv;
+    if (transform && tvg::inverse(transform, &inv)) box = _transformBounds(bbox, inv);
+
+    startX = cell.x + floorf((box.x - cell.x) / cell.w) * cell.w;
+    startY = cell.y + floorf((box.y - cell.y) / cell.h) * cell.h;
+    cols = (int)ceilf((box.x + box.w - startX) / cell.w);
+    rows = (int)ceilf((box.y + box.h - startY) / cell.h);
+}
+
+static Paint* _applyPatternProperty(SvgParserContext& ctx, Shape* vg, SvgNode* node, SvgNode* patternNode, const Box& vBox, const string& svgPath)
+{
+    if (!patternNode || patternNode->child.empty()) return nullptr;
+    auto& pat = patternNode->node.pattern;
+
+    if (pat.applying) {
+        TVGLOG("SVG", "Circular pattern reference detected; skipped.");
+        return nullptr;
+    }
+
+    auto bbox = _bounds(vg);
+    if (!_validBox(bbox)) return nullptr;
+
+    Box cell;
+    if (!_patternCellRect(pat, bbox, cell)) return nullptr;
+
+    float startX, startY;
+    int cols, rows;
+    _patternTileGrid(cell, bbox, pat.transform, startX, startY, cols, rows);
+
+    auto contentTransform = _patternContentTransform(pat, bbox, cell);
+
+    pat.applying = true;
+
+    auto base = _buildBaseTile(ctx, patternNode, vBox, svgPath);
+    auto tilesScene = Scene::gen();
+    if (base) {
+        for (int r = 0; r < rows; ++r) {
+            for (int c = 0; c < cols; ++c) {
+                auto copy = base->duplicate();
+                if (!copy) continue;
+                Matrix tileTransform = Matrix{1, 0, startX + c * cell.w, 0, 1, startY + r * cell.h, 0, 0, 1} * contentTransform;
+                if (pat.transform) tileTransform = *pat.transform * tileTransform;
+                copy->transform(tileTransform * copy->transform());
+                tilesScene->add(copy);
+            }
+        }
+        Paint::rel(base);
+    }
+
+    auto clipper = Shape::gen();
+    if (!_recognizeShape(node, clipper)) {
+        pat.applying = false;
+        Paint::rel(tilesScene);
+        Paint::rel(clipper);
+        return nullptr;
+    }
+    tilesScene->clip(clipper);
+
+    pat.applying = false;
+    return tilesScene;
+}
 
 static void _updateInvalidViewSize(Scene* scene, Box& vBox, float& w, float& h, SvgViewFlag viewFlag)
 {
