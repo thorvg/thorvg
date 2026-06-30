@@ -25,55 +25,22 @@
 
 #include "tvgMediaLoader.h"
 
-// TODO: WebMediaLoader is a delegator for web binding support.
-
 struct WebMediaLoader : MediaLoader
 {
-    WebMediaLoader() :
-        MediaLoader(FileType::Media) {}
-    ~WebMediaLoader(){};
+    WebMediaLoader();
+    ~WebMediaLoader();
 
-    Result play() override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
+    using Loader::open;
+    Result open(uint32_t w, uint32_t h, float duration, ColorSpace cs);
+    Result update(const uint32_t* frame, float time);
 
-    Result pause() override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result stop() override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result seek(float seconds) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result loop(bool on) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result volume(float volume) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
-
-    Result mute(bool on) override
-    {
-        // TODO:
-        return Result::NonSupport;
-    }
+    Result play() override;
+    Result pause() override;
+    Result stop() override;
+    Result seek(float seconds) override;
+    Result loop(bool on) override;
+    Result volume(float volume) override;
+    Result mute(bool on) override;
 };
 
 #endif  //_TVG_WEB_LOADER_H_

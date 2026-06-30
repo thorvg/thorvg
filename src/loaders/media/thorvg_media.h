@@ -70,6 +70,15 @@ struct TVG_API Video final
     Result loop(bool on) noexcept;
 
     /**
+     * @brief Retrieves whether repeated playback is enabled.
+     *
+     * @return @c true if looping, @c false otherwise (or if the video is not loaded).
+     *
+     * @see Video::loop(bool)
+     */
+    bool loop() const noexcept;
+
+    /**
      * @brief Retrieves a picture instance associated with this video player instance.
      *
      * This function provides access to the picture instance that can be added to the designated canvas,
