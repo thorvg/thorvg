@@ -207,7 +207,7 @@ RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegi
 static GlRenderTask* drawPrimitiveGeometry(GlProgram* stencilProgram, GlRenderTask* task, const GlGeometry& geometry,
                                            GlStencilCoverBatch& batch, GlRenderPass* pass,
                                            GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, GlStencilMode stencilMode,
-                                           int32_t depth, const Matrix& viewMatrix, const RenderRegion& passViewport, const RenderColor* color,
+                                           bool clipped, int32_t depth, const Matrix& viewMatrix, const RenderRegion& passViewport, const RenderColor* color,
                                            const RenderRegion& viewBounds, RenderRegion& stencilBounds, const GlGeometryBuffer*& stencilBuffer, uint32_t*& stencilIndices, bool& merge)
 {
     if (stencilMode == GlStencilMode::None) {
@@ -218,7 +218,7 @@ static GlRenderTask* drawPrimitiveGeometry(GlProgram* stencilProgram, GlRenderTa
         return nullptr;
     }
 
-    return batch.prepare(stencilProgram, pass, task, geometry, gpuBuffer, flag, stencilMode, depth, viewMatrix, passViewport, color, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
+    return batch.prepare(stencilProgram, pass, task, geometry, gpuBuffer, flag, stencilMode, clipped, depth, viewMatrix, passViewport, color, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
 }
 
 static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, RenderUpdateFlag flag)
@@ -315,12 +315,13 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     const GlGeometryBuffer* stencilBuffer = nullptr;
     uint32_t* stencilIndices = nullptr;
     bool merge = false;
+    auto clipped = !sdata.clips.empty();
     auto pass = currentPass();
-    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, vp, &color, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
+    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, clipped, depth, viewMatrix, vp, &color, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
     // Keep BlendRegion on the existing solid-shape blend UBO slot.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
 
-    if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, stencilBounds, viewBounds, stencilBuffer, stencilIndices);
+    if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, clipped, stencilBounds, viewBounds, stencilBuffer, stencilIndices);
     else pass->addRenderTask(task);
 }
 
@@ -386,7 +387,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     uint32_t* stencilIndices = nullptr;
     bool merge = false;
     auto pass = currentPass();
-    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, depth, viewMatrix, vp, nullptr, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
+    auto clipped = !sdata.clips.empty();
+    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, clipped, depth, viewMatrix, vp, nullptr, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
 
     // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
@@ -501,7 +503,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
-    if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, stencilBounds, viewBounds, stencilBuffer, stencilIndices);
+    if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, clipped, stencilBounds, viewBounds, stencilBuffer, stencilIndices);
     else pass->addRenderTask(task);
 }
 

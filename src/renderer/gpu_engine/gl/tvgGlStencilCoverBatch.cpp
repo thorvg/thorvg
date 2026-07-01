@@ -125,13 +125,14 @@ void GlStencilCoverBatch::clear()
     vertexCount = 0;
     indexOffset = 0;
     indexCount = 0;
+    clipped = false;
     ySorted = false;
     open = false;
 }
 
 GlRenderTask* GlStencilCoverBatch::prepare(GlProgram* stencilProgram, GlRenderPass* pass, GlRenderTask* coverTask,
                                            const GlGeometry& geometry, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag,
-                                           GlStencilMode stencilMode, int32_t depth, const Matrix& viewMatrix,
+                                           GlStencilMode stencilMode, bool clipped, int32_t depth, const Matrix& viewMatrix,
                                            const RenderRegion& passViewport, const RenderColor* color,
                                            const RenderRegion& viewBounds, RenderRegion& geometryBounds,
                                            const GlGeometryBuffer*& stencilBuffer, uint32_t*& stencilIndices,
@@ -159,7 +160,7 @@ GlRenderTask* GlStencilCoverBatch::prepare(GlProgram* stencilProgram, GlRenderPa
     stencilBuffer = stroke ? &geometry.stroke : &geometry.fill;
     // Cache this before writing stencil indices; the batch needs the
     // pre-mutation answer to keep the index stream mergeable.
-    merge = mergeable(pass, stencilMode, geometryBounds, stencilBuffer);
+    merge = mergeable(pass, stencilMode, clipped, geometryBounds, stencilBuffer);
 
     auto stencilTask = new GlRenderTask(stencilProgram);
     stencilTask->setViewMatrix(viewMatrix);
@@ -198,13 +199,17 @@ void GlStencilCoverBatch::addBounds(const RenderRegion& bounds)
 }
 
 
-bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const
+bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const
 {
     if (!open) return false;
     // A new current pass is a hard batch boundary; fail before touching the old pass/task pair.
     if (this->pass != pass) return false;
     if (pass->lastTask() != task) return false;
     if (this->mode != mode) return false;
+    // drawClip() clears the batch for every clipped paint, so different clip
+    // chains cannot continue the same batch. Only clipped vs unclipped needs
+    // an extra merge guard here.
+    if (this->clipped != clipped) return false;
     if (bounds.invalid()) return false;
     if (this->bounds.count >= BATCH_REGION_MAX_COUNT) return false;
     auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
@@ -215,7 +220,7 @@ bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode
 }
 
 
-void GlStencilCoverBatch::draw(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, bool merge, GlStencilMode mode, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices)
+void GlStencilCoverBatch::draw(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, bool merge, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices)
 {
     if (!stencil || !cover) {
         delete stencil;
@@ -224,11 +229,11 @@ void GlStencilCoverBatch::draw(GlRenderPass* pass, GlRenderTask* stencil, GlRend
     }
 
     if (merge) this->append(stencil, cover, bounds, viewBounds, stencilBuffer, stencilIndices);
-    else emitSingle(pass, stencil, cover, mode, bounds, viewBounds, stencilBuffer);
+    else emitSingle(pass, stencil, cover, mode, clipped, bounds, viewBounds, stencilBuffer);
 }
 
 
-void GlStencilCoverBatch::emitSingle(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer)
+void GlStencilCoverBatch::emitSingle(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer)
 {
     auto task = new GlStencilCoverTask(stencil, cover, mode);
     pass->addRenderTask(task);
@@ -236,6 +241,7 @@ void GlStencilCoverBatch::emitSingle(GlRenderPass* pass, GlRenderTask* stencil, 
     this->pass = pass;
     this->task = task;
     this->mode = mode;
+    this->clipped = clipped;
     ySorted = pass->getViewport().sh() > pass->getViewport().sw();
     coverViewBounds = viewBounds;
     if (this->bounds.reserved > BATCH_REGION_RESET_THRESHOLD) this->bounds.reset();
