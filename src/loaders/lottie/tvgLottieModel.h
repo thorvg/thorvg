@@ -1108,6 +1108,7 @@ struct LottieLayer : LottieGroup
     Array<LottieMask*> masks;
     Array<LottieEffect*> effects;
     LottieLayer* matteTarget = nullptr;
+    BBox* srcRect = nullptr;  // used by expressions (sourceRectAtTime)
 
     LottieRenderPooler<tvg::Shape> statical;  //static pooler for solid fill and clipper
 
