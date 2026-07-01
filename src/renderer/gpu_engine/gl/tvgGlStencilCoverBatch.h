@@ -37,16 +37,16 @@ public:
     void clear();
     GlRenderTask* prepare(GlProgram* stencilProgram, GlRenderPass* pass, GlRenderTask* coverTask,
                           const GlGeometry& geometry, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag,
-                          GlStencilMode stencilMode, int32_t depth, const Matrix& viewMatrix,
+                          GlStencilMode stencilMode, bool clipped, int32_t depth, const Matrix& viewMatrix,
                           const RenderRegion& passViewport, const RenderColor* color,
                           const RenderRegion& viewBounds, RenderRegion& geometryBounds,
                           const GlGeometryBuffer*& stencilBuffer, uint32_t*& stencilIndices,
                           bool& merge);
-    bool mergeable(const GlRenderPass* pass, GlStencilMode mode, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const;
-    void draw(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, bool merge, GlStencilMode mode, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
+    bool mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const;
+    void draw(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, bool merge, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
 
 private:
-    void emitSingle(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer);
+    void emitSingle(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer);
     void append(GlRenderTask* stencil, GlRenderTask* cover, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
     void setStencilMergeTarget(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer);
     bool merge(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
@@ -64,6 +64,7 @@ private:
     uint32_t vertexCount = 0;
     uint32_t indexOffset = 0;
     uint32_t indexCount = 0;
+    bool clipped = false;
     bool ySorted = false;
     bool open = false;
 };
