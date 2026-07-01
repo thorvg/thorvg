@@ -1062,6 +1062,11 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
     bool mergeable() override { return allowMerge; }
     LottieProperty* property(uint16_t ix) override;
 
+    LottieObject* child(size_t idx)
+    {
+        return (idx >= 0 && idx < children.count) ? children[idx] : nullptr;
+    }
+
     LottieObject* content(unsigned long id)
     {
         if (this->id == id) return this;
