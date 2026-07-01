@@ -187,3 +187,76 @@ TEST_CASE("Lottie Segment", "[tvgAnimation]")
 }
 
 #endif
+
+#ifdef THORVG_GIF_LOADER_SUPPORT
+
+TEST_CASE("GIF Frames Counting", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init(1) == Result::Success);
+    {
+        auto animation = unique_ptr<Animation>(Animation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        REQUIRE(picture->load(TEST_DIR "/invalid.gif") == Result::InvalidArguments);
+        REQUIRE(picture->load(TEST_DIR "/test.gif") == Result::Success);
+
+        REQUIRE(animation->totalFrame() == Approx(4).margin(0.001f));
+        REQUIRE(animation->curFrame() == 0);
+        REQUIRE(animation->duration() == Approx(0.4f).margin(0.001f));  // 4 frames at 10 fps
+
+        REQUIRE(animation->frame(2.0f) == Result::Success);
+        REQUIRE(animation->curFrame() == Approx(2.0f));
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("GIF Segment", "[tvgAnimation]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<Animation>(Animation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        float begin, end;
+
+        // Segment by range before loaded
+        REQUIRE(animation->segment(0, 0.5) == Result::InsufficientCondition);
+
+        // Get current segment before loaded
+        REQUIRE(animation->segment(&begin, &end) == Result::InsufficientCondition);
+
+        // Animation load
+        REQUIRE(picture->load(TEST_DIR "/test.gif") == Result::Success);
+
+        // Get current segment before segment
+        REQUIRE(animation->segment(&begin, &end) == Result::Success);
+        REQUIRE(begin == 0.0f);
+        REQUIRE(end == animation->totalFrame());
+
+        // Segment by range
+        REQUIRE(animation->segment(1.0f, 3.0f) == Result::Success);
+
+        // Get current segment
+        REQUIRE(animation->segment(&begin, &end) == Result::Success);
+        REQUIRE(begin == 1.0f);
+        REQUIRE(end == 3.0f);
+
+        //the segment is mapped onto the entire playback range
+        REQUIRE(animation->totalFrame() == Approx(2.0f).margin(0.001f));
+        REQUIRE(animation->duration() == Approx(0.2f).margin(0.001f));  //2 frames at 10 fps
+
+        //frame numbers are reported relative to the segment begin
+        REQUIRE(animation->frame(1.0f) == Result::Success);
+        REQUIRE(animation->curFrame() == Approx(1.0f).margin(0.001f));
+
+        // Segment by invalid range
+        REQUIRE(animation->segment(3.0f, 1.0f) == Result::InvalidArguments);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+#endif

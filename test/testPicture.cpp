@@ -458,3 +458,91 @@ TEST_CASE("Load WEBP file and render", "[tvgPicture]")
 
 #endif
 
+#ifdef THORVG_GIF_LOADER_SUPPORT
+
+TEST_CASE("Load GIF file from path", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    // Invalid file
+    REQUIRE(picture->load("invalid.gif") == Result::InvalidArguments);
+
+    REQUIRE(picture->load(TEST_DIR "/test.gif") == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+
+    REQUIRE(w == 32);
+    REQUIRE(h == 32);
+
+    Paint::rel(picture);
+}
+
+TEST_CASE("Load GIF file from data", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    // Open file
+    ifstream file(TEST_DIR "/test.gif", ios::in | ios::binary);
+    REQUIRE(file.is_open());
+    auto begin = file.tellg();
+    file.seekg(0, ios::end);
+    auto size = file.tellg() - begin;
+    auto data = (char*)malloc(size);
+    file.seekg(0, ios::beg);
+    file.read(data, size);
+    file.close();
+
+    REQUIRE(picture->load(data, size, "") == Result::Success);
+    REQUIRE(picture->load(data, size, "gif", "", true) == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 32);
+    REQUIRE(h == 32);
+
+    free(data);
+
+    Paint::rel(picture);
+}
+
+TEST_CASE("Load interlaced GIF file", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+
+    REQUIRE(picture->load(TEST_DIR "/test_interlaced.gif") == Result::Success);
+
+    float w, h;
+    REQUIRE(picture->size(&w, &h) == Result::Success);
+    REQUIRE(w == 16);
+    REQUIRE(h == 16);
+
+    Paint::rel(picture);
+}
+
+TEST_CASE("Load GIF file and render", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+
+        uint32_t buffer[100 * 100] = {};
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
+
+        auto picture = Picture::gen();
+        REQUIRE(picture);
+
+        REQUIRE(picture->load(TEST_DIR "/test.gif") == Result::Success);
+        REQUIRE(picture->opacity(192) == Result::Success);
+        REQUIRE(picture->scale(5.0) == Result::Success);
+
+        REQUIRE(canvas->add(picture) == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+#endif
