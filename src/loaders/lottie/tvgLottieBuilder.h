@@ -51,6 +51,7 @@ struct RenderText
     Point cursor{};
     int line = 0, space = 0, idx = 0;
     float lineSpace = 0.0f, totalLineSpace = 0.0f;
+    bool perpToPath = false;
     char *p;  //current processing character
     int nChars;
     float scale;
