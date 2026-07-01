@@ -426,7 +426,7 @@ float LottieLoader::duration()
 }
 
 
-void LottieLoader::sync()
+bool LottieLoader::sync()
 {
     done();
 
@@ -434,6 +434,7 @@ void LottieLoader::sync()
         if (comp) comp->clear();
         run(0);
     }
+    return true;
 }
 
 
