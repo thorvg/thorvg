@@ -172,7 +172,8 @@ enum struct SvgStyleFlags
     StrokeDashOffset = 0x40000,
     Filter = 0x80000,
     BlendMode = 0x100000,
-    TextAnchor = 0x200000
+    TextAnchor = 0x200000,
+    AlignmentBaseline = 0x400000
 };
 
 constexpr bool operator&(SvgStyleFlags a, SvgStyleFlags b)
@@ -530,6 +531,18 @@ struct SvgFilter
     SvgNode* node;
 };
 
+enum class SvgBaseline : uint8_t
+{
+    Auto = 0,
+    Alphabetic,
+    BeforeEdge,
+    AfterEdge,
+    Central,
+    Middle,
+    Hanging,
+    Mathematical
+};
+
 struct SvgStyleProperty
 {
     SvgStyleFill fill;
@@ -541,6 +554,7 @@ struct SvgStyleProperty
     SvgColor color;
     char* cssClass;
     float textAnchor;  // 0=start, 0.5=middle, 1=end
+    SvgBaseline alignmentBaseline;
     SvgStyleFlags flags;
     SvgStyleFlags flagsImportance; //indicates the importance of the flag - if set, higher priority is applied (https://drafts.csswg.org/css-cascade-4/#importance)
     bool curColorSet;

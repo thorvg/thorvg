@@ -928,7 +928,37 @@ static char* _processText(const char* text, SvgXmlSpace space)
     return processed;
 }
 
-static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const Matrix* transform)
+static void _applyTextBaseline(Text* text, SvgBaseline baseline, Matrix& transform)
+{
+    if (baseline == SvgBaseline::Auto || baseline == SvgBaseline::Alphabetic) return;
+
+    TextMetrics tm;
+    if (text->metrics(tm) != Result::Success) return;  // ascent > 0, descent < 0
+
+    auto shift = 0.0f;
+    // baseline geometry: https://www.w3.org/TR/css-inline-3/#baseline-types
+    // hanging/mathematical are synthesized from the ascent when the font provides no baseline table,
+    // see https://www.w3.org/TR/css-inline-3/#baseline-synthesis-fonts
+    switch (baseline) {
+        case SvgBaseline::BeforeEdge: shift = tm.ascent; break;
+        case SvgBaseline::AfterEdge: shift = tm.descent; break;
+        case SvgBaseline::Central: shift = 0.5f * (tm.ascent + tm.descent); break;
+        case SvgBaseline::Middle: {  // half the x-height (top extent of 'x')
+            GlyphMetrics gm;
+            if (text->metrics("x", gm) == Result::Success && gm.max.y > 0.0f) shift = 0.5f * gm.max.y;
+            else shift = 0.27f * tm.ascent;  // fallback when the 'x' glyph is missing
+            break;
+        }
+        case SvgBaseline::Hanging: shift = 0.8f * tm.ascent; break;
+        case SvgBaseline::Mathematical: shift = 0.5f * tm.ascent; break;
+        default: return;
+    }
+
+    translateR(&transform, {0.0f, shift});
+    text->transform(transform);
+}
+
+static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const Matrix* transform, SvgBaseline baseline)
 {
     if (!textNode->text) return nullptr;
 
@@ -950,6 +980,8 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     auto textTransform = transform ? *transform : tvg::identity();
     translateR(&textTransform, {textNode->x + textNode->dx, textNode->y + textNode->dy - tm.ascent});
     text->transform(textTransform);
+
+    _applyTextBaseline(text, baseline, textTransform);
 
     return text;
 }
@@ -1009,7 +1041,7 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
             if (textNode.x == FLT_MAX) textNode.x = textPos.x;
             if (textNode.y == FLT_MAX) textNode.y = textPos.y;
 
-            auto text = _buildText(&textNode, xmlSpace, nullptr);
+            auto text = _buildText(&textNode, xmlSpace, nullptr, child->style->alignmentBaseline);
             if (text) {
                 text->align(child->style->textAnchor, 0.0f);
                 _updatePos(text, textNode, child->style->textAnchor, textPos);
@@ -1035,7 +1067,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
     if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
 
     if (!_hasPositionedTspan(node, 0)) {
-        auto text = _buildText(textNode, xmlSpace, node->transform);
+        auto text = _buildText(textNode, xmlSpace, node->transform, node->style->alignmentBaseline);
         if (!text) return nullptr;
         text->align(node->style->textAnchor, 0.0f);
         _applyTextFill(node->style, text, vBox, ctx.parser->global);
@@ -1049,7 +1081,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
 
     Point textPos = {textNode->x, textNode->y};
 
-    if (auto text = _buildText(textNode, xmlSpace, nullptr)) {
+    if (auto text = _buildText(textNode, xmlSpace, nullptr, node->style->alignmentBaseline)) {
         text->align(node->style->textAnchor, 0.0f);
         _updatePos(text, *textNode, node->style->textAnchor, textPos);
         _applyTextFill(node->style, text, vBox, ctx.parser->global);
