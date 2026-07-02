@@ -150,6 +150,11 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         to->flags |= SvgStyleFlags::TextAnchor;
         if (from->flagsImportance & SvgStyleFlags::TextAnchor) to->flagsImportance |= SvgStyleFlags::TextAnchor;
     }
+    if (((from->flags & SvgStyleFlags::AlignmentBaseline) && (overwrite || !(to->flags & SvgStyleFlags::AlignmentBaseline))) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::AlignmentBaseline)) {
+        to->alignmentBaseline = from->alignmentBaseline;
+        to->flags |= SvgStyleFlags::AlignmentBaseline;
+        if (from->flagsImportance & SvgStyleFlags::AlignmentBaseline) to->flagsImportance |= SvgStyleFlags::AlignmentBaseline;
+    }
 }
 
 
