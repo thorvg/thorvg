@@ -1105,6 +1105,24 @@ static void _handleTextAnchorAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* nod
     else node->style->textAnchor = 0.0f;
 }
 
+static SvgBaseline _toBaseline(const char* str)
+{
+    if (STR_AS(str, "alphabetic")) return SvgBaseline::Alphabetic;
+    if (STR_AS(str, "before-edge") || STR_AS(str, "text-before-edge")) return SvgBaseline::BeforeEdge;
+    if (STR_AS(str, "after-edge") || STR_AS(str, "text-after-edge") || STR_AS(str, "ideographic")) return SvgBaseline::AfterEdge;
+    if (STR_AS(str, "central")) return SvgBaseline::Central;
+    if (STR_AS(str, "middle")) return SvgBaseline::Middle;
+    if (STR_AS(str, "hanging")) return SvgBaseline::Hanging;
+    if (STR_AS(str, "mathematical")) return SvgBaseline::Mathematical;
+    return SvgBaseline::Auto;
+}
+
+static void _handleAlignmentBaselineAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    node->style->flags |= SvgStyleFlags::AlignmentBaseline;
+    node->style->alignmentBaseline = _toBaseline(value);
+}
+
 static void _handleCssClassAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
@@ -1128,6 +1146,8 @@ static constexpr struct
     styleMethod tagHandler;
     SvgStyleFlags flag;
 } styleTags[] = {
+    // hyphenated names below are macro identifiers, not subtraction; keep them intact
+    // clang-format off
     STYLE_DEF(color, Color, SvgStyleFlags::Color),
     STYLE_DEF(fill, Fill, SvgStyleFlags::Fill),
     STYLE_DEF(fill-rule, FillRule, SvgStyleFlags::FillRule),
@@ -1149,7 +1169,9 @@ static constexpr struct
     STYLE_DEF(paint-order, PaintOrder, SvgStyleFlags::PaintOrder),
     STYLE_DEF(filter, Filter, SvgStyleFlags::Filter),
     STYLE_DEF(mix-blend-mode, MixBlendMode, SvgStyleFlags::BlendMode),
-    STYLE_DEF(text-anchor, TextAnchor, SvgStyleFlags::TextAnchor)};
+    STYLE_DEF(text-anchor, TextAnchor, SvgStyleFlags::TextAnchor),
+    STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline)};
+// clang-format on
 
 static SvgXmlSpace _toXmlSpace(const char* str)
 {
@@ -2990,6 +3012,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::Display) to->display = from->display;
     if (from->flags & SvgStyleFlags::BlendMode) to->blendMode = from->blendMode;
     if (from->flags & SvgStyleFlags::TextAnchor) to->textAnchor = from->textAnchor;
+    if (from->flags & SvgStyleFlags::AlignmentBaseline) to->alignmentBaseline = from->alignmentBaseline;
 
     //Fill
     to->fill.flags = (to->fill.flags | from->fill.flags);
