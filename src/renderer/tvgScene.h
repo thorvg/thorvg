@@ -140,6 +140,8 @@ struct SceneImpl : Scene
 
         if (!incomposite && impl.cmpFlag) {
             cmp = renderer->target(bounds(), renderer->colorSpace(), impl.cmpFlag);
+            //A degenerate region must not drop the required composition (children would rasterize unblended). Retry with the viewport.
+            if (!cmp) cmp = renderer->target(renderer->viewport(), renderer->colorSpace(), impl.cmpFlag);
             renderer->beginComposite(cmp, MaskMethod::None, opacity);
         }
 
