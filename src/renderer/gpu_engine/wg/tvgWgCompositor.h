@@ -25,7 +25,6 @@
 
 #include "tvgWgRenderTarget.h"
 #include "tvgWgRenderData.h"
-#include "tvgWgTextureMgr.h"
 
 struct WgCompose: RenderCompositor
 {
@@ -45,11 +44,6 @@ private:
     WgStageBufferSolidColor stageBufferSolidColor{};
     WgStageBufferUniform<WgShaderTypePaintSettings> stageBufferPaint;
     WgStageBufferUniform<WgShaderTypeMat4x4fBlock> stageBufferViewMat;
-    // texture preprocess
-    WGPUTexture texStaging{};
-    WGPUTextureView texViewStaging{};
-    WGPUBindGroup bindGroupTexStaging{};
-    Array<WgTextureEntry*> texPreprocess;
     // global stencil/depth buffer handles
     WGPUTexture texDepthStencil{};
     WGPUTextureView texViewDepthStencil{};

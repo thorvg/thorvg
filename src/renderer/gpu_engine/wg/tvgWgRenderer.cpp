@@ -211,7 +211,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     if (needsImage) {
         rdp->releaseTexture(mTextures, mContext);
         auto* entry = mTextures.retain(mContext, surface, filter, refreshTexture);
-        rdp->setImage(entry, surface, filter, mTextures.stamp);
+        rdp->setImage(entry->texture, entry->bindGroup, surface, filter, mTextures.stamp);
     }
 
     if (flags & RenderUpdateFlag::Clip) rdp->updateClips(clips);
@@ -608,7 +608,8 @@ bool WgRenderer::preUpdate()
 
 bool WgRenderer::postUpdate()
 {
-    return true;
+    if (mContext.invalid()) return false;
+    return mTextures.flushPreprocess(mContext);
 }
 
 
