@@ -914,13 +914,6 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
 
     auto text = Text::gen();
 
-    Matrix textTransform;
-    if (transform) textTransform = *transform;
-    else textTransform = tvg::identity();
-
-    translateR(&textTransform, {textNode->x + textNode->dx, textNode->y + textNode->dy - textNode->fontSize});
-    text->transform(textTransform);
-
     //TODO: handle def values of font and size as used in a system?
     auto size = textNode->fontSize * 0.75f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     if (text->font(textNode->fontFamily) != Result::Success) {
@@ -931,6 +924,12 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     auto processedText = _processText(textNode->text, xmlSpace);
     text->text(processedText);
     tvg::free(processedText);
+
+    TextMetrics tm;
+    text->metrics(tm);
+    auto textTransform = transform ? *transform : tvg::identity();
+    translateR(&textTransform, {textNode->x + textNode->dx, textNode->y + textNode->dy - tm.ascent});
+    text->transform(textTransform);
 
     return text;
 }
