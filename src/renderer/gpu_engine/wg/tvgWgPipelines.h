@@ -49,8 +49,6 @@ private:
     // shader effects
     WGPUShaderModule shader_shadow;
     WGPUShaderModule shader_effects;
-    // compute shaders
-    WGPUShaderModule shader_tex_preprocess{};
 
     // layouts helpers
     WGPUPipelineLayout layout_stencil{};
@@ -72,8 +70,6 @@ private:
     // layouts effects
     WGPUPipelineLayout layout_shadow{};
     WGPUPipelineLayout layout_effects{};
-    // layouts computes
-    WGPUPipelineLayout layout_tex_preprocess{};
 public:
     // pipelines stencil markup
     WGPURenderPipeline nonzero{};
@@ -114,12 +110,7 @@ public:
     WGPURenderPipeline fill_effect{};
     WGPURenderPipeline tint_effect{};
     WGPURenderPipeline tritone_effect{};
-    // compute shaders
-    WGPUComputePipeline compute_alpha_premult_shuffle{};
-    WGPUComputePipeline compute_alpha_premult{};
-    WGPUComputePipeline compute_color_shuffle{};
 private:
-    void releaseComputeHandles(WgContext& context);
     void releaseGraphicHandles(WgContext& context);
     WGPUShaderModule createShaderModule(WGPUDevice device, const char* label, const char* code);
     WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, const uint32_t bindGroupLayoutsCount);
@@ -130,11 +121,6 @@ private:
         const WGPUVertexBufferLayout *vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
         const WGPUColorWriteMask writeMask, const WGPUTextureFormat colorTargetFormat, const WGPUBlendState blendState,
         const WGPUDepthStencilState depthStencilState, const WGPUMultisampleState multisampleState);
-    WGPUComputePipeline createComputePipeline(
-        WGPUDevice device, const char* pipelineLabel,
-        const WGPUShaderModule shaderModule, const char* entryPoint,
-        const WGPUPipelineLayout pipelineLayout);
-    void releaseComputePipeline(WGPUComputePipeline& computePipeline);
     void releaseRenderPipeline(WGPURenderPipeline& renderPipeline);
     void releasePipelineLayout(WGPUPipelineLayout& pipelineLayout);
     void releaseShaderModule(WGPUShaderModule& shaderModule);

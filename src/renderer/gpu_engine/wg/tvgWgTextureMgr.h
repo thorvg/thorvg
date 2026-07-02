@@ -23,8 +23,17 @@
 #ifndef _TVG_WG_TEXTURE_MGR_H_
 #define _TVG_WG_TEXTURE_MGR_H_
 
+#include "tvgArray.h"
 #include "tvgWgCommon.h"
 #include "tvgInlist.h"
+
+enum WgTexPrep : uint8_t
+{
+    PrepNone = 0,
+    Premultiply = 1 << 0,
+    Bgr = 1 << 1,
+    Queued = 1 << 2
+};
 
 struct WgTextureEntry
 {
@@ -32,16 +41,15 @@ struct WgTextureEntry
     WGPUTexture texture{};
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
-    uint8_t channelSize{};
-    bool premultiplied = true;
-    bool shuffled{};
+    WgTexPrep preprocess = PrepNone;
     uint32_t refCnt = 0;
 };
 
 struct WgTextureMgr
 {
-    WgTextureEntry* retain(WgContext& context, const RenderSurface* surface, FilterMethod filter, bool refreshTexture);
+    const WgTextureEntry* retain(WgContext& context, const RenderSurface* surface, FilterMethod filter, bool refreshTexture);
     void release(WgContext& context, const RenderSurface* surface, FilterMethod filter, WGPUTexture texture);
+    bool flushPreprocess(WgContext& context);
     void clear(WgContext& context);
 
     struct SurfaceEntry
@@ -58,6 +66,16 @@ struct WgTextureMgr
     static WGPUTextureFormat textureFormat(const RenderSurface* surface);
 
     tvg::Inlist<SurfaceEntry> surfaces;
+    WGPUShaderModule prepShader{};
+    WGPUPipelineLayout prepLayout{};
+    WGPUComputePipeline prepPremultBgr{};
+    WGPUComputePipeline prepPremult{};
+    WGPUTexture prepStaging{};
+    WGPUTextureView prepStagingView{};
+    WGPUBindGroup prepStagingBindGroup{};
+    Array<WgTextureEntry*> prepRequests;
+    uint32_t prepStagingWidth = 0;
+    uint32_t prepStagingHeight = 0;
     uint16_t stamp = 1;
 };
 

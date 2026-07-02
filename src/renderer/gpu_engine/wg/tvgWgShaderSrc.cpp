@@ -964,26 +964,20 @@ const char* cShaderSrc_Texture_Preprocess = R"(
 @group(1) @binding(0) var uTextureDst : texture_storage_2d<rgba8unorm, write>;
 
 @compute @workgroup_size(16, 16, 1)
-fn cs_main_premult_shuffle(@builtin(global_invocation_id) gid: vec3<u32>) {
+fn cs_main_premult_bgr(@builtin(global_invocation_id) gid: vec3<u32>) {
     let size = textureDimensions(uTextureSrc);
     if (gid.x >= size.x || gid.y >= size.y) { return; }
-    let Sc = textureLoad(uTextureSrc, gid.xy, 0);
-    textureStore(uTextureDst, gid.xy, vec4f(Sc.bgr * Sc.a, Sc.a));
+    let pos = vec2<i32>(gid.xy);
+    let Sc = textureLoad(uTextureSrc, pos, 0);
+    textureStore(uTextureDst, pos, vec4f(Sc.bgr * Sc.a, Sc.a));
 }
 
 @compute @workgroup_size(16, 16, 1)
 fn cs_main_premult(@builtin(global_invocation_id) gid: vec3<u32>) {
     let size = textureDimensions(uTextureSrc);
     if (gid.x >= size.x || gid.y >= size.y) { return; }
-    let Sc = textureLoad(uTextureSrc, gid.xy, 0);
-    textureStore(uTextureDst, gid.xy, vec4f(Sc.rgb * Sc.a, Sc.a));
-}
-
-@compute @workgroup_size(16, 16, 1)
-fn cs_main_shuffle(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let size = textureDimensions(uTextureSrc);
-    if (gid.x >= size.x || gid.y >= size.y) { return; }
-    let Sc = textureLoad(uTextureSrc, gid.xy, 0);
-    textureStore(uTextureDst, gid.xy, Sc.bgra);
+    let pos = vec2<i32>(gid.xy);
+    let Sc = textureLoad(uTextureSrc, pos, 0);
+    textureStore(uTextureDst, pos, vec4f(Sc.rgb * Sc.a, Sc.a));
 }
 )";

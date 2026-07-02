@@ -164,6 +164,8 @@ void WgBindGroupLayouts::initialize(WGPUDevice device)
     const WGPUShaderStage visibility_frag = WGPUShaderStage_Fragment | WGPUShaderStage_Compute;
     const WGPUSamplerBindingLayout sampler = { .type = WGPUSamplerBindingType_Filtering };
     const WGPUTextureBindingLayout texture = { .sampleType = WGPUTextureSampleType_Float, .viewDimension = WGPUTextureViewDimension_2D };
+    // Preprocessing uses storage binding. BGRA8Unorm render targets are not the
+    // issue; BGRA8Unorm storage requires an optional WebGPU feature.
     const WGPUStorageTextureBindingLayout storageTextureWO { .access = WGPUStorageTextureAccess_WriteOnly, .format = WGPUTextureFormat_RGBA8Unorm, .viewDimension = WGPUTextureViewDimension_2D };
     const WGPUBufferBindingLayout bufferUniform { .type = WGPUBufferBindingType_Uniform };
 
