@@ -936,12 +936,11 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
 
 static void _updatePos(Text* text, const SvgTextNode& textNode, float anchor, Point& textPos)
 {
-    auto advance = _bounds(text).w;
+    auto advance = 0.0f;
     if (auto utf8 = text->text()) {
         GlyphMetrics gm;
-        if (text->metrics(utf8, gm) == Result::Success) advance += gm.min.x;
         while (utf8) {
-            if (text->metrics(utf8, gm, &utf8) == Result::Success) advance += gm.advance - gm.max.x;
+            if (text->metrics(utf8, gm, &utf8) == Result::Success) advance += gm.advance;
             else break;
         }
     }
