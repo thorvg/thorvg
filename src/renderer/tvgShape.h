@@ -129,7 +129,7 @@ struct ShapeImpl : Shape
         }
         //Keep this for legacy. loaders still depend on this logic, remove it if possible.
         if (fallback) {
-            BBox box = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
+            BBox box;
             if (!rs.path.bounds(obb ? nullptr : &m, box)) return false;
             if (rs.stroke) {
                 //Use geometric mean for feathering.

@@ -617,12 +617,12 @@ bool SfntLoader::metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& ou
 
     // if no info, calculate it manually
     if (glyph->bbox.zero()) {
-        glyph->bbox.init();
-        glyph->path.bounds(nullptr, glyph->bbox);
-        // convert y since sfnt y coordinates origin is reverted
-        auto temp = glyph->bbox.min.y;
-        glyph->bbox.min.y = -glyph->bbox.max.y;
-        glyph->bbox.max.y = -temp;
+        if (glyph->path.bounds(nullptr, glyph->bbox)) {
+            // convert y since sfnt y coordinates origin is reverted
+            auto temp = glyph->bbox.min.y;
+            glyph->bbox.min.y = -glyph->bbox.max.y;
+            glyph->bbox.max.y = -temp;
+        }
     }
     out.min = glyph->bbox.min * scale;
     out.max = glyph->bbox.max * scale;
