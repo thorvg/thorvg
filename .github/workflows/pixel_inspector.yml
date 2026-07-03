@@ -6,7 +6,7 @@ permissions:
   contents: read
 
 env:
-  THORVG_PIXEL_GOLDEN_REF: v1.0.6
+  THORVG_PIXEL_GOLDEN_REF: v1.0.7
   WGPU_NATIVE_VERSION: v27.0.4.0
 
 jobs:
