@@ -265,15 +265,12 @@ SfntGlyphMetrics* SfntLoader::request(uint32_t code)
     if (code == 0) return nullptr;
 
     auto it = glyphs.find(code);
-    if (it == glyphs.end()) {
-        auto it = glyphs.emplace(code, SfntGlyphMetrics{}).first;
-        auto rtgm = &it->second;
-        if (reader->convert(*rtgm, code, rtgm->path)) return rtgm;
-        TVGERR("SFNT", "invalid glyph id, codepoint(0x%x)", code);
-        glyphs.erase(it);
-        return nullptr;
-    }
-    return &it->second;
+    if (it) return &it->val;
+    auto& rtgm = glyphs[code];
+    if (reader->convert(rtgm, code, rtgm.path)) return &rtgm;
+
+    TVGERR("SFNT", "invalid glyph id, codepoint(0x%x)", code);
+    return nullptr;
 }
 
 void SfntLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out)

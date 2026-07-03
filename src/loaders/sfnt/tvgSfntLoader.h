@@ -22,7 +22,7 @@
 #ifndef _TVG_SFNT_LOADER_H_
 #define _TVG_SFNT_LOADER_H_
 
-#include <unordered_map>
+#include "tvgMap.h"
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 #include "tvgSfntReader.h"
@@ -39,7 +39,7 @@ struct SfntLoader : public FontLoader
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     void* mapping = nullptr;
 #endif
-    unordered_map<uint32_t, SfntGlyphMetrics> glyphs;  // glyph cache. key: codepoint
+    Map<uint32_t, SfntGlyphMetrics> glyphs;  // glyph cache. key: codepoint
     SfntReader* reader = nullptr;
     char* text = nullptr;
     bool nomap = false;
