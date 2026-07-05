@@ -647,6 +647,66 @@ static void _get(float& begin, float& end)
 }
 
 
+Point RenderPath::pointAt(float at, float& angle) const
+{
+    auto cleng = 0.0f;
+    auto p = pts.data;
+    auto c = cmds.data;
+    Bezier bz{};
+    Point pos{}, start{};
+    auto line = true;
+
+    for (uint32_t i = 0; i < cmds.count; ++i, ++c) {
+        switch (*c) {
+            case PathCommand::MoveTo: {
+                pos = start = *p++;
+                continue;
+            }
+            case PathCommand::LineTo: {
+                bz.start = *(p - 1);
+                bz.end = *p++;
+                line = true;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                bz = {*(p - 1), *p, *(p + 1), *(p + 2)};
+                p += 3;
+                line = false;
+                break;
+            }
+            case PathCommand::Close: {
+                bz.start = *(p - 1);
+                bz.end = start;
+                line = true;
+                break;
+            }
+        }
+        auto len = line ? length(bz.start, bz.end) : bz.length();
+        if (tvg::zero(len)) continue;
+
+        //the target lies on this segment
+        if (at <= cleng + len) {
+            if (line) {
+                angle = tvg::atan(bz.end - bz.start);
+                return bz.start + (bz.end - bz.start) * ((at - cleng) / len);
+            }
+            if (at < cleng) {  //ahead of the path
+                angle = deg2rad(bz.angle(0.0001f));
+                return bz.start + Point{cosf(angle), sinf(angle)} * (at - cleng);
+            }
+            auto t = bz.at(at - cleng, len);
+            angle = deg2rad(bz.angle(t));
+            return bz.at(t);
+        }
+        cleng += len;
+        angle = line ? tvg::atan(bz.end - bz.start) : deg2rad(bz.angle(0.999f));
+        pos = bz.end;
+    }
+    //beyond the end of the path
+    return pos + Point{cosf(angle), sinf(angle)} * (at - cleng);
+}
+
+
 bool RenderTrimPath::trim(const RenderPath& in, RenderPath& out) const
 {
     if (in.pts.count < 2 || tvg::zero(begin - end)) return false;

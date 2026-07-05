@@ -35,13 +35,15 @@ namespace tvg
 struct TextImpl : Text
 {
     Paint::Impl impl;
-    Shape* shape;   //text shape
+    Shape* shape;        //text shape
     FontLoader* loader = nullptr;
     FontMetrics fm;
+    RenderPath path;     //text path
     char* utf8 = nullptr;
     uint32_t utf8len = 0;
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
+    float offset = 0.0f;
     bool updated = false;
 
     TextImpl() : impl(Paint::Impl(this)), shape(Shape::gen())
@@ -118,9 +120,9 @@ struct TextImpl : Text
     {
         if (!loader) return false;
         if (updated) {
-            if (loader->get(fm, utf8, utf8len, to<ShapeImpl>(shape)->rs.path)) {
-                loader->transform(shape, fm, italicShear);
-            }
+            auto& out = to<ShapeImpl>(shape)->rs.path;
+            auto ret = path.empty() ? loader->get(fm, utf8, utf8len, out) : loader->get(fm, utf8, utf8len, path, offset, out);
+            if (ret) loader->transform(shape, fm, italicShear);
             updated = false;
         }
         return true;
@@ -164,6 +166,16 @@ struct TextImpl : Text
     {
         fm.box = {w, h};
         updated = true;
+    }
+
+    void layout(const RenderPath& path, float offset)
+    {
+        this->path.clear();
+        this->path.cmds.push(path.cmds);
+        this->path.pts.push(path.pts);
+        this->offset = offset;
+        updated = true;
+        impl.mark(RenderUpdateFlag::Path);
     }
 
     Result spacing(float letter, float line)
@@ -235,6 +247,9 @@ struct TextImpl : Text
         dup->utf8len = utf8len;
         dup->italicShear = italicShear;
         dup->outlineWidth = outlineWidth;
+        dup->path.cmds.push(path.cmds);
+        dup->path.pts.push(path.pts);
+        dup->offset = offset;
         dup->updated = true;
 
         return text;
