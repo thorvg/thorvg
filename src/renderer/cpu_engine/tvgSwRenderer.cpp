@@ -124,7 +124,7 @@ struct SwShapeTask : SwTask
     {
         auto strokeWidth = validStrokeWidth(clipper);
         auto updateShape = flags[0] & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
-        auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
+        auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform));
 
         //Shape
         if (updateShape) {
