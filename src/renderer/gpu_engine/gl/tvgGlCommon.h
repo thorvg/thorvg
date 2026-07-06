@@ -133,8 +133,6 @@ struct GlShape
   GLuint texId = 0;
   const RenderSurface* texSource = nullptr;
   FilterMethod texFilter = FilterMethod::Bilinear;
-  uint32_t texFlipY = 0;
-  ColorSpace texColorSpace = ColorSpace::ABGR8888;
   GlGeometry geometry;
   Array<RenderData> clips;
   uint16_t texStamp = 0;  // Tracks TextureMgr::stamp ownership of texId.
