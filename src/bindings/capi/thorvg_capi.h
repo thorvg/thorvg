@@ -346,7 +346,7 @@ typedef enum
 /**
  * @brief Defines the image filtering method used during image scaling or transformation.
  *
- * @note Experimental API
+ * @since 1.1
  */
 typedef enum
 {
@@ -969,7 +969,7 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint);
  * @see tvg_accessor_generate_id()
  * @see tvg_paint_set_id()
  *
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint);
 
@@ -985,7 +985,7 @@ TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint);
  * @see tvg_accessor_generate_id()
  * @see tvg_paint_get_id()
  *
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API Tvg_Result tvg_paint_set_id(Tvg_Paint paint, uint32_t id);
 
@@ -2110,7 +2110,7 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
  * @param[in] method The filtering method to apply. Default is @c TVG_FILTER_METHOD_BILINEAR.
  *
  * @see Tvg_Filter_Method
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method method);
 
@@ -2504,9 +2504,9 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
  * @return The total number of lines.
  *
  * @see tvg_text_wrap_mode()
- * @note Experimental API
+ * @since 1.1
  */
- TVG_API uint32_t tvg_text_line_count(Tvg_Paint text);
+TVG_API uint32_t tvg_text_line_count(Tvg_Paint text);
 
 /**
  * @brief Set the spacing scale factors for text layout.
@@ -3032,7 +3032,7 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name);
  * @see tvg_picture_set_accessible()
  *
  * @note This function is only available within Accessor callbacks registered via @ref tvg_accessor_set().
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API const char* tvg_accessor_get_name(Tvg_Accessor accessor, uint32_t id);
 
@@ -3136,9 +3136,9 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
  *
  * @retval TVG_RESULT_INVALID_ARGUMENT In case @c nullptr is passed as the argument or @c idx is out of range.
  *
- * @since 1.0
+ * @deprecated see tvg_lottie_animation_get_marker_info()
  */
-TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
+TVG_API TVG_DEPRECATED Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
 
 /**
  * @brief Retrieves marker information by index.
@@ -3156,7 +3156,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
  *
  * @see tvg_lottie_animation_get_markers_cnt()
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end);
 

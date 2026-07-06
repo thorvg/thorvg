@@ -193,11 +193,10 @@ enum struct FillRule : uint8_t
     EvenOdd      ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
 };
 
-
 /**
  * @brief Defines the image filtering method used during image scaling or transformation.
  *
- * @note Experimental API
+ * @since 1.1
  */
 enum struct FilterMethod : uint8_t
 {
@@ -1741,7 +1740,7 @@ struct TVG_API Picture : Paint
      * @return Always returns @c Result::Success.
      *
      * @see FilterMethod
-     * @note Experimental API
+     * @since 1.1
      */
     Result filter(FilterMethod method) noexcept;
 
@@ -2050,7 +2049,7 @@ struct TVG_API Text : Paint
      * @return The total number of lines.
      *
      * @see Text::wrap()
-     * @since Experimental API
+     * @since 1.1
      */
     uint32_t lines() noexcept;
 
@@ -2431,11 +2430,11 @@ struct TVG_API WgCanvas final : Canvas
      *
      * @warning Regardless of the value of @p cs, this target API uses the default alpha mode.
      *
-     * @since 1.0
-     *
      * @see WgCanvas::target(const Context&, void*, uint32_t, uint32_t, ColorSpace, int)
      * @see Canvas::viewport()
      * @see Canvas::sync()
+     *
+     * @since 1.0
      */
     Result target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
 
@@ -2452,10 +2451,10 @@ struct TVG_API WgCanvas final : Canvas
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the wg engine is not supported.
      *
-     * @note Experimental API
-     *
      * @see Canvas::viewport()
      * @see Canvas::sync()
+     *
+     * @note Experimental API
      */
     Result target(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
 
@@ -2824,8 +2823,8 @@ struct TVG_API Accessor
      * @see Accessor::set()
      * @see Picture::accessible
      *
-     * @note This function is only availble within Accessor callbacks registered via @ref Accessor::set().
-     * @note Experimental API
+     * @note This function is only available within Accessor callbacks registered via @ref Accessor::set().
+     * @since 1.1
      */
     const char* name(uint32_t id) noexcept;
 
