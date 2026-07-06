@@ -145,9 +145,9 @@ struct TVG_API LottieAnimation final : Animation
      * @retval The name of marker when succeed, @c nullptr otherwise.
      *
      * @see LottieAnimation::markersCnt()
-     * @since 1.0
+     * @deprecated see marker(uint32_t, float*, float*)
      */
-    const char* marker(uint32_t idx) noexcept;
+    TVG_DEPRECATED const char* marker(uint32_t idx) noexcept;
 
     /**
      * @brief Retrieves the name and frame range of a marker by index.
@@ -161,7 +161,7 @@ struct TVG_API LottieAnimation final : Animation
      * @return The name of the marker on success, or @c nullptr otherwise.
      *
      * @see LottieAnimation::markersCnt()
-     * @note Experimental API
+     * @since 1.1
      */
     const char* marker(uint32_t idx, float* begin, float* end) noexcept;
 
@@ -242,9 +242,10 @@ struct TVG_API LottieAnimation final : Animation
      * @retval Result::InsufficientCondition The animation has not been loaded.
      *
      * @note To disable audio notifications, pass @c nullptr as @p func.
-     * @note Experimental API.
      *
      * @see LottieAudioResolver
+     *
+     * @note Experimental API
      */
     Result resolver(std::function<void(const LottieAudioResolver& info, void* data)> func, void* data) noexcept;
 

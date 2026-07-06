@@ -1254,27 +1254,19 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
-
-TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name)
+TVG_API TVG_DEPRECATED Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name)
 {
-#ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    if (animation && name) {
-        *name = reinterpret_cast<LottieAnimation*>(animation)->marker(idx);
-        if (!(*name)) return TVG_RESULT_INVALID_ARGUMENT;
-        return TVG_RESULT_SUCCESS;
-    }
-    return TVG_RESULT_INVALID_ARGUMENT;
-#endif
-    return TVG_RESULT_NOT_SUPPORTED;
+    if (!name) return TVG_RESULT_INVALID_ARGUMENT;  // for backward compat.
+    return tvg_lottie_animation_get_marker_info(animation, idx, name, nullptr, nullptr);
 }
 
 TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    const char* n = nullptr;
-    if (animation) n = reinterpret_cast<LottieAnimation*>(animation)->marker(idx, begin, end);
-    if (name) *name = n;
-    if (n) return TVG_RESULT_SUCCESS;
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    auto ret = reinterpret_cast<LottieAnimation*>(animation)->marker(idx, begin, end);
+    if (name) *name = ret;
+    if (ret) return TVG_RESULT_SUCCESS;
     auto markerCnt = reinterpret_cast<LottieAnimation*>(animation)->markersCnt();
     if (markerCnt > 0 && idx >= markerCnt) return TVG_RESULT_INVALID_ARGUMENT;
     return TVG_RESULT_INSUFFICIENT_CONDITION;

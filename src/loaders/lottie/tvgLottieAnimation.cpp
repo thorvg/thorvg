@@ -111,8 +111,7 @@ uint32_t LottieAnimation::markersCnt() noexcept
     return loader->markersCnt();
 }
 
-
-const char* LottieAnimation::marker(uint32_t idx) noexcept
+TVG_DEPRECATED const char* LottieAnimation::marker(uint32_t idx) noexcept
 {
     return marker(idx, nullptr, nullptr);
 }
