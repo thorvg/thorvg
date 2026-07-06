@@ -333,10 +333,7 @@ const char* IMAGE_VERT_SHADER = TVG_COMPOSE_SHADER(
 
 const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
     layout(std140) uniform ColorInfo {                                                      \n
-        int format;                                                                         \n
-        int flipY;                                                                          \n
-        int opacity;                                                                        \n
-        int dummy;                                                                          \n
+        ivec4 params;                                                                       \n
     } uColorInfo;                                                                           \n
     uniform sampler2D uTexture;                                                             \n
     in vec2 vUV;                                                                            \n
@@ -344,20 +341,7 @@ const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
                                                                                             \n
     void main()                                                                             \n
     {                                                                                       \n
-        vec2 uv = vUV;                                                                      \n
-        if (uColorInfo.flipY == 1) { uv.y = 1.0 - uv.y; }                                   \n
-        vec4 color = texture(uTexture, uv);                                                 \n
-        vec4 result;                                                                        \n
-        if (uColorInfo.format == 0) { /* FMT_ABGR8888 */                                    \n
-            result = color;                                                                 \n
-        } else if (uColorInfo.format == 1) { /* FMT_ARGB8888 */                             \n
-            result = color.bgra;                                                            \n
-        } else if (uColorInfo.format == 2) { /* FMT_ABGR8888S */                            \n
-            result = vec4(color.rgb * color.a, color.a);                                    \n
-        } else if (uColorInfo.format == 3) { /* FMT_ARGB8888S */                            \n
-            result = vec4(color.bgr * color.a, color.a);                                    \n
-        }                                                                                   \n
-        FragColor = result * float(uColorInfo.opacity) / 255.0;                             \n
+        FragColor = texture(uTexture, vUV) * float(uColorInfo.params.x) / 255.0;             \n
    }                                                                                        \n
 );
 
@@ -716,10 +700,7 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 
 const char* BLEND_SCENE_FRAG_HEADER = R"(
 layout(std140) uniform ColorInfo {
-    int format;
-    int flipY;
-    int opacity;
-    int dummy;
+    ivec4 params;
 } uColorInfo;
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
@@ -738,7 +719,7 @@ void getFragData() {
     // fill fragment data
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
-    d.So = float(uColorInfo.opacity) / 255.0;
+    d.So = float(uColorInfo.params.x) / 255.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
     if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }
@@ -781,10 +762,7 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 
 const char* BLEND_SCENE_FRAG_HEADER = R"(
 layout(std140) uniform ColorInfo {
-    int format;
-    int flipY;
-    int opacity;
-    int dummy;
+    ivec4 params;
 } uColorInfo;
 
 layout(std140) uniform BlendRegion {
@@ -809,7 +787,7 @@ void getFragData() {
     // fill fragment data
     d.Sc = colorSrc.rgb;
     d.Sa = colorSrc.a;
-    d.So = float(uColorInfo.opacity) / 255.0;
+    d.So = float(uColorInfo.params.x) / 255.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
     if (d.Sa > 0.0) {d.Sc = d.Sc / d.Sa; }

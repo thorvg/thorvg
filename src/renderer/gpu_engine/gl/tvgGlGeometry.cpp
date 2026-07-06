@@ -251,10 +251,10 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
         fill.vertex.push(v);
     };
 
-    appendVertex(leftTop, 0.f, 1.f);
-    appendVertex(leftBottom, 0.f, 0.f);
-    appendVertex(rightTop, 1.f, 1.f);
-    appendVertex(rightBottom, 1.f, 0.f);
+    appendVertex(leftTop, 0.f, 0.f);
+    appendVertex(leftBottom, 0.f, 1.f);
+    appendVertex(rightTop, 1.f, 0.f);
+    appendVertex(rightBottom, 1.f, 1.f);
 
     fill.index.push(0);
     fill.index.push(1);

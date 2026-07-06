@@ -23,15 +23,20 @@
 #ifndef _TVG_GL_TEXTURE_MGR_H_
 #define _TVG_GL_TEXTURE_MGR_H_
 
+#include "tvgArray.h"
 #include "tvgGlCommon.h"
 #include "tvgInlist.h"
 #include "tvgGlStateCache.h"
+
+struct GlProgram;
 
 struct TextureMgr
 {
     GLuint retain(GlStateCache& state, const RenderSurface* surface, FilterMethod filter);
     GLuint release(const RenderSurface* surface, FilterMethod filter, GLuint texId);
     void clear();
+    void upload(GlStateCache& state, GLuint texId, const RenderSurface* surface, FilterMethod filter, bool initialize = false);
+    bool flushPreprocess(GlStateCache& state, GLint restoreFbo);
 
     struct Entry
     {
@@ -47,11 +52,28 @@ struct TextureMgr
         Entry nearest;
     };
 
+    struct Request
+    {
+        GLuint texId;
+        uint32_t width;
+        uint32_t height;
+        int32_t flags;
+    };
+
     SurfaceEntry* find(const RenderSurface* surface);
-    static void upload(GlStateCache& state, GLuint texId, const RenderSurface* surface, FilterMethod filter);
+    void requestPreprocess(GLuint texId, uint32_t width, uint32_t height, int32_t flags);
 
     tvg::Inlist<SurfaceEntry> surfaces;  // Cached textures keyed by RenderSurface.
     uint16_t stamp = 1;                  // Non-zero rolling stamp for stale texture ownership checks.
+    GLint prepFlagsLoc = -1;
+    GlProgram* prepProgram = nullptr;
+    GLuint prepStagingFbo = 0;
+    GLuint prepTargetFbo = 0;
+    GLuint prepStagingTex = 0;
+    GLuint prepVao = 0;
+    uint32_t prepStagingWidth = 0;
+    uint32_t prepStagingHeight = 0;
+    Array<Request> prepRequests;
 };
 
 #endif /* _TVG_GL_TEXTURE_MGR_H_ */
