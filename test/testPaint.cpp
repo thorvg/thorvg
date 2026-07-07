@@ -313,19 +313,21 @@ TEST_CASE("Intersection", "[tvgPaint]")
         REQUIRE(canvas->draw() == Result::Success);
 
         // Case1. Fully contained
-        REQUIRE(shape->intersects(0, 0, 200, 200) == true);
+        REQUIRE(shape->intersects(0, 0, 200, 200, true) == true);
 
         // Case2. Partially overlapping
-        REQUIRE(shape->intersects(25, 25, 50, 50) == true);
-        REQUIRE(shape->intersects(125, 125, 50, 50) == true);
+        REQUIRE(shape->intersects(25, 25, 50, 50, false) == true);
+        REQUIRE(shape->intersects(125, 125, 50, 50, false) == true);
+
+        shape->visible(false);
 
         // Case3. Edge-touching
-        REQUIRE(shape->intersects(49, 49, 2, 2) == true);
-        REQUIRE(shape->intersects(149, 149, 2, 2) == true);
+        REQUIRE(shape->intersects(49, 49, 2, 2, true) == false);
+        REQUIRE(shape->intersects(149, 149, 2, 2, false) == true);
 
         // Case4. Fully separated
-        REQUIRE(shape->intersects(0, 0, 25, 25) == false);
-        REQUIRE(shape->intersects(175, 175, 25, 25) == false);
+        REQUIRE(shape->intersects(0, 0, 25, 25, true) == false);
+        REQUIRE(shape->intersects(175, 175, 25, 25, true) == false);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

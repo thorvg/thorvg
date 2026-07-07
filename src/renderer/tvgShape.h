@@ -241,7 +241,7 @@ struct ShapeImpl : Shape
         return Result::Success;
     }
 
-    bool intersects(const RenderRegion& region)
+    bool intersects(const RenderRegion& region, TVG_UNUSED bool visibleOnly)
     {
         if (!impl.rd || !impl.renderer) return false;
         return impl.renderer->intersectsShape(impl.rd, region);
