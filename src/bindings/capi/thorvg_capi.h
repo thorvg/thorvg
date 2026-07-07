@@ -1085,6 +1085,11 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity
 TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
 
 /**
+ * @deprecated see tvg_paint_intersects_region()
+ */
+TVG_API TVG_DEPRECATED bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
+
+/**
  * @brief Checks whether a given region intersects the filled area of the paint.
  *
  * This function determines whether the specified rectangular region—defined by (`x`, `y`, `w`, `h`)—
@@ -1096,21 +1101,22 @@ TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
  * The paint must be updated in a Canvas beforehand—typically after the Canvas has been
  * drawn and synchronized.
  *
- * @param[in] paint The shape object to be tested.
+ * @param[in] paint The paint object to be tested.
  * @param[in] x The x-coordinate of the top-left corner of the test region.
  * @param[in] y The y-coordinate of the top-left corner of the test region.
- * @param[in] w The width of the region to test. Must be greater than 0; defaults to 1.
- * @param[in] h The height of the region to test. Must be greater than 0; defaults to 1.
+ * @param[in] w The width of the region to test. Must be greater than 0.
+ * @param[in] h The height of the region to test. Must be greater than 0.
+ * @param[in] visibleOnly If @c true, hidden paints are excluded from the intersection test.
  *
  * @return @c true if any part of the region intersects the filled area; otherwise, @c false.
  *
  * @note To test a single point, set the region size to w = 1, h = 1.
- * @note For efficiency, an AABB (axis-aligned bounding box) test is performed internally before precise hit detection.
  * @note This test does not take into account the results of blending or masking.
- * @note This test does take into account the the hidden paints as well. @see tvg_paint_set_visible().
- * @since 1.0
+ *
+ * @see tvg_paint_set_visible()
+ * @since 1.1
  */
-TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
+TVG_API bool tvg_paint_intersects_region(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly);
 
 /**
  * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in canvas space.
@@ -3128,14 +3134,6 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation animation, cons
 TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation, uint32_t* cnt);
 
 /**
- * @brief Gets the marker name by a given index.
- *
- * @param[in] animation The Lottie animation object.
- * @param[in] idx The index of the animation marker, starts from 0.
- * @param[out] name The name of marker when succeed.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case @c nullptr is passed as the argument or @c idx is out of range.
- *
  * @deprecated see tvg_lottie_animation_get_marker_info()
  */
 TVG_API TVG_DEPRECATED Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);

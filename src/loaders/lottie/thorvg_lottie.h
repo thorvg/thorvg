@@ -138,13 +138,6 @@ struct TVG_API LottieAnimation final : Animation
     uint32_t markersCnt() noexcept;
 
     /**
-     * @brief Gets the marker name by a given index.
-     *
-     * @param[in] idx The index of the animation marker, starts from 0.
-     *
-     * @retval The name of marker when succeed, @c nullptr otherwise.
-     *
-     * @see LottieAnimation::markersCnt()
      * @deprecated see marker(uint32_t, float*, float*)
      */
     TVG_DEPRECATED const char* marker(uint32_t idx) noexcept;

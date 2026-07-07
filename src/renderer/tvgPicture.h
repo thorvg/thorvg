@@ -114,12 +114,12 @@ struct PictureImpl : Picture
         return Result::Success;
     }
 
-    bool intersects(const RenderRegion& region)
+    bool intersects(const RenderRegion& region, bool visibleOnly)
     {
         if (!impl.renderer) return false;
         load();
         if (impl.rd) return impl.renderer->intersectsImage(impl.rd, region);
-        else if (vector) return to<SceneImpl>(vector)->intersects(region);
+        else if (vector) return PAINT(vector)->intersects(region, visibleOnly);
         return false;
     }
 
