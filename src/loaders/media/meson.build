@@ -8,6 +8,8 @@ elif system == 'darwin' or system == 'ios'
     subdir('apple')
 elif system == 'emscripten'
     subdir('web')
+elif system == 'android'
+    subdir('android')
 endif
 
 source_file = [
