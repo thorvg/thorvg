@@ -7,7 +7,7 @@ permissions:
 
 env:
   THORVG_PIXEL_GOLDEN_REF: v1.0.7
-  WGPU_NATIVE_VERSION: v27.0.4.0
+  WGPU_NATIVE_VERSION: v29.0.1.1
 
 jobs:
   pixel_inspector:
