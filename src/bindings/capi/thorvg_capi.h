@@ -9,7 +9,7 @@
 #endif
 
 #define TVG_VERSION_MAJOR 1  // for compile-time checks
-#define TVG_VERSION_MINOR 0  // for compile-time checks
+#define TVG_VERSION_MINOR 1  // for compile-time checks
 #define TVG_VERSION_MICRO 0  // for compile-time checks
 
 #ifndef TVG_STATIC
