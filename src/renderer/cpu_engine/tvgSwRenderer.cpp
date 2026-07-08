@@ -704,7 +704,7 @@ bool SwRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 
     if (!task->valid || !task->bounds().intersected(region)) return false;
     if (rleIntersect(task->shape.strokeRle, region)) return true;
-    return task->shape.rle ? rleIntersect(task->shape.rle, region): task->shape.fastTrack;
+    return task->shape.fastTrack || rleIntersect(task->shape.rle, region);
 }
 
 
