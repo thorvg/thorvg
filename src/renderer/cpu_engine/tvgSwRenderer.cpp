@@ -124,7 +124,9 @@ struct SwShapeTask : SwTask
     {
         auto strokeWidth = validStrokeWidth(clipper);
         auto updateShape = flags[0] & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
-        auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
+        //The fill placement coefficients bake in the shape transform, so they must be regenerated on a transform-only change (the color table stays gated on Gradient).
+        auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform));
+        auto updateStroke = updateShape || (flags[0] & RenderUpdateFlag::Stroke);
 
         //Shape
         if (updateShape) {
@@ -140,19 +142,21 @@ struct SwShapeTask : SwTask
         //Fill
         if (updateFill) {
             if (auto fill = rshape->fill) {
-                auto ctable = (flags[0] & RenderUpdateFlag::Gradient) ? true : false;
+                //The color table bakes in the paint opacity, so a Color-only change (Paint::opacity) must regenerate it.
+                auto ctable = (flags[0] & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Color)) ? true : false;
                 if (!shapeGenFillColors(shape, fill, transform, renderer->surface, opacity, ctable)) goto err;
             }
         }
         //Stroke
-        if (updateShape || flags[0] & RenderUpdateFlag::Stroke) {
+        if (updateStroke || (flags[0] & RenderUpdateFlag::Color)) {
             if (strokeWidth > 0.0f) {
-                if (!shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid, renderer->antiAlias)) goto err;
+                //The outline depends on geometry only; a Color-only change re-bakes just the stroke fill's color table (opacity).
+                if (updateStroke && !shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid, renderer->antiAlias)) goto err;
                 if (auto fill = rshape->strokeFill()) {
-                    auto ctable = (flags[0] & RenderUpdateFlag::GradientStroke) ? true : false;
+                    auto ctable = (flags[0] & (RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Color)) ? true : false;
                     if (!shapeGenStrokeFillColors(shape, fill, transform, renderer->surface, opacity, ctable)) goto err;
                 }
-            } else {
+            } else if (updateStroke) {
                 shapeDelStroke(shape);
             }
         }
