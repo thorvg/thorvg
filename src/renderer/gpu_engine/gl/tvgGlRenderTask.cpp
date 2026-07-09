@@ -94,8 +94,11 @@ void GlRenderTask::run()
         }
     }
 
-    if (mUseDrawArrays) GL_CHECK(glDrawArrays(mArrayMode, mArrayOffset, mIndexCount));
-    else GL_CHECK(glDrawElements(GL_TRIANGLES, mIndexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mIndexOffset)));
+    if (mUseDrawArrays) {
+        GL_CHECK(glDrawArrays(mArrayMode, mArrayOffset, mIndexCount));
+    } else {
+        GL_CHECK(glDrawElements(GL_TRIANGLES, mIndexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mIndexOffset)));
+    }
 
     // setup attribute layout
     for (uint32_t i = 0; i < mVertexLayout.count; i++) {

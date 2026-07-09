@@ -193,11 +193,10 @@ enum struct FillRule : uint8_t
     EvenOdd      ///< A line from the point to a location outside the shape is drawn and its intersections with the path segments of the shape are counted. If the number of intersections is an odd number, the point is inside the shape.
 };
 
-
 /**
  * @brief Defines the image filtering method used during image scaling or transformation.
  *
- * @note Experimental API
+ * @since 1.1
  */
 enum struct FilterMethod : uint8_t
 {
@@ -592,6 +591,11 @@ struct TVG_API Paint
     Result bounds(float* x, float* y, float* w, float* h) noexcept;
 
     /**
+     * @deprecated see bool intersects(int32_t, int32_t, int32_t, int32_t, bool)
+     */
+    TVG_DEPRECATED bool intersects(int32_t x, int32_t y, int32_t w = 1, int32_t h = 1) noexcept;
+
+    /**
      * @brief Checks whether a given region intersects the filled area of the paint.
      *
      * This function determines whether the specified rectangular region—defined by (`x`, `y`, `w`, `h`)—
@@ -605,18 +609,20 @@ struct TVG_API Paint
      *
      * @param[in] x The x-coordinate of the top-left corner of the test region.
      * @param[in] y The y-coordinate of the top-left corner of the test region.
-     * @param[in] w The width of the region to test. Must be greater than 0; defaults to 1.
-     * @param[in] h The height of the region to test. Must be greater than 0; defaults to 1.
+     * @param[in] w The width of the region to test. Must be greater than 0.
+     * @param[in] h The height of the region to test. Must be greater than 0.
+     * @param[in] visibleOnly If @c true, hidden paints are excluded from the intersection test.
      *
      * @return @c true if any part of the region intersects the filled area; otherwise, @c false.
      *
      * @note To test a single point, set the region size to w = 1, h = 1.
-     * @note For efficiency, an AABB (axis-aligned bounding box) test is performed internally before precise hit detection.
      * @note This test does not take into account the results of blending or masking.
-     * @note This test does take into account the the hidden paints as well. @see Paint::visible()
-     * @since 1.0
+     *
+     * @see Paint::visible(bool on)
+     *
+     * @since 1.1
      */
-    bool intersects(int32_t x, int32_t y, int32_t w = 1, int32_t h = 1) noexcept;
+    bool intersects(int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly) noexcept;
 
     /**
      * @brief Duplicates the object.
@@ -1741,7 +1747,7 @@ struct TVG_API Picture : Paint
      * @return Always returns @c Result::Success.
      *
      * @see FilterMethod
-     * @note Experimental API
+     * @since 1.1
      */
     Result filter(FilterMethod method) noexcept;
 
@@ -2050,7 +2056,7 @@ struct TVG_API Text : Paint
      * @return The total number of lines.
      *
      * @see Text::wrap()
-     * @since Experimental API
+     * @since 1.1
      */
     uint32_t lines() noexcept;
 
@@ -2431,11 +2437,11 @@ struct TVG_API WgCanvas final : Canvas
      *
      * @warning Regardless of the value of @p cs, this target API uses the default alpha mode.
      *
-     * @since 1.0
-     *
      * @see WgCanvas::target(const Context&, void*, uint32_t, uint32_t, ColorSpace, int)
      * @see Canvas::viewport()
      * @see Canvas::sync()
+     *
+     * @since 1.0
      */
     Result target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
 
@@ -2452,10 +2458,10 @@ struct TVG_API WgCanvas final : Canvas
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the wg engine is not supported.
      *
-     * @note Experimental API
-     *
      * @see Canvas::viewport()
      * @see Canvas::sync()
+     *
+     * @note Experimental API
      */
     Result target(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
 
@@ -2824,8 +2830,8 @@ struct TVG_API Accessor
      * @see Accessor::set()
      * @see Picture::accessible
      *
-     * @note This function is only availble within Accessor callbacks registered via @ref Accessor::set().
-     * @note Experimental API
+     * @note This function is only available within Accessor callbacks registered via @ref Accessor::set().
+     * @since 1.1
      */
     const char* name(uint32_t id) noexcept;
 

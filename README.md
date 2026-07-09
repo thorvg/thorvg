@@ -386,7 +386,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 <br />
 ## In Practice
 ### ArcBrush
-[ArcBrush](https://arcbrush.com/) is a free, node-based image editor built for creators who value speed, flexibility, and full creative control. It leverages ThorVG for high-performance SVG rasterization in production.
+[ArcBrush](https://arcbrush.com/) is a free, node-based image editor that leverages ThorVG for high-performance SVG rasterization.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_arcbrush.jpg">
@@ -414,28 +414,28 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 </p>
 
 ### Espressif
-[Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official component in its ESP-IDF, simplifying integration into projects. This enables developers to easily use ThorVG’s rendering on IoT devices powered by ESP32 and ESP32-P4.
+[Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official ESP-IDF component, enabling easy integration and vector graphics rendering on ESP32 and ESP32-P4 devices.
 
 <p align="center">
   <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
 </p>
 
 ### Flux Audio
-[Flux Audio](https://www.flux.audio/) is a high-performance audio company focused on premium sound. ThorVG powers its UI with fast, scalable vector rendering, demonstrating its flexibility in modern audio platforms.
+[Flux Audio](https://www.flux.audio/) leverages ThorVG for fast, scalable vector rendering, powering modern user interfaces across its audio platforms.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_flux.jpg">
 </p>
 
 ### Godot
-ThorVG is integrated into the [Godot](https://www.godotengine.org) game engine to enable high-quality vector-based UI and assets. Godot is a modern open-source engine that provides a full toolset for efficient game development.
+[Godot](https://www.godotengine.org) integrates ThorVG to enable high-quality vector-based UI and assets in its open-source game engine.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_godot.png">
 </p>
 
 ### LibreScoot
-[LibreScoot](https://librescoot.org/en/) is an open-source embedded mobility platform for the unu Scooter Pro electric scooter. ThorVG powers GPU-free Lottie boot animation rendering on its embedded Linux dashboard system running on i.MX6 hardware.
+[LibreScoot](https://librescoot.org/en/) is an open-source embedded mobility platform leveraging ThorVG for GPU-free Lottie boot animation rendering.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_librescoot.png">
@@ -443,21 +443,21 @@ ThorVG is integrated into the [Godot](https://www.godotengine.org) game engine t
 
 ### Lottie Creator
 
-[Lottie Creator](https://creator.lottiefiles.com/) enables lightweight, customizable, and interactive animations for web, apps, and social, enhanced by AI-based Motion Copilot. ThorVG powers its Canvas engine, delivering fast and scalable vector rendering across platforms.
+[Lottie Creator](https://creator.lottiefiles.com/) leverages ThorVG to power its Canvas engine with fast, scalable vector rendering for interactive animations.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_creator.png">
 </p>
 
 ### LVGL
-[LVGL](https://lvgl.io/) is an open-source graphics library for embedded systems with limited resources, offering lightweight and customizable GUI support for microcontrollers and IoT devices. ThorVG serves as its vector drawing primitives library.
+[LVGL](https://lvgl.io/) is an open-source graphics library leveraging ThorVG as its vector drawing primitives library for embedded systems.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
 </p>
 
 ### MetaModule
-ThorVG is used as a lightweight vector rasterization backend in [MetaModule](https://4mscompany.com/metamodule) firmware, an embedded modular synthesizer environment, enabling efficient UI rendering under real-time constraints.
+[MetaModule](https://4mscompany.com/metamodule) leverages ThorVG as a lightweight vector rasterization backend for efficient UI rendering in its embedded modular synthesizer platform.
 
 <p align="center">
   <img width="400" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_metamodule.png">
@@ -470,6 +470,13 @@ ThorVG is used as a lightweight vector rasterization backend in [MetaModule](htt
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_morphos.jpg">
 </p>
 
+### OpenVela
+[OpenVela](https://www.openvela.com/), an open-source AIoT operating system integrating ThorVG for lightweight vector graphics rendering.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_openvela.png">
+</p>
+
 ### Segger
 [SEGGER](https://www.segger.com/) adopts ThorVG as a GPU driver to enable high-performance vector rendering for embedded GUI applications.
 
@@ -478,14 +485,14 @@ ThorVG is used as a lightweight vector rasterization backend in [MetaModule](htt
 </p>
 
 ### TinyPiXOS
-[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS with a custom C/C++ graphics stack replacing X11/Wayland. ThorVG handles core GUI rendering, delivering efficient performance and high visual quality in constrained environments.
+[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for efficient, high-quality GUI rendering.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tinypixos.png">
 </p>
 
 ### Tizen
-ThorVG is integrated into the [Tizen](https://www.tizen.org) platform as its vector graphics engine, powering NUI’s vector graphics backend for rendering primitives and scalable content like SVG and Lottie animations.
+[Tizen](https://www.tizen.org), an open-source platform integrating ThorVG as its vector graphics backend for rendering primitives, SVG, and Lottie animations.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tizen.png">
@@ -653,7 +660,7 @@ ThorVG provides flexible image loading capabilities, supporting both static and 
 The following outlines the dependencies for these optional features:
 
 * **GL Engine**: [OpenGL 3.3](https://www.khronos.org/opengl/), [OpenGL ES 3.0](https://www.khronos.org/opengles/), or a browser with [WebGL2](https://www.khronos.org/webgl/) support.
-* **WG Engine**: [webgpu-native v0.27](https://github.com/gfx-rs/wgpu-native) or a browser with [WebGPU](https://www.w3.org/TR/webgpu/) support.
+* **WG Engine**: [wgpu-native v29.0.1.1](https://github.com/gfx-rs/wgpu-native) or a browser with [WebGPU](https://www.w3.org/TR/webgpu/) support.
 * **PNG Loader** (external): [libpng](https://github.com/pnggroup/libpng)
 * **JPEG Loader** (external): [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * **WebP Loader** (external): [libwebp](https://developers.google.com/speed/webp/download)

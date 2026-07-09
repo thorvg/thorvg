@@ -914,13 +914,6 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
 
     auto text = Text::gen();
 
-    Matrix textTransform;
-    if (transform) textTransform = *transform;
-    else textTransform = tvg::identity();
-
-    translateR(&textTransform, {textNode->x + textNode->dx, textNode->y + textNode->dy - textNode->fontSize});
-    text->transform(textTransform);
-
     //TODO: handle def values of font and size as used in a system?
     auto size = textNode->fontSize * 0.75f; //1 pt = 1/72; 1 in = 96 px; -> 72/96 = 0.75
     if (text->font(textNode->fontFamily) != Result::Success) {
@@ -932,17 +925,22 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     text->text(processedText);
     tvg::free(processedText);
 
+    TextMetrics tm;
+    text->metrics(tm);
+    auto textTransform = transform ? *transform : tvg::identity();
+    translateR(&textTransform, {textNode->x + textNode->dx, textNode->y + textNode->dy - tm.ascent});
+    text->transform(textTransform);
+
     return text;
 }
 
 static void _updatePos(Text* text, const SvgTextNode& textNode, float anchor, Point& textPos)
 {
-    auto advance = _bounds(text).w;
+    auto advance = 0.0f;
     if (auto utf8 = text->text()) {
         GlyphMetrics gm;
-        if (text->metrics(utf8, gm) == Result::Success) advance += gm.min.x;
         while (utf8) {
-            if (text->metrics(utf8, gm, &utf8) == Result::Success) advance += gm.advance - gm.max.x;
+            if (text->metrics(utf8, gm, &utf8) == Result::Success) advance += gm.advance;
             else break;
         }
     }

@@ -192,9 +192,6 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
         //Get marker count
         REQUIRE(animation->markersCnt() == 3);
 
-        //Get marker name by index
-        REQUIRE(!strcmp(animation->marker(1), "sectionB"));
-
         // Get marker name and segment by index
         REQUIRE(!strcmp(animation->marker(0, &markerBegin, &markerEnd), "sectionA"));
         REQUIRE(markerBegin == 0.0f);
@@ -217,7 +214,6 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
         REQUIRE(markerEnd == 22.0f);
 
         // Get marker by invalid index
-        REQUIRE(animation->marker(-1) == nullptr);
         REQUIRE(animation->marker(-1, &markerBegin, &markerEnd) == nullptr);
 
         REQUIRE(animation->segment(nullptr) == Result::Success);

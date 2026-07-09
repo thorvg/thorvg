@@ -30,7 +30,7 @@
 #include "tvgRender.h"
 #include "tvgLottieProperty.h"
 #include "tvgLottieRenderPooler.h"
-
+#include "tvgLottieTween.h"
 
 struct LottieComposition;
 
@@ -377,7 +377,7 @@ struct LottieTextRange : LottieObject
 
     float factor(float frameNo, float totalLen, float idx);
 
-    void color(float frameNo, RGB32& fillColor, RGB32& strokeColor, float factor, Tween& tween, LottieExpressions* exps)
+    void color(float frameNo, RGB32& fillColor, RGB32& strokeColor, float factor, LottieTween& tween, LottieExpressions* exps)
     {
         if (style.flags.fillColor) {
             auto color = style.fillColor(frameNo, tween, exps);
@@ -510,7 +510,7 @@ public:
     int8_t maskIdx = -1;
 
     Point position(float lenSearched, float& angle);
-    float prepare(LottieMask* mask, float frameNo, float scale, Tween& tween, LottieExpressions* exps);
+    float prepare(LottieMask* mask, float frameNo, float scale, LottieTween& tween, LottieExpressions* exps);
 };
 
 
@@ -579,7 +579,7 @@ struct LottieTrimpath : LottieObject
         return nullptr;
     }
 
-    void segment(float frameNo, float& start, float& end, Tween& tween, LottieExpressions* exps);
+    void segment(float frameNo, float& start, float& end, LottieTween& tween, LottieExpressions* exps);
 
     LottieFloat start = 0.0f;
     LottieFloat end = 100.0f;
@@ -901,7 +901,7 @@ struct LottieGradient : LottieObject
     }
 
     uint32_t populate(ColorStop& color, size_t count);
-    Fill* fill(float frameNo, uint8_t opacity, Tween& tween, LottieExpressions* exps);
+    Fill* fill(float frameNo, uint8_t opacity, LottieTween& tween, LottieExpressions* exps);
 
     LottieScalar start = Point{0.0f, 0.0f};
     LottieScalar end = Point{0.0f, 0.0f};

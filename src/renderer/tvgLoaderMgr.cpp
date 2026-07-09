@@ -276,7 +276,7 @@ tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool*
         delete (loader);
     }
     // Unknown MimeType. Try with the candidates in the order
-    for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
+    for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         if (auto loader = _find(static_cast<FileType>(i))) {
             if (loader->open(filename, ops)) {
                 if (loader->cache(filename)) {
@@ -322,7 +322,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
         }
     }
     // Unknown MimeType. Try with the candidates in the order
-    for (int i = 0; i < static_cast<int>(FileType::Raw); i++) {
+    for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (!loader) continue;
         if (loader->open(data, size, ops, copy)) {

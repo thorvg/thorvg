@@ -87,9 +87,45 @@ struct TVG_API LottieAnimation final : Animation
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      *
+     * @see tweenTo(float)
+     *
      * @since 1.0
      */
     Result tween(float from, float to, float progress) noexcept;
+
+    /**
+     * @brief Sets the target frame for dynamic tweening.
+     *
+     * This method starts a dynamic interpolation from the current animation frame
+     * toward @p to. Use tween(float progress) to update the interpolation progress.
+     *
+     * @param[in] to The target frame number of the interpolation.
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     *
+     * @note The dynamic tweening set by this method is discarded when @ref Animation::frame()
+     *       or @ref LottieAnimation::tween(float,float,float) is called.
+     *
+     * @see tween(float)
+     * @note Experimental API
+     */
+    Result tweenTo(float to) noexcept;
+
+    /**
+     * @brief Updates the current tween toward the target frame.
+     *
+     * This method advances the interpolation started by tweenTo() using the
+     * given @p progress value.
+     *
+     * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     * @retval Result::InsufficientCondition If @ref tweenTo() has not been called.
+     *
+     * @see tweenTo()
+     * @note Experimental API
+     */
+    Result tween(float progress) noexcept;
 
     /**
      * @brief Gets the marker count of the animation.
@@ -102,16 +138,9 @@ struct TVG_API LottieAnimation final : Animation
     uint32_t markersCnt() noexcept;
 
     /**
-     * @brief Gets the marker name by a given index.
-     *
-     * @param[in] idx The index of the animation marker, starts from 0.
-     *
-     * @retval The name of marker when succeed, @c nullptr otherwise.
-     *
-     * @see LottieAnimation::markersCnt()
-     * @since 1.0
+     * @deprecated see marker(uint32_t, float*, float*)
      */
-    const char* marker(uint32_t idx) noexcept;
+    TVG_DEPRECATED const char* marker(uint32_t idx) noexcept;
 
     /**
      * @brief Retrieves the name and frame range of a marker by index.
@@ -125,7 +154,7 @@ struct TVG_API LottieAnimation final : Animation
      * @return The name of the marker on success, or @c nullptr otherwise.
      *
      * @see LottieAnimation::markersCnt()
-     * @note Experimental API
+     * @since 1.1
      */
     const char* marker(uint32_t idx, float* begin, float* end) noexcept;
 
@@ -206,9 +235,10 @@ struct TVG_API LottieAnimation final : Animation
      * @retval Result::InsufficientCondition The animation has not been loaded.
      *
      * @note To disable audio notifications, pass @c nullptr as @p func.
-     * @note Experimental API.
      *
      * @see LottieAudioResolver
+     *
+     * @note Experimental API
      */
     Result resolver(std::function<void(const LottieAudioResolver& info, void* data)> func, void* data) noexcept;
 

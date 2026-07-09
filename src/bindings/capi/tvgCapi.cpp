@@ -278,13 +278,16 @@ TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint)
     return nullptr;
 }
 
-
-TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h)
+TVG_API TVG_DEPRECATED bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    if (paint) return reinterpret_cast<Paint*>(paint)->intersects(x, y, w, h);
-    return false;
+    return tvg_paint_intersects_region(paint, x, y, w, h, false);
 }
 
+TVG_API bool tvg_paint_intersects_region(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly)
+{
+    if (paint) return reinterpret_cast<Paint*>(paint)->intersects(x, y, w, h, visibleOnly);
+    return false;
+}
 
 TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint paint, uint8_t opacity)
 {
@@ -1254,27 +1257,19 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
-
-TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name)
+TVG_API TVG_DEPRECATED Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name)
 {
-#ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    if (animation && name) {
-        *name = reinterpret_cast<LottieAnimation*>(animation)->marker(idx);
-        if (!(*name)) return TVG_RESULT_INVALID_ARGUMENT;
-        return TVG_RESULT_SUCCESS;
-    }
-    return TVG_RESULT_INVALID_ARGUMENT;
-#endif
-    return TVG_RESULT_NOT_SUPPORTED;
+    if (!name) return TVG_RESULT_INVALID_ARGUMENT;  // for backward compat.
+    return tvg_lottie_animation_get_marker_info(animation, idx, name, nullptr, nullptr);
 }
 
 TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    const char* n = nullptr;
-    if (animation) n = reinterpret_cast<LottieAnimation*>(animation)->marker(idx, begin, end);
-    if (name) *name = n;
-    if (n) return TVG_RESULT_SUCCESS;
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    auto ret = reinterpret_cast<LottieAnimation*>(animation)->marker(idx, begin, end);
+    if (name) *name = ret;
+    if (ret) return TVG_RESULT_SUCCESS;
     auto markerCnt = reinterpret_cast<LottieAnimation*>(animation)->markersCnt();
     if (markerCnt > 0 && idx >= markerCnt) return TVG_RESULT_INVALID_ARGUMENT;
     return TVG_RESULT_INSUFFICIENT_CONDITION;
@@ -1286,6 +1281,24 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
     if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tween(from, to, progress);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_lottie_animation_tween_to(Tvg_Animation animation, float to)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tweenTo(to);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+TVG_API Tvg_Result tvg_lottie_animation_tween_go(Tvg_Animation animation, float progress)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tween(progress);
     return TVG_RESULT_INVALID_ARGUMENT;
 #endif
     return TVG_RESULT_NOT_SUPPORTED;

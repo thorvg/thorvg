@@ -202,10 +202,10 @@ struct TextImpl : Text
         return true;
     }
 
-    bool intersects(const RenderRegion& region)
+    bool intersects(const RenderRegion& region, TVG_UNUSED bool visibleOnly)
     {
         if (!load()) return false;
-        return to<ShapeImpl>(shape)->intersects(region);
+        return to<ShapeImpl>(shape)->intersects(region, false);
     }
 
     bool bounds(Point* pt4, const Matrix& m, bool obb)

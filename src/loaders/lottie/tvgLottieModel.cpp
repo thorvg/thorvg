@@ -69,7 +69,7 @@ void LottieTextFollowPath::rewind()
     currentLen = 0.0f;
 }
 
-float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale, Tween& tween, LottieExpressions* exps)
+float LottieTextFollowPath::prepare(LottieMask* mask, float frameNo, float scale, LottieTween& tween, LottieExpressions* exps)
 {
     this->mask = mask;
     Matrix m{1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f / scale, 0.0f, 0.0f, 0.0f, 1.0f};
@@ -310,8 +310,7 @@ void LottieImage::prepare(bool external)
     picture->ref();
 }
 
-
-void LottieTrimpath::segment(float frameNo, float& start, float& end, Tween& tween, LottieExpressions* exps)
+void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieTween& tween, LottieExpressions* exps)
 {
     start = tvg::clamp(this->start(frameNo, tween, exps) * 0.01f, 0.0f, 1.0f);
     end = tvg::clamp(this->end(frameNo, tween, exps) * 0.01f, 0.0f, 1.0f);
@@ -427,8 +426,7 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
     return output.count;
 }
 
-
-Fill* LottieGradient::fill(float frameNo, uint8_t opacity, Tween& tween, LottieExpressions* exps)
+Fill* LottieGradient::fill(float frameNo, uint8_t opacity, LottieTween& tween, LottieExpressions* exps)
 {
     if (opacity == 0) return nullptr;
 

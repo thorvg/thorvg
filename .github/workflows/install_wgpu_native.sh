@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-version="${WGPU_NATIVE_VERSION:-v27.0.4.0}"
+version="${WGPU_NATIVE_VERSION:-v29.0.1.1}"
 pc_url="${WGPU_NATIVE_PC_URL:-https://github.com/user-attachments/files/20096376/wgpu_native.pc.zip}"
 prefix="${WGPU_NATIVE_PREFIX:-/usr/local}"
 

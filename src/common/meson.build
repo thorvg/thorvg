@@ -5,6 +5,7 @@ source_file = [
    'tvgCompressor.h',
    'tvgInlist.h',
    'tvgLock.h',
+   'tvgMap.h',
    'tvgMath.h',
    'tvgStr.h',
    'tvgCompressor.cpp',

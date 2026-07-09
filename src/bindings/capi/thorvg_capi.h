@@ -346,7 +346,7 @@ typedef enum
 /**
  * @brief Defines the image filtering method used during image scaling or transformation.
  *
- * @note Experimental API
+ * @since 1.1
  */
 typedef enum
 {
@@ -969,7 +969,7 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint);
  * @see tvg_accessor_generate_id()
  * @see tvg_paint_set_id()
  *
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint);
 
@@ -985,7 +985,7 @@ TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint);
  * @see tvg_accessor_generate_id()
  * @see tvg_paint_get_id()
  *
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API Tvg_Result tvg_paint_set_id(Tvg_Paint paint, uint32_t id);
 
@@ -1085,6 +1085,11 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity
 TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
 
 /**
+ * @deprecated see tvg_paint_intersects_region()
+ */
+TVG_API TVG_DEPRECATED bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
+
+/**
  * @brief Checks whether a given region intersects the filled area of the paint.
  *
  * This function determines whether the specified rectangular region—defined by (`x`, `y`, `w`, `h`)—
@@ -1096,21 +1101,22 @@ TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
  * The paint must be updated in a Canvas beforehand—typically after the Canvas has been
  * drawn and synchronized.
  *
- * @param[in] paint The shape object to be tested.
+ * @param[in] paint The paint object to be tested.
  * @param[in] x The x-coordinate of the top-left corner of the test region.
  * @param[in] y The y-coordinate of the top-left corner of the test region.
- * @param[in] w The width of the region to test. Must be greater than 0; defaults to 1.
- * @param[in] h The height of the region to test. Must be greater than 0; defaults to 1.
+ * @param[in] w The width of the region to test. Must be greater than 0.
+ * @param[in] h The height of the region to test. Must be greater than 0.
+ * @param[in] visibleOnly If @c true, hidden paints are excluded from the intersection test.
  *
  * @return @c true if any part of the region intersects the filled area; otherwise, @c false.
  *
  * @note To test a single point, set the region size to w = 1, h = 1.
- * @note For efficiency, an AABB (axis-aligned bounding box) test is performed internally before precise hit detection.
  * @note This test does not take into account the results of blending or masking.
- * @note This test does take into account the the hidden paints as well. @see tvg_paint_set_visible().
- * @since 1.0
+ *
+ * @see tvg_paint_set_visible()
+ * @since 1.1
  */
-TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
+TVG_API bool tvg_paint_intersects_region(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly);
 
 /**
  * @brief Retrieves the axis-aligned bounding box (AABB) of the paint object in canvas space.
@@ -2110,7 +2116,7 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
  * @param[in] method The filtering method to apply. Default is @c TVG_FILTER_METHOD_BILINEAR.
  *
  * @see Tvg_Filter_Method
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method method);
 
@@ -2504,9 +2510,9 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode);
  * @return The total number of lines.
  *
  * @see tvg_text_wrap_mode()
- * @note Experimental API
+ * @since 1.1
  */
- TVG_API uint32_t tvg_text_line_count(Tvg_Paint text);
+TVG_API uint32_t tvg_text_line_count(Tvg_Paint text);
 
 /**
  * @brief Set the spacing scale factors for text layout.
@@ -3032,7 +3038,7 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name);
  * @see tvg_picture_set_accessible()
  *
  * @note This function is only available within Accessor callbacks registered via @ref tvg_accessor_set().
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API const char* tvg_accessor_get_name(Tvg_Accessor accessor, uint32_t id);
 
@@ -3128,17 +3134,9 @@ TVG_API Tvg_Result tvg_lottie_animation_set_marker(Tvg_Animation animation, cons
 TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation, uint32_t* cnt);
 
 /**
- * @brief Gets the marker name by a given index.
- *
- * @param[in] animation The Lottie animation object.
- * @param[in] idx The index of the animation marker, starts from 0.
- * @param[out] name The name of marker when succeed.
- *
- * @retval TVG_RESULT_INVALID_ARGUMENT In case @c nullptr is passed as the argument or @c idx is out of range.
- *
- * @since 1.0
+ * @deprecated see tvg_lottie_animation_get_marker_info()
  */
-TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
+TVG_API TVG_DEPRECATED Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name);
 
 /**
  * @brief Retrieves marker information by index.
@@ -3156,7 +3154,7 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION In case the animation is not loaded.
  *
  * @see tvg_lottie_animation_get_markers_cnt()
- * @note Experimental API
+ * @since 1.1
  */
 TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end);
 
@@ -3176,6 +3174,42 @@ TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation,
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float from, float to, float progress);
+
+/**
+ * @brief Sets the target frame for dynamic tweening.
+ *
+ * This method starts a dynamic interpolation from the current animation frame
+ * toward @p to. Use tvg_lottie_animation_tween_go() to update the interpolation progress.
+ *
+ * @param[in] animation The Lottie animation object.
+ * @param[in] to The target frame number of the interpolation.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
+ *
+ * @note The dynamic tweening set by this method is discarded when @ref tvg_animation_set_frame()
+ *       or @ref tvg_lottie_animation_tween() is called.
+ *
+ * @see tvg_lottie_animation_tween_go()
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_tween_to(Tvg_Animation animation, float to);
+
+/**
+ * @brief Updates the current tween toward the target frame.
+ *
+ * This method advances the interpolation started by @ref tvg_lottie_animation_tween_to() using the
+ * given @p progress value.
+ *
+ * @param[in] animation The Lottie animation object.
+ * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If @ref tvg_lottie_animation_tween_to() has not been called.
+ *
+ * @see tvg_lottie_animation_tween_to()
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_lottie_animation_tween_go(Tvg_Animation animation, float progress);
 
 /**
  * @brief Sets the quality level for Lottie effects.

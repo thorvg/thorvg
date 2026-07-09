@@ -124,7 +124,7 @@ struct SwShapeTask : SwTask
     {
         auto strokeWidth = validStrokeWidth(clipper);
         auto updateShape = flags[0] & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip);
-        auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient));
+        auto updateFill = (flags[0] & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform));
 
         //Shape
         if (updateShape) {
@@ -704,7 +704,7 @@ bool SwRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 
     if (!task->valid || !task->bounds().intersected(region)) return false;
     if (rleIntersect(task->shape.strokeRle, region)) return true;
-    return task->shape.rle ? rleIntersect(task->shape.rle, region): task->shape.fastTrack;
+    return task->shape.fastTrack || rleIntersect(task->shape.rle, region);
 }
 
 
