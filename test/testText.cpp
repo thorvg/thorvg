@@ -225,6 +225,7 @@ TEST_CASE("Text Layout", "[tvgText]")
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
         REQUIRE(text->text("ThorVG Test\n Text!") == Result::Success);
+        REQUIRE(text->lines() == 2);
 
         REQUIRE(text->align(0.0f, 0.0f) == Result::Success);
         REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
@@ -303,6 +304,34 @@ TEST_CASE("Text Spacing", "[tvgText]")
         REQUIRE(text->spacing(2.0f, 2.0f) == Result::Success);
 
         REQUIRE(canvas->add(text) == Result::Success);
+    }
+    Initializer::term();
+}
+
+#endif
+
+#ifdef THORVG_OTF_LOADER_SUPPORT
+
+TEST_CASE("Load OTF Data from a file", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100] = {};
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+
+        auto text = Text::gen();
+        REQUIRE(text);
+
+        REQUIRE(Text::load(TEST_DIR"/DMSans.otf") == Result::Success);
+        REQUIRE(text->font("DMSans") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == Result::Success);
+        REQUIRE(text->text("Very Long Long Text ThorVG Test\n ABCDEFGHIJKLMNOPRSTU!") == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
+
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
     }
     Initializer::term();
 }

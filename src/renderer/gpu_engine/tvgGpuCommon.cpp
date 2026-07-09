@@ -73,10 +73,7 @@ RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix
 
 struct ThinPathTracker
 {
-    enum
-    {
-        INLINE_PENDING_CAP = 8
-    };
+    static constexpr int INLINE_PENDING_CAP = 8;
 
     Point preAxisPoints[INLINE_PENDING_CAP];
     Array<Point> preAxisOverflow;
@@ -228,25 +225,21 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
     if (!result.transformed) return;
 
     auto& out = *result.transformed;
-    auto localOut = result.local;
+    out.clear();
 
-    out.cmds.clear();
-    out.pts.clear();
-    if (localOut) {
-        localOut->cmds.clear();
-        localOut->pts.clear();
-    }
+    auto localOut = result.local;
+    if (localOut) localOut->clear();
+
     if (in.empty()) return;
 
     out.cmds.reserve(in.cmds.count);
     out.pts.reserve(in.pts.count);
+
     if (localOut) {
         localOut->cmds.reserve(in.cmds.count);
         localOut->pts.reserve(in.pts.count);
     }
 
-    auto cmds = in.cmds.data;
-    auto cmdCnt = in.cmds.count;
     const auto* pts = in.pts.data;
 
     Point lastOutT{};
@@ -285,12 +278,8 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
     };
 
     auto addLineCmd = [&](const Point& local, const Point& transformed) {
-        out.cmds.push(PathCommand::LineTo);
-        out.pts.push(transformed);
-        if (localOut) {
-            localOut->cmds.push(PathCommand::LineTo);
-            localOut->pts.push(local);
-        }
+        out.lineTo(transformed);
+        if (localOut) localOut->lineTo(local);
         lastOutT = transformed;
     };
 
@@ -300,12 +289,10 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
         endT = cubicPts[2] * matrix;
 
         auto trackThinCubic = [&](const Point& startT) {
-            auto closed = tvg::closed(startT, endT, PATH_OPT_PX_TOLERANCE);
-            if (closed) {
+            if (tvg::closed(startT, endT, PATH_OPT_PX_TOLERANCE)) {
                 thinTracker.trackClosedCubic(startT, ctrl1T, ctrl2T, endT);
                 return;
             }
-
             float maxDist, minT, maxT, vecLen;
             validateCubic(startT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT, vecLen);
             auto flat = (maxDist <= PATH_OPT_PX_TOLERANCE);
@@ -316,8 +303,7 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
         };
         trackThinCubic(startInT);
 
-        auto closed = tvg::closed(startOutT, endT, PATH_OPT_PX_TOLERANCE);
-        if (closed) return;
+        if (tvg::closed(startOutT, endT, PATH_OPT_PX_TOLERANCE)) return;
 
         float maxDist, minT, maxT, vecLen;
         validateCubic(startOutT, ctrl1T, ctrl2T, endT, maxDist, minT, maxT, vecLen);
@@ -328,24 +314,16 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
             subpathHasSegment = true;
             addLineCmd(cubicPts[2], endT);
         } else {
-            out.cmds.push(PathCommand::CubicTo);
-            out.pts.push(ctrl1T);
-            out.pts.push(ctrl2T);
-            out.pts.push(endT);
-            if (localOut) {
-                localOut->cmds.push(PathCommand::CubicTo);
-                localOut->pts.push(cubicPts[0]);
-                localOut->pts.push(cubicPts[1]);
-                localOut->pts.push(cubicPts[2]);
-            }
+            out.cubicTo(ctrl1T, ctrl2T, endT);
+            if (localOut) localOut->cubicTo(cubicPts[0], cubicPts[1], cubicPts[2]);
             lastOutT = endT;
             subpathHasSegment = true;
             thinTracker.disable();
         }
     };
 
-    for (uint32_t i = 0; i < cmdCnt; i++) {
-        switch (cmds[i]) {
+    ARRAY_FOREACH(cmd, in.cmds) {
+        switch (*cmd) {
             case PathCommand::MoveTo: {
                 finalizeSubpath();
                 auto pt = *pts;

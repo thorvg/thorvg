@@ -71,4 +71,5 @@ stroke (black 1-pixel lines), font-family (Arial) and font-size properties.
 	</g>
 	<text id="revision" x="10" y="340" font-size="40" stroke="none" fill="black">$Revision: 1.2 $</text>
 	<rect id="test-frame" x="1" y="1" width="478" height="358" fill="none" stroke="#000000"/>
+	<text x="24" y="80" font-family="PublicSans-Regular" font-size="44" fill="#1565c0">A<tspan dx="26" dy="-26">B</tspan><tspan dx="26" dy="44">C</tspan><tspan dx="26" dy="-26">D</tspan></text>
 </svg>
