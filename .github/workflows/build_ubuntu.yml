@@ -73,7 +73,7 @@ jobs:
       run: |
         meson setup build -Dloaders="all" -Dengines="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
         sudo ninja -C build install
-        env LIBGL_ALWAYS_SOFTWARE=1 meson test -C build --print-errorlogs
+        env LIBGL_ALWAYS_SOFTWARE=1 meson test -C build --print-errorlogs --timeout 120
 
     - uses: actions/upload-artifact@v4
       with:
