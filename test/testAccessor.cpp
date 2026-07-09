@@ -21,6 +21,7 @@
  */
 
 #include <thorvg.h>
+#include <string.h>
 #include "config.h"
 #include "catch.hpp"
 
@@ -50,6 +51,8 @@ TEST_CASE("Set", "[tvgAccessor]")
 
         auto picture = Picture::gen();
         REQUIRE(picture);
+
+        picture->accessible = true;
         REQUIRE(picture->load(TEST_DIR"/test0.svg") == Result::Success);
 
         auto accessor = unique_ptr<Accessor>(Accessor::gen());
@@ -59,26 +62,22 @@ TEST_CASE("Set", "[tvgAccessor]")
         REQUIRE(accessor->set(picture, nullptr, nullptr) == Result::InvalidArguments);
 
         //Case 2
-        Shape* ret = nullptr;
-
         auto f = [](const tvg::Paint* paint, void* data) -> bool
         {
-            if (paint->type() == Type::Shape) {
+            auto accessor = static_cast<tvg::Accessor*>(data);
+
+            // figure out SVG node with the unique ID "star".
+            if (!strcmp(accessor->name(paint->id), "path42")) {
+                // override color
                 auto shape = (tvg::Shape*) paint;
-                uint8_t r, g, b;
-                shape->fill(&r, &g, &b);
-                if (r == 255 && g == 255 && b == 255) {
-                    shape->fill(0, 0, 255);
-                    shape->id = Accessor::id("TestAccessor");
-                    *static_cast<Shape**>(data) = shape;
-                    return false;
-                }
+                shape->fill(0, 0, 255);
+                return false;
             }
             return true;
         };
 
-        REQUIRE(accessor->set(picture, f, &ret) == Result::Success);
-        REQUIRE((ret && ret->id == Accessor::id("TestAccessor")));
+        REQUIRE(accessor->set(picture, f, accessor.get()) == Result::Success);
+        REQUIRE(picture->paint(Accessor::id("path42")));
 
         Picture::rel(picture);
     }

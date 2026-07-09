@@ -202,21 +202,28 @@ TEST_CASE("Picture Duplication", "[tvgPicture]")
 
 TEST_CASE("Load SVG file", "[tvgPicture]")
 {
-    auto picture = Picture::gen();
-    REQUIRE(picture);
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        // for test coverage
+        Text::load(TEST_DIR"/PublicSans-Regular.ttf");
 
-    //Invalid file
-    REQUIRE(picture->load("invalid.svg") == Result::InvalidArguments);
+        auto picture = Picture::gen();
+        REQUIRE(picture);
 
-    //Load Svg file
-    REQUIRE(picture->load(TEST_DIR"/test1.svg") == Result::Success);
-    REQUIRE(picture->load(TEST_DIR"/test2.svg") == Result::Success);
-    REQUIRE(picture->load(TEST_DIR"/test3.svg") == Result::Success);
+        //Invalid file
+        REQUIRE(picture->load("invalid.svg") == Result::InvalidArguments);
 
-    float w, h;
-    REQUIRE(picture->size(&w, &h) == Result::Success);
+        //Load Svg file
+        REQUIRE(picture->load(TEST_DIR"/test1.svg") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/test2.svg") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/test3.svg") == Result::Success);
 
-    Paint::rel(picture);
+        float w, h;
+        REQUIRE(picture->size(&w, &h) == Result::Success);
+
+        Paint::rel(picture);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
 }
 
 TEST_CASE("Load SVG Data", "[tvgPicture]")
@@ -456,5 +463,15 @@ TEST_CASE("Load WEBP file and render", "[tvgPicture]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
-#endif
+TEST_CASE("Filter Method", "[tvgPicture]")
+{
+    auto picture = Picture::gen();
+    REQUIRE(picture);
 
+    REQUIRE(picture->filter(FilterMethod::Bilinear) == Result::Success);
+    REQUIRE(picture->filter(FilterMethod::Nearest) == Result::Success);
+
+    Paint::rel(picture);
+}
+
+#endif

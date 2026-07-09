@@ -23,7 +23,7 @@
 #include "config.h"
 #include <thorvg.h>
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-#include <thorvg_lottie.h>
+    #include <thorvg_lottie.h>
 #endif
 #include <fstream>
 #include <cstring>
@@ -38,7 +38,7 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
-        #define TEST_CNT 10
+        #define TEST_CNT 12
 
         const char* names[TEST_CNT] = {
             "test3.lot",
@@ -50,7 +50,9 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
             "test9.lot",
             "test10.lot",
             "test11.lot",
-            "test12.lot"
+            "test12.lot",
+            "test13.lot",
+            "test14.lot"
         };
 
         auto animation = unique_ptr<Animation>(Animation::gen());
@@ -230,24 +232,26 @@ TEST_CASE("Lottie Tween", "[tvgLottie]")
 
         auto picture = animation->picture();
 
-        REQUIRE(animation->tween(0.0f, 10.0f, 0.5f) == Result::InsufficientCondition);
+        REQUIRE(animation->tweenTo(10.0f) == Result::InsufficientCondition);
+        REQUIRE(animation->tween(0.5f) == Result::InsufficientCondition);
 
-        REQUIRE(picture->load(TEST_DIR"/test.lot") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/tween.lot") == Result::Success);
 
-        //Set initial frame to avoid frame difference being too small
+        REQUIRE(animation->tween(0.5f) == Result::InsufficientCondition);
+
         REQUIRE(animation->frame(5.0f) == Result::Success);
+        REQUIRE(animation->tweenTo(20.0f) == Result::Success);
+        REQUIRE(animation->tween(0.0f) == Result::Success);
+        REQUIRE(animation->tween(0.5f) == Result::Success);
+        REQUIRE(animation->tween(1.0f) == Result::Success);
 
-        //Tween between frames with different progress values
+        REQUIRE(animation->tweenTo(30.0f) == Result::Success);
+        REQUIRE(animation->frame(10.0f) == Result::Success);
+        REQUIRE(animation->tween(0.5f) == Result::InsufficientCondition);
+
+        REQUIRE(animation->tweenTo(40.0f) == Result::Success);
         REQUIRE(animation->tween(0.0f, 10.0f, 0.5f) == Result::Success);
-        REQUIRE(animation->tween(10.0f, 20.0f, 0.0f) == Result::Success);
-        REQUIRE(animation->tween(20.0f, 30.0f, 1.0f) == Result::Success);
-
-        //Tween with different frame ranges
-        REQUIRE(animation->tween(10.0f, 50.0f, 0.25f) == Result::Success);
-        REQUIRE(animation->tween(50.0f, 100.0f, 0.75f) == Result::Success);
-
-        //Tween between distant frames
-        REQUIRE(animation->tween(0.0f, 100.0f, 0.5f) == Result::Success);
+        REQUIRE(animation->tween(0.75f) == Result::InsufficientCondition);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

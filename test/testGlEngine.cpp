@@ -475,14 +475,56 @@ TEST_CASE("GL Solid Batch", "[tvgGlEngine]")
 
         for (uint32_t i = 0; i < 4; ++i) {
             auto shape = Shape::gen();
-            REQUIRE(shape);
-            REQUIRE(shape->appendRect(10, 10, 80, 80) == Result::Success);
-            REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
-            REQUIRE(canvas->add(shape) == Result::Success);
+            shape->appendRect(-98.56f, -98.56f, 200, 200, 0.15f, 0.15f);
+            shape->fill(127, 255, 255);
+            shape->strokeFill(0, 0, 255);
+            shape->strokeWidth(0.045f);
+            canvas->add(shape);
         }
 
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("GL Intersection", "[tvgGlEngine]")
+{
+    TestGLEngine engine;
+
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
+        REQUIRE(canvas);
+        engine.target(canvas.get());
+
+        ifstream file(TEST_DIR "/rawimage_250x375.raw");
+        if (!file.is_open()) return;
+        auto data = (uint32_t*)malloc(sizeof(uint32_t) * (250 * 375));
+        file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * 250 * 375);
+        file.close();
+
+        auto picture = Picture::gen();
+        REQUIRE(picture);
+
+        REQUIRE(picture->load(data, 250, 375, ColorSpace::ARGB8888, false) == Result::Success);
+
+        REQUIRE(picture->size(240, 240) == Result::Success);
+        REQUIRE(picture->transform({0.572866f, -4.431353f, 336.605835f, 5.198910f, -0.386219f, 30.710693f, 0.0f, 0.0f, 1.0f}) == Result::Success);
+        REQUIRE(canvas->add(picture) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+
+        // Case1. Fully contained
+        REQUIRE(picture->intersects(0, 0, 200, 200, true) == true);
+
+        // Case2. Partially overlapping
+        REQUIRE(picture->intersects(25, 25, 50, 50, false) == true);
+        REQUIRE(picture->intersects(125, 125, 50, 50, false) == true);
+
+        REQUIRE(canvas->sync() == Result::Success);
+
+        free(data);
+
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
