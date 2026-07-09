@@ -135,6 +135,8 @@ GlRenderer::~GlRenderer()
 
 void GlRenderer::initShaders()
 {
+    TvgPerfTimer timer("gl", "init_shaders");
+
     mPrograms.reserve((int)RT_None);
 
 #if 1  //for optimization

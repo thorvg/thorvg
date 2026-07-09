@@ -32,6 +32,8 @@
         #include <windows.h>
     #endif
 #endif
+#include <chrono>
+#include <cstdio>
 #include <string>
 #include <cstdint>
 #include <cstdlib>
@@ -94,6 +96,26 @@ namespace tvg
         #define TVGERR(...) do {} while(0)
         #define TVGLOG(...) do {} while(0)
     #endif
+
+    struct TvgPerfTimer
+    {
+        TvgPerfTimer(const char* prefix, const char* body) : prefix(prefix), body(body), start(std::chrono::steady_clock::now())
+        {
+        }
+
+        ~TvgPerfTimer()
+        {
+            auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
+            fprintf(stdout, "[TVG_PERF] %s %s elapsed_us=%lld\n", prefix, body, static_cast<long long>(elapsed));
+        }
+
+        TvgPerfTimer(const TvgPerfTimer&) = delete;
+        TvgPerfTimer& operator=(const TvgPerfTimer&) = delete;
+
+        const char* prefix;
+        const char* body;
+        std::chrono::steady_clock::time_point start;
+    };
 
     template<typename T>
     static inline T* to(const Paint* p)

@@ -67,6 +67,8 @@ Result Canvas::add(Paint* target, Paint* at) noexcept
 
 Result Canvas::draw(bool clear) noexcept
 {
+    TvgPerfTimer timer("canvas", "draw");
+
     TVGLOG("RENDERER", "Draw S. -------------------------------- Canvas(%p)", this);
     auto ret = pImpl->draw(clear);
     TVGLOG("RENDERER", "Draw E. -------------------------------- Canvas(%p)", this);
@@ -77,6 +79,8 @@ Result Canvas::draw(bool clear) noexcept
 
 Result Canvas::update() noexcept
 {
+    TvgPerfTimer timer("canvas", "update");
+
     TVGLOG("RENDERER", "Update S. ------------------------------ Canvas(%p)", this);
     auto ret = pImpl->update();
     TVGLOG("RENDERER", "Update E. ------------------------------ Canvas(%p)", this);
@@ -99,6 +103,7 @@ Result Canvas::viewport(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
 
 Result Canvas::sync() noexcept
 {
+    TvgPerfTimer timer("canvas", "sync");
     return pImpl->sync();
 }
 
