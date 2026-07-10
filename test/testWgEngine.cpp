@@ -130,9 +130,10 @@ TEST_CASE("WG Basic draw", "[tvgWgEngine]")
                 if (maskOp != MaskMethod::None) REQUIRE(shape4->mask(mask(), maskOp) == Result::Success);
                 REQUIRE(canvas->add(shape4) == Result::Success);
             }
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+            REQUIRE(canvas->remove() == Result::Success);
         }
-        REQUIRE(canvas->draw(true) == Result::Success);
-        REQUIRE(canvas->sync() == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -235,10 +236,10 @@ TEST_CASE("WG Image Draw", "[tvgWgEngine]")
                 REQUIRE(picture7->scale(2.0f) == Result::Success);
                 REQUIRE(canvas->add(picture7) == Result::Success);
             }
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+            REQUIRE(canvas->remove() == Result::Success);
         }
-
-        REQUIRE(canvas->draw() == Result::Success);
-        REQUIRE(canvas->sync() == Result::Success);
         free(data);
     }
     REQUIRE(Initializer::term() == Result::Success);
