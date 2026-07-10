@@ -664,6 +664,7 @@ The following outlines the dependencies for these optional features:
 * **PNG Loader** (external): [libpng](https://github.com/pnggroup/libpng)
 * **JPEG Loader** (external): [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * **WebP Loader** (external): [libwebp](https://developers.google.com/speed/webp/download)
+* **GIF Loader** (external): [giflib](https://giflib.sourceforge.net/)
 
 [Back to contents](#contents)
 <br />
