@@ -29,6 +29,74 @@
 
 #include <thorvg.h>
 
+#ifdef __APPLE__
+
+// macOS has no native EGL; the engine loads Apple's OpenGL.framework, so test with CGL.
+#define GL_SILENCE_DEPRECATION 1
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl3.h>
+
+using namespace tvg;
+
+struct TestGLEngine
+{
+    CGLContextObj context = nullptr;
+    GLuint fbo = 0;
+    GLuint colorBuf = 0;
+    GLuint depthStencilBuf = 0;
+    uint32_t width;
+    uint32_t height;
+    ColorSpace colorSpace;
+
+    TestGLEngine(uint32_t w = 100, uint32_t h = 100, ColorSpace cs = ColorSpace::ABGR8888S) : width(w), height(h), colorSpace(cs)
+    {
+        CGLPixelFormatAttribute attrs[] = {
+            kCGLPFAOpenGLProfile, (CGLPixelFormatAttribute)kCGLOGLPVersion_GL3_Core,
+            kCGLPFAColorSize, (CGLPixelFormatAttribute)32,
+            kCGLPFADepthSize, (CGLPixelFormatAttribute)24,
+            kCGLPFAStencilSize, (CGLPixelFormatAttribute)8,
+            (CGLPixelFormatAttribute)0};
+
+        CGLPixelFormatObj pixelFormat = nullptr;
+        GLint numFormats = 0;
+        CGLChoosePixelFormat(attrs, &pixelFormat, &numFormats);
+        CGLCreateContext(pixelFormat, nullptr, &context);
+        CGLDestroyPixelFormat(pixelFormat);
+        CGLSetCurrentContext(context);
+
+        // render into an offscreen fbo
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glGenRenderbuffers(1, &colorBuf);
+        glBindRenderbuffer(GL_RENDERBUFFER, colorBuf);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuf);
+        glGenRenderbuffers(1, &depthStencilBuf);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuf);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuf);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    ~TestGLEngine()
+    {
+        CGLSetCurrentContext(context);
+        glDeleteFramebuffers(1, &fbo);
+        glDeleteRenderbuffers(1, &colorBuf);
+        glDeleteRenderbuffers(1, &depthStencilBuf);
+        CGLSetCurrentContext(nullptr);
+        CGLDestroyContext(context);
+    }
+
+    void target(GlCanvas* canvas)
+    {
+        CGLSetCurrentContext(context);
+        canvas->target(nullptr, nullptr, context, static_cast<int32_t>(fbo), width, height, colorSpace);
+    }
+};
+
+#else
+
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -146,5 +214,6 @@ struct TestGLEngine
     }
 };
 
+#endif
 #endif
 #endif
