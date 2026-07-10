@@ -217,6 +217,7 @@ TEST_CASE("Load SVG file", "[tvgPicture]")
         REQUIRE(picture->load(TEST_DIR"/test1.svg") == Result::Success);
         REQUIRE(picture->load(TEST_DIR"/test2.svg") == Result::Success);
         REQUIRE(picture->load(TEST_DIR"/test3.svg") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/test4.svg") == Result::Success);
 
         float w, h;
         REQUIRE(picture->size(&w, &h) == Result::Success);
