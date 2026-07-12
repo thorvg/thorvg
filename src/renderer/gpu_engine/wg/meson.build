@@ -10,6 +10,7 @@ source_file = [
     'tvgWgRenderTask.h',
     'tvgWgShaderSrc.h',
     'tvgWgShaderTypes.h',
+    'tvgWgSolidBatch.h',
     'tvgWgTextureMgr.h',
     'tvgWgTessellator.h',
     'tvgWgBindGroups.cpp',
@@ -23,6 +24,7 @@ source_file = [
     'tvgWgRenderTask.cpp',
     'tvgWgShaderSrc.cpp',
     'tvgWgShaderTypes.cpp',
+    'tvgWgSolidBatch.cpp',
     'tvgWgTextureMgr.cpp',
     'tvgWgTessellator.cpp'
 ]

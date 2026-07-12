@@ -86,6 +86,7 @@ public:
     WGPURenderPipeline radial{};
     WGPURenderPipeline linear{};
     WGPURenderPipeline solid_conv{};  // convex geometry (no stencil)
+    WGPURenderPipeline solid_batch{};  // batched convex geometry (no stencil)
     WGPURenderPipeline radial_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline linear_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline image{};
