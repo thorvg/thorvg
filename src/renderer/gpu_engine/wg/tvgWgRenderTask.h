@@ -28,6 +28,7 @@
 // base class for any renderable objects 
 struct WgRenderTask {
     virtual ~WgRenderTask() {}
+    virtual void stage(WgCompositor& compositor) = 0;
     virtual void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) = 0;
 };
 
@@ -39,6 +40,8 @@ struct WgPaintTask: public WgRenderTask {
 
     WgPaintTask(WgRenderDataPaint* renderData, BlendMethod blendMethod) : 
         renderData(renderData), blendMethod(blendMethod) {}
+    // stage all resources used by this paint
+    void stage(WgCompositor& compositor) override;
     // apply shape execution, including custom blending and clipping
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
 };
@@ -61,12 +64,13 @@ public:
 
     WgSceneTask(WgRenderTarget* renderTarget, WgCompose* compose, WgSceneTask* parent) :
         parent(parent), renderTarget(renderTarget), compose(compose) {}
+    // stage all resources used by the scene tree
+    void stage(WgCompositor& compositor) override;
     // run all, including all shapes drawing, blending, composition and effect
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
 private:
     void runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
     void runEffect(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
 };
- 
- #endif // _TVG_WG_RENDER_TASK_H_
- 
+
+#endif  // _TVG_WG_RENDER_TASK_H_
