@@ -123,6 +123,7 @@ public:
     float progress = 0.0f;  // [0 - 1]
     bool active = false;
     bool legacy = false;  // for legacy backward compat
+    bool dirty = false;
 
     ~LottieTween()
     {
@@ -156,6 +157,7 @@ public:
     {
         if (active) {
             active = legacy = false;
+            dirty = true;
             release();
         }
     }

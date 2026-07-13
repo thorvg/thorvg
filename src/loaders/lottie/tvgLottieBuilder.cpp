@@ -178,7 +178,7 @@ static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, u
 
 void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 {
-    if (!layer || (!tween.active && tvg::equal(layer->cache.frameNo, frameNo))) return;
+    if (!layer || (!tween.active && !tween.dirty && tvg::equal(layer->cache.frameNo, frameNo))) return;
 
     auto transform = layer->transform;
     auto parent = layer->parent;
@@ -1754,6 +1754,8 @@ bool LottieBuilder::update(LottieComposition* comp, float frameNo)
         auto layer = static_cast<LottieLayer*>(*child);
         if (!layer->matteSrc) updateLayer(comp, comp->root->scene, layer, frameNo);
     }
+
+    tween.dirty = false;
 
     return true;
 }

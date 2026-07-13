@@ -386,7 +386,7 @@ bool LottieLoader::frame(float no)
     no = shorten(no);
 
     //Skip update if frame diff is too small.
-    if (!builder->tween.active && fabsf(this->frameNo - no) <= 0.0009f) return false;
+    if (!builder->tween.active && !builder->tween.dirty && fabsf(this->frameNo - no) <= 0.0009f) return false;
 
     this->done();
 
