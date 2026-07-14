@@ -467,7 +467,6 @@ void shapeDelStroke(SwShape& shape);
 bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
 bool shapeGenStrokeFillColors(SwShape& shape, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
 void shapeResetFill(SwShape& shape);
-void shapeResetStrokeFill(SwShape& shape);
 bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool);
 void shapeDelFill(SwShape& shape);
 
