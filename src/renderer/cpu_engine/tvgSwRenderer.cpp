@@ -62,8 +62,8 @@ struct SwTask : Task
 
     void invisible()
     {
-        curBox.reset();
-        if (!nodirty) dirtyRegion->add(prvBox, curBox);
+        valid = false;
+        if (!nodirty) dirtyRegion->add(prvBox, {});
     }
 
     bool ready(bool condition)
@@ -77,6 +77,12 @@ struct SwTask : Task
         flags[0] |= flags[1];  //applied the previous flags if it's skipped before
         flags[1] = RenderUpdateFlag::None;  //reset
         return false;
+    }
+
+    bool complete()
+    {
+        prvBox = valid ? curBox : RenderRegion{};
+        return true;
     }
 
     virtual bool clip(SwRle* target) = 0;
@@ -423,8 +429,7 @@ bool SwRenderer::renderImage(RenderData data)
             }
         }
     }
-    task->prvBox = task->curBox;
-    return true;
+    return task->complete();
 }
 
 
@@ -483,8 +488,7 @@ bool SwRenderer::renderShape(RenderData data)
             }
         }
     }
-    task->prvBox = task->curBox;
-    return true;
+    return task->complete();
 }
 
 
