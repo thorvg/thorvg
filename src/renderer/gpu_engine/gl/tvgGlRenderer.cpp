@@ -1315,7 +1315,16 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         flags = RenderUpdateFlag::All;
     }
 
-    if ((opacity == 0 && !clipper) || flags == RenderUpdateFlag::None) return sdata;
+    // Defer updates while transparent.
+    if (opacity == 0 && !clipper) {
+        sdata->opacity = 0;
+        sdata->deferredFlags |= flags;
+        return sdata;
+    }
+
+    flags |= sdata->deferredFlags;
+    sdata->deferredFlags = RenderUpdateFlag::None;
+    if (flags == RenderUpdateFlag::None) return sdata;
 
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);

@@ -127,6 +127,7 @@ struct GlShape
   float viewWd;
   float viewHt;
   uint32_t opacity = 0;
+  RenderUpdateFlag deferredFlags = RenderUpdateFlag::None;
   GLuint texId = 0;
   const RenderSurface* texSource = nullptr;
   FilterMethod texFilter = FilterMethod::Bilinear;
