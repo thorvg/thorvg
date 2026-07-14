@@ -79,7 +79,7 @@ If your program includes the main renderer, you can seamlessly utilize ThorVG AP
 </p>
 
 ### CPU Rasterization
-ThorVG is optimized for CPU-based rasterization, with a strong focus on vector rendering in environments where GPU resources are limited, unavailable, or intentionally avoided. In representative CPU benchmarks, ThorVG demonstrates **an average of ~1.8× faster performance** to a widely-used vector graphics engine across common vector rendering workloads. The advantage is particularly clear in geometry-heavy scenarios such as rectangles, strokes, rotations, and circle rendering.
+ThorVG is optimized for CPU-based rasterization, with a strong focus on vector rendering in environments where GPU resources are limited, unavailable, or intentionally avoided. In representative CPU benchmarks, ThorVG demonstrates **an average of ~2.3× faster performance** to a widely-used vector graphics engine across common vector rendering workloads. The advantage is particularly clear in geometry-heavy scenarios such as rectangles, strokes, rotations, and circle rendering.
 
 #### Performance Overview
 <p align="center">
@@ -89,9 +89,9 @@ ThorVG is optimized for CPU-based rasterization, with a strong focus on vector r
 #### Test Conditions
 - Tested with 5k semi-transparent primitives, including shapes, strokes, and images, using alpha blending.
 - Image filtering was performed using bilinear interpolation.
-- Test Platform: Apple M1 (macOS 15)
+- Test Platform: Apple M2 Pro (macOS 26)
 - Render size: 2560 × 1440 (2K) for each test case
-- Versions: ThorVG v1.0.0, Skia v144
+- Versions: ThorVG v1.1, Skia v148
 
 <p align="center">
   <img width="800" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_stress.png">
