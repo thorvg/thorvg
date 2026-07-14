@@ -38,15 +38,15 @@
 <br />
 The following primitives are supported by ThorVG: <br />
  
-- **Lines & Shapes**: rectangles, circles, and paths with coordinate control
-- **Filling**: solid colors, linear & radial gradients, and path clipping
+- **Lines & Shapes**: rectangles, circles, paths, and arbitrary vector geometry
+- **Filling**: solid colors and linear & radial gradients
 - **Stroking**: stroke width, joins, caps, dash patterns, and trimming
-- **Scene Management**: retainable scene graph and object transformations
-- **Composition**: various blending and masking
-- **Text**: unicode characters with horizontal multi-line text layout using scalable fonts (TTF/OTF)
-- **Images**: SVG, JPG, PNG, WebP, and raw bitmaps
-- **Effects**: blur, drop shadow, fill, tint, tritone and color replacement
-- **Animations**: Lottie
+- **Scene Management**: retained-mode scene graph and hierarchical transformations
+- **Composition**: W3C compositing and blending modes, masking, clipping, and nested scenes
+- **Text**: Unicode, scalable TTF/OTF fonts, and multi-line text layout
+- **Images**: SVG, PNG, JPEG, WebP, and raw bitmaps
+- **Effects**: blur, drop shadow, tint, tritone, color replacement, and fill effects
+- **Animations**: Lottie (JSON) playback and rendering
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_primitives.png">
