@@ -118,7 +118,7 @@ The following figure illustrates the geometry changes and highlights the minimal
 Please note that in highly dynamic content—such as fast-paced games or full-screen animations where nearly all objects change every frame—partial rendering provides little to no benefit and may even introduce minor overhead. In these scenarios, full-scene rendering is typically the better choice. For a practical showcase, visit [this page](https://hermet.github.io/partial-test/) demonstrating a performance comparison of partial rendering using ThorVG's software renderer.<br />
 
 ### Render Backends
-Today, ThorVG provides its own implementation of multiple render-backend engines, allowing you to choose the one that best suits your app and system preferences.
+Today, ThorVG provides its own implementation of multiple rendering backends, allowing you to choose the one that best suits your application and target platform.
 <br/>
 
 - CPU/SIMD (Software)
@@ -126,12 +126,22 @@ Today, ThorVG provides its own implementation of multiple render-backend engines
 - WebGL
 - WebGPU
 
-ThorVG is particularly ahead of the curve in the web ecosystem. WebGPU introduces next-generation graphics APIs comparable to Vulkan, offering access to compute shaders and low-overhead GPU control. This enables more aggressive optimization strategies and broader application potential. On top of this, ThorVG fully supports all of its vector rendering features within the WebGPU backend, ensuring a complete and consistent experience across platforms.
+ThorVG is particularly ahead of the curve in the web ecosystem. WebGPU introduces a next-generation graphics API comparable to Vulkan, providing low-overhead GPU access and modern graphics capabilities. This enables more aggressive optimization strategies while preserving feature parity with other ThorVG backends. All vector rendering features are fully supported on the WebGPU backend, ensuring a consistent rendering experience across platforms.
 
-Furthermore, by abstracting underlying hardware graphics APIs such as Metal, Vulkan, and DirectX, ThorVG guarantees seamless integration across a wide range of systems, regardless of the specific hardware accelerations available.
+Beyond feature completeness, the WebGPU backend also delivers substantial performance improvements over the OpenGL backend in many rendering workloads. Internal benchmarks show up an average of approximately **1.8× higher** rendering throughput, with the largest gains observed in stroke rendering, gradients, and image rendering. Even for general vector rendering, WebGPU consistently maintains higher performance while producing identical visual output.
+
+<p align="center">
+  <img width="1900" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_gpu_performance.png">
+</p>
+
+> [!NOTE]
+> Benchmark results were obtained using [ThorVG's benchmark application](https://github.com/thorvg/thorvg.benchmark) on Apple M1. Actual performance may vary depending on the hardware, operating system, graphics driver, and rendering workload.
+
+Furthermore, by abstracting native graphics APIs such as Metal, Vulkan, and DirectX through WebGPU, ThorVG provides a single rendering interface that seamlessly scales across desktop, mobile, and web environments. This architecture allows applications to benefit from modern GPU capabilities without requiring platform-specific rendering code.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_webgpu.png">
+</p>
 
 ### Supported Platforms
 ThorVG is designed to be portable across a wide range of devices, including small IoT devices, embedded systems, mobile platforms, game consoles, desktop environments, and the web. It is actively under development, with continuous efforts to expand support for essential platforms as needed. Currently, the major supported platforms include:<br />
