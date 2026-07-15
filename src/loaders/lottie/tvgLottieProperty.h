@@ -993,8 +993,25 @@ struct LottieBitmap : LottieProperty
             picture->ref();
         }
 
+        size = rhs.size;
         width = rhs.width;
         height = rhs.height;
+
+        if (shallow) {
+            data = rhs.data;
+            mimeType = rhs.mimeType;
+            rhs.data = nullptr;
+            rhs.mimeType = nullptr;
+            rhs.size = 0;
+        } else {
+            if (rhs.size > 0) {
+                data = tvg::malloc<char>(rhs.size);
+                memcpy(data, rhs.data, rhs.size);
+            } else if (rhs.path) {
+                path = tvg::duplicate(rhs.path);
+            }
+            if (rhs.mimeType) mimeType = tvg::duplicate(rhs.mimeType);
+        }
     }
 };
 
