@@ -1265,11 +1265,18 @@ void GlRenderer::dispose(RenderData data)
 
 RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
 {
-    if (opacity == 0) return data;
-
     //TODO: redefine GlImage?
     auto sdata = static_cast<GlShape*>(data);
     if (!sdata) sdata = new GlShape;
+
+    if (opacity == 0) {
+        sdata->opacity = 0;
+        sdata->deferredFlags |= flags;
+        return sdata;
+    }
+
+    flags |= sdata->deferredFlags;
+    sdata->deferredFlags = RenderUpdateFlag::None;
 
     auto cacheStale = sdata->texId && (sdata->texStamp != mTextures.stamp);
     if (flags == RenderUpdateFlag::None && !cacheStale) return data;
@@ -1394,6 +1401,7 @@ bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
 {
     if (!data) return false;
     auto shape = (GlShape*)data;
+    if (shape->opacity == 0) return false;
     const auto& bbox = shape->geometry.getBounds();
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
@@ -1408,6 +1416,7 @@ bool GlRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion&
 {
     if (!data) return false;
     auto shape = (GlShape*)data;
+    if (shape->opacity == 0) return false;
     const auto& bbox = shape->geometry.getBounds();
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
