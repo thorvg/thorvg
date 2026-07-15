@@ -178,7 +178,14 @@ static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, u
 
 void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 {
-    if (!layer || (!tween.active && tvg::equal(layer->cache.frameNo, frameNo))) return;
+    if (!layer) return;
+
+    if (tween.active) {
+        layer->cache.frameNo = -1.0f;  // tweening doesn't cache the result; invalidate it
+    } else {
+        if (tvg::equal(layer->cache.frameNo, frameNo)) return;
+        layer->cache.frameNo = frameNo;
+    }
 
     auto transform = layer->transform;
     auto parent = layer->parent;
@@ -190,8 +197,6 @@ void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
     _update(transform, frameNo, matrix, layer->cache.opacity, layer->autoOrient, tween, exps);
 
     if (parent) layer->cache.matrix = parent->cache.matrix * matrix;
-
-    layer->cache.frameNo = frameNo;
 }
 
 
