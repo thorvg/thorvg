@@ -364,7 +364,10 @@ tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size
 {
 #ifdef THORVG_SFNT_LOADER_SUPPORT
     // TODO: add check for mimetype ?
-    if (auto loader = font(name)) return loader;
+    if (auto loader = font(name)) {
+        if (loader->sharing > 0) --loader->sharing;   //font loading doesn't mean sharing.
+        return loader;
+    }
 
     // function is dedicated for SFNT-based font loading
     auto loader = new SfntLoader;
