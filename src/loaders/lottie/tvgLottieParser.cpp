@@ -1060,7 +1060,7 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
 }
 
 
-LottieObject* LottieParser::parseAsset()
+LottieObject* LottieParser::parseAsset(bool image)
 {
     enterObject();
 
@@ -1094,7 +1094,7 @@ LottieObject* LottieParser::parseAsset()
         else skip();
     }
     if (data) {
-        if (!strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
+        if (image || !strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
             auto asset = new LottieImage;
             parseImage(asset, data, subPath, embedded, width, height);
             if (sid) registerSlot(asset, sid, asset->bitmap);
@@ -1757,10 +1757,13 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
         case LottieProperty::Type::Image: {
             LottieObject* obj = nullptr;
             while (auto key = nextObjectKey()) {
-                if (KEY_AS("p")) obj = parseAsset();
+                if (KEY_AS("p")) obj = parseAsset(true);
                 else skip();
             }
-            if (!obj) return nullptr;
+            if (!obj || obj->type != LottieObject::Type::Image) {
+                delete(obj);
+                return nullptr;
+            }
             prop = new LottieBitmap(static_cast<LottieImage*>(obj)->bitmap);
             delete(obj);
             break;

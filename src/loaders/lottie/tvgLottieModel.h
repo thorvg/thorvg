@@ -949,6 +949,8 @@ struct LottieImage : LottieObject
     LottieBitmap bitmap;
     bool resolved = false;
 
+    LottieImage() { LottieObject::type = LottieObject::Image; }
+
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
