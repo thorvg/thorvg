@@ -246,7 +246,7 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
     return new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
 }
 
-void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding)
+void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding, bool auxBuffer)
 {
     if (!dstCopyFbo) return;
 
@@ -255,12 +255,14 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
 #else  // TODO: create partial buffer when MSAA is disabled
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
+    auto bufferId = auxBuffer ? mGpuBuffer.getAuxBufferId() : mGpuBuffer.getBufferId();
+    auto bufferOffset = auxBuffer ? mGpuBuffer.pushAux(region, sizeof(region), true) : mGpuBuffer.push(region, sizeof(region), true);
     task->addBindResource(GlBindingResource{
         binding,
         task->getProgram()->getUniformBlockIndex("BlendRegion"),
-        mGpuBuffer.getBufferId(),
-        mGpuBuffer.push(region, 4 * sizeof(float), true),
-        4 * sizeof(float),
+        bufferId,
+        bufferOffset,
+        sizeof(region),
     });
     task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
 }
@@ -319,7 +321,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto pass = currentPass();
     auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, clipped, depth, viewMatrix, vp, &color, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
     // Keep BlendRegion on the existing solid-shape blend UBO slot.
-    bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
+    bindBlendTarget(task, dstCopyFbo, viewRegion, 2, stencilTask != nullptr);
 
     if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, clipped, stencilBounds, viewBounds, stencilBuffer, stencilIndices);
     else pass->addRenderTask(task);
@@ -389,6 +391,11 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     auto pass = currentPass();
     auto clipped = !sdata.clips.empty();
     auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, sdata.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, clipped, depth, viewMatrix, vp, nullptr, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
+    auto auxUbo = stencilTask != nullptr;
+    auto uboBufferId = auxUbo ? mGpuBuffer.getAuxBufferId() : mGpuBuffer.getBufferId();
+    auto pushUbo = [this, auxUbo](void* data, uint32_t size) {
+        return auxUbo ? mGpuBuffer.pushAux(data, size, true) : mGpuBuffer.push(data, size, true);
+    };
 
     // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
@@ -405,12 +412,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     float transformInfo[GL_MAT3_STD140_SIZE];
     memcpy(transformInfo, invMat3, GL_MAT3_STD140_BYTES);
-    auto transformOffset = mGpuBuffer.push(transformInfo, sizeof(transformInfo), true);
+    auto transformOffset = pushUbo(transformInfo, sizeof(transformInfo));
 
     task->addBindResource(GlBindingResource{
         0,
         task->getProgram()->getUniformBlockIndex("TransformInfo"),
-        mGpuBuffer.getBufferId(),
+        uboBufferId,
         transformOffset,
         sizeof(transformInfo),
     });
@@ -459,8 +466,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         gradientBinding = GlBindingResource{
             2,
             loc,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlLinearGradientBlock), true),
+            uboBufferId,
+            pushUbo(&gradientBlock, sizeof(GlLinearGradientBlock)),
             sizeof(GlLinearGradientBlock),
         };
     } else {
@@ -492,8 +499,8 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
         gradientBinding = GlBindingResource{
             2,
             loc,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlRadialGradientBlock), true),
+            uboBufferId,
+            pushUbo(&gradientBlock, sizeof(GlRadialGradientBlock)),
             sizeof(GlRadialGradientBlock),
         };
     }
@@ -501,7 +508,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     task->addBindResource(gradientBinding);
 
     // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
-    bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
+    bindBlendTarget(task, dstCopyFbo, viewRegion, 3, auxUbo);
 
     if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, clipped, stencilBounds, viewBounds, stencilBuffer, stencilIndices);
     else pass->addRenderTask(task);

@@ -26,20 +26,15 @@
 #include "tvgGlStencilCoverBatch.h"
 
 #include <cassert>
-#include <string.h>
 
-// WebGL uses smaller batch caps to limit wasm memory. Native GL keeps larger caps
+// WebGL keeps fewer regions per batch to limit wasm memory. Native GL keeps more
 // for fewer render tasks. BATCH_REGION_RESET_THRESHOLD only releases cached bounds.
 #ifdef __EMSCRIPTEN__
 static constexpr uint32_t BATCH_REGION_MAX_COUNT = 256;
 static constexpr uint32_t BATCH_REGION_RESET_THRESHOLD = 64;
-static constexpr uint32_t BATCH_VERTEX_MAX_COUNT = 65536;
-static constexpr uint32_t BATCH_INDEX_MAX_COUNT = 262144;
 #else
 static constexpr uint32_t BATCH_REGION_MAX_COUNT = 512;
 static constexpr uint32_t BATCH_REGION_RESET_THRESHOLD = 128;
-static constexpr uint32_t BATCH_VERTEX_MAX_COUNT = 262144;
-static constexpr uint32_t BATCH_INDEX_MAX_COUNT = 1048576;
 #endif
 
 static constexpr uint32_t COVER_VERTEX_COUNT = 6;
@@ -84,7 +79,6 @@ static uint32_t* drawStencilGeometry(GlRenderTask* task, GlStageBuffer* gpuBuffe
 
     uint32_t* indices = nullptr;
     auto indexOffset = gpuBuffer->reserveIndex(buffer->index.count * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
-    if (buffer->index.count > 0) memcpy(indices, buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
     task->setDrawRange(indexOffset, buffer->index.count);
@@ -158,9 +152,7 @@ GlRenderTask* GlStencilCoverBatch::prepare(GlProgram* stencilProgram, GlRenderPa
     coverTask->mArrayOffset = 0;
     coverTask->mIndexCount = COVER_VERTEX_COUNT;
     stencilBuffer = stroke ? &geometry.stroke : &geometry.fill;
-    // Cache this before writing stencil indices; the batch needs the
-    // pre-mutation answer to keep the index stream mergeable.
-    merge = mergeable(pass, stencilMode, clipped, geometryBounds, stencilBuffer);
+    merge = mergeable(pass, stencilMode, clipped, geometryBounds);
 
     auto stencilTask = new GlRenderTask(stencilProgram);
     stencilTask->setViewMatrix(viewMatrix);
@@ -189,7 +181,11 @@ void GlStencilCoverBatch::addBounds(const RenderRegion& bounds)
 {
     auto p = this->bounds.count;
     auto min = ySorted ? bounds.min.y : bounds.min.x;
-    this->bounds.grow(1);
+    if (this->bounds.full()) {
+        auto capacity = this->bounds.reserved ? this->bounds.reserved << 1 : 1;
+        if (capacity > BATCH_REGION_MAX_COUNT) capacity = BATCH_REGION_MAX_COUNT;
+        this->bounds.reserve(capacity);
+    }
     while (p > 0 && (ySorted ? this->bounds[p - 1].min.y : this->bounds[p - 1].min.x) > min) {
         this->bounds[p] = this->bounds[p - 1];
         --p;
@@ -198,8 +194,7 @@ void GlStencilCoverBatch::addBounds(const RenderRegion& bounds)
     ++this->bounds.count;
 }
 
-
-bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const
+bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds) const
 {
     if (!open) return false;
     // A new current pass is a hard batch boundary; fail before touching the old pass/task pair.
@@ -212,10 +207,6 @@ bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode
     if (this->clipped != clipped) return false;
     if (bounds.invalid()) return false;
     if (this->bounds.count >= BATCH_REGION_MAX_COUNT) return false;
-    auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
-    auto incomingIndexCount = stencilBuffer ? stencilBuffer->index.count : 0;
-    if (incomingVertexCount > BATCH_VERTEX_MAX_COUNT || vertexCount > BATCH_VERTEX_MAX_COUNT - incomingVertexCount) return false;
-    if (incomingIndexCount > BATCH_INDEX_MAX_COUNT || indexCount > BATCH_INDEX_MAX_COUNT - incomingIndexCount) return false;
     return !intersects(bounds);
 }
 
@@ -229,7 +220,10 @@ void GlStencilCoverBatch::draw(GlRenderPass* pass, GlRenderTask* stencil, GlRend
     }
 
     if (merge) this->append(stencil, cover, bounds, viewBounds, stencilBuffer, stencilIndices);
-    else emitSingle(pass, stencil, cover, mode, clipped, bounds, viewBounds, stencilBuffer);
+    else {
+        buildIndices(stencilIndices, stencilBuffer, 0);
+        emitSingle(pass, stencil, cover, mode, clipped, bounds, viewBounds, stencilBuffer);
+    }
 }
 
 
@@ -259,6 +253,7 @@ void GlStencilCoverBatch::append(GlRenderTask* stencil, GlRenderTask* cover, con
         coverViewBounds = viewBounds;
     }
     if (!merge(stencil, viewBounds, stencilBuffer, stencilIndices)) {
+        buildIndices(stencilIndices, stencilBuffer, 0);
         task->mStencilTasks.push(stencil);
         setStencilMergeTarget(stencil, viewBounds, stencilBuffer);
     }
@@ -279,6 +274,9 @@ void GlStencilCoverBatch::setStencilMergeTarget(GlRenderTask* stencil, const Ren
 bool GlStencilCoverBatch::merge(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices)
 {
     auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
+    auto incomingIndexCount = stencil->mIndexCount;
+    if (incomingVertexCount > UINT32_MAX - vertexCount) return false;
+    if (incomingIndexCount > UINT32_MAX - indexCount) return false;
     if (!stencilTask || vertexCount == 0 || incomingVertexCount == 0) return false;
     if (!(stencilViewBounds == viewBounds)) return false;
     if (!stencilIndices) return false;

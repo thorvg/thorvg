@@ -42,7 +42,7 @@ public:
                           const RenderRegion& viewBounds, RenderRegion& geometryBounds,
                           const GlGeometryBuffer*& stencilBuffer, uint32_t*& stencilIndices,
                           bool& merge);
-    bool mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const;
+    bool mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds) const;
     void draw(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, bool merge, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
 
 private:

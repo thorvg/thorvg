@@ -53,7 +53,7 @@ public:
     ~GlStageBuffer();
 
     uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false);
-    uint32_t pushAux(void* data, uint32_t size);
+    uint32_t pushAux(void* data, uint32_t size, bool alignGpuOffset = false);
     uint32_t pushIndex(void* data, uint32_t size);
     uint32_t reserve(uint32_t size, void** dst, bool alignGpuOffset = false);
     uint32_t reserveAux(uint32_t size, void** dst);
@@ -65,7 +65,7 @@ public:
     GLuint getAuxBufferId();
 
 private:
-    void alignOffset(uint32_t size);
+    void alignOffset(Array<uint8_t>& buffer, uint32_t size);
 
     GLuint mVao = 0;
     GlGpuBuffer mGpuBuffer = {};
@@ -77,4 +77,3 @@ private:
 };
 
 #endif /* _TVG_GL_GPU_BUFFER_H_ */
-
