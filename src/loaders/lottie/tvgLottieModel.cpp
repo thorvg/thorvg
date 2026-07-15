@@ -305,7 +305,7 @@ void LottieImage::prepare(bool external)
     if (bitmap.size > 0) result = picture->load((const char*)bitmap.data, bitmap.size, bitmap.mimeType);
     else if (external) result = picture->load(bitmap.path);
     if (result == Result::Success) resolved = true;
-    picture->size(bitmap.width, bitmap.height);
+    if (resolved || (bitmap.width > 0.0f && bitmap.height > 0.0f)) picture->size(bitmap.width, bitmap.height);
     bitmap.picture = picture;
     picture->ref();
 }
