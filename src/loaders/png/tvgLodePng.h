@@ -135,6 +135,48 @@ struct LodePNGInfo
     unsigned filter_method;     /*filter method of the original file*/
     unsigned interlace_method;  /*interlace method of the original file: 0=none, 1=Adam7*/
     LodePNGColorMode color;     /*color type and bits, palette and transparency of the PNG file*/
+
+    /*
+     Color profile related chunks: iCCP
+
+     LodePNG does not apply any color conversions on pixels in the encoder or decoder and does not interpret these color
+     profile values. It merely passes on the information. If you wish to use color profiles and convert colors, please
+     use these values with a color management library.
+
+     See the PNG, ICC and sRGB specifications for more information about the meaning of these values.
+    */
+    /*
+     iCCP chunk: optional. May not appear at the same time as sRGB.
+
+     LodePNG does not parse or use the ICC profile (except its color space header field for an edge case), a
+     separate library to handle the ICC data (not included in LodePNG) format is needed to use it for color
+     management and conversions.
+
+     For encoding, if iCCP is present, gAMA and cHRM are recommended to be added as well with values that match the ICC
+     profile as closely as possible, if you wish to do this you should provide the correct values for gAMA and cHRM and
+     enable their '_defined' flags since LodePNG will not automatically compute them from the ICC profile.
+
+     For encoding, the ICC profile is required by the PNG specification to be an "RGB" profile for non-gray
+     PNG color types and a "GRAY" profile for gray PNG color types. If you disable auto_convert, you must ensure
+     the ICC profile type matches your requested color type, else the encoder gives an error. If auto_convert is
+     enabled (the default), and the ICC profile is not a good match for the pixel data, this will result in an encoder
+     error if the pixel data has non-gray pixels for a GRAY profile, or a silent less-optimal compression of the pixel
+     data if the pixels could be encoded as grayscale but the ICC profile is RGB.
+
+     To avoid this do not set an ICC profile in the image unless there is a good reason for it, and when doing so
+     make sure you compute it carefully to avoid the above problems.
+    */
+    unsigned iccp_defined; /* Whether an iCCP chunk is present (0 = not present, 1 = present). */
+    char* iccp_name;       /* Null terminated string with profile name, 1-79 bytes */
+    /*
+      The ICC profile in iccp_profile_size bytes.
+      Don't allocate this buffer yourself. It is allocated by the decoder when an
+      iCCP chunk is present and freed by lodepng_state_cleanup().
+    */
+    unsigned char* iccp_profile;
+    unsigned iccp_profile_size; /* The size of iccp_profile in bytes */
+
+    /* End of color profile related chunks */
 };
 
 /*
@@ -170,5 +212,6 @@ void lodepng_state_init(LodePNGState* state);
 void lodepng_state_cleanup(LodePNGState* state);
 unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h, LodePNGState* state, const unsigned char* in, size_t insize);
 unsigned lodepng_inspect(unsigned* w, unsigned* h, LodePNGState* state, const unsigned char* in, size_t insize);
+unsigned lodepng_toSrgb(unsigned char* out, const unsigned char* in, unsigned w, unsigned h, const LodePNGState* state);
 
 #endif //_TVG_LODEPNG_H_
