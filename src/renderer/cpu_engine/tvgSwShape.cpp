@@ -511,22 +511,17 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
     return shape.strokeRle ? true : false;
 }
 
-
-bool shapeGenFillColors(SwShape& shape, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
+bool shapeGenFillColors(SwFill*& out, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
-    if (ctable) shapeResetFill(shape);
-    return fillGenColorTable(shape.fill, fill, transform, surface, opacity, ctable);
-}
+    if (!fill) return true;  // a normal case
 
-bool shapeGenStrokeFillColors(SwShape& shape, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
-{
-    if (!shape.stroke->fill) {
-        shape.stroke->fill = tvg::calloc<SwFill>(1, sizeof(SwFill));
+    if (!out) {
+        out = tvg::calloc<SwFill>(1, sizeof(SwFill));
         ctable = true;
     } else if (ctable) {
-        fillReset(shape.stroke->fill);
+        fillReset(out);
     }
-    return fillGenColorTable(shape.stroke->fill, fill, transform, surface, opacity, ctable);
+    return fillGenColorTable(out, fill, transform, surface, opacity, ctable);
 }
 
 void shapeResetFill(SwShape& shape)
