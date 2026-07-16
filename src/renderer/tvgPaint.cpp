@@ -369,7 +369,7 @@ Result Paint::bounds(Point* pt4) noexcept
     return Result::InsufficientCondition;
 }
 
-TVG_DEPRECATED bool Paint::intersects(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
+bool Paint::intersects(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
 {
     return intersects(x, y, w, h, false);
 }
