@@ -773,8 +773,6 @@ void fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uin
 
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
-    if (!fill) return false;
-
     fill->spread = fdata->spread();
 
     if (fdata->type() == Type::LinearGradient) {
