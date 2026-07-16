@@ -1479,6 +1479,15 @@ static int lodepng_pixel_overflow(unsigned w, unsigned h, const LodePNGColorMode
     return 0; /* no overflow */
 }
 
+static void lodepng_clear_icc(LodePNGInfo* info)
+{
+    tvg::free(info->iccp_name);
+    info->iccp_name = NULL;
+    tvg::free(info->iccp_profile);
+    info->iccp_profile = NULL;
+    info->iccp_profile_size = 0;
+    info->iccp_defined = 0;
+}
 
 static void lodepng_info_init(LodePNGInfo* info)
 {
@@ -1486,12 +1495,15 @@ static void lodepng_info_init(LodePNGInfo* info)
     info->interlace_method = 0;
     info->compression_method = 0;
     info->filter_method = 0;
+    info->iccp_defined = 0;
+    info->iccp_name = NULL;
+    info->iccp_profile = NULL;
 }
-
 
 static void lodepng_info_cleanup(LodePNGInfo* info)
 {
     lodepng_color_mode_cleanup(&info->color);
+    lodepng_clear_icc(info);
 }
 
 
@@ -2362,6 +2374,43 @@ static unsigned readChunk_tRNS(LodePNGColorMode* color, const unsigned char* dat
     return 0; /* OK */
 }
 
+static unsigned readChunk_iCCP(LodePNGInfo* info, const LodePNGDecompressSettings* zlibsettings,
+                               const unsigned char* data, size_t chunkLength)
+{
+    unsigned error = 0;
+    unsigned i;
+    size_t size = 0;
+
+    unsigned length, string2_begin;
+
+    if (info->iccp_name) lodepng_clear_icc(info);
+
+    for (length = 0; length < chunkLength && data[length] != 0; ++length) ;
+    if (length + 2 >= chunkLength) return 75; /*no null termination, corrupt?*/
+    if (length < 1 || length > 79) return 89; /*keyword too short or long*/
+
+    info->iccp_name = tvg::malloc<char>(length + 1);
+    if (!info->iccp_name) return 83; /*alloc fail*/
+
+    info->iccp_name[length] = 0;
+    for (i = 0; i != length; ++i) {
+        info->iccp_name[i] = (char)data[i];
+    }
+
+    if (data[length + 1] != 0) return 72; /*the 0 byte indicating compression must be 0*/
+
+    string2_begin = length + 2;
+    if (string2_begin > chunkLength) return 75; /*no null termination, corrupt?*/
+
+    length = (unsigned)chunkLength - string2_begin;
+    error = zlib_decompress(&info->iccp_profile, &size, 0,
+                            &data[string2_begin],
+                            length, zlibsettings);
+    info->iccp_profile_size = size;
+    if (!error && !info->iccp_profile_size) error = 100; /*invalid ICC profile size*/
+    if (!error) info->iccp_defined = 1;
+    return error;
+}
 
 /* read a PNG, the result will be in the same color type as the PNG (hence "generic") */
 static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h, LodePNGState* state, const unsigned char* in, size_t insize)
@@ -2439,6 +2488,9 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h, LodePNG
             in without 'LODEPNG_COMPILE_ANCILLARY_CHUNKS' because it contains essential color information that
             affects the alpha channel of pixels. */
             state->error = readChunk_tRNS(&state->info_png.color, data, chunkLength);
+            if (state->error) break;
+        } else if (lodepng_chunk_type_equals(chunk, "iCCP")) {
+            state->error = readChunk_iCCP(&state->info_png, &state->decoder.zlibsettings, data, chunkLength);
             if (state->error) break;
         } else /*it's not an implemented chunk type, so ignore it: skip over the data*/ {
             /*error: unknown critical chunk (5th bit of first byte of chunk type is 0)*/
