@@ -1085,9 +1085,33 @@ TVG_API Tvg_Result tvg_paint_get_opacity(const Tvg_Paint paint, uint8_t* opacity
 TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint);
 
 /**
- * @deprecated see tvg_paint_intersects_region()
+ * @brief Checks whether a given region intersects the filled area of the paint.
+ *
+ * This function determines whether the specified rectangular region—defined by (`x`, `y`, `w`, `h`)—
+ * intersects the geometric fill region of the paint object.
+ *
+ * This is useful for hit-testing purposes, such as detecting whether a user interaction (e.g., touch or click)
+ * occurs within a painted region.
+ *
+ * The paint must be updated in a Canvas beforehand—typically after the Canvas has been
+ * drawn and synchronized.
+ *
+ * @param[in] paint The paint object to be tested.
+ * @param[in] x The x-coordinate of the top-left corner of the test region.
+ * @param[in] y The y-coordinate of the top-left corner of the test region.
+ * @param[in] w The width of the region to test. Must be greater than 0.
+ * @param[in] h The height of the region to test. Must be greater than 0.
+ *
+ * @return @c true if any part of the region intersects the filled area; otherwise, @c false.
+ *
+ * @note To test a single point, set the region size to w = 1, h = 1.
+ * @note For efficiency, an AABB (axis-aligned bounding box) test is performed internally before precise hit detection.
+ * @note This test does not take into account the results of blending or masking.
+ * @note This test does take into account hidden paints as well.
+ * @see tvg_paint_set_visible()
+ * @since 1.0
  */
-TVG_API TVG_DEPRECATED bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
+TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h);
 
 /**
  * @brief Checks whether a given region intersects the filled area of the paint.
@@ -1114,7 +1138,7 @@ TVG_API TVG_DEPRECATED bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int
  * @note This test does not take into account the results of blending or masking.
  *
  * @see tvg_paint_set_visible()
- * @since 1.1
+ * @since Experimental API
  */
 TVG_API bool tvg_paint_intersects_region(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly);
 
@@ -2137,7 +2161,7 @@ TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method m
  * @see tvg_accessor_get_name()
  * @see tvg_picture_get_paint()
  *
- * @since 1.0
+ * @since 1.1
  */
 TVG_API Tvg_Result tvg_picture_set_accessible(Tvg_Paint picture, bool accessible);
 

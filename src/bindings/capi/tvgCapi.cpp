@@ -278,7 +278,7 @@ TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint)
     return nullptr;
 }
 
-TVG_API TVG_DEPRECATED bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h)
+TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h)
 {
     return tvg_paint_intersects_region(paint, x, y, w, h, false);
 }

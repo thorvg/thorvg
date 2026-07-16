@@ -591,9 +591,32 @@ struct TVG_API Paint
     Result bounds(float* x, float* y, float* w, float* h) noexcept;
 
     /**
-     * @deprecated see bool intersects(int32_t, int32_t, int32_t, int32_t, bool)
+     * @brief Checks whether a given region intersects the filled area of the paint.
+     *
+     * This function determines whether the specified rectangular region—defined by (`x`, `y`, `w`, `h`)—
+     * intersects the geometric fill region of the paint object.
+     *
+     * This is useful for hit-testing purposes, such as detecting whether a user interaction (e.g., touch or click)
+     * occurs within a painted region.
+     *
+     * The paint must be updated in a Canvas beforehand—typically after the Canvas has been
+     * drawn and synchronized.
+     *
+     * @param[in] x The x-coordinate of the top-left corner of the test region.
+     * @param[in] y The y-coordinate of the top-left corner of the test region.
+     * @param[in] w The width of the region to test. Must be greater than 0; defaults to 1.
+     * @param[in] h The height of the region to test. Must be greater than 0; defaults to 1.
+     *
+     * @return @c true if any part of the region intersects the filled area; otherwise, @c false.
+     *
+     * @note To test a single point, set the region size to w = 1, h = 1.
+     * @note For efficiency, an AABB (axis-aligned bounding box) test is performed internally before precise hit detection.
+     * @note This test does not take into account the results of blending or masking.
+     * @note This test does take into account hidden paints as well.
+     * @see Paint::visible() const
+     * @since 1.0
      */
-    TVG_DEPRECATED bool intersects(int32_t x, int32_t y, int32_t w = 1, int32_t h = 1) noexcept;
+    bool intersects(int32_t x, int32_t y, int32_t w = 1, int32_t h = 1) noexcept;
 
     /**
      * @brief Checks whether a given region intersects the filled area of the paint.
@@ -620,7 +643,7 @@ struct TVG_API Paint
      *
      * @see Paint::visible(bool on)
      *
-     * @since 1.1
+     * @since Experimental API
      */
     bool intersects(int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly) noexcept;
 
@@ -1792,6 +1815,21 @@ struct TVG_API Picture : Paint
      */
     Type type() const noexcept override;
 
+    /**
+     * @brief Enable or disable accessible mode for a Picture.
+     *
+     * When accessible mode is enabled, the Picture maintains an internal mapping
+     * of ID-accessible vector assets nodes (such as SVG), allowing efficient access to Paint objects
+     * and their associated identifier information via Accessor APIs.
+     *
+     * When disabled, no additional mapping is maintained and all nodes are treated
+     * as general traversal targets.
+     *
+     * @see Picture::paint()
+     * @see Accessor::name()
+     *
+     * @since 1.1
+     */
     bool accessible = false;
 
     _TVG_DECLARE_ACCESSOR(Animation);
