@@ -130,58 +130,18 @@ jobs:
           path: tvg-pixel-inspector/output/reporter.*.pdf
           if-no-files-found: warn
 
-      - name: Write pixel report summary
+      - name: Save PR number
         if: always()
         run: |
-          python3 -u - <<'PY'
-          import html
-          import pathlib
-          import re
-
-          report_html = pathlib.Path("tvg-pixel-inspector/output/reporter.html")
-          report_txt = pathlib.Path("pixel-report.txt")
-
-          if not report_html.exists():
-              report_txt.write_text("status=missing\n")
-              raise SystemExit(0)
-
-          text = report_html.read_text(errors="replace")
-
-          def first(pattern, default="0"):
-              match = re.search(pattern, text, re.S)
-              return html.unescape(match.group(1)).strip() if match else default
-
-          compared = first(r'<span>compared</span><b[^>]*>([^<]+)</b>')
-          different = first(r'<span>different</span><b[^>]*>([^<]+)</b>')
-          failed = first(r'<span>failed</span><b[^>]*>([^<]+)</b>')
-
-          backends = []
-          for match in re.finditer(
-              r'<section class="panel backend" data-backend="([^"]+)">.*?'
-              r'<p class="muted">compared ([0-9]+), stored ([0-9]+), different ([0-9]+), failed ([0-9]+)</p>',
-              text,
-              re.S,
-          ):
-              backends.append(tuple(html.unescape(value) for value in match.groups()))
-
-          lines = [
-              "status=ok",
-              "pr=${{ github.event.pull_request.number }}",
-              f"compared={compared}",
-              f"different={different}",
-              f"failed={failed}",
-          ]
-
-          for backend, backend_compared, _stored, backend_different, backend_failed in backends:
-              lines.append(f"backend={backend},{backend_compared},{backend_different},{backend_failed}")
-
-          report_txt.write_text("\n".join(lines) + "\n")
-          PY
+          mkdir -p tvg-pixel-inspector/output
+          echo "${{ github.event.pull_request.number }}" > tvg-pixel-inspector/output/pr-number.txt
 
       - name: Upload pixel report summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: thorvg-pixel-summary
-          path: pixel-report.txt
+          path: |
+            tvg-pixel-inspector/output/reporter.md
+            tvg-pixel-inspector/output/pr-number.txt
           if-no-files-found: warn
