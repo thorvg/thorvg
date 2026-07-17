@@ -32,75 +32,21 @@ jobs:
             const path = require('path');
             const reportHeader = '## Pixel Inspector Report';
             const workflowRun = context.payload.workflow_run;
-            const summaryPath = path.join('ci-report', 'pixel-report.txt');
+            const reportPath = path.join('ci-report', 'reporter.md');
 
-            function parseSummary(filename) {
-              const summary = {
-                exists: fs.existsSync(filename),
-                status: 'missing-artifact',
-                prNumber: null,
-                compared: '0',
-                different: '0',
-                failed: '0',
-                backends: [],
-              };
+            // The pixel inspector generates reporter.md; publish it as-is.
+            let body = fs.existsSync(reportPath)
+              ? fs.readFileSync(reportPath, 'utf8').trimEnd()
+              : `${reportHeader}\n\nPixel report was not generated.`;
+            // The header identifies the comment to update on later runs.
+            if (!body.startsWith(reportHeader)) body = `${reportHeader}\n\n${body}`;
 
-              if (!summary.exists) return summary;
-
-              for (const line of fs.readFileSync(filename, 'utf8').split(/\r?\n/)) {
-                if (!line) continue;
-                const index = line.indexOf('=');
-                if (index < 0) continue;
-
-                const key = line.slice(0, index);
-                const value = line.slice(index + 1);
-
-                if (key === 'status') summary.status = value;
-                else if (key === 'pr') {
-                  const prNumber = Number(value);
-                  if (Number.isInteger(prNumber) && prNumber > 0) summary.prNumber = prNumber;
-                }
-                else if (key === 'compared') summary.compared = value;
-                else if (key === 'different') summary.different = value;
-                else if (key === 'failed') summary.failed = value;
-                else if (key === 'backend') {
-                  const [name, compared, different, failed] = value.split(',');
-                  if (name && compared && different && failed) {
-                    summary.backends.push({name, compared, different, failed});
-                  }
-                }
-              }
-
-              return summary;
-            }
-
-            function renderSummary(summary) {
-              if (!summary.exists) {
-                return `${reportHeader}\n\nPixel report summary artifact was not generated.\n\n`;
-              }
-
-              if (summary.status !== 'ok') {
-                return `${reportHeader}\n\nPixel report HTML was not generated.\n\n`;
-              }
-
-              let body = `${reportHeader}\n\n`;
-              body += '| Backend | Compared | Diff | Failed |\n';
-              body += '| --- | ---: | ---: | ---: |\n';
-
-              if (summary.backends.length > 0) {
-                for (const backend of summary.backends) {
-                  body += `| \`${backend.name}\` | ${backend.compared} | ${backend.different} | ${backend.failed} |\n`;
-                }
-              } else {
-                body += `| \`all\` | ${summary.compared} | ${summary.different} | ${summary.failed} |\n`;
-              }
-
-              body += '\n';
-              return body;
-            }
-
-            const summary = parseSummary(summaryPath);
-            let body = renderSummary(summary);
+            // reporter.md is PR-controlled: neutralize @mentions and cap the size
+            // below GitHub's 65536-char comment limit.
+            body = body.replace(/@(\w)/g, '@\u200b$1');
+            const maxLength = 60000;
+            if (body.length > maxLength) body = body.slice(0, maxLength) + '\n\n(truncated)';
+            body += '\n\n';
 
             // Return the PR number from workflow_run.pull_requests when it is uniquely present.
             function extractPayloadPrNumber() {
@@ -133,12 +79,22 @@ jobs:
               return null;
             }
 
-            let prNumber = summary.prNumber;
-            if (!prNumber) {
-              prNumber = extractPayloadPrNumber();
+            function readArtifactPrNumber() {
+              const prPath = path.join('ci-report', 'pr-number.txt');
+              if (!fs.existsSync(prPath)) return null;
+              const value = Number(fs.readFileSync(prPath, 'utf8').trim());
+              return Number.isInteger(value) && value > 0 ? value : null;
             }
+
+            let prNumber = extractPayloadPrNumber();
             if (!prNumber) {
               prNumber = await lookupPrNumberByHeadBranch();
+            }
+
+            // pr-number.txt is produced by the PR-controlled
+            // run, so it is untrusted and only consulted when the trusted payload/branch lookups fail.
+            if (!prNumber) {
+              prNumber = readArtifactPrNumber();
             }
 
             if (!Number.isInteger(prNumber) || prNumber <= 0) {
