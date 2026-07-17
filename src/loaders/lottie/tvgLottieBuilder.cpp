@@ -1033,14 +1033,14 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     if (text->font && text->font->style && strstr(text->font->style, "Italic")) paint->italic();
     paint->text(buf);
     paint->layout(doc.bbox.size.x, doc.bbox.size.y);
-    paint->translate(doc.bbox.pos.x, doc.bbox.pos.y);
     if (doc.bbox.size.x > 0.0f) paint->wrap(TextWrap::Smart);
 
     //align the text to the base line, or top within the box
     TextMetrics metrics;
     paint->metrics(metrics);
-    auto valign = (doc.bbox.size.y > 0.0f) ? 0.0f : metrics.ascent / (metrics.ascent - metrics.descent);
-    paint->align(doc.justify, valign);
+    auto vpos = doc.bbox.pos.y - (doc.bbox.size.y > 0.0f ? 0.0f : metrics.ascent);
+    paint->translate(doc.bbox.pos.x, vpos);
+    paint->align(doc.justify, 0.0f);
 
     //apply spacing
     auto hspacing = 1.0f + doc.tracking * doc.size / metrics.ascent;
