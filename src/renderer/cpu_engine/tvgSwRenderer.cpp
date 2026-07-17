@@ -34,7 +34,11 @@
 /************************************************************************/
 
 static int32_t _rendererCnt = -1;
+#ifdef __STDCPP_THREADS__
 static mutex _rendererMtx;
+#else
+static struct { void lock() {} void unlock() {} } _rendererMtx;
+#endif
 
 struct SwTask : Task
 {
