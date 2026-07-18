@@ -23,6 +23,7 @@
 #ifndef _TVG_WG_RENDERER_H_
 #define _TVG_WG_RENDERER_H_
 
+#include "tvgRender.h"
 #include "tvgWgRenderTask.h"
 #include "tvgWgTextureMgr.h"
 
