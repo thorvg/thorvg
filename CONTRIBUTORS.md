@@ -62,4 +62,5 @@
 - Geordie Jay @ephemer
 - Weihang Ding @xiaozhuai
 - Duram Kim @alpakaDurumi
+- Hoyang Tsai @hoyangtsai
 
