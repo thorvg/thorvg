@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <algorithm>
 #include "tvgSwCommon.h"
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
@@ -34,7 +33,7 @@
 /************************************************************************/
 
 static int32_t _rendererCnt = -1;
-static mutex _rendererMtx;
+static StrictKey _rendererMtx;
 
 struct SwTask : Task
 {

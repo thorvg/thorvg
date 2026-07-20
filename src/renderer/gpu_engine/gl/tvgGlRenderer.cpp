@@ -36,7 +36,7 @@
 #define NOISE_LEVEL 0.5f
 
 static int32_t _rendererCnt = -1;
-static mutex _rendererMtx;
+static StrictKey _rendererMtx;
 
 static constexpr float IDENTITY_VERTEX[] = {-1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f, -1.f};
 static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};

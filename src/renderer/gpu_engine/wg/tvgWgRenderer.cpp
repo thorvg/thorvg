@@ -28,8 +28,7 @@
 /************************************************************************/
 
 static int32_t _rendererCnt = -1;
-static mutex _rendererMtx;
-
+static StrictKey _rendererMtx;
 
 void WgRenderer::release()
 {
