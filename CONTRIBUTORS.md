@@ -61,3 +61,5 @@
 - Andrew X @LizzaM1net
 - Geordie Jay @ephemer
 - Weihang Ding @xiaozhuai
+- Duram Kim @alpakaDurumi
+
