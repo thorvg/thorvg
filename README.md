@@ -1,6 +1,6 @@
 [![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=thorvg)](https://insights.linuxfoundation.org/project/thorvg)
 [![CodeFactor](https://www.codefactor.io/repository/github/thorvg/thorvg/badge)](https://www.codefactor.io/repository/github/thorvg/thorvg)
-![BinarySize](https://img.shields.io/badge/Size->150kb-black)
+![BinarySize](https://img.shields.io/badge/Size->170kb-black)
 [![License](https://img.shields.io/badge/licence-MIT-green.svg?style=flat)](LICENSE)
 [![Wikipedia](https://img.shields.io/badge/Wikipedia-000000?style=flat&logo=wikipedia&logoColor=white)](https://en.wikipedia.org/wiki/Thor_Vector_Graphics)
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/thorvg/thorvg)
@@ -59,7 +59,7 @@ The following primitives are supported by ThorVG: <br />
   <img width="750" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_structure.png">
 </p>
 
-The core library of ThorVG maintains a binary size of approximately **150KB**. This is significantly smaller compared to graphics engines designed primarily for desktop environments and offers the following advantages.<br />
+The core library of ThorVG maintains a binary size of approximately **170KB**. This is significantly smaller compared to graphics engines designed primarily for desktop environments and offers the following advantages.<br />
 
 - **Memory Efficiency**: Thanks to its low runtime memory usage, ThorVG operates stably even on low-spec systems.
 - **Fast Boot**: The library loads and initializes quickly, improving the overall startup speed of applications.
