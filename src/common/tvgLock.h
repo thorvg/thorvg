@@ -103,17 +103,16 @@ namespace tvg
 
         ScopedLock(StrictKey& k)
         {
-            k.mtx.lock();
+            k.lock();
             key = &k;
         }
 
         ~ScopedLock()
         {
-            if (key) key->mtx.unlock();
+            if (key) key->unlock();
         }
     };
 #endif //THORVG_THREAD_SUPPORT
 }
 
 #endif //_TVG_LOCK_H_
-
