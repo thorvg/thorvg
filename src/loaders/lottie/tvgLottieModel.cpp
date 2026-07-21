@@ -305,7 +305,8 @@ void LottieImage::prepare(bool external)
     if (bitmap.size > 0) result = picture->load((const char*)bitmap.data, bitmap.size, bitmap.mimeType);
     else if (external) result = picture->load(bitmap.path);
     if (result == Result::Success) resolved = true;
-    if (resolved || (bitmap.width > 0.0f && bitmap.height > 0.0f)) picture->size(bitmap.width, bitmap.height);
+    //json may omit the dimensions (e.g. slot override); keep the natural size instead of collapsing to 0x0
+    if (bitmap.width > 0.0f && bitmap.height > 0.0f) picture->size(bitmap.width, bitmap.height);
     bitmap.picture = picture;
     picture->ref();
 }
