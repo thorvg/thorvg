@@ -955,8 +955,8 @@ struct LottieImage : LottieObject
         if (release) bitmap.release();
         else backup = new LottieBitmap(bitmap);
         bitmap.copy(*static_cast<LottieBitmap*>(prop), false);
-        //embedded data was already loaded synchronously; a path needs re-resolving
-        resolved = bitmap.size > 0;
+        //embedded data was already loaded synchronously; a path needs re-resolving unless its picture is loaded
+        resolved = bitmap.size > 0 || (bitmap.picture && bitmap.picture->size(nullptr, nullptr) == Result::Success);
         return backup;
     }
 
