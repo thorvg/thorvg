@@ -328,6 +328,47 @@ TEST_CASE("Lottie Asset Resolver", "[tvgLottie]")
 }
 
 
+TEST_CASE("Lottie Slot Image Resolver", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        int callCount = 0;
+        string lastSrc;
+
+        auto resolver = [&](Paint* p, const char* src, void* data) -> bool {
+            if (p->type() != Type::Picture) return false;
+            ++callCount;
+            lastSrc = src ? src : "";
+            return static_cast<Picture*>(p)->load(TEST_DIR"/test.png") == Result::Success;
+        };
+
+        REQUIRE(picture->resolver(resolver, nullptr) == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/slot.lot") == Result::Success);
+        REQUIRE(animation->frame(1) == Result::Success);
+        REQUIRE(callCount == 1);
+
+        //overriding with a path-based image should re-fire the resolver
+        const char* slotJson = R"({"path_img":{"p":{"p":"dog.png","u":"images/","e":0}}})";
+        auto id = animation->gen(slotJson);
+        REQUIRE(id > 0);
+        REQUIRE(animation->apply(id) == Result::Success);
+        REQUIRE(animation->frame(2) == Result::Success);
+        REQUIRE(callCount == 2);
+        REQUIRE(lastSrc.find("dog.png") != string::npos);
+
+        //a resolved image shouldn't re-trigger the resolver
+        REQUIRE(animation->frame(3) == Result::Success);
+        REQUIRE(callCount == 2);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+
 TEST_CASE("Lottie Audio Layer", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);
