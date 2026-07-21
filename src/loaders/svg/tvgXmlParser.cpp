@@ -68,19 +68,38 @@ static const char* _xmlFindWhiteSpace(const char* itr, const char* itrEnd)
     return itr;
 }
 
+struct XmlEntity
+{
+    const char* name;
+    uint8_t length;
+};
+
+static constexpr XmlEntity xmlEntities[] = {
+    {"&#10;", 5},
+    {"&quot;", 6},
+    {"&nbsp;", 6},
+    {"&apos;", 6},
+    {"&amp;", 5},
+    {"&lt;", 4},
+    {"&gt;", 4},
+    {"&#035;", 6},
+    {"&#039;", 6},
+};
+
+static const XmlEntity* _xmlFindEntity(const char* itr, const char* itrEnd)
+{
+    for (auto& entity : xmlEntities) {
+        if (itrEnd - itr >= entity.length && !memcmp(itr, entity.name, entity.length)) return &entity;
+    }
+    return nullptr;
+}
 
 static const char* _xmlSkipXmlEntities(const char* itr, const char* itrEnd)
 {
-    auto p = itr;
     while (itr < itrEnd && *itr == '&') {
-        for (int i = 0; i < NUMBER_OF_XML_ENTITIES; ++i) {
-            if (strncmp(itr, xmlEntity[i], xmlEntityLength[i]) == 0) {
-                itr += xmlEntityLength[i];
-                break;
-            }
-        }
-        if (itr == p) break;
-        p = itr;
+        auto entity = _xmlFindEntity(itr, itrEnd);
+        if (!entity) break;
+        itr += entity->length;
     }
     return itr;
 }
@@ -90,10 +109,9 @@ static const char* _xmlUnskipXmlEntities(const char* itr, const char* itrStart)
 {
     auto p = itr;
     while (itr > itrStart && *(itr - 1) == ';') {
-        for (int i = 0; i < NUMBER_OF_XML_ENTITIES; ++i) {
-            if (itr - xmlEntityLength[i] > itrStart &&
-                strncmp(itr - xmlEntityLength[i], xmlEntity[i], xmlEntityLength[i]) == 0) {
-                itr -= xmlEntityLength[i];
+        for (auto& entity : xmlEntities) {
+            if (itr - itrStart > entity.length && !memcmp(itr - entity.length, entity.name, entity.length)) {
+                itr -= entity.length;
                 break;
             }
         }
@@ -130,7 +148,6 @@ static const char* _unskipWhiteSpacesAndXmlEntities(const char* itr, const char*
     }
     return itr;
 }
-
 
 static const char* _xmlFindStartTag(const char* itr, const char* itrEnd)
 {
