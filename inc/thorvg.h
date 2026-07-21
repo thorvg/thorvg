@@ -1259,8 +1259,8 @@ struct TVG_API Shape : Paint
      *
      * The rectangle is treated as a new sub-path - it is not connected with the previous sub-path.
      *
-     * The value of the current point is set to (@p x + @p rx, @p y) - in case @p rx is greater
-     * than @p w/2 the current point is set to (@p x + @p w/2, @p y)
+     * The value of the current point is set to (@p x + @p w, @p y + @p ry) - in case @p ry is greater
+     * than @p h/2 the current point is set to (@p x + @p w, @p y + @p h/2).
      *
      * @param[in] x The horizontal coordinate of the upper-left corner of the rectangle.
      * @param[in] y The vertical coordinate of the upper-left corner of the rectangle.
