@@ -215,7 +215,7 @@ struct TVG_API LottieAnimation final : Animation
      * Lower values prioritize performance while higher values prioritize quality.
      *
      * @param[in] value The quality level (0-100). 0 represents lowest quality/best performance,
-     *                  100 represents highest quality/lowest performance, default is 50.
+     *                  100 represents highest quality/lowest performance, the initial value is 50.
      *
      * @retval Result::InsufficientCondition If the animation is not loaded.
      *
