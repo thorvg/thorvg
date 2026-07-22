@@ -1333,7 +1333,7 @@ struct TVG_API Shape : Paint
      * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
-     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 255.
+     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
      *
      * @note If the stroke width is 0 (default), the stroke will not be visible regardless of the color.
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
@@ -1427,7 +1427,7 @@ struct TVG_API Shape : Paint
      * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
      * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
-     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 255.
+     * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
      *
      * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
      */
