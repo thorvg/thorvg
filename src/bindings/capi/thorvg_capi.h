@@ -928,7 +928,7 @@ TVG_API uint16_t tvg_paint_get_ref(const Tvg_Paint paint);
  * This is useful for selectively excluding paint objects during rendering.
  *
  * @param[in] paint The paint object to set the visibility status.
- * @param[in] on A boolean flag indicating visibility. The default is @c true.
+ * @param[in] on A boolean flag indicating visibility. The initial value is @c true.
  *               @c true, the object will be rendered by the engine.
  *               @c false, the object will be excluded from the drawing process.
  *
@@ -993,7 +993,7 @@ TVG_API Tvg_Result tvg_paint_set_id(Tvg_Paint paint, uint32_t id);
  * @brief Scales the given Tvg_Paint object by the given factor.
  *
  * @param[in] paint The paint object to be scaled.
- * @param[in] factor The value of the scaling factor. The default value is 1.
+ * @param[in] factor The value of the scaling factor. The initial value is 1.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION in case a custom transform is applied.
  *
@@ -1466,7 +1466,7 @@ TVG_API Tvg_Result tvg_shape_get_path(const Tvg_Paint paint, const Tvg_Path_Comm
  * path's geometry.
  *
  * @param[in] paint The shape object.
- * @param[in] width The width of the stroke in pixels. Must be positive value. (The default is 0)
+ * @param[in] width The width of the stroke in pixels. Must be positive value. (The initial value is 0)
  *
  * @note A value of @p width 0 disables the stroke.
  *
@@ -1487,12 +1487,12 @@ TVG_API Tvg_Result tvg_shape_get_stroke_width(const Tvg_Paint paint, float* widt
  * @brief Sets the shape's stroke color.
  *
  * @param[in] paint The shape object.
- * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
+ * @param[in] r The red color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] g The green color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] b The blue color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The initial value is 0.
  *
- * @note If the stroke width is 0 (default), the stroke will not be visible regardless of the color.
+ * @note If the stroke width is 0 (initial value), the stroke will not be visible regardless of the color.
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  *
  * @see tvg_shape_set_stroke_width()
@@ -1504,9 +1504,9 @@ TVG_API Tvg_Result tvg_shape_set_stroke_color(Tvg_Paint paint, uint8_t r, uint8_
  * @brief Gets the shape's stroke color.
  *
  * @param[in] paint The shape object.
- * @param[out] r The red color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[out] g The green color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[out] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
+ * @param[out] r The red color channel value in the range [0 ~ 255].
+ * @param[out] g The green color channel value in the range [0 ~ 255].
+ * @param[out] b The blue color channel value in the range [0 ~ 255].
  * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION No stroke was set.
@@ -1577,7 +1577,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_dash(const Tvg_Paint paint, const float*
  * The cap style specifies the shape to be used at the end of the open stroked sub-paths.
  *
  * @param[in] paint The shape object.
- * @param[in] cap The cap style value. The default value is @c TVG_STROKE_CAP_SQUARE.
+ * @param[in] cap The cap style value. The initial value is @c TVG_STROKE_CAP_SQUARE.
  *
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_cap(Tvg_Paint paint, Tvg_Stroke_Cap cap);
@@ -1595,7 +1595,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_cap(const Tvg_Paint paint, Tvg_Stroke_Ca
  * @brief Sets the join style for stroked path segments.
  *
  * @param[in] paint The shape object.
- * @param[in] join The join style value. The default value is @c TVG_STROKE_JOIN_BEVEL.
+ * @param[in] join The join style value. The initial value is @c TVG_STROKE_JOIN_BEVEL.
  *
  */
 TVG_API Tvg_Result tvg_shape_set_stroke_join(Tvg_Paint paint, Tvg_Stroke_Join join);
@@ -1613,7 +1613,7 @@ TVG_API Tvg_Result tvg_shape_get_stroke_join(const Tvg_Paint paint, Tvg_Stroke_J
  * @brief Sets the stroke miterlimit.
  *
  * @param[in] paint The shape object.
- * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join when the @c TVG_STROKE_JOIN_MITER join style is set. The default value is 4.
+ * @param[in] miterlimit The miterlimit imposes a limit on the extent of the stroke join when the @c TVG_STROKE_JOIN_MITER join style is set. The initial value is 4.
  *
  * @retval TVG_RESULT_INVALID_ARGUMENT Unsupported @p miterlimit values (less than zero).
  *
@@ -1653,10 +1653,10 @@ TVG_API Tvg_Result tvg_shape_set_trimpath(Tvg_Paint paint, float begin, float en
  * The parts of the shape defined as inner are colored.
  *
  * @param[in] paint The shape object.
- * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
+ * @param[in] r The red color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] g The green color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] b The blue color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The initial value is 0.
  *
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  * @see tvg_shape_set_fill_rule()
@@ -1667,10 +1667,10 @@ TVG_API Tvg_Result tvg_shape_set_fill_color(Tvg_Paint paint, uint8_t r, uint8_t 
  * @brief Gets the shape's solid color.
  *
  * @param[in] paint The shape object.
- * @param[out] r The red color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[out] g The green color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[out] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque. The default value is 0.
+ * @param[out] r The red color channel value in the range [0 ~ 255].
+ * @param[out] g The green color channel value in the range [0 ~ 255].
+ * @param[out] b The blue color channel value in the range [0 ~ 255].
+ * @param[out] a The alpha channel value in the range [0 ~ 255], where 0 is completely transparent and 255 is opaque.
  *
  */
 TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint paint, uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a);
@@ -1679,7 +1679,7 @@ TVG_API Tvg_Result tvg_shape_get_fill_color(const Tvg_Paint paint, uint8_t* r, u
  * @brief Sets the fill rule for the shape.
  *
  * Specifies how the interior of the shape is determined when its path intersects itself.
- * The default fill rule is @c TVG_FILL_RULE_NON_ZERO.
+ * The initial fill rule is @c TVG_FILL_RULE_NON_ZERO.
  *
  * @param[in] paint The shape object.
  * @param[in] rule The fill rule to apply to the shape.
@@ -1703,7 +1703,7 @@ TVG_API Tvg_Result tvg_shape_get_fill_rule(const Tvg_Paint paint, Tvg_Fill_Rule*
  * @brief Sets the rendering order of the stroke and the fill.
  *
  * @param[in] paint The shape object.
- * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the default option).
+ * @param[in] strokeFirst If @c true the stroke is rendered before the fill, otherwise the stroke is rendered as the second one (the initial option).
  *
  * @since 0.10
  */
@@ -2137,7 +2137,7 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
  * during rendering. This affects the visual quality and performance of the output.
  *
  * @param[in] picture A Tvg_Paint pointer to the picture object.
- * @param[in] method The filtering method to apply. Default is @c TVG_FILTER_METHOD_BILINEAR.
+ * @param[in] method The filtering method to apply. The initial value is @c TVG_FILTER_METHOD_BILINEAR.
  *
  * @see Tvg_Filter_Method
  * @since 1.1
@@ -2478,8 +2478,8 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8);
  * the text box is pinned to the paint position.
  *
  * @param[in] text The text object.
- * @param[in] x Horizontal alignment/anchor in [0..1]: 0=left/start, 0.5=center, 1=right/end. (Default is 0)
- * @param[in] y Vertical alignment/anchor in [0..1]: 0=top, 0.5=middle, 1=bottom. (Default is 0)
+ * @param[in] x Horizontal alignment/anchor in [0..1]: 0=left/start, 0.5=center, 1=right/end. (The initial value is 0)
+ * @param[in] y Vertical alignment/anchor in [0..1]: 0=top, 0.5=middle, 1=bottom. (The initial value is 0)
  *
  * @since 1.0
  *
@@ -2495,8 +2495,8 @@ TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y);
  * unconstrained and @ref tvg_text_align() acts as an anchor on that axis.
  *
  * @param[in] text The text object.
- * @param[in] w Layout width in user space. Use 0 for no horizontal constraint. (Default is 0)
- * @param[in] h Layout height in user space. Use 0 for no vertical constraint. (Default is 0)
+ * @param[in] w Layout width in user space. Use 0 for no horizontal constraint. (The initial value is 0)
+ * @param[in] h Layout height in user space. Use 0 for no vertical constraint. (The initial value is 0)
  *
  * @note This defines constraints only; alignment/anchoring is controlled by @ref align().
  * @since 1.0
@@ -2514,7 +2514,7 @@ TVG_API Tvg_Result tvg_text_layout(Tvg_Paint text, float w, float h);
  * or adjusted automatically. An ellipsis mode is also available for truncation with "...".
  *
  * @param[in] text The text object.
- * @param[in] mode The wrapping strategy to apply. Default is @c TVG_TEXT_WRAP_NONE.
+ * @param[in] mode The wrapping strategy to apply. The initial value is @c TVG_TEXT_WRAP_NONE.
  *
  * @see Tvg_Text_Wrap
  * @see tvg_text_line_count()
@@ -2551,11 +2551,11 @@ TVG_API uint32_t tvg_text_line_count(Tvg_Paint text);
  * @param[in] text The text object.
  * @param[in] letter The scale factor for letter spacing.
  *                   Values > 1.0 increase spacing, values < 1.0 decrease it.
- *                   Must be greater than or equal to 0.0. (default: 1.0)
+ *                   Must be greater than or equal to 0.0. The initial value is 1.0.
  *
  * @param[in] line The scale factor for line spacing.
  *                 Values > 1.0 increase line spacing, values < 1.0 decrease it.
- *                 Must be greater than or equal to 0.0. (default: 1.0)
+ *                 Must be greater than or equal to 0.0. The initial value is 1.0.
  *
  * @since 1.0
  */
@@ -2591,7 +2591,7 @@ TVG_API Tvg_Result tvg_text_set_italic(Tvg_Paint text, float shear);
  * The outline enhances the visibility of the text by rendering a stroke around its glyphs.
  *
  * @param[in] text The text object.
- * @param width The width of the outline. Must be positive value. (The default is 0)
+ * @param width The width of the outline. Must be positive value. (The initial value is 0)
  * @param r     Red component of the outline color (0–255).
  * @param g     Green component of the outline color (0–255).
  * @param b     Blue component of the outline color (0–255).
@@ -2607,9 +2607,9 @@ TVG_API Tvg_Result tvg_text_set_outline(Tvg_Paint text, float width, uint8_t r, 
  * @brief Sets the text solid color.
  *
  * @param[in] paint The text object.
- * @param[in] r The red color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] g The green color channel value in the range [0 ~ 255]. The default value is 0.
- * @param[in] b The blue color channel value in the range [0 ~ 255]. The default value is 0.
+ * @param[in] r The red color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] g The green color channel value in the range [0 ~ 255]. The initial value is 0.
+ * @param[in] b The blue color channel value in the range [0 ~ 255]. The initial value is 0.
  *
  * @note Either a solid color or a gradient fill is applied, depending on what was set as last.
  *
@@ -3243,7 +3243,7 @@ TVG_API Tvg_Result tvg_lottie_animation_tween_go(Tvg_Animation animation, float 
  *
  * @param[in] animation The Lottie animation object.
  * @param[in] value The quality level (0-100). 0 represents lowest quality/best performance,
- *                  100 represents highest quality/lowest performance, default is 50.
+ *                  100 represents highest quality/lowest performance, the initial value is 50.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
  *
