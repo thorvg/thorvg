@@ -20,47 +20,32 @@
  * SOFTWARE.
  */
 
- #include "tvgMediaLoader.h"
+#ifndef _TVG_MF_LOADER_H_
+#define _TVG_MF_LOADER_H_
 
- #if defined(THORVG_APPLE_MEDIA_SUPPORT)
-    #include "tvgAvfMediaLoader.h"
+#include "tvgMediaLoader.h"
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new AvfMediaLoader;
-    }
-#elif defined(THORVG_LINUX_MEDIA_SUPPORT)
-    #include "tvgGstMediaLoader.h"
+struct MfImpl;
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new GstMediaLoader;
-    }
-#elif defined(THORVG_WEB_MEDIA_SUPPORT)
-    #include "tvgWebMediaLoader.h"
+struct MfMediaLoader : MediaLoader
+{
+    MfImpl* pImpl;
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new WebMediaLoader;
-    }
-#elif defined(THORVG_ANDROID_MEDIA_SUPPORT)
-    #include "tvgAndroidMediaLoader.h"
+    MfMediaLoader();
+    ~MfMediaLoader();
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new AndroidMediaLoader;
-    }
-#elif defined(THORVG_WINDOWS_MEDIA_SUPPORT)
-    #include "tvgMfMediaLoader.h"
+    bool open(const char* path, const LoaderOps* ops) override;
+    bool read() override;
+    bool close() override;
+    bool sync() override;
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new MfMediaLoader;
-    }
-#else
-    MediaLoader* MediaLoader::gen()
-    {
-        TVGLOG("MEDIA", "Couldn't find a proper Media loader.");
-        return nullptr;
-    }
-#endif
+    Result play() override;
+    Result pause() override;
+    Result stop() override;
+    Result seek(float seconds) override;
+    Result loop(bool on) override;
+    Result volume(float volume) override;
+    Result mute(bool on) override;
+};
+
+#endif  //_TVG_MF_LOADER_H_

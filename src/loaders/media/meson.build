@@ -10,6 +10,8 @@ elif system == 'emscripten'
     subdir('web')
 elif system == 'android'
     subdir('android')
+elif system == 'windows'
+    subdir('windows')
 endif
 
 source_file = [
