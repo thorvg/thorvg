@@ -20,47 +20,27 @@
  * SOFTWARE.
  */
 
- #include "tvgMediaLoader.h"
+#ifndef _TVG_ANDROID_MEDIA_SCHEDULER_H_
+#define _TVG_ANDROID_MEDIA_SCHEDULER_H_
 
- #if defined(THORVG_APPLE_MEDIA_SUPPORT)
-    #include "tvgAvfMediaLoader.h"
+#include <cstdint>
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new AvfMediaLoader;
-    }
-#elif defined(THORVG_LINUX_MEDIA_SUPPORT)
-    #include "tvgGstMediaLoader.h"
+struct MediaTask
+{
+    MediaTask* next = nullptr;
+    bool attached = false;
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new GstMediaLoader;
-    }
-#elif defined(THORVG_WEB_MEDIA_SUPPORT)
-    #include "tvgWebMediaLoader.h"
+    virtual ~MediaTask() = default;
+    virtual int64_t pumpFrame() = 0;   //µs until the next call, or -1 to park until wake()
+};
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new WebMediaLoader;
-    }
-#elif defined(THORVG_ANDROID_MEDIA_SUPPORT)
-    #include "tvgAndroidMediaLoader.h"
+struct AndroidMediaScheduler
+{
+    void attach(MediaTask* task);
+    void detach(MediaTask* task);
+    void wake();
+};
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new AndroidMediaLoader;
-    }
-#elif defined(THORVG_WINDOWS_MEDIA_SUPPORT)
-    #include "tvgMfMediaLoader.h"
+AndroidMediaScheduler& androidMediaScheduler();
 
-    MediaLoader* MediaLoader::gen()
-    {
-        return new MfMediaLoader;
-    }
-#else
-    MediaLoader* MediaLoader::gen()
-    {
-        TVGLOG("MEDIA", "Couldn't find a proper Media loader.");
-        return nullptr;
-    }
-#endif
+#endif  //_TVG_ANDROID_MEDIA_SCHEDULER_H_
