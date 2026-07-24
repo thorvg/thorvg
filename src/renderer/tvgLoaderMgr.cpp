@@ -235,12 +235,11 @@ bool LoaderMgr::init()
 
 bool LoaderMgr::term()
 {
-    // clean up the remained font loaders which is globally used.
+    // force clean up the font loaders which is globally used.
     INLIST_SAFE_FOREACH(_activeLoaders, loader) {
         if (loader->type != FileType::Sfnt) continue;
-        auto ret = loader->close();
         _activeLoaders.remove(loader);
-        if (ret) delete (loader);
+        delete (loader);
     }
     return true;
 }
@@ -250,9 +249,7 @@ bool LoaderMgr::retrieve(Loader* loader)
     if (!loader) return false;
 
     if (loader->close()) {
-        if (loader->cached) {
-            _activeLoaders.remove(loader);
-        }
+        if (loader->cached) _activeLoaders.remove(loader);
         delete (loader);
     }
     return true;
