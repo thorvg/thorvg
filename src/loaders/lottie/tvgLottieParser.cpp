@@ -272,11 +272,11 @@ bool LottieParser::getValue(uint8_t& val)
 {
     if (peekType() == kArrayType) {
         enterArray();
-        if (nextArrayValue()) val = (uint8_t)(getFloat() * 2.55f);
+        if (nextArrayValue()) val = (uint8_t)REMAP255(getFloat() * 0.01f);
         //discard rest
         while (nextArrayValue()) getFloat();
     } else {
-        val = (uint8_t)(getFloat() * 2.55f);
+        val = (uint8_t)REMAP255(getFloat() * 0.01f);
     }
     return false;
 }
