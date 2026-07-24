@@ -1648,26 +1648,29 @@ static void _buildHierarchy(LottieGroup* parent, LottieLayer* child)
     }
 }
 
-
 static void _attachFont(LottieComposition* comp, LottieLayer* parent)
 {
-    //TODO: Consider to migrate this attachment to the frame update time.
-    ARRAY_FOREACH(p, parent->children) {
-        auto text = static_cast<LottieText*>(*p);
-        auto& doc = text->doc(0);
-        if (!doc.name) continue;
-        auto len = strlen(doc.name);
-        for (uint32_t i = 0; i < comp->fonts.count; ++i) {
-            auto font = comp->fonts[i];
-            auto len2 = strlen(font->name);
-            if (len == len2 && !strcmp(font->name, doc.name)) {
-                text->font = font;
-                break;
+    if (!parent->children.empty()) {
+        // TODO: Consider to migrate this attachment to the frame update time.
+        auto text = static_cast<LottieText*>(parent->children.first());
+        if (text->type == LottieObject::Text) {
+            auto& doc = text->doc(0);
+            if (doc.name) {
+                auto len = strlen(doc.name);
+                for (uint32_t i = 0; i < comp->fonts.count; ++i) {
+                    auto font = comp->fonts[i];
+                    auto len2 = strlen(font->name);
+                    if (len == len2 && !strcmp(font->name, doc.name)) {
+                        text->font = font;
+                        break;
+                    }
+                }
             }
+            return;
         }
     }
+    parent->children.clear();  // make the invalid text layer empty to prevent an access during rendering.
 }
-
 
 static bool _buildComposition(LottieComposition* comp, LottieLayer* parent)
 {
