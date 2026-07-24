@@ -51,10 +51,7 @@ Result Text::load(const char* filename) noexcept
     bool invalid; //invalid path
     LoaderOps ops = {Type::Text};
     auto loader = LoaderMgr::loader(filename, &ops, &invalid);
-    if (loader) {
-        if (loader->sharing > 0) --loader->sharing;   //font loading doesn't mean sharing.
-        return Result::Success;
-    }
+    if (loader) return Result::Success;
     if (invalid) return Result::InvalidArguments;
     else return Result::NonSupport;
 #else
