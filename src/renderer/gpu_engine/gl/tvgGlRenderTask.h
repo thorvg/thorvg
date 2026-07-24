@@ -26,6 +26,7 @@
 #include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
 
+class GlStateCache;
 
 struct GlVertexLayout
 {
@@ -35,8 +36,7 @@ struct GlVertexLayout
     size_t   offset;
     GLenum type = GL_FLOAT;
     GLboolean normalized = GL_FALSE;
-    // Optional VBO for this attribute. 0 means use the GL_ARRAY_BUFFER binding
-    // captured at the start of GlRenderTask::run().
+    // VBO supplying this attribute. ThorVG layouts must always provide it.
     GLuint arrayBufferId = 0;
 };
 
@@ -50,13 +50,13 @@ enum class GlBindingType
 struct GlBindingResource
 {
     GlBindingType type;
+    GlShaderUniform uniform = GlShaderUniform::Count;
+    GlShaderUniformBlock uniformBlock = GlShaderUniformBlock::Count;
     /**
      * Binding point index.
-     * Can be a uniform location for a texture
      * Can be a uniform buffer binding index for a uniform block
      */
     uint32_t        bindPoint = 0;
-    GLint           location = 0;
     // GL object id used by this binding: texture id for kTexture, UBO id for kUniformBuffer.
     GLuint resourceId = 0;
     uint32_t        bufferOffset = 0;
@@ -64,11 +64,11 @@ struct GlBindingResource
 
     GlBindingResource() = default;
 
-    GlBindingResource(uint32_t index, GLint location, GLuint uniformBufferId, uint32_t offset, uint32_t range) : type(GlBindingType::kUniformBuffer), bindPoint(index), location(location), resourceId(uniformBufferId), bufferOffset(offset), bufferRange(range)
+    GlBindingResource(uint32_t index, GlShaderUniformBlock block, GLuint uniformBufferId, uint32_t offset, uint32_t range) : type(GlBindingType::kUniformBuffer), uniformBlock(block), bindPoint(index), resourceId(uniformBufferId), bufferOffset(offset), bufferRange(range)
     {
     }
 
-    GlBindingResource(uint32_t bindPoint, GLuint textureId, GLint location) : type(GlBindingType::kTexture), bindPoint(bindPoint), location(location), resourceId(textureId)
+    GlBindingResource(uint32_t bindPoint, GLuint textureId, GlShaderUniform uniform) : type(GlBindingType::kTexture), uniform(uniform), bindPoint(bindPoint), resourceId(textureId)
     {
     }
 };
@@ -82,7 +82,7 @@ public:
 
     virtual ~GlRenderTask() = default;
 
-    virtual void run();
+    virtual void run(GlStateCache& state);
 
     void addVertexLayout(const GlVertexLayout& layout);
     void setVertexColor(float r, float g, float b, float a);
@@ -95,10 +95,8 @@ public:
 
     GlProgram* getProgram() { return mProgram; }
     const RenderRegion& getViewport() const { return mViewport; }
-    float getDrawDepth() const { return mDrawDepth; }
     const Array<GlVertexLayout>& getVertexLayout() const { return mVertexLayout; }
     uint32_t getIndexOffset() const { return mIndexOffset; }
-    uint32_t getIndexCount() const { return mIndexCount; }
 
 private:
     GlProgram* mProgram;
@@ -125,7 +123,7 @@ public:
     GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode);
     ~GlStencilCoverTask() override;
 
-    void run() override;
+    void run(GlStateCache& state) override;
     void normalizeDrawDepth(int32_t maxDepth) override;
 
 private:
@@ -142,7 +140,7 @@ public:
     GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
     ~GlComposeTask() override;
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     void setRenderSize(uint32_t width, uint32_t height) { mRenderWidth = width; mRenderHeight = height; }
 
@@ -152,7 +150,7 @@ protected:
     GLuint getTargetFbo() { return mTargetFbo; }
     GLuint getSelfFbo();
     GLuint getResolveFboId();
-    void onResolve();
+    void onResolve(GlStateCache& state);
 
 private:
     GLuint mTargetFbo;
@@ -168,7 +166,7 @@ public:
     GlBlitTask(GlProgram*, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
     ~GlBlitTask() override = default;
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GLuint getColorTexture() const { return mColorTex; }
 
@@ -188,7 +186,7 @@ public:
 
     void setParentSize(uint32_t width, uint32_t height) { mParentWidth = width; mParentHeight = height; }
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
 private:
     GlRenderTask* mPrevTask = nullptr;
@@ -206,7 +204,7 @@ public:
     void setSrcTarget(GlRenderTarget* srcFbo) { mSrcFbo = srcFbo; }
     void setDstCopy(GlRenderTarget* dstCopyFbo) { mDstCopyFbo = dstCopyFbo; }
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
 private:
     GlRenderTarget* mSrcFbo = nullptr;
@@ -221,7 +219,7 @@ public:
     GlClipTask(GlRenderTask* clip, GlRenderTask* mask);
     ~GlClipTask() override;
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     void normalizeDrawDepth(int32_t maxDepth) override;
 private:
@@ -235,7 +233,8 @@ public:
     GlDirectBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, const RenderRegion& copyRegion);
     ~GlDirectBlendTask() override = default;
 
-    void run() override;
+    void run(GlStateCache& state) override;
+
 private:
     GlRenderTarget* mDstFbo = nullptr;
     GlRenderTarget* mDstCopyFbo = nullptr;
@@ -248,7 +247,7 @@ public:
     GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlRenderTask* stencilTask, GlComposeTask* composeTask);
     ~GlComplexBlendTask() override;
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     void normalizeDrawDepth(int32_t maxDepth) override;
 private:
@@ -265,7 +264,7 @@ public:
         GlRenderTask(nullptr), mDstFbo(dstFbo), mDstCopyFbo0(dstCopyFbo0), mDstCopyFbo1(dstCopyFbo1) {};
     ~GlGaussianBlurTask(){ delete horzTask; delete vertTask; };
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTask* horzTask;
     GlRenderTask* vertTask;
@@ -283,7 +282,7 @@ public:
         GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo0(dstCopyFbo0), mDstCopyFbo1(dstCopyFbo1) {};
     ~GlEffectDropShadowTask(){ delete horzTask; delete vertTask; };
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTask* horzTask;
     GlRenderTask* vertTask;
@@ -301,7 +300,8 @@ public:
         GlRenderTask(program), mDstFbo(dstFbo), mDstCopyFbo(dstCopyFbo) {};
     ~GlEffectColorTransformTask() {};
 
-    void run() override;
+    void run(GlStateCache& state) override;
+
 private:
     GlRenderTarget* mDstFbo;
     GlRenderTarget* mDstCopyFbo;

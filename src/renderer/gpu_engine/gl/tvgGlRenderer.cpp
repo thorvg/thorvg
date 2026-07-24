@@ -235,7 +235,7 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
 
     if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
 
-    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 #if defined(THORVG_GL_TARGET_GL)
     dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
 #else  // TODO: create partial buffer when MSAA is disabled
@@ -257,12 +257,12 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
 #endif
     task->addBindResource(GlBindingResource{
         binding,
-        task->getProgram()->getUniformBlockIndex("BlendRegion"),
+        GlShaderUniformBlock::BlendRegion,
         mGpuBuffer.getBufferId(),
         mGpuBuffer.push(region, 4 * sizeof(float), true),
         4 * sizeof(float),
     });
-    task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
+    task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, GlShaderUniform::DestinationTexture});
 }
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
@@ -409,7 +409,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     task->addBindResource(GlBindingResource{
         0,
-        task->getProgram()->getUniformBlockIndex("TransformInfo"),
+        GlShaderUniformBlock::TransformInfo,
         mGpuBuffer.getBufferId(),
         transformOffset,
         sizeof(transformInfo),
@@ -426,7 +426,6 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     // gradient block
     GlBindingResource gradientBinding{};
-    auto loc = task->getProgram()->getUniformBlockIndex("GradientInfo");
 
     if (fill->type() == Type::LinearGradient) {
         auto linearFill = static_cast<const LinearGradient*>(fill);
@@ -458,7 +457,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         gradientBinding = GlBindingResource{
             2,
-            loc,
+            GlShaderUniformBlock::GradientInfo,
             mGpuBuffer.getBufferId(),
             mGpuBuffer.push(&gradientBlock, sizeof(GlLinearGradientBlock), true),
             sizeof(GlLinearGradientBlock),
@@ -491,7 +490,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
         gradientBinding = GlBindingResource{
             2,
-            loc,
+            GlShaderUniformBlock::GradientInfo,
             mGpuBuffer.getBufferId(),
             mGpuBuffer.push(&gradientBlock, sizeof(GlRadialGradientBlock), true),
             sizeof(GlRadialGradientBlock),
@@ -548,7 +547,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBoun
         auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
 
         maskTask->setDrawDepth(clipDepths[i]);
-        maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset});
+        maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset, GL_FLOAT, GL_FALSE, mGpuBuffer.getBufferId()});
         maskTask->setDrawRange(identityIndexOffset, RECT_INDEX_COUNT);
         maskTask->setViewport(viewRegion);
 
@@ -573,7 +572,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
 
     if (mBlendMethod == BlendMethod::Normal) return false;
 
-    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 
     auto blendFbo = mBlendPool[0]->getRenderTarget(bounds);
 
@@ -590,7 +589,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     auto composeTask = blendPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
 
     const auto& vp = blendPass->getViewport();
-    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 #if defined(THORVG_GL_TARGET_GL)
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
 #else // TODO: create partial buffer when MSAA is disabled        
@@ -613,7 +612,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
     task->addBindResource(GlBindingResource{
         0,
-        task->getProgram()->getUniformBlockIndex("BlendRegion"),
+        GlShaderUniformBlock::BlendRegion,
         mGpuBuffer.getBufferId(),
         mGpuBuffer.push(region, 4 * sizeof(float), true),
         4 * sizeof(float),
@@ -621,8 +620,8 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 #endif
 
     // src and dst texture
-    task->addBindResource(GlBindingResource{1, blendPass->getFbo()->colorTex, task->getProgram()->getUniformLocation("uSrcTexture")});
-    task->addBindResource(GlBindingResource{2, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
+    task->addBindResource(GlBindingResource{1, blendPass->getFbo()->colorTex, GlShaderUniform::SourceTexture});
+    task->addBindResource(GlBindingResource{2, dstCopyFbo->colorTex, GlShaderUniform::DestinationTexture});
 
     currentPass()->addRenderTask(task);
 
@@ -730,7 +729,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 void GlRenderer::prepareBlitTask(GlBlitTask* task)
 {
     prepareCmpTask(task, {{0, 0}, {int32_t(surface.w), int32_t(surface.h)}}, surface.w, surface.h);
-    task->addBindResource(GlBindingResource{0, task->getColorTexture(), task->getProgram()->getUniformLocation("uSrcTexture")});
+    task->addBindResource(GlBindingResource{0, task->getColorTexture(), GlShaderUniform::SourceTexture});
 }
 
 
@@ -772,8 +771,8 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
     uint32_t vertexOffset = mGpuBuffer.push(vertices, sizeof(vertices));
     uint32_t indexOffset = mGpuBuffer.pushIndex((void*)RECT_INDEX, sizeof(RECT_INDEX));
 
-    task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
-    task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
+    task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, mGpuBuffer.getBufferId()});
+    task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, mGpuBuffer.getBufferId()});
     task->setDrawRange(indexOffset, RECT_INDEX_COUNT);
     y = (passVp.sh() - y - h);
     task->setViewport({{x, y}, {x + w, y + h}});
@@ -838,8 +837,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
             prepareCmpTask(compose_task, glCmp->bbox, selfPass->getFboWidth(), selfPass->getFboHeight());
 
-            compose_task->addBindResource(GlBindingResource{0, selfPass->getTextureId(), program->getUniformLocation("uSrcTexture")});
-            compose_task->addBindResource(GlBindingResource{1, maskPass->getTextureId(), program->getUniformLocation("uMaskTexture")});
+            compose_task->addBindResource(GlBindingResource{0, selfPass->getTextureId(), GlShaderUniform::SourceTexture});
+            compose_task->addBindResource(GlBindingResource{1, maskPass->getTextureId(), GlShaderUniform::MaskTexture});
 
             compose_task->setDrawDepth(currentPass()->nextDrawDepth());
             compose_task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
@@ -850,8 +849,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
     } else if (glCmp->blendMethod != BlendMethod::Normal) {
         auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
-            if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-            if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+            if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+            if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 #if defined(THORVG_GL_TARGET_GL)
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(renderPass->getViewport());
 #else // TODO: create partial buffer when MSAA is disabled
@@ -871,17 +870,17 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
             task->addBindResource(GlBindingResource{
                 1,
-                task->getProgram()->getUniformBlockIndex("BlendRegion"),
+                GlShaderUniformBlock::BlendRegion,
                 mGpuBuffer.getBufferId(),
                 mGpuBuffer.push(region, 4 * sizeof(float), true),
                 4 * sizeof(float),
             });
 #endif
             // info
-            task->addBindResource(GlBindingResource{0, task->getProgram()->getUniformBlockIndex("ColorInfo"), mGpuBuffer.getBufferId(), mGpuBuffer.push(info, sizeof(info), true), sizeof(info)});
+            task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::ColorInfo, mGpuBuffer.getBufferId(), mGpuBuffer.push(info, sizeof(info), true), sizeof(info)});
             // textures
-            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->getProgram()->getUniformLocation("uSrcTexture")});
-            task->addBindResource(GlBindingResource{1, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
+            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), GlShaderUniform::SourceTexture});
+            task->addBindResource(GlBindingResource{1, dstCopyFbo->colorTex, GlShaderUniform::DestinationTexture});
             task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
             currentPass()->addRenderTask(std::move(task));
         }
@@ -900,14 +899,14 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
             task->addBindResource(GlBindingResource{
                 1,
-                task->getProgram()->getUniformBlockIndex("ColorInfo"),
+                GlShaderUniformBlock::ColorInfo,
                 mGpuBuffer.getBufferId(),
                 mGpuBuffer.push(info, 4 * sizeof(uint32_t), true),
                 4 * sizeof(uint32_t),
             });
 
             // texture id
-            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->getProgram()->getUniformLocation("uTexture")});
+            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), GlShaderUniform::Texture});
             task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
             currentPass()->addRenderTask(std::move(task));
         }
@@ -935,6 +934,8 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
     //assume the context zero is invalid
     if (!context || w == 0 || h == 0) return Result::InvalidArguments;
 
+    mStateCache.invalidate();
+
     if (mContext) {
         currentContext();
         if (mContext != context) mTextures.clear();
@@ -953,9 +954,13 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
     mTargetFboId = static_cast<GLint>(id);
 
     auto ret = currentContext();
+    // Cached values belong to the previous context. Numeric object ids can be
+    // reused by the new context, so do not carry any binding assumptions over.
+    mStateCache.invalidate();
 
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
-    mRootTarget.init(this->surface.w, this->surface.h, mTargetFboId);
+    mRootTarget.init(mStateCache, this->surface.w, this->surface.h, mTargetFboId);
+    mStateCache.invalidate();
 
     return ret ? Result::Success : Result::InsufficientCondition;
 }
@@ -963,19 +968,28 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
 
 bool GlRenderer::sync()
 {
+    // State can also be touched while preparing textures and render targets.
+    // Invalidate even for an empty sync() so the next render replays every
+    // ThorVG-tracked assumption.
+    mStateCache.invalidate();
+
     //nothing to be done.
     if (mRenderPassStack.empty()) return true;
 
     currentContext();
 
+    // Keep this baseline limited to state ThorVG explicitly establishes.
+    // Applications sharing the context must reset any other OpenGL state that
+    // can affect rendering before calling sync().
+
     // Blend function for straight alpha
-    GL_CHECK(glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
-    GL_CHECK(glEnable(GL_BLEND));
-    GL_CHECK(glEnable(GL_SCISSOR_TEST));
+    mStateCache.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    mStateCache.enable(GL_BLEND);
+    mStateCache.enable(GL_SCISSOR_TEST);
     GL_CHECK(glCullFace(GL_FRONT_AND_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glDepthFunc(GL_GREATER));
+    mStateCache.enable(GL_DEPTH_TEST);
+    mStateCache.depthFunc(GL_GREATER);
 
     auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
 
@@ -984,14 +998,15 @@ bool GlRenderer::sync()
     task->mClearBuffer = mClearBuffer;
     task->setTargetViewport({{0, 0}, {int32_t(surface.w), int32_t(surface.h)}});
 
-    if (mGpuBuffer.flushToGPU()) {
-        mGpuBuffer.bind();
-        task->run();
+    if (mGpuBuffer.flushToGPU(mStateCache)) {
+        mGpuBuffer.bind(mStateCache);
+        task->run(mStateCache);
     }
 
-    mGpuBuffer.unbind();
+    mGpuBuffer.unbind(mStateCache);
 
-    GL_CHECK(glDisable(GL_SCISSOR_TEST));
+    mStateCache.disable(GL_SCISSOR_TEST);
+    mStateCache.invalidate();
 
     clearDisposes();
 
@@ -1076,7 +1091,7 @@ bool GlRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
     glCmp->blendMethod = mBlendMethod;
 
     uint32_t index = mRenderPassStack.count - 1;
-    if (index >= mComposePool.count) mComposePool.push( new GlRenderTargetPool(surface.w, surface.h));
+    if (index >= mComposePool.count) mComposePool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 
     if (glCmp->bbox.valid()) mRenderPassStack.push(new GlRenderPass(mComposePool[index]->getRenderTarget(glCmp->bbox)));
     else mRenderPassStack.push(new GlRenderPass(nullptr));
@@ -1102,8 +1117,8 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
     // we must be sure, that we have intermediate FBOs
-    if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
-    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h));
+    if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 
     mEffect.update(effect, transform);
 }
@@ -1181,14 +1196,14 @@ bool GlRenderer::renderImage(void* data)
 
     task->addBindResource(GlBindingResource{
         1,
-        task->getProgram()->getUniformBlockIndex("ColorInfo"),
+        GlShaderUniformBlock::ColorInfo,
         mGpuBuffer.getBufferId(),
         mGpuBuffer.push(info, 4 * sizeof(uint32_t), true),
         4 * sizeof(uint32_t),
     });
 
     // texture id
-    task->addBindResource(GlBindingResource{0, sdata->texId, task->getProgram()->getUniformLocation("uTexture")});
+    task->addBindResource(GlBindingResource{0, sdata->texId, GlShaderUniform::Texture});
 
     auto taskBounds = bbox;
     taskBounds.intersect(vp);
@@ -1288,13 +1303,13 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
     if (cacheStale || sdata->texId == 0 || sdata->texSource != image || sdata->texFilter != filter) {
         auto ownsTexture = sdata->texId && (sdata->texStamp == mTextures.stamp);
         if (ownsTexture) disposeTexture(mTextures.release(sdata->texSource, sdata->texFilter, sdata->texId));
-        sdata->texId = mTextures.retain(image, filter);
+        sdata->texId = mTextures.retain(mStateCache, image, filter);
         sdata->texSource = image;
         sdata->texFilter = filter;
         sdata->texStamp = mTextures.stamp;
         sdata->geometry = GlGeometry();
     } else if (flags & RenderUpdateFlag::Image) {
-        TextureMgr::upload(sdata->texId, image, filter);
+        TextureMgr::upload(mStateCache, sdata->texId, image, filter);
     }
 
     sdata->texColorSpace = image->cs;

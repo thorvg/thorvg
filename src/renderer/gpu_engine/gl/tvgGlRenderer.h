@@ -30,6 +30,7 @@
 #include "tvgGlTextureMgr.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlStateCache.h"
 #include "tvgGlSolidBatch.h"
 #include "tvgGlStencilCoverBatch.h"
 
@@ -220,6 +221,7 @@ private:
 
     RenderSurface surface;
     GLint mTargetFboId = 0;
+    GlStateCache mStateCache;
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
