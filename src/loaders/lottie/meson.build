@@ -4,7 +4,7 @@ endif
 
 source_file = [
    'tvgLottieBuilder.h',
-   'tvgLottieData.h',
+   'tvgLottieCommon.h',
    'tvgLottieExpressions.h',
    'tvgLottieInterpolator.h',
    'tvgLottieLoader.h',
@@ -14,6 +14,7 @@ source_file = [
    'tvgLottieParserHandler.h',
    'tvgLottieProperty.h',
    'tvgLottieRenderPooler.h',
+   'tvgLottieTween.h',
    'tvgLottieAnimation.cpp',
    'tvgLottieBuilder.cpp',
    'tvgLottieExpressions.cpp',

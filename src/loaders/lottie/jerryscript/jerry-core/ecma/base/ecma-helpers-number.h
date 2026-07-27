@@ -18,16 +18,10 @@
 
 #include "ecma-globals.h"
 
-#include "jerry-config.h"
-
 /**
  * Binary representation of an ecma-number
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-typedef uint64_t ecma_binary_num_t;
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 typedef uint32_t ecma_binary_num_t;
-#endif /* !JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Makes it possible to read/write the binary representation of an ecma_number_t
@@ -50,11 +44,7 @@ ecma_number_t ecma_number_create (bool sign, uint32_t biased_exp, uint64_t fract
 /**
  * Maximum number of significant decimal digits that an ecma-number can store
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_MAX_DIGITS (19)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_MAX_DIGITS (9)
-#endif /* !JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Width of sign field
@@ -70,20 +60,12 @@ ecma_number_t ecma_number_create (bool sign, uint32_t biased_exp, uint64_t fract
  * See also:
  *          IEEE-754 2008, 3.6, Table 3.5
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_BIASED_EXP_WIDTH (11)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_BIASED_EXP_WIDTH (8)
-#endif /* !JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Exponent bias
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_EXPONENT_BIAS (1023)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_EXPONENT_BIAS (127)
-#endif /* !JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Width of fraction field
@@ -91,38 +73,22 @@ ecma_number_t ecma_number_create (bool sign, uint32_t biased_exp, uint64_t fract
  * See also:
  *          IEEE-754 2008, 3.6, Table 3.5
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_FRACTION_WIDTH (52)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_FRACTION_WIDTH (23)
-#endif /* !JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Sign bit in ecma-numbers
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_SIGN_BIT 0x8000000000000000ull
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
-#define ECMA_NUMBER_SIGN_BIT 0x7f800000u
-#endif /* !JERRY_NUMBER_TYPE_FLOAT64 */
+#define ECMA_NUMBER_SIGN_BIT 0x80000000u
 
 /**
  * Binary representation of an IEEE-754 QNaN value.
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_BINARY_QNAN 0x7ff8000000000000ull
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_BINARY_QNAN 0x7fc00000u
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Binary representation of an IEEE-754 Infinity value.
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_BINARY_INF 0x7ff0000000000000ull
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_BINARY_INF 0x7f800000u
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Binary representation of an IEEE-754 zero value.
@@ -134,73 +100,45 @@ ecma_number_t ecma_number_create (bool sign, uint32_t biased_exp, uint64_t fract
  *
  * See also: ECMA_262 v5, 15.7.3.3
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_MIN_VALUE ((ecma_number_t) 5e-324)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_MIN_VALUE (FLT_MIN)
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Number.MAX_VALUE (i.e., the maximum value of ecma-number)
  *
  * See also: ECMA_262 v5, 15.7.3.2
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_MAX_VALUE ((ecma_number_t) 1.7976931348623157e+308)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_MAX_VALUE (FLT_MAX)
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Number.EPSILON
  *
  * See also: ECMA_262 v6, 20.1.2.1
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_EPSILON ((ecma_number_t) 2.2204460492503130808472633361816e-16)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_EPSILON ((ecma_number_t) 1.1920928955078125e-7)
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Number.MAX_SAFE_INTEGER
  *
  * See also: ECMA_262 v6, 20.1.2.6
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_MAX_SAFE_INTEGER ((ecma_number_t) 0x1FFFFFFFFFFFFF)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_MAX_SAFE_INTEGER ((ecma_number_t) 0xFFFFFF)
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Number.MIN_SAFE_INTEGER
  *
  * See also: ECMA_262 v6, 20.1.2.8
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define ECMA_NUMBER_MIN_SAFE_INTEGER ((ecma_number_t) -0x1FFFFFFFFFFFFF)
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define ECMA_NUMBER_MIN_SAFE_INTEGER ((ecma_number_t) -0xFFFFFF)
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Number.MAX_VALUE exponent part
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define NUMBER_MAX_DECIMAL_EXPONENT 308
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define NUMBER_MAX_DECIMAL_EXPONENT 38
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Number.MIN_VALUE exponent part
  */
-#if JERRY_NUMBER_TYPE_FLOAT64
-#define NUMBER_MIN_DECIMAL_EXPONENT -324
-#else /* !JERRY_NUMBER_TYPE_FLOAT64 */
 #define NUMBER_MIN_DECIMAL_EXPONENT -45
-#endif /* JERRY_NUMBER_TYPE_FLOAT64 */
 
 /**
  * Euler number

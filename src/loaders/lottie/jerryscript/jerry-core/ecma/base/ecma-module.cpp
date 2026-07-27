@@ -63,6 +63,7 @@ typedef struct
 ecma_module_t *
 ecma_module_create (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (JERRY_CONTEXT (module_current_p) == NULL);
 
   ecma_object_t *obj_p = ecma_create_object (NULL, sizeof (ecma_module_t), ECMA_OBJECT_TYPE_CLASS);
@@ -91,6 +92,7 @@ ecma_module_create (void)
 void
 ecma_module_cleanup_context (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_deref_object ((ecma_object_t *) JERRY_CONTEXT (module_current_p));
 #ifndef JERRY_NDEBUG
   JERRY_CONTEXT (module_current_p) = NULL;
@@ -103,6 +105,7 @@ ecma_module_cleanup_context (void)
 static void
 ecma_module_set_error_state (ecma_module_t *module_p) /**< module */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   module_p->header.u.cls.u1.module_state = JERRY_MODULE_STATE_ERROR;
 
   if (JERRY_CONTEXT (module_state_changed_callback_p) != NULL && !jcontext_has_pending_abort ())
@@ -539,6 +542,7 @@ exit:
 ecma_value_t
 ecma_module_evaluate (ecma_module_t *module_p) /**< module */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (module_p->header.u.cls.u1.module_state == JERRY_MODULE_STATE_ERROR)
   {
     return ecma_raise_range_error (ECMA_ERR_MODULE_IS_IN_ERROR_STATE);
@@ -1087,6 +1091,7 @@ ecma_module_link (ecma_module_t *module_p, /**< root module */
                   jerry_module_resolve_cb_t callback, /**< resolve module callback */
                   void *user_p) /**< pointer passed to the resolve callback */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (module_p->header.u.cls.u1.module_state != JERRY_MODULE_STATE_UNLINKED)
   {
     return ecma_raise_type_error (ECMA_ERR_MODULE_MUST_BE_IN_UNLINKED_STATE);
@@ -1339,6 +1344,7 @@ ecma_value_t
 ecma_module_import (ecma_value_t specifier, /**< module specifier */
                     ecma_value_t user_value) /**< user value assigned to the script */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_string_t *specifier_p = ecma_op_to_string (specifier);
   ecma_module_t *module_p;
 

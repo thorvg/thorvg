@@ -10,11 +10,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: "thorvg"
+      - name: Install Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install meson ninja-build
       - name: Create source archive
         run: |
-          rm -rf ./thorvg/.git*
-          tar -I "gzip -9" -cf thorvg.tar.gz thorvg
+          meson setup builddir thorvg
+          meson dist -C builddir
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
-          files: thorvg.tar.gz
+          files: builddir/meson-dist/*.xz

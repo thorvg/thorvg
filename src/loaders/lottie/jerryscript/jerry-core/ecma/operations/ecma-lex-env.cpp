@@ -42,6 +42,7 @@
 void
 ecma_init_global_environment (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_CONTEXT (global_object_p) = ecma_builtin_create_global_object ();
 } /* ecma_init_global_environment */
 
@@ -51,6 +52,7 @@ ecma_init_global_environment (void)
 void
 ecma_finalize_global_environment (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   /* After this point the gc can free the global object, but the global_object_p pointer
    * is not set to NULL because the global object might still be used before the free. */
   ecma_deref_object ((ecma_object_t *) JERRY_CONTEXT (global_object_p));

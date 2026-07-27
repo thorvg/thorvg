@@ -1238,6 +1238,7 @@ parser_post_processing (parser_context_t *context_p) /**< context */
 static bool
 parser_resolve_private_identifier_eval (parser_context_t *context_p) /**< context */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_string_t *search_key_p;
   uint8_t *destination_p = (uint8_t *) parser_malloc (context_p, context_p->token.lit_location.length);
 
@@ -1818,6 +1819,7 @@ parser_parse_source (void *source_p, /**< source code */
                      uint32_t parse_opts, /**< ecma_parse_opts_t option bits */
                      const jerry_parse_options_t *options_p) /**< additional configuration options */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   parser_context_t context;
   ecma_compiled_code_t *compiled_code_p;
 

@@ -52,6 +52,7 @@ jmem_finalize (void)
 jmem_cpointer_t JERRY_ATTR_PURE
 jmem_compress_pointer (const void *pointer_p) /**< pointer to compress */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (pointer_p != NULL);
   JERRY_ASSERT (jmem_is_heap_pointer (pointer_p));
 
@@ -78,6 +79,7 @@ jmem_compress_pointer (const void *pointer_p) /**< pointer to compress */
 void *JERRY_ATTR_PURE
 jmem_decompress_pointer (uintptr_t compressed_pointer) /**< pointer to decompress */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (compressed_pointer != JMEM_CP_NULL);
 
   uintptr_t uint_ptr = compressed_pointer;

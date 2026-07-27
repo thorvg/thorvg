@@ -403,6 +403,7 @@ scanner_literal_is_arguments (lexer_lit_location_t *literal_p) /**< literal */
 static bool
 scanner_find_duplicated_arg (parser_context_t *context_p, lexer_lit_location_t *lit_loc_p)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (!(context_p->status_flags & PARSER_FUNCTION_IS_PARSING_ARGS))
   {
     return false;
@@ -494,6 +495,7 @@ static bool
 scanner_scope_find_lexical_declaration (parser_context_t *context_p, /**< context */
                                         lexer_lit_location_t *literal_p) /**< literal */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_string_t *name_p;
   uint32_t flags = context_p->global_status_flags;
 

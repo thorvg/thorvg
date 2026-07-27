@@ -38,13 +38,14 @@ void JpgLoader::clear()
 
 void JpgLoader::run(unsigned tid)
 {
-    surface.cs = ImageLoader::cs;
-    surface.buf8 = jpgdDecompress(decoder, surface.cs);
+    surface.cs = ColorSpace::ABGR8888;
+    surface.buf8 = jpgdDecompress(decoder);
     surface.stride = static_cast<uint32_t>(w);
     surface.w = static_cast<uint32_t>(w);
     surface.h = static_cast<uint32_t>(h);
     surface.channelSize = sizeof(uint32_t);
     surface.premultiplied = true;
+    surface.alphaIgnored = true;
 
     clear();
 }
@@ -67,8 +68,7 @@ JpgLoader::~JpgLoader()
     tvg::free(surface.buf8);
 }
 
-
-bool JpgLoader::open(const char* path)
+bool JpgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     int width, height;
@@ -83,8 +83,7 @@ bool JpgLoader::open(const char* path)
 #endif
 }
 
-
-bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
+bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
 {
     if (copy) {
         this->data = tvg::malloc<char>(size);
@@ -110,7 +109,7 @@ bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpa
 
 bool JpgLoader::read()
 {
-    if (!LoadModule::read()) return true;
+    if (!Loader::read()) return true;
 
     if (!decoder || w == 0 || h == 0) return false;
 
@@ -122,7 +121,7 @@ bool JpgLoader::read()
 
 bool JpgLoader::close()
 {
-    if (!LoadModule::close()) return false;
+    if (!Loader::close()) return false;
     this->done();
     return true;
 }

@@ -38,7 +38,7 @@ Type Scene::type() const noexcept
 }
 
 
-Result Scene::push(Paint* target, Paint* at) noexcept
+Result Scene::add(Paint* target, Paint* at) noexcept
 {
     return to<SceneImpl>(this)->insert(target, at);
 }
@@ -57,11 +57,11 @@ const list<Paint*>& Scene::paints() const noexcept
 }
 
 
-Result Scene::push(SceneEffect effect, ...) noexcept
+Result Scene::add(SceneEffect effect, ...) noexcept
 {
     va_list args;
     va_start(args, effect);
-    auto ret = to<SceneImpl>(this)->push(effect, args);
+    auto ret = to<SceneImpl>(this)->add(effect, args);
     va_end(args);
     return ret;
 }

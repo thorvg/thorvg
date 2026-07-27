@@ -1,27 +1,22 @@
 engine_dep = []
 
-if sw_engine
-    subdir('sw_engine')
+if cpu_engine
+    subdir('cpu_engine')
 endif
 
-if gl_engine
-    subdir('gl_engine')
-endif
-
-if wg_engine
-    subdir('wg_engine')
+if gl_engine or wg_engine
+    subdir('gpu_engine')
 endif
 
 source_file = [
    'tvgAnimation.h',
    'tvgCanvas.h',
    'tvgFill.h',
-   'tvgFrameModule.h',
    'tvgLoader.h',
-   'tvgLoadModule.h',
+   'tvgLoaderMgr.h',
    'tvgPicture.h',
    'tvgRender.h',
-   'tvgIteratorAccessor.h',
+   'tvgAccessor.h',
    'tvgSaveModule.h',
    'tvgScene.h',
    'tvgShape.h',
@@ -32,7 +27,7 @@ source_file = [
    'tvgCanvas.cpp',
    'tvgFill.cpp',
    'tvgInitializer.cpp',
-   'tvgLoader.cpp',
+   'tvgLoaderMgr.cpp',
    'tvgPaint.cpp',
    'tvgPicture.cpp',
    'tvgRender.cpp',

@@ -353,6 +353,7 @@ ecma_op_container_create (const ecma_value_t *arguments_list_p, /**< arguments l
                           lit_magic_string_id_t lit_id, /**< internal class id */
                           ecma_builtin_id_t proto_id) /**< prototype builtin id */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
   JERRY_ASSERT (lit_id == LIT_MAGIC_STRING_MAP_UL || lit_id == LIT_MAGIC_STRING_SET_UL
                 || lit_id == LIT_MAGIC_STRING_WEAKMAP_UL || lit_id == LIT_MAGIC_STRING_WEAKSET_UL);

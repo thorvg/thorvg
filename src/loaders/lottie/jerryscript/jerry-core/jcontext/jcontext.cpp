@@ -28,6 +28,7 @@
 bool
 jcontext_has_pending_exception (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   return JERRY_CONTEXT (status_flags) & ECMA_STATUS_EXCEPTION;
 } /* jcontext_has_pending_exception */
 
@@ -40,6 +41,7 @@ jcontext_has_pending_exception (void)
 bool
 jcontext_has_pending_abort (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   return JERRY_CONTEXT (status_flags) & ECMA_STATUS_ABORT;
 } /* jcontext_has_pending_abort */
 
@@ -52,6 +54,7 @@ void
 jcontext_set_abort_flag (bool is_abort) /**< true - if the abort flag should be set
                                          *   false - if the abort flag should be removed */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (jcontext_has_pending_exception ());
 
   if (is_abort)
@@ -73,6 +76,7 @@ void
 jcontext_set_exception_flag (bool is_exception) /**< true - if the exception flag should be set
                                                  *   false - if the exception flag should be removed */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (is_exception)
   {
     JERRY_CONTEXT (status_flags) |= ECMA_STATUS_EXCEPTION;
@@ -91,6 +95,7 @@ jcontext_set_exception_flag (bool is_exception) /**< true - if the exception fla
 void
 jcontext_raise_exception (ecma_value_t error) /**< error to raise */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (!jcontext_has_pending_exception ());
   JERRY_ASSERT (!jcontext_has_pending_abort ());
 
@@ -117,6 +122,7 @@ jcontext_release_exception (void)
 ecma_value_t
 jcontext_take_exception (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (jcontext_has_pending_exception ());
 
   JERRY_CONTEXT (status_flags) &= (uint32_t) ~(ECMA_STATUS_EXCEPTION

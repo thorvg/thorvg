@@ -478,6 +478,7 @@ ecma_new_ecma_external_string_from_cesu8 (const lit_utf8_byte_t *string_p, /**< 
                                           void *user_p) /**< user pointer passed to the callback
                                                          *   when the string is freed */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (string_p != NULL || string_size == 0);
   JERRY_ASSERT (lit_is_valid_cesu8_string (string_p, string_size));
 
@@ -948,6 +949,7 @@ ecma_deref_ecma_string (ecma_string_t *string_p) /**< ecma-string */
 void
 ecma_destroy_ecma_string (ecma_string_t *string_p) /**< ecma-string */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (string_p != NULL);
   JERRY_ASSERT (!ECMA_IS_DIRECT_STRING (string_p));
   JERRY_ASSERT ((string_p->refs_and_container < ECMA_STRING_REF_ONE) || ECMA_STRING_IS_STATIC (string_p));

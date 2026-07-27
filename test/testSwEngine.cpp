@@ -28,7 +28,7 @@
 using namespace tvg;
 using namespace std;
 
-#ifdef THORVG_SW_RASTER_SUPPORT
+#ifdef THORVG_CPU_ENGINE_SUPPORT
 
 TEST_CASE("Basic draw", "[tvgSwEngine]")
 {
@@ -37,7 +37,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888S) == Result::Success);
 
         std::vector<MaskMethod> masks;
@@ -88,7 +88,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
                 REQUIRE(shape1->strokeWidth(2) == Result::Success);
                 REQUIRE(shape1->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(shape1->mask(mask(), maskOp) == Result::Success);
-                REQUIRE(canvas->push(shape1) == Result::Success);
+                REQUIRE(canvas->add(shape1) == Result::Success);
 
                 //Cubic
                 auto shape2 = Shape::gen();
@@ -99,7 +99,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
                 REQUIRE(shape2->strokeWidth(1) == Result::Success);
                 REQUIRE(shape2->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(shape2->mask(mask(), maskOp) == Result::Success);
-                REQUIRE(canvas->push(shape2) == Result::Success);
+                REQUIRE(canvas->add(shape2) == Result::Success);
 
                 //Fill
                 auto shape3 = Shape::gen();
@@ -111,7 +111,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
                 REQUIRE(shape3->fill(255, 255, 255) == Result::Success);
                 REQUIRE(shape3->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(shape3->mask(mask(), maskOp) == Result::Success);
-                REQUIRE(canvas->push(shape3) == Result::Success);
+                REQUIRE(canvas->add(shape3) == Result::Success);
 
                 //Dashed Line shape
                 auto shape4 = Shape::gen();
@@ -127,7 +127,7 @@ TEST_CASE("Basic draw", "[tvgSwEngine]")
                 REQUIRE(shape4->strokeCap(StrokeCap::Round) == Result::Success);
                 REQUIRE(shape4->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(shape4->mask(mask(), maskOp) == Result::Success);
-                REQUIRE(canvas->push(shape4) == Result::Success);
+                REQUIRE(canvas->add(shape4) == Result::Success);
             }
         }
         REQUIRE(canvas->draw(true) == Result::Success);
@@ -143,7 +143,7 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         //raw image
@@ -199,39 +199,39 @@ TEST_CASE("Image Draw", "[tvgSwEngine]")
                 REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
                 REQUIRE(picture->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(picture->mask(mask(), maskOp) == Result::Success);
-                REQUIRE(canvas->push(picture) == Result::Success);
+                REQUIRE(canvas->add(picture) == Result::Success);
 
                 //Clipped images
                 auto picture2 = picture->duplicate();
                 REQUIRE(picture2->clip(mask()) == Result::Success);
-                REQUIRE(canvas->push(picture2) == Result::Success);
+                REQUIRE(canvas->add(picture2) == Result::Success);
 
                 // Transformed images
                 auto picture3 = picture->duplicate();
                 REQUIRE(picture3->rotate(45) == Result::Success);
-                REQUIRE(canvas->push(picture3) == Result::Success);
+                REQUIRE(canvas->add(picture3) == Result::Success);
 
                 //Up-scaled Image
                 auto picture4 = picture->duplicate();
                 REQUIRE(picture4->scale(2.0f) == Result::Success);
-                REQUIRE(canvas->push(picture4) == Result::Success);
+                REQUIRE(canvas->add(picture4) == Result::Success);
 
                 //Down-scaled Image
                 auto picture5 = picture->duplicate();
                 REQUIRE(picture5->scale(0.25f) == Result::Success);
-                REQUIRE(canvas->push(picture5) == Result::Success);
+                REQUIRE(canvas->add(picture5) == Result::Success);
 
                 //Direct Clipped image
                 auto picture6 = Picture::gen();
                 REQUIRE(picture6->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
                 REQUIRE(picture6->clip(mask()) == Result::Success);
                 REQUIRE(picture6->blend(method) == Result::Success);
-                REQUIRE(canvas->push(picture6) == Result::Success);
+                REQUIRE(canvas->add(picture6) == Result::Success);
 
                 //Scaled Clipped image
                 auto picture7 = picture6->duplicate();
                 REQUIRE(picture7->scale(2.0f) == Result::Success);
-                REQUIRE(canvas->push(picture7) == Result::Success);
+                REQUIRE(canvas->add(picture7) == Result::Success);
             }
         }
 
@@ -249,7 +249,7 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         std::vector<MaskMethod> masks;
@@ -312,7 +312,7 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
                 REQUIRE(shape->fill(linear) == Result::Success);
                 REQUIRE(shape->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(shape->mask(mask(), maskOp) == Result::Success);
-                REQUIRE(canvas->push(shape) == Result::Success);
+                REQUIRE(canvas->add(shape) == Result::Success);
 
                 //Radial Gradient
                 auto radial = RadialGradient::gen();
@@ -325,7 +325,7 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
                 REQUIRE(shape2->fill(radial) == Result::Success);
                 REQUIRE(shape2->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(shape2->mask(mask(), maskOp) == Result::Success);
-                REQUIRE(canvas->push(shape2) == Result::Success);
+                REQUIRE(canvas->add(shape2) == Result::Success);
             }
         }
 
@@ -349,14 +349,60 @@ TEST_CASE("Image Rotation", "[tvgSwEngine]")
 
         auto picture = Picture::gen();
         REQUIRE(picture);
+ 
+        ifstream file(TEST_DIR"/rawimage_250x375.raw");
+        if (!file.is_open()) return;
+        auto data = (uint32_t*)malloc(sizeof(uint32_t) * (250*375));
+        file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 250 * 375);
+        file.close();
 
-        REQUIRE(picture->load(TEST_DIR "/test.png") == Result::Success);
+        REQUIRE(picture->load(data, 250, 375, ColorSpace::ARGB8888, false) == Result::Success);
+
         REQUIRE(picture->size(240, 240) == Result::Success);
         REQUIRE(picture->transform({0.572866f, -4.431353f, 336.605835f, 5.198910f, -0.386219f, 30.710693f, 0.0f, 0.0f, 1.0f}) == Result::Success);
-        REQUIRE(canvas->push(picture) == Result::Success);
+        REQUIRE(canvas->add(picture) == Result::Success);
 
         REQUIRE(canvas->draw(true) == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
+
+        free(data);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("Intersection", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+
+        uint32_t buffer[200 * 200] = {};
+        canvas->target(buffer, 200, 200, 200, ColorSpace::ARGB8888);
+
+        auto shape = Shape::gen();
+        REQUIRE(shape);
+        REQUIRE(shape->appendRect(50, 50, 100, 100) == Result::Success);
+        REQUIRE(shape->fill(255, 0, 0, 255) == Result::Success);
+
+        REQUIRE(canvas->add(shape) == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+
+        // Case1. Fully contained
+        REQUIRE(shape->intersects(0, 0, 200, 200, true) == true);
+
+        // Case2. Partially overlapping
+        REQUIRE(shape->intersects(25, 25, 50, 50, false) == true);
+        REQUIRE(shape->intersects(125, 125, 50, 50, false) == true);
+
+        shape->visible(false);
+
+        // Case3. Edge-touching
+        REQUIRE(shape->intersects(49, 49, 2, 2, true) == false);
+        REQUIRE(shape->intersects(149, 149, 2, 2, false) == true);
+
+        // Case4. Fully separated
+        REQUIRE(shape->intersects(0, 0, 25, 25, true) == false);
+        REQUIRE(shape->intersects(175, 175, 25, 25, true) == false);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

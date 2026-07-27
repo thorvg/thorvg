@@ -8,7 +8,7 @@
   - README.md
 
 "font":
-  - src/loaders/ttf/**/*
+  - src/loaders/sfnt/**/*
 
 "image":
   - src/loaders/jpg/**/*
@@ -41,13 +41,15 @@
   - src/loaders/lottie/**/*
 
 "cpu":
-  - src/renderer/sw_engine/**/*
+  - src/renderer/cpu_engine/**/*
 
 "webgpu":
-  - src/renderer/wg_engine/**/*
+  - src/renderer/gpu_engine/wg/**/*
+  - src/renderer/gpu_engine/*
 
 "gl":
-  - src/renderer/gl_engine/**/*
+  - src/renderer/gpu_engine/gl/**/*
+  - src/renderer/gpu_engine/*
 
 "renderer":
   - src/renderer/*

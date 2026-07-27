@@ -134,10 +134,9 @@ RenderRegion Paint::Impl::bounds()
     return ret;
 }
 
-
-Iterator* Paint::Impl::iterator()
+AccessorIterator* Paint::Impl::iterator()
 {
-    Iterator* ret;
+    AccessorIterator* ret;
     PAINT_METHOD(ret, iterator());
     return ret;
 }
@@ -162,7 +161,7 @@ Paint* Paint::Impl::duplicate(Paint* ret)
 }
 
 
-bool Paint::Impl::render(RenderMethod* renderer)
+bool Paint::Impl::render(RenderMethod* renderer, CompositionFlag flag)
 {
     if (hidden || opacity == 0) return true;
 
@@ -188,7 +187,7 @@ bool Paint::Impl::render(RenderMethod* renderer)
     if (cmp) renderer->beginComposite(cmp, maskData->method, maskData->target->pImpl->opacity);
 
     bool ret;
-    PAINT_METHOD(ret, render(renderer));
+    PAINT_METHOD(ret, render(renderer, flag));
 
     if (cmp) renderer->endComposite(cmp);
 
@@ -280,12 +279,12 @@ bool Paint::Impl::bounds(Point* pt4, const Matrix* pm, bool obb)
     return ret;
 }
 
-
-bool Paint::Impl::intersects(const RenderRegion& region)
+bool Paint::Impl::intersects(const RenderRegion& region, bool visibleOnly)
 {
+    if (visibleOnly && hidden) return false;
     if (renderer) {
         bool ret;
-        PAINT_METHOD(ret, intersects(region));
+        PAINT_METHOD(ret, intersects(region, visibleOnly));
         return ret;
     }
     return false;
@@ -370,11 +369,15 @@ Result Paint::bounds(Point* pt4) noexcept
     return Result::InsufficientCondition;
 }
 
-
 bool Paint::intersects(int32_t x, int32_t y, int32_t w, int32_t h) noexcept
 {
+    return intersects(x, y, w, h, false);
+}
+
+bool Paint::intersects(int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly) noexcept
+{
     if (w <= 0 || h <= 0) return false;
-    return pImpl->intersects({{x, y}, {x + w, y + h}});
+    return pImpl->intersects({{x, y}, {x + w, y + h}}, visibleOnly);
 }
 
 

@@ -80,6 +80,7 @@ jmem_heap_get_region_end (jmem_heap_free_t *curr_p) /**< current region */
 void
 jmem_heap_init (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if !JERRY_SYSTEM_ALLOCATOR
   JERRY_ASSERT ((uintptr_t) JERRY_HEAP_CONTEXT (area) % JMEM_ALIGNMENT == 0);
 
@@ -108,6 +109,7 @@ jmem_heap_init (void)
 void
 jmem_heap_finalize (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (JERRY_CONTEXT (jmem_heap_allocated_size) == 0);
 #if !JERRY_SYSTEM_ALLOCATOR
   JMEM_VALGRIND_NOACCESS_SPACE (&JERRY_HEAP_CONTEXT (first), JMEM_HEAP_SIZE);
@@ -126,6 +128,7 @@ jmem_heap_finalize (void)
 static void *JERRY_ATTR_HOT
 jmem_heap_alloc (const size_t size) /**< size of requested block */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if !JERRY_SYSTEM_ALLOCATOR
   /* Align size. */
   const size_t required_size = ((size + JMEM_ALIGNMENT - 1) / JMEM_ALIGNMENT) * JMEM_ALIGNMENT;
@@ -274,6 +277,7 @@ static void *
 jmem_heap_gc_and_alloc_block (const size_t size, /**< required memory size */
                               jmem_pressure_t max_pressure) /**< pressure limit */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (JERRY_UNLIKELY (size == 0))
   {
     return NULL;
@@ -356,6 +360,7 @@ jmem_heap_alloc_block_null_on_error (const size_t size) /**< required memory siz
 static jmem_heap_free_t *
 jmem_heap_find_prev (const jmem_heap_free_t *const block_p) /**< which memory block's predecessor we're looking for */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   const jmem_heap_free_t *prev_p;
 
   if (block_p > JERRY_CONTEXT (jmem_heap_list_skip_p))
@@ -397,6 +402,7 @@ jmem_heap_insert_block (jmem_heap_free_t *block_p, /**< block to insert */
                         jmem_heap_free_t *prev_p, /**< the free block after which to insert 'block_p' */
                         const size_t size) /**< size of the inserted block */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT ((uintptr_t) block_p % JMEM_ALIGNMENT == 0);
   JERRY_ASSERT (size % JMEM_ALIGNMENT == 0);
 
@@ -452,6 +458,7 @@ void JERRY_ATTR_HOT
 jmem_heap_free_block_internal (void *ptr, /**< pointer to beginning of data space of the block */
                                const size_t size /**< size of allocated region */)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (size > 0);
   JERRY_ASSERT (JERRY_CONTEXT (jmem_heap_limit) >= JERRY_CONTEXT (jmem_heap_allocated_size));
   JERRY_ASSERT (JERRY_CONTEXT (jmem_heap_allocated_size) > 0);
@@ -492,6 +499,7 @@ jmem_heap_realloc_block (void *ptr, /**< memory region to reallocate */
                          const size_t old_size, /**< current size of the region */
                          const size_t new_size) /**< desired new size */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if !JERRY_SYSTEM_ALLOCATOR
   JERRY_ASSERT (jmem_is_heap_pointer (ptr));
   JERRY_ASSERT ((uintptr_t) ptr % JMEM_ALIGNMENT == 0);
@@ -698,6 +706,7 @@ jmem_heap_free_block (void *ptr, /**< pointer to beginning of data space of the 
 bool
 jmem_is_heap_pointer (const void *pointer) /**< pointer */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if !JERRY_SYSTEM_ALLOCATOR
   return ((uint8_t *) pointer >= JERRY_HEAP_CONTEXT (area)
           && (uint8_t *) pointer <= (JERRY_HEAP_CONTEXT (area) + JMEM_HEAP_AREA_SIZE));

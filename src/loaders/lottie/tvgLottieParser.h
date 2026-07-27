@@ -65,6 +65,7 @@ private:
     bool getValue(int8_t& val);
     bool getValue(RGB32& color);
     bool getValue(Point& pt);
+    bool getValue(Point3& pt);
 
     template<typename T> bool parseTangent(const char *key, LottieVectorFrame<T>& value);
     template<typename T> bool parseTangent(const char *key, LottieScalarFrame<T>& value);
@@ -76,6 +77,8 @@ private:
     LottieObject* parseObject(const char* type);
     LottieObject* parseAsset();
     void parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
+    void parseAudio(LottieAudio* audio, const char* data, const char* subPath, bool embedded);
+    void parseVolume(LottieLayer* layer);
     LottieLayer* parseLayer(LottieLayer* precomp);
     LottieObject* parseGroup();
     LottieRect* parseRect();
@@ -93,6 +96,8 @@ private:
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();
     LottieOffsetPath* parseOffsetPath();
+    LottiePuckerBloat* parsePuckerBloat();
+    LottieZigZag* parseZigZag();
     LottieFont* parseFont();
     void parseFontData(LottieFont* font, const char* data);
     LottieMarker* parseMarker();
@@ -130,7 +135,7 @@ private:
 
     char* captureType();
     void captureSlots(const char* key);
-    void registerSlot(LottieObject* obj, const char* sid, LottieProperty::Type type);
+    void registerSlot(LottieObject* obj, const char* sid, LottieProperty& prop);
 
     //Current parsing context
     struct Context {

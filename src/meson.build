@@ -10,6 +10,11 @@ else
 endif
 
 cc = meson.get_compiler('cpp')
+
+if host_machine.system() == 'windows'
+    compiler_flags += ['-DNOMINMAX']
+endif
+
 if cc.get_id() == 'clang-cl'
     if simd_type == 'avx'
         compiler_flags += ['/clang:-mavx']
@@ -29,9 +34,7 @@ if cc.get_id() == 'clang-cl'
                            '/clang:-fno-stack-protector', '/clang:-fno-unwind-tables' ,
                            '/clang:-fno-asynchronous-unwind-tables']
     endif
-elif (cc.get_id() == 'msvc')
-    compiler_flags += ['-DNOMINMAX']
-else
+elif (cc.get_id() != 'msvc')
     if simd_type == 'avx'
         compiler_flags += ['-mavx']
     endif
@@ -57,7 +60,7 @@ subdir('savers')
 
 thorvg_lib_dep = [common_dep, utils_dep, loader_dep, saver_dep]
 
-if get_option('threads') and host_machine.system() != 'windows' and host_machine.system() != 'android'
+if host_machine.system() != 'windows' and host_machine.system() != 'android' and host_machine.system() != 'emscripten'
     thread_dep = meson.get_compiler('cpp').find_library('pthread')
     thorvg_lib_dep += [thread_dep]
 endif

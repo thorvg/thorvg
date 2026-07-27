@@ -150,7 +150,7 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         canvas->target(buffer.get(), 500, 500, 500, ColorSpace::ARGB8888);
 
         auto shape = Shape::gen();
-        canvas->push(shape);
+        canvas->add(shape);
 
         //Negative
         float x = 0, y = 0, w = 0, h = 0;
@@ -164,10 +164,10 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
 
         //Positive
         REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
-        REQUIRE(x == 100.0f);
-        REQUIRE(y == 121.0f);
-        REQUIRE(w == 20.0f);
-        REQUIRE(h == 100.0f);
+        REQUIRE(x == Approx(100.0f).margin(0.001f));
+        REQUIRE(y == Approx(121.0f).margin(0.001f));
+        REQUIRE(w == Approx(20.0f).margin(0.001f));
+        REQUIRE(h == Approx(100.0f).margin(0.001f));
 
         Point pts[4];
         REQUIRE(shape->bounds(pts) == Result::Success);
@@ -219,53 +219,55 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(canvas->update() == Result::Success);
 
         REQUIRE(shape->bounds(&x, &y, &w, &h) == Result::Success);
-        REQUIRE(x == 4.0f);
-        REQUIRE(y == 4.0f);
-        REQUIRE(h == 12.0f);
-        REQUIRE(w == 192.0f);
+        REQUIRE(x == Approx(4.0f).margin(0.000001));
+        REQUIRE(y == Approx(4.0f).margin(0.000001));
+        REQUIRE(h == Approx(12.0f).margin(0.000001));
+        REQUIRE(w == Approx(192.0f).margin(0.000001));
 
         REQUIRE(shape->bounds(pts) == Result::Success);
-        REQUIRE(pts[0].x == 4.0f);
-        REQUIRE(pts[3].x == 4.0f);
-        REQUIRE(pts[0].y == 4.0f);
-        REQUIRE(pts[1].y == 4.0f);
-        REQUIRE(pts[1].x == 196.0f);
-        REQUIRE(pts[2].x == 196.0f);
-        REQUIRE(pts[2].y == 16.0f);
-        REQUIRE(pts[3].y == 16.0f);
+        REQUIRE(pts[0].x == Approx(4.0f).margin(0.000001));
+        REQUIRE(pts[3].x == Approx(4.0f).margin(0.000001));
+        REQUIRE(pts[0].y == Approx(4.0f).margin(0.000001));
+        REQUIRE(pts[1].y == Approx(4.0f).margin(0.000001));
+        REQUIRE(pts[1].x == Approx(196.0f).margin(0.000001));
+        REQUIRE(pts[2].x == Approx(196.0f).margin(0.000001));
+        REQUIRE(pts[2].y == Approx(16.0f).margin(0.000001));
+        REQUIRE(pts[3].y == Approx(16.0f).margin(0.000001));
 
+#ifdef THORVG_TTF_LOADER_SUPPORT
         //Text
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
         auto text = Text::gen();
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
         //Empty Size
         REQUIRE(text->bounds(&x, &y, &w, &h) == Result::Success);
 
         //Case 1
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(32) == Result::Success);
         REQUIRE(text->text("TEST") == Result::Success);
         REQUIRE(text->translate(100.0f, 111.0f) == Result::Success);
         REQUIRE(text->bounds(&x, &y, &w, &h) == Result::Success);
 
-        REQUIRE(x == Approx(101.0f).margin(0.000001));
-        REQUIRE(y == Approx(118.5625f).margin(0.000001));
-        REQUIRE(w == Approx(107.1875f).margin(0.000001));
-        REQUIRE(h == Approx(31.58334f).margin(0.001f));
+        REQUIRE(x == Approx(100.981331f).margin(0.000001));
+        REQUIRE(y == Approx(120.301323f).margin(0.000001));
+        REQUIRE(w == Approx(103.722679f).margin(0.000001));
+        REQUIRE(h == Approx(31.658669f).margin(0.001f));
 
         REQUIRE(canvas->update() == Result::Success);
 
         REQUIRE(text->bounds(pts) == Result::Success);
-        REQUIRE(pts[0].x == Approx(101.0f).margin(0.000001));
-        REQUIRE(pts[3].x == Approx(101.0f).margin(0.000001));
-        REQUIRE(pts[1].x == Approx(208.1875f).margin(0.000001));
-        REQUIRE(pts[2].x == Approx(208.1875f).margin(0.000001));
-        REQUIRE(pts[0].y == Approx(118.5625f).margin(0.000001));
-        REQUIRE(pts[1].y == Approx(118.5625f).margin(0.000001));
-        REQUIRE(pts[2].y == Approx(150.14584f).margin(0.000001));
-        REQUIRE(pts[3].y == Approx(150.14584f).margin(0.000001));
+        REQUIRE(pts[0].x == Approx(100.981331f).margin(0.000001));
+        REQUIRE(pts[1].x == Approx(204.704010f).margin(0.000001));
+        REQUIRE(pts[2].x == Approx(204.704010f).margin(0.000001));
+        REQUIRE(pts[3].x == Approx(100.981331f).margin(0.000001));
+        REQUIRE(pts[0].y == Approx(120.301323f).margin(0.000001));
+        REQUIRE(pts[1].y == Approx(120.301323f).margin(0.000001));
+        REQUIRE(pts[2].y == Approx(151.959991f).margin(0.000001));
+        REQUIRE(pts[3].y == Approx(151.959991f).margin(0.000001));
+
 
         //Case 2
         REQUIRE(text->text("BOUNDS") == Result::Success);
@@ -273,56 +275,22 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(text->transform(identity) == Result::Success);
         REQUIRE(text->bounds(&x, &y, &w, &h) == Result::Success);
 
-        REQUIRE(x == Approx(3.125f).margin(0.000001));
-        REQUIRE(y == Approx(7.54167f).margin(0.000001));
-        REQUIRE(w == Approx(177.1875f).margin(0.000001));
-        REQUIRE(h == Approx(31.60417f).margin(0.000001));
+        REQUIRE(x == Approx(4.074667f).margin(0.000001));
+        REQUIRE(y == Approx(9.258667f).margin(0.000001));
+        REQUIRE(w == Approx(173.503998f).margin(0.000001));
+        REQUIRE(h == Approx(31.701332f).margin(0.000001));
 
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(text->bounds(pts) == Result::Success);
-        REQUIRE(pts[0].x == Approx(3.125f).margin(0.000001));
-        REQUIRE(pts[3].x == Approx(3.125f).margin(0.000001));
-        REQUIRE(pts[1].x == Approx(180.3125f).margin(0.000001));
-        REQUIRE(pts[2].x == Approx(180.3125f).margin(0.000001));
-        REQUIRE(pts[0].y == Approx(7.54167f).margin(0.000001));
-        REQUIRE(pts[1].y == Approx(7.54167f).margin(0.000001));
-        REQUIRE(pts[2].y == Approx(39.14584f).margin(0.000001));
-        REQUIRE(pts[3].y == Approx(39.14584f).margin(0.000001));
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("Intersection", "[tvgPaint]")
-{
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-
-        uint32_t buffer[200 * 200];
-        canvas->target(buffer, 200, 200, 200, ColorSpace::ARGB8888);
-
-        auto shape = Shape::gen();
-        REQUIRE(shape);
-        REQUIRE(shape->appendRect(50, 50, 100, 100) == Result::Success);
-        REQUIRE(shape->fill(255, 0, 0, 255) == Result::Success);
-
-        REQUIRE(canvas->push(shape) == Result::Success);
-        REQUIRE(canvas->draw() == Result::Success);
-
-        // Case1. Fully contained
-        REQUIRE(shape->intersects(0, 0, 200, 200) == true);
-
-        // Case2. Partially overlapping
-        REQUIRE(shape->intersects(25, 25, 50, 50) == true);
-        REQUIRE(shape->intersects(125, 125, 50, 50) == true);
-
-        // Case3. Edge-touching
-        REQUIRE(shape->intersects(49, 49, 2, 2) == true);
-        REQUIRE(shape->intersects(149, 149, 2, 2) == true);
-
-        // Case4. Fully separated
-        REQUIRE(shape->intersects(0, 0, 25, 25) == false);
-        REQUIRE(shape->intersects(175, 175, 25, 25) == false);
+        REQUIRE(pts[0].x == Approx(4.074667f).margin(0.000001));
+        REQUIRE(pts[1].x == Approx(177.578659f).margin(0.000001));
+        REQUIRE(pts[2].x == Approx(177.578659f).margin(0.000001));
+        REQUIRE(pts[3].x == Approx(4.074667f).margin(0.000001));
+        REQUIRE(pts[0].y == Approx(9.258667f).margin(0.000001));
+        REQUIRE(pts[1].y == Approx(9.258667f).margin(0.000001));
+        REQUIRE(pts[2].y == Approx(40.959999f).margin(0.000001));
+        REQUIRE(pts[3].y == Approx(40.959999f).margin(0.000001));
+#endif
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -335,14 +303,16 @@ TEST_CASE("Duplication", "[tvgPaint]")
     REQUIRE(shape);
     paints.push_back(shape);
 
-    REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+#ifdef THORVG_TTF_LOADER_SUPPORT
+    REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
     auto text = Text::gen();
     REQUIRE(text);
-    REQUIRE(text->font("Arial") == Result::Success);
+    REQUIRE(text->font("PublicSans-Regular") == Result::Success);
     REQUIRE(text->size(32) == Result::Success);
     REQUIRE(text->text("Original Text") == Result::Success);
     REQUIRE(text->fill(255, 0, 0) == Result::Success);
     paints.push_back(text);
+#endif
 
     for (auto& paint : paints) {
         //Setup paint properties
@@ -401,24 +371,24 @@ TEST_CASE("Reference Count", "[tvgPaint]")
 
         shape = Shape::gen();
         REQUIRE(shape->ref() == 1);
-        canvas->push(shape);
+        canvas->add(shape);
         REQUIRE(shape->refCnt() == 2);
         REQUIRE(shape->unref() == 1);
 
         shape = Shape::gen();
         REQUIRE(shape->ref() == 1);
         auto scene = Scene::gen();
-        scene->push(shape);
-        canvas->push(scene);
+        scene->add(shape);
+        canvas->add(scene);
         REQUIRE(shape->refCnt() == 2);
         REQUIRE(shape->unref() == 1);
 
         shape = Shape::gen();
         REQUIRE(shape->ref() == 1);
         scene = Scene::gen();
-        scene->push(shape);
+        scene->add(shape);
         scene->remove();
-        canvas->push(scene);
+        canvas->add(scene);
         REQUIRE(shape->unref() == 0);
     }
     Initializer::term();

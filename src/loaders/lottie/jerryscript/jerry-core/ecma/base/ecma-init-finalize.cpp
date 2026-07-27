@@ -42,6 +42,7 @@
 void
 ecma_init (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #if (JERRY_GC_MARK_LIMIT != 0)
   JERRY_CONTEXT (ecma_gc_mark_recursion_limit) = JERRY_GC_MARK_LIMIT;
 #endif /* (JERRY_GC_MARK_LIMIT != 0) */
@@ -73,6 +74,7 @@ ecma_init (void)
 void
 ecma_finalize (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (JERRY_CONTEXT (current_new_target_p) == NULL);
 
   ecma_finalize_global_environment ();

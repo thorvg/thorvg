@@ -1,15 +1,15 @@
 source_file = [
+   'tvgSvgBuilder.h',
+   'tvgSvgCommon.h',
    'tvgSvgCssStyle.h',
    'tvgSvgLoader.h',
-   'tvgSvgLoaderCommon.h',
    'tvgSvgPath.h',
-   'tvgSvgSceneBuilder.h',
    'tvgSvgUtil.h',
    'tvgXmlParser.h',
+   'tvgSvgBuilder.cpp',
    'tvgSvgCssStyle.cpp',
    'tvgSvgLoader.cpp',
    'tvgSvgPath.cpp',
-   'tvgSvgSceneBuilder.cpp',
    'tvgSvgUtil.cpp',
    'tvgXmlParser.cpp'
 ]

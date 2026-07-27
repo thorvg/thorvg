@@ -58,9 +58,149 @@ bool RenderMethod::viewport(const RenderRegion& vp)
 /* RenderPath Class Implementation                                      */
 /************************************************************************/
 
+// used as a temporary buffer
+RenderPath& RenderPath::scratch()
+{
+    static thread_local RenderPath dbuffers[3];  // tripple-buffering
+    static thread_local int idx = 0;
+    if (++idx > 2) idx = 0;
+    dbuffers[(idx)].clear();
+    return dbuffers[(int)idx];
+}
+
+void RenderPath::addCircle(float cx, float cy, float rx, float ry, bool cw)
+{
+    auto rxKappa = rx * PATH_KAPPA;
+    auto ryKappa = ry * PATH_KAPPA;
+
+    cmds.grow(6);
+    auto cmds = this->cmds.end();
+
+    cmds[0] = PathCommand::MoveTo;
+    cmds[1] = PathCommand::CubicTo;
+    cmds[2] = PathCommand::CubicTo;
+    cmds[3] = PathCommand::CubicTo;
+    cmds[4] = PathCommand::CubicTo;
+    cmds[5] = PathCommand::Close;
+
+    this->cmds.count += 6;
+
+    int table[2][13] = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 12}};
+    int* idx = cw ? table[0] : table[1];
+
+    pts.grow(13);
+    auto pts = this->pts.end();
+
+    pts[idx[0]] = {cx, cy - ry};  // moveTo
+    pts[idx[1]] = {cx + rxKappa, cy - ry};
+    pts[idx[2]] = {cx + rx, cy - ryKappa};
+    pts[idx[3]] = {cx + rx, cy};  // cubicTo
+    pts[idx[4]] = {cx + rx, cy + ryKappa};
+    pts[idx[5]] = {cx + rxKappa, cy + ry};
+    pts[idx[6]] = {cx, cy + ry};  // cubicTo
+    pts[idx[7]] = {cx - rxKappa, cy + ry};
+    pts[idx[8]] = {cx - rx, cy + ryKappa};
+    pts[idx[9]] = {cx - rx, cy};  // cubicTo
+    pts[idx[10]] = {cx - rx, cy - ryKappa};
+    pts[idx[11]] = {cx - rxKappa, cy - ry};
+    pts[idx[12]] = {cx, cy - ry};  // cubicTo
+
+    this->pts.count += 13;
+}
+
+void RenderPath::addRect(float x, float y, float w, float h, float rx, float ry, bool cw)
+{
+    if (tvg::zero(rx) && tvg::zero(ry)) {  // sharp rect
+        cmds.grow(5);
+        pts.grow(4);
+
+        auto cmds = this->cmds.end();
+        auto pts = this->pts.end();
+
+        cmds[0] = PathCommand::MoveTo;
+        cmds[1] = cmds[2] = cmds[3] = PathCommand::LineTo;
+        cmds[4] = PathCommand::Close;
+
+        pts[0] = {x + w, y};
+        pts[2] = {x, y + h};
+        if (cw) {
+            pts[1] = {x + w, y + h};
+            pts[3] = {x, y};
+        } else {
+            pts[1] = {x, y};
+            pts[3] = {x + w, y + h};
+        }
+
+        this->cmds.count += 5;
+        this->pts.count += 4;
+    } else {  // round rect
+        auto hsize = Point{w * 0.5f, h * 0.5f};
+        rx = (rx > hsize.x) ? hsize.x : rx;
+        ry = (ry > hsize.y) ? hsize.y : ry;
+        auto hr = Point{rx * PATH_KAPPA, ry * PATH_KAPPA};
+
+        cmds.grow(10);
+        pts.grow(17);
+
+        auto cmds = this->cmds.end();
+        auto pts = this->pts.end();
+
+        cmds[0] = PathCommand::MoveTo;
+        cmds[9] = PathCommand::Close;
+        pts[0] = {x + w, y + ry};  // move
+
+        if (cw) {
+            cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::LineTo;
+            cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::CubicTo;
+
+            pts[1] = {x + w, y + h - ry};  // line
+            pts[2] = {x + w, y + h - ry + hr.y};
+            pts[3] = {x + w - rx + hr.x, y + h};
+            pts[4] = {x + w - rx, y + h};  // cubic
+            pts[5] = {x + rx, y + h};      // line
+            pts[6] = {x + rx - hr.x, y + h};
+            pts[7] = {x, y + h - ry + hr.y};
+            pts[8] = {x, y + h - ry};  // cubic
+            pts[9] = {x, y + ry};      // line
+            pts[10] = {x, y + ry - hr.y};
+            pts[11] = {x + rx - hr.x, y};
+            pts[12] = {x + rx, y};      // cubic
+            pts[13] = {x + w - rx, y};  // line
+            pts[14] = {x + w - rx + hr.x, y};
+            pts[15] = {x + w, y + ry - hr.y};
+            pts[16] = {x + w, y + ry};  // cubic
+        } else {
+            cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::CubicTo;
+            cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::LineTo;
+
+            pts[1] = {x + w, y + ry - hr.y};
+            pts[2] = {x + w - rx + hr.x, y};
+            pts[3] = {x + w - rx, y};  // cubic
+            pts[4] = {x + rx, y};      // line
+            pts[5] = {x + rx - hr.x, y};
+            pts[6] = {x, y + ry - hr.y};
+            pts[7] = {x, y + ry};      // cubic
+            pts[8] = {x, y + h - ry};  // line
+            pts[9] = {x, y + h - ry + hr.y};
+            pts[10] = {x + rx - hr.x, y + h};
+            pts[11] = {x + rx, y + h};      // cubic
+            pts[12] = {x + w - rx, y + h};  // line
+            pts[13] = {x + w - rx + hr.x, y + h};
+            pts[14] = {x + w, y + h - ry + hr.y};
+            pts[15] = {x + w, y + h - ry};  // cubic
+            pts[16] = {x + w, y + ry};      // line
+        }
+
+        this->cmds.count += 10;
+        this->pts.count += 17;
+    }
+}
+
 bool RenderPath::bounds(const Matrix* m, BBox& box)
 {
     if (cmds.empty() || cmds.first() == PathCommand::CubicTo) return false;
+
+    box.init();
 
     auto pt = pts.begin();
     auto cmd = cmds.begin();
@@ -101,154 +241,6 @@ bool RenderPath::bounds(const Matrix* m, BBox& box)
     }
     return true;
 }
-
-
-void RenderPath::optimize(RenderPath& out, const Matrix& matrix) const
-{
-#if defined(THORVG_GL_RASTER_SUPPORT) || defined(THORVG_WG_RASTER_SUPPORT)
-    static constexpr auto PX_TOLERANCE = 0.25f;
-
-    if (empty()) return;
-
-    out.cmds.clear();
-    out.pts.clear();
-    out.cmds.reserve(cmds.count);
-    out.pts.reserve(pts.count);
-
-    auto cmds = this->cmds.data;
-    auto cmdCnt = this->cmds.count;
-    auto pts = this->pts.data;
-
-    Point lastOutT, prevOutT;   // The suffix "T" indicates that the point is transformed.
-    uint32_t prevIdx = 0;
-    uint32_t prevPrevIdx = 0;
-    auto hasPrevPrev = false;
-
-    //vecLen is guaranteed to be non-zero since closed points are already merged
-    auto point2Line = [](const Point& point, const Point& start, const Point& vec, float vecLen, float& maxDist, float& minT, float& maxT) {
-        Point offset = point - start;
-        auto dist = fabsf(tvg::cross(vec, offset)) / vecLen;
-        if (dist > maxDist) maxDist = dist;
-        auto t = tvg::dot(offset, vec) / (vecLen * vecLen);
-        if (t < minT) minT = t;
-        if (t > maxT) maxT = t;
-    };
-
-    auto validateCubic = [&point2Line](const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end, float& maxDist, float& minT, float& maxT, float& vecLen) {
-        auto vec = end - start;
-        vecLen = sqrtf(vec.x * vec.x + vec.y * vec.y);
-        maxDist = 0.0f;
-        minT = FLT_MAX;
-        maxT = FLT_MIN;
-        point2Line(ctrl1, start, vec, vecLen, maxDist, minT, maxT);
-        point2Line(ctrl2, start, vec, vecLen, maxDist, minT, maxT);
-    };
-
-    auto point2LineSimple = [](const Point& point, const Point& start, const Point& end, float& dist, float& t, float& vecLen) {
-        auto vec = end - start;
-        auto vecLenSq = vec.x * vec.x + vec.y * vec.y;
-        vecLen = sqrtf(vecLenSq);
-        Point offset = point - start;
-        dist = fabsf(tvg::cross(vec, offset)) / vecLen;
-        t = tvg::dot(offset, vec) / vecLenSq;
-    };
-
-    auto addLineCmd = [&](const Point& pt, const Point& ptT) {
-        out.cmds.push(PathCommand::LineTo);
-        out.pts.push(pt);
-        prevOutT = lastOutT;
-        lastOutT = ptT;
-        prevPrevIdx = prevIdx;
-        prevIdx = out.pts.count - 1;
-        hasPrevPrev = true;
-    };
-
-    auto processLineCollinear = [&](const Point& startT, const Point& pt, const Point& ptT) {
-        if (!hasPrevPrev || out.pts.count <= 1) {
-            addLineCmd(pt, ptT);
-            return;
-        }
-
-        float dist, t, vecLen;
-        point2LineSimple(ptT, prevOutT, startT, dist, t, vecLen);
-        if (dist > PX_TOLERANCE) {
-            addLineCmd(pt, ptT);
-            return;
-        }
-
-        auto tEps = PX_TOLERANCE / vecLen;
-        if (t <= -tEps) {
-            out.pts[prevPrevIdx] = pt;
-            lastOutT = ptT;
-        } else if (t >= 1.0f - tEps) {
-            out.pts[prevIdx] = pt;
-            lastOutT = ptT;
-        }
-    };
-
-    auto processCubicTo = [&](const Point* cubicPts, const Point& startT) {
-        auto endT = cubicPts[2] * matrix;
-        if (tvg::closed(startT, endT, PX_TOLERANCE)) return;
-        float maxDist, minT, maxT, vecLen;
-        validateCubic(startT, cubicPts[0] * matrix, cubicPts[1] * matrix, endT, maxDist, minT, maxT, vecLen);
-        auto flat = (maxDist <= PX_TOLERANCE);
-        auto tEps = PX_TOLERANCE / vecLen;
-        auto inSpan = (minT >= -tEps) && (maxT <= 1.0f + tEps);
-        if (flat && inSpan) {
-            processLineCollinear(startT, cubicPts[2], endT);
-        } else {
-            out.cmds.push(PathCommand::CubicTo);
-            out.pts.push(cubicPts[0]);
-            out.pts.push(cubicPts[1]);
-            out.pts.push(cubicPts[2]);
-            prevOutT = lastOutT;
-            lastOutT = endT;
-            prevPrevIdx = prevIdx;
-            prevIdx = out.pts.count - 1;
-            hasPrevPrev = true;
-        }
-    };
-
-    for (uint32_t i = 0; i < cmdCnt; i++) {
-        switch (cmds[i]) {
-            case PathCommand::MoveTo: {
-                out.cmds.push(PathCommand::MoveTo);
-                out.pts.push(*pts);
-                lastOutT = *pts * matrix;
-                prevIdx = out.pts.count - 1;
-                hasPrevPrev = false;
-                pts++;
-                break;
-            }
-            case PathCommand::LineTo: {
-                auto startT = lastOutT;
-                auto ptT = (*pts) * matrix;
-                if (tvg::closed(startT, ptT, PX_TOLERANCE)) {
-                    pts++;
-                    break;
-                }
-                processLineCollinear(startT, *pts, ptT);
-                pts++;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                processCubicTo(pts, lastOutT);
-                pts += 3;
-                break;
-            }
-            case PathCommand::Close: {
-                out.cmds.push(PathCommand::Close);
-                hasPrevPrev = false;
-                break;
-            }
-            default: break;
-        }
-    }
-#else
-    TVGLOG("RENDERER", "RenderPath Optimization is disabled");
-#endif
-}
-
 
 /************************************************************************/
 /* RenderRegion Class Implementation                                    */
@@ -711,210 +703,3 @@ bool RenderTrimPath::trim(const RenderPath& in, RenderPath& out) const
 
     return out.pts.count >= 2;
 }
-
-/************************************************************************/
-/* StrokeDashPath Class Implementation                                  */
-/************************************************************************/
-
-//TODO: use this common function from sw engine
-#if defined(THORVG_GL_RASTER_SUPPORT) || defined(THORVG_WG_RASTER_SUPPORT)
-
-struct StrokeDashPath
-{
-public:
-    StrokeDashPath(RenderStroke::Dash dash) : dash(dash) {}
-    bool gen(const RenderPath& in, RenderPath& out, bool drawPoint);
-
-private:
-    void lineTo(RenderPath& out, const Point& pt, bool drawPoint);
-    void cubicTo(RenderPath& out, const Point& pt1, const Point& pt2, const Point& pt3, bool drawPoint);
-    void point(RenderPath& out, const Point& p);
-
-    template<typename Segment, typename LengthFn, typename SplitFn, typename DrawFn, typename PointFn>
-    void segment(Segment seg, float len, RenderPath& out, bool allowDot, LengthFn lengthFn, SplitFn splitFn, DrawFn drawFn, PointFn getStartPt, const Point& endPos);
-
-    RenderStroke::Dash dash;
-    float curLen = 0.0f;
-    int32_t curIdx = 0;
-    Point curPos{};
-    bool opGap = false;
-    bool move = true;
-};
-
-
-template<typename Segment, typename LengthFn, typename SplitFn, typename DrawFn, typename PointFn>
-void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allowDot, LengthFn lengthFn, SplitFn splitFn, DrawFn drawFn, PointFn getStartPt, const Point& end)
-{
-    #define MIN_CURR_LEN_THRESHOLD 0.1f
-
-    if (tvg::zero(len)) {
-        out.moveTo(curPos);
-    } else if (len <= curLen) {
-        curLen -= len;
-        if (!opGap) {
-            if (move) {
-                out.moveTo(curPos);
-                move = false;
-            }
-            drawFn(seg);
-        }
-    } else {
-        Segment left, right;
-        while (len - curLen > DASH_PATTERN_THRESHOLD) {
-            if (curLen > 0.0f) {
-                splitFn(seg, curLen, left, right);
-                len -= curLen;
-                if (!opGap) {
-                    if (move || dash.pattern[curIdx] - curLen < FLOAT_EPSILON) {
-                        out.moveTo(getStartPt(left));
-                        move = false;
-                    }
-                    drawFn(left);
-                }
-            } else {
-                if (allowDot && !opGap) point(out, getStartPt(seg));
-                right = seg;
-            }
-
-            curIdx = (curIdx + 1) % dash.count;
-            curLen = dash.pattern[curIdx];
-            opGap = !opGap;
-            seg = right;
-            curPos = getStartPt(seg);
-            move = true;
-        }
-        curLen -= len;
-        if (!opGap) {
-            if (move) {
-                out.moveTo(getStartPt(seg));
-                move = false;
-            }
-            drawFn(seg);
-        }
-        if (curLen < MIN_CURR_LEN_THRESHOLD) {
-            curIdx = (curIdx + 1) % dash.count;
-            curLen = dash.pattern[curIdx];
-            opGap = !opGap;
-        }
-    }
-    curPos = end;
-}
-
-
-//allowDot: zero length segment with non-butt cap still should be rendered as a point - only the caps are visible
-bool StrokeDashPath::gen(const RenderPath& in, RenderPath& out, bool allowDot)
-{
-    int32_t idx = 0;
-    auto offset = dash.offset;
-    auto gap = false;
-    if (!tvg::zero(dash.offset)) {
-        auto length = (dash.count % 2) ? dash.length * 2 : dash.length;
-        offset = fmodf(offset, length);
-        if (offset < 0) offset += length;
-
-        for (uint32_t i = 0; i < dash.count * (dash.count % 2 + 1); ++i, ++idx) {
-            auto curPattern = dash.pattern[i % dash.count];
-            if (offset < curPattern) break;
-            offset -= curPattern;
-            gap = !gap;
-        }
-        idx = idx % dash.count;
-    }
-
-    auto pts = in.pts.data;
-    Point start{};
-
-    ARRAY_FOREACH(cmd, in.cmds) {
-        switch (*cmd) {
-            case PathCommand::Close: {
-                lineTo(out, start, allowDot);
-                break;
-            }
-            case PathCommand::MoveTo: {
-                // reset the dash state
-                curIdx = idx;
-                curLen = dash.pattern[idx] - offset;
-                opGap = gap;
-                move = true;
-                start = curPos = *pts;
-                pts++;
-                break;
-            }
-            case PathCommand::LineTo: {
-                lineTo(out, *pts, allowDot);
-                pts++;
-                break;
-            }
-            case PathCommand::CubicTo: {
-                cubicTo(out, pts[0], pts[1], pts[2], allowDot);
-                pts += 3;
-                break;
-            }
-            default: break;
-        }
-    }
-    return true;
-}
-
-
-void StrokeDashPath::point(RenderPath& out, const Point& p)
-{
-    if (move || dash.pattern[curIdx] < FLOAT_EPSILON) {
-        out.moveTo(p);
-        move = false;
-    }
-    out.lineTo(p);
-}
-
-
-void StrokeDashPath::lineTo(RenderPath& out, const Point& to, bool allowDot)
-{
-    Line line = {curPos, to};
-    auto len = length(to - curPos);
-    segment<Line>(line, len, out, allowDot,
-        [](const Line& l) { return length(l.pt2 - l.pt1); },
-        [](const Line& l, float len, Line& left, Line& right) { l.split(len, left, right); },
-        [&](const Line& l) { out.lineTo(l.pt2); },
-        [](const Line& l) { return l.pt1; },
-        to
-    );
-}
-
-
-void StrokeDashPath::cubicTo(RenderPath& out, const Point& cnt1, const Point& cnt2, const Point& end, bool allowDot)
-{
-    Bezier curve = {curPos, cnt1, cnt2, end};
-    auto len = curve.length();
-    segment<Bezier>(curve, len, out, allowDot,
-        [](const Bezier& b) { return b.length(); },
-        [](const Bezier& b, float len, Bezier& left, Bezier& right) { b.split(len, left, right); },
-        [&](const Bezier& b) { out.cubicTo(b.ctrl1, b.ctrl2, b.end); },
-        [](const Bezier& b) { return b.start; },
-        end
-    );
-}
-
-
-bool RenderShape::strokeDash(RenderPath& out) const
-{
-    if (!stroke || stroke->dash.count == 0 || stroke->dash.length < DASH_PATTERN_THRESHOLD) return false;
-
-    out.cmds.reserve(20 * path.cmds.count);
-    out.pts.reserve(20 * path.pts.count);
-
-    StrokeDashPath dash(stroke->dash);
-    auto allowDot = stroke->cap != StrokeCap::Butt;
-
-    if (trimpath()) {
-        RenderPath tpath;
-        if (stroke->trim.trim(path, tpath)) return dash.gen(tpath, out, allowDot);
-        else return false;
-    }
-    return dash.gen(path, out, allowDot);
-}
-#else
-bool RenderShape::strokeDash(RenderPath& out) const
-{
-    return false;
-}
-#endif

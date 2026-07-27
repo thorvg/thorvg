@@ -45,6 +45,7 @@
 ecma_value_t
 ecma_op_create_number_object (ecma_value_t arg) /**< argument passed to the Number constructor */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   ecma_number_t num;
   ecma_value_t conv_to_num_completion = ecma_op_to_number (arg, &num);
 

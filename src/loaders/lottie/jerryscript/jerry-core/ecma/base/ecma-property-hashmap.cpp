@@ -72,6 +72,7 @@ static const uint8_t ecma_property_hashmap_steps[ECMA_PROPERTY_HASHMAP_NUMBER_OF
 void
 ecma_property_hashmap_create (ecma_object_t *object_p) /**< object */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (JERRY_CONTEXT (ecma_prop_hashmap_alloc_state) != ECMA_PROP_HASHMAP_ALLOC_ON)
   {
     return;

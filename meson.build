@@ -1,6 +1,6 @@
 project('thorvg',
         'cpp',
-        default_options : ['buildtype=debugoptimized', 'b_sanitize=none', 'werror=false', 'optimization=3', 'cpp_std=c++14', 'strip=true'],
+        default_options : ['buildtype=debugoptimized', 'b_sanitize=none', 'werror=false', 'optimization=3', 'cpp_std=c++14'],
         version : '1.0.0',
         license : 'MIT')
 
@@ -23,22 +23,22 @@ endif
 # Engines
 all_engines = get_option('engines').contains('all')
 
-sw_engine = false
-if all_engines or get_option('engines').contains('sw')
-    sw_engine = true
-    config_h.set10('THORVG_SW_RASTER_SUPPORT', true)
+cpu_engine = false
+if all_engines or get_option('engines').contains('cpu')
+    cpu_engine = true
+    config_h.set10('THORVG_CPU_ENGINE_SUPPORT', true)
 endif
 
 gl_engine = false
 if all_engines or get_option('engines').contains('gl')
     gl_engine = true
-    config_h.set10('THORVG_GL_RASTER_SUPPORT', true)
+    config_h.set10('THORVG_GL_ENGINE_SUPPORT', true)
 endif
 
 wg_engine = false
 if all_engines or get_option('engines').contains('wg')
     wg_engine = true
-    config_h.set10('THORVG_WG_RASTER_SUPPORT', true)
+    config_h.set10('THORVG_WG_ENGINE_SUPPORT', true)
 endif
 
 # Partial Rendering
@@ -58,6 +58,7 @@ png_loader = all_loaders or get_option('loaders').contains('png')
 jpg_loader = all_loaders or get_option('loaders').contains('jpg')
 lottie_loader = all_loaders or get_option('loaders').contains('lottie') or lottie2gif
 ttf_loader = all_loaders or get_option('loaders').contains('ttf')
+otf_loader = all_loaders or get_option('loaders').contains('otf')
 webp_loader = all_loaders or get_option('loaders').contains('webp')
 
 # Savers
@@ -85,7 +86,13 @@ if lottie_loader
 endif
 
 if ttf_loader
+    config_h.set10('THORVG_SFNT_LOADER_SUPPORT', true)
     config_h.set10('THORVG_TTF_LOADER_SUPPORT', true)
+endif
+
+if otf_loader
+    config_h.set10('THORVG_SFNT_LOADER_SUPPORT', true)
+    config_h.set10('THORVG_OTF_LOADER_SUPPORT', true)
 endif
 
 if webp_loader
@@ -187,9 +194,9 @@ summary(
 
 summary(
   {
-    'SW': sw_engine,
+    'CPU': cpu_engine,
     'GL': gl_engine,
-    'WG': wg_engine,
+    'WebGPU': wg_engine,
   },
   section: 'Raster Engine',
   bool_yn: true,
@@ -199,6 +206,7 @@ summary(
   {
     'SVG': svg_loader,
     'TTF': ttf_loader,
+    'OTF': otf_loader,
     'LOTTIE': lottie_loader,
     'PNG': png_loader,
     'JPG': jpg_loader,

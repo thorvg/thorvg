@@ -60,7 +60,7 @@ Result Shape::path(const PathCommand** cmds, uint32_t* cmdsCnt, const Point** pt
 
 Result Shape::appendPath(const PathCommand *cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept
 {
-    return to<ShapeImpl>(this)->appendPath(cmds, cmdCnt, pts, ptsCnt);
+    return to<ShapeImpl>(this)->addPath(cmds, cmdCnt, pts, ptsCnt);
 }
 
 
@@ -97,14 +97,14 @@ Result Shape::close() noexcept
 
 Result Shape::appendCircle(float cx, float cy, float rx, float ry, bool cw) noexcept
 {
-    to<ShapeImpl>(this)->appendCircle(cx, cy, rx, ry, cw);
+    to<ShapeImpl>(this)->addCircle(cx, cy, rx, ry, cw);
     return Result::Success;
 }
 
 
 Result Shape::appendRect(float x, float y, float w, float h, float rx, float ry, bool cw) noexcept
 {
-    to<ShapeImpl>(this)->appendRect(x, y, w, h, rx, ry, cw);
+    to<ShapeImpl>(this)->addRect(x, y, w, h, rx, ry, cw);
     return Result::Success;
 }
 

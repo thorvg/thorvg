@@ -123,6 +123,7 @@ ecma_value_t
 ecma_builtin_object_dispatch_construct (const ecma_value_t *arguments_list_p, /**< arguments list */
                                         uint32_t arguments_list_len) /**< number of arguments */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   if (JERRY_CONTEXT (current_new_target_p) != ecma_builtin_get (ECMA_BUILTIN_ID_OBJECT))
   {
     ecma_object_t *prototype_obj_p =

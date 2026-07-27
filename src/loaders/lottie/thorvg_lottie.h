@@ -7,6 +7,40 @@ namespace tvg
 {
 
 /**
+ * @brief Describes the current state of a Lottie audio layer.
+ *
+ * This structure is provided to the audio resolver callback and contains
+ * the information required to synchronize audio playback with the animation
+ * timeline. Applications are responsible for managing audio playback using
+ * their own audio engine.
+ *
+ * Example:
+ * @code
+ * animation->resolver([](const LottieAudioResolver& info, void*) {
+ *     if (info.active) {
+ *         // Start or seek playback of info.src.
+ *     } else {
+ *         // Stop playback of info.src.
+ *     }
+ * }, nullptr);
+ * @endcode
+ *
+ * @see LottieAnimation::resolver()
+ *
+ * @note Experimental API
+ */
+struct LottieAudioResolver
+{
+    const char* src;         ///< Audio source: a file path/URL or embedded raw bytes.
+    const char* mimeType;    ///< MIME type string; valid when @c embedded; may be @c nullptr.
+    uint32_t    size;        ///< Embedded data size in bytes; valid when @c embedded.
+    float       offset;      ///< Position within the audio file in seconds; valid when @c active.
+    float       volume;      ///< Volume [0, 100]; valid when @c active.
+    bool        active;      ///< @c true while the layer is within its playback range.
+    bool        embedded;    ///< @c true if @p src points to embedded audio data; @c false if it is a file path or URL.
+};
+
+/**
  * @class LottieAnimation
  *
  * @brief The LottieAnimation class enables control of advanced Lottie features.
@@ -17,9 +51,8 @@ namespace tvg
  * 
  * @since 0.15
  */
-class TVG_API LottieAnimation final : public Animation
+struct TVG_API LottieAnimation final : Animation
 {
-public:
     ~LottieAnimation() override;
 
     /**
@@ -54,9 +87,45 @@ public:
      *
      * @retval Result::InsufficientCondition In case the animation is not loaded.
      *
+     * @see tweenTo(float)
+     *
      * @since 1.0
      */
     Result tween(float from, float to, float progress) noexcept;
+
+    /**
+     * @brief Sets the target frame for dynamic tweening.
+     *
+     * This method starts a dynamic interpolation from the current animation frame
+     * toward @p to. Use tween(float progress) to update the interpolation progress.
+     *
+     * @param[in] to The target frame number of the interpolation.
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     *
+     * @note The dynamic tweening set by this method is discarded when @ref Animation::frame()
+     *       or @ref LottieAnimation::tween(float,float,float) is called.
+     *
+     * @see tween(float)
+     * @note Experimental API
+     */
+    Result tweenTo(float to) noexcept;
+
+    /**
+     * @brief Updates the current tween toward the target frame.
+     *
+     * This method advances the interpolation started by tweenTo() using the
+     * given @p progress value.
+     *
+     * @param[in] progress The current progress of the interpolation (range: 0.0 to 1.0).
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     * @retval Result::InsufficientCondition If @ref tweenTo() has not been called.
+     *
+     * @see tweenTo()
+     * @note Experimental API
+     */
+    Result tween(float progress) noexcept;
 
     /**
      * @brief Gets the marker count of the animation.
@@ -67,37 +136,27 @@ public:
      * @since 1.0
      */
     uint32_t markersCnt() noexcept;
-    
-    /**
-     * @brief Gets the marker name by a given index.
-     *
-     * @param[in] idx The index of the animation marker, starts from 0.
-     *
-     * @retval The name of marker when succeed, @c nullptr otherwise.
-     * 
-     * @see LottieAnimation::markersCnt()
-     * @since 1.0
-     */
-    const char* marker(uint32_t idx) noexcept;
 
     /**
-     * @brief Updates the value of an expression variable for a specific layer.
-     *
-     * This function sets the value of a specified expression variable within a particular layer.
-     * It is useful for dynamically changing the properties of a layer at runtime.
-     *
-     * @param[in] layer The name of the layer containing the variable to be updated.
-     * @param[in] ix The property index of the variable within the layer.
-     * @param[in] var The name of the variable to be updated.
-     * @param[in] val The new value to assign to the variable.
-     *
-     * @retval Result::InsufficientCondition If the animation is not loaded.
-     * @retval Result::InvalidArguments When the given parameter is invalid.
-     * @retval Result::NonSupport When neither the layer nor the property is found in the current animation.
-     *
-     * @note Experimental API
+     * @deprecated see marker(uint32_t, float*, float*)
      */
-    Result assign(const char* layer, uint32_t ix, const char* var, float val);
+    TVG_DEPRECATED const char* marker(uint32_t idx) noexcept;
+
+    /**
+     * @brief Retrieves the name and frame range of a marker by index.
+     *
+     * @param[in] idx The zero-based index of the animation marker.
+     * @param[out] begin Pointer to receive the marker's starting frame.
+     *                   Pass @c nullptr if the value is not required.
+     * @param[out] end Pointer to receive the marker's ending frame.
+     *                 Pass @c nullptr if the value is not required.
+     *
+     * @return The name of the marker on success, or @c nullptr otherwise.
+     *
+     * @see LottieAnimation::markersCnt()
+     * @since 1.1
+     */
+    const char* marker(uint32_t idx, float* begin, float* end) noexcept;
 
     /**
      * @brief Creates a new slot based on the given Lottie slot data.
@@ -156,13 +215,32 @@ public:
      * Lower values prioritize performance while higher values prioritize quality.
      *
      * @param[in] value The quality level (0-100). 0 represents lowest quality/best performance,
-     *                  100 represents highest quality/lowest performance, default is 50.
+     *                  100 represents highest quality/lowest performance, the initial value is 50.
      *
      * @retval Result::InsufficientCondition If the animation is not loaded.
      *
      * @since 1.0
      */
     Result quality(uint8_t value) noexcept;
+
+    /**
+     * @brief Sets the audio resolver callback for Lottie audio layers.
+     *
+     * The resolver is invoked whenever the playback state of an audio layer changes.
+     * It allows applications to synchronize audio playback with the animation timeline.
+     *
+     * @param[in] func A user-defined callback that receives audio playback state updates.
+     * @param[in] data User data passed to @p func.
+     *
+     * @retval Result::InsufficientCondition The animation has not been loaded.
+     *
+     * @note To disable audio notifications, pass @c nullptr as @p func.
+     *
+     * @see LottieAudioResolver
+     *
+     * @note Experimental API
+     */
+    Result resolver(std::function<void(const LottieAudioResolver& info, void* data)> func, void* data) noexcept;
 
     /**
      * @brief Creates a new LottieAnimation object.

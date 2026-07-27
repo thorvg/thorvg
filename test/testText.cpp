@@ -29,7 +29,7 @@
 using namespace tvg;
 using namespace std;
 
-#ifdef THORVG_TTF_LOADER_SUPPORT
+#ifdef THORVG_SFNT_LOADER_SUPPORT
 
 TEST_CASE("Text Creation", "[tvgText]")
 {
@@ -41,6 +41,10 @@ TEST_CASE("Text Creation", "[tvgText]")
     Paint::rel(text);
 }
 
+#endif
+
+#ifdef THORVG_TTF_LOADER_SUPPORT
+
 TEST_CASE("Load TTF Data from a file", "[tvgText]")
 {
     Initializer::init();
@@ -49,11 +53,11 @@ TEST_CASE("Load TTF Data from a file", "[tvgText]")
         REQUIRE(text);
 
         REQUIRE(Text::unload(TEST_DIR"/invalid.ttf") == Result::InsufficientCondition);
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
         REQUIRE(Text::load(TEST_DIR"/invalid.ttf") == Result::InvalidArguments);
-        REQUIRE(Text::unload(TEST_DIR"/Arial.ttf") == Result::Success);
+        REQUIRE(Text::unload(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
         REQUIRE(Text::load("") == Result::InvalidArguments);
-        REQUIRE(Text::load(TEST_DIR"/NanumGothicCoding.ttf") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
 
         Paint::rel(text);
     }
@@ -64,7 +68,7 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
 {
     Initializer::init();
     {
-        ifstream file(TEST_DIR"/Arial.ttf", ios::binary);
+        ifstream file(TEST_DIR"/PublicSans-Regular.ttf", ios::binary);
         REQUIRE(file.is_open());
         file.seekg(0, std::ios::end);
         auto size = file.tellg();
@@ -81,19 +85,18 @@ TEST_CASE("Load TTF Data from a memory", "[tvgText]")
 
         //load
         REQUIRE(Text::load(nullptr, data, size) == Result::InvalidArguments);
-        REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
-        REQUIRE(Text::load("Arial", data, 0) == Result::InvalidArguments);
-        REQUIRE(Text::load("ArialSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
-        REQUIRE(Text::load("ArialUnknown", data, size, "unknown") == Result::Success);
-        REQUIRE(Text::load("ArialTtf", data, size, "ttf", true) == Result::Success);
-        REQUIRE(Text::load("Arial", data, size, "") == Result::Success);
+        REQUIRE(Text::load("PublicSans-Regular", data, 0) == Result::InvalidArguments);
+        REQUIRE(Text::load("PublicSans-RegularSvg", svg, strlen(svg), "unknown") == Result::NonSupport);
+        REQUIRE(Text::load("PublicSans-RegularUnknown", data, size, "unknown") == Result::Success);
+        REQUIRE(Text::load("PublicSans-RegularTtf", data, size, "ttf", true) == Result::Success);
+        REQUIRE(Text::load("PublicSans-Regular", data, size, "") == Result::Success);
 
         //unload
         REQUIRE(Text::load("invalid", nullptr, 0) == Result::InsufficientCondition);
-        REQUIRE(Text::load("ArialSvg", nullptr, 0) == Result::InsufficientCondition);
-        REQUIRE(Text::load("ArialUnknown", nullptr, 0) == Result::Success);
-        REQUIRE(Text::load("ArialTtf", nullptr, 0) == Result::Success);
-        REQUIRE(Text::load("Arial", nullptr, 111) == Result::Success);
+        REQUIRE(Text::load("PublicSans-RegularSvg", nullptr, 0) == Result::InsufficientCondition);
+        REQUIRE(Text::load("PublicSans-RegularUnknown", nullptr, 0) == Result::Success);
+        REQUIRE(Text::load("PublicSans-RegularTtf", nullptr, 0) == Result::Success);
+        REQUIRE(Text::load("PublicSans-Regular", nullptr, 111) == Result::Success);
 
         free(data);
 
@@ -109,10 +112,10 @@ TEST_CASE("Text Font", "[tvgText]")
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(1) == Result::Success);
         REQUIRE(text->size(50) == Result::Success);
         REQUIRE(text->font(nullptr) == Result::Success);
@@ -128,21 +131,21 @@ TEST_CASE("Text Basic", "[tvgText]")
     Initializer::init();
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text(nullptr) == Result::Success);
         REQUIRE(text->text("") == Result::Success);
         REQUIRE(text->text("ABCDEFGHIJIKLMOPQRSTUVWXYZ") == Result::Success);
         REQUIRE(text->text("THORVG Text") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -154,18 +157,18 @@ TEST_CASE("Text with composite glyphs", "[tvgText]")
     Initializer::init();
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -177,14 +180,14 @@ TEST_CASE("Text Styles", "[tvgText]")
     Initializer::init();
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text("ThorVG Test\n Text!") == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
@@ -198,7 +201,7 @@ TEST_CASE("Text Styles", "[tvgText]")
         REQUIRE(text->italic(0.0) == Result::Success);
         REQUIRE(text->italic(0.18f) == Result::Success);
 
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
@@ -211,17 +214,18 @@ TEST_CASE("Text Layout", "[tvgText]")
     Initializer::init();
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
         REQUIRE(text->text("ThorVG Test\n Text!") == Result::Success);
+        REQUIRE(text->lines() == 2);
 
         REQUIRE(text->align(0.0f, 0.0f) == Result::Success);
         REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
@@ -233,7 +237,7 @@ TEST_CASE("Text Layout", "[tvgText]")
         REQUIRE(text->layout(-100, -100) == Result::Success);
         REQUIRE(text->layout(100, 100) == Result::Success);
 
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -245,20 +249,20 @@ TEST_CASE("Text Wrap Mode", "[tvgText]")
     Initializer::init();
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->fill(255, 255, 255) == Result::Success);
         REQUIRE(text->align(0.5f, 0.5f) == Result::Success);
         REQUIRE(text->text("Very Long Long Text ThorVG Test\n ABCDEFGHIJKLMNOPRSTU!") == Result::Success);
         REQUIRE(text->layout(100, 100) == Result::Success);
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
 
         REQUIRE(text->wrap(TextWrap::Character) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
@@ -284,14 +288,14 @@ TEST_CASE("Text Spacing", "[tvgText]")
     Initializer::init();
     {
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
 
         auto text = Text::gen();
         REQUIRE(text);
 
-        REQUIRE(Text::load(TEST_DIR"/Arial.ttf") == Result::Success);
-        REQUIRE(text->font("Arial") == Result::Success);
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
         REQUIRE(text->size(80) == Result::Success);
         REQUIRE(text->text("\xc5\xbb\x6f\xc5\x82\xc4\x85\x64\xc5\xba \xc8\xab") == Result::Success);
         REQUIRE(text->spacing(-1.0f, -1.0f) == Result::InvalidArguments);
@@ -299,7 +303,35 @@ TEST_CASE("Text Spacing", "[tvgText]")
         REQUIRE(text->spacing(1.5f, 1.5f) == Result::Success);
         REQUIRE(text->spacing(2.0f, 2.0f) == Result::Success);
 
-        REQUIRE(canvas->push(text) == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
+    }
+    Initializer::term();
+}
+
+#endif
+
+#ifdef THORVG_OTF_LOADER_SUPPORT
+
+TEST_CASE("Load OTF Data from a file", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[100*100] = {};
+        canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888);
+
+        auto text = Text::gen();
+        REQUIRE(text);
+
+        REQUIRE(Text::load(TEST_DIR"/DMSans.otf") == Result::Success);
+        REQUIRE(text->font("DMSans") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+        REQUIRE(text->fill(255, 255, 255) == Result::Success);
+        REQUIRE(text->text("Very Long Long Text ThorVG Test\n ABCDEFGHIJKLMNOPRSTU!") == Result::Success);
+        REQUIRE(canvas->add(text) == Result::Success);
+
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
     }
     Initializer::term();
 }

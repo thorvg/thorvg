@@ -81,7 +81,8 @@ void LottieLoader::release()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-LottieLoader::LottieLoader() : FrameModule(FileType::Lot), builder(new LottieBuilder)
+LottieLoader::LottieLoader() :
+    AnimLoader(FileType::Lot), builder(new LottieBuilder)
 {
 
 }
@@ -100,12 +101,11 @@ LottieLoader::~LottieLoader()
     tvg::free(dirName);
 }
 
-
 bool LottieLoader::header()
 {
     //A single thread doesn't need to perform intensive tasks.
     if (TaskScheduler::threads() == 0) {
-        LoadModule::read();
+        Loader::read();
         if (prepare()) {
             w = static_cast<float>(comp->w);
             h = static_cast<float>(comp->h);
@@ -207,32 +207,34 @@ bool LottieLoader::header()
     return true;
 }
 
-
-bool LottieLoader::open(const char* data, uint32_t size, const char* rpath, bool copy)
+bool LottieLoader::open(const char* data, uint32_t size, const LoaderOps* _ops, bool copy)
 {
+    auto ops = static_cast<const PictureOps*>(_ops);
+    if (ops->caller != tvg::Type::Picture) return false;
+
     if (copy) {
         content = tvg::malloc<char>(size + 1);
-        if (!content) return false;
         memcpy((char*)content, data, size);
         const_cast<char*>(content)[size] = '\0';
     } else content = data;
 
     this->size = size;
     this->copy = copy;
-
-    if (!rpath) this->dirName = duplicate(".");
-    else this->dirName = duplicate(rpath);
+    dirName = ops->rpath ? duplicate(ops->rpath) : duplicate(".");
+    builder->resolver = ops->resolver;
 
     return header();
 }
 
-
-bool LottieLoader::open(const char* path)
+bool LottieLoader::open(const char* path, const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if ((content = LoadModule::open(path, size, true))) {
+    if (ops->caller != tvg::Type::Picture) return false;
+
+    if ((content = Loader::open(path, size, true))) {
         dirName = tvg::dirname(path);
         copy = true;
+        builder->resolver = static_cast<const PictureOps*>(ops)->resolver;
         return header();
     }
 #endif
@@ -259,8 +261,8 @@ bool LottieLoader::resize(Paint* paint, float w, float h)
 
 bool LottieLoader::read()
 {
-    //the loading has been already completed
-    if (!LoadModule::read()) return true;
+    // the loading has been already completed
+    if (!Loader::read()) return true;
 
     if (!content || size == 0) return false;
 
@@ -325,6 +327,7 @@ bool LottieLoader::del(uint32_t slotcode, bool byDefault)
         }
         this->slots.remove(slot);
         delete(slot);
+        if (curSlot == slotcode) curSlot = 0;
         break;
     }
     return true;
@@ -383,13 +386,13 @@ bool LottieLoader::frame(float no)
     no = shorten(no);
 
     //Skip update if frame diff is too small.
-    if (!builder->tweening() && fabsf(this->frameNo - no) <= 0.0009f) return false;
+    if (!builder->tween.active && fabsf(this->frameNo - no) <= 0.0009f) return false;
 
     this->done();
 
     this->frameNo = no;
 
-    builder->offTween();
+    builder->tween.off();
 
     if (comp) comp->clear();     //clear synchronously
 
@@ -427,7 +430,10 @@ void LottieLoader::sync()
 {
     done();
 
-    if (build) run(0);
+    if (build) {
+        if (comp) comp->clear();
+        run(0);
+    }
 }
 
 
@@ -436,14 +442,14 @@ uint32_t LottieLoader::markersCnt()
     return ready() ? comp->markers.count : 0;
 }
 
-
-const char* LottieLoader::markers(uint32_t index)
+const char* LottieLoader::markers(uint32_t index, float* begin, float* end)
 {
     if (!ready() || index >= comp->markers.count) return nullptr;
-    auto marker = comp->markers.begin() + index;
-    return (*marker)->name;
+    auto marker = comp->markers[index];
+    if (begin) *begin = marker->time;
+    if (end) *end = marker->time + marker->duration;
+    return marker->name;
 }
-
 
 Result LottieLoader::segment(float begin, float end)
 {
@@ -481,39 +487,56 @@ bool LottieLoader::ready()
         if (comp) return true;
     }
     done();
-    if (comp) return true;
-    return false;
+    return comp ? true : false;
 }
 
-
-bool LottieLoader::tween(float from, float to, float progress)
+bool LottieLoader::tweenTo(float to)
 {
-    //tweening is not necessary
-    if (tvg::zero(progress)) return frame(from);
-    else if (tvg::equal(progress, 1.0f)) return frame(to);
+    done();
+
+    builder->tween.on(shorten(to));
+
+    return true;
+}
+
+bool LottieLoader::tween(float progress)
+{
+    if (!builder->tween.active || builder->tween.legacy) return false;
+
+    // Skip update if frame diff is too small.
+    progress = shorten(progress);
+    if (tvg::equal(progress, builder->tween.progress)) return true;
 
     done();
 
-    frameNo = shorten(from);
-
-    builder->onTween(shorten(to), progress);
-
-    if (comp) comp->clear();     //clear synchronously
+    if (tvg::equal(progress, 1.0f)) frameNo = builder->tween.to;
+    builder->tween.progress = progress;
+    if (comp) comp->clear();  // clear synchronously
 
     TaskScheduler::request(this);
 
     return true;
 }
 
-
-bool LottieLoader::assign(const char* layer, uint32_t ix, const char* var, float val)
+bool LottieLoader::tween(float from, float to, float progress)
 {
-    if (!ready() || !comp->expressions) return false;
-    comp->root->assign(layer, ix, var, val);
+    builder->tween.off();  // Not allowed dynamic tweening during the new tween mode
+
+    //tweening is not necessary
+    if (tvg::zero(progress)) return frame(from);
+    if (tvg::equal(progress, 1.0f)) return frame(to);
+
+    done();
+
+    progress = shorten(progress);
+    frameNo = shorten(from);
+    builder->tween.on(shorten(to), progress);
+    if (comp) comp->clear();     //clear synchronously
+
+    TaskScheduler::request(this);
 
     return true;
 }
-
 
 bool LottieLoader::quality(uint8_t value)
 {
@@ -526,7 +549,7 @@ bool LottieLoader::quality(uint8_t value)
 }
 
 
-void LottieLoader::set(const AssetResolver* resolver)
+void LottieLoader::resolver(std::function<void(const tvg::LottieAudioResolver&, void*)> func, void* data)
 {
-    builder->resolver = resolver;
+    builder->audioResolver = {std::move(func), data};
 }

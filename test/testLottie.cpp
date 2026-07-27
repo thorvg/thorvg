@@ -23,7 +23,7 @@
 #include "config.h"
 #include <thorvg.h>
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-#include <thorvg_lottie.h>
+    #include <thorvg_lottie.h>
 #endif
 #include <fstream>
 #include <cstring>
@@ -38,7 +38,7 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
-        #define TEST_CNT 10
+        #define TEST_CNT 12
 
         const char* names[TEST_CNT] = {
             "test3.lot",
@@ -50,7 +50,9 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
             "test9.lot",
             "test10.lot",
             "test11.lot",
-            "test12.lot"
+            "test12.lot",
+            "test13.lot",
+            "test14.lot"
         };
 
         auto animation = unique_ptr<Animation>(Animation::gen());
@@ -176,6 +178,10 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
         //Set marker name before loaded
         REQUIRE(animation->segment("sectionC") == Result::InsufficientCondition);
 
+        // Get marker info before loaded
+        float markerBegin, markerEnd;
+        REQUIRE(animation->marker(0, &markerBegin, &markerEnd) == nullptr);
+
         //Animation load
         REQUIRE(picture->load(TEST_DIR"/segment.lot") == Result::Success);
 
@@ -188,11 +194,29 @@ TEST_CASE("Lottie Marker", "[tvgLottie]")
         //Get marker count
         REQUIRE(animation->markersCnt() == 3);
 
-        //Get marker name by index
-        REQUIRE(!strcmp(animation->marker(1), "sectionB"));
+        // Get marker name and segment by index
+        REQUIRE(!strcmp(animation->marker(0, &markerBegin, &markerEnd), "sectionA"));
+        REQUIRE(markerBegin == 0.0f);
+        REQUIRE(markerEnd == 22.0f);
 
-        //Get marker name by invalid index
-        REQUIRE(animation->marker(-1) == nullptr);
+        REQUIRE(!strcmp(animation->marker(1, &markerBegin, &markerEnd), "sectionB"));
+        REQUIRE(markerBegin == 22.0f);
+        REQUIRE(markerEnd == 33.0f);
+
+        REQUIRE(!strcmp(animation->marker(2, &markerBegin, &markerEnd), "sectionC"));
+        REQUIRE(markerBegin == 33.0f);
+        REQUIRE(markerEnd == 63.0f);
+
+        // Get marker with only begin
+        REQUIRE(!strcmp(animation->marker(0, &markerBegin, nullptr), "sectionA"));
+        REQUIRE(markerBegin == 0.0f);
+
+        // Get marker with only end
+        REQUIRE(!strcmp(animation->marker(0, nullptr, &markerEnd), "sectionA"));
+        REQUIRE(markerEnd == 22.0f);
+
+        // Get marker by invalid index
+        REQUIRE(animation->marker(-1, &markerBegin, &markerEnd) == nullptr);
 
         REQUIRE(animation->segment(nullptr) == Result::Success);
     }
@@ -208,24 +232,26 @@ TEST_CASE("Lottie Tween", "[tvgLottie]")
 
         auto picture = animation->picture();
 
-        REQUIRE(animation->tween(0.0f, 10.0f, 0.5f) == Result::InsufficientCondition);
+        REQUIRE(animation->tweenTo(10.0f) == Result::InsufficientCondition);
+        REQUIRE(animation->tween(0.5f) == Result::InsufficientCondition);
 
-        REQUIRE(picture->load(TEST_DIR"/test.lot") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/tween.lot") == Result::Success);
 
-        //Set initial frame to avoid frame difference being too small
+        REQUIRE(animation->tween(0.5f) == Result::InsufficientCondition);
+
         REQUIRE(animation->frame(5.0f) == Result::Success);
+        REQUIRE(animation->tweenTo(20.0f) == Result::Success);
+        REQUIRE(animation->tween(0.0f) == Result::Success);
+        REQUIRE(animation->tween(0.5f) == Result::Success);
+        REQUIRE(animation->tween(1.0f) == Result::Success);
 
-        //Tween between frames with different progress values
+        REQUIRE(animation->tweenTo(30.0f) == Result::Success);
+        REQUIRE(animation->frame(10.0f) == Result::Success);
+        REQUIRE(animation->tween(0.5f) == Result::InsufficientCondition);
+
+        REQUIRE(animation->tweenTo(40.0f) == Result::Success);
         REQUIRE(animation->tween(0.0f, 10.0f, 0.5f) == Result::Success);
-        REQUIRE(animation->tween(10.0f, 20.0f, 0.0f) == Result::Success);
-        REQUIRE(animation->tween(20.0f, 30.0f, 1.0f) == Result::Success);
-
-        //Tween with different frame ranges
-        REQUIRE(animation->tween(10.0f, 50.0f, 0.25f) == Result::Success);
-        REQUIRE(animation->tween(50.0f, 100.0f, 0.75f) == Result::Success);
-
-        //Tween between distant frames
-        REQUIRE(animation->tween(0.0f, 100.0f, 0.5f) == Result::Success);
+        REQUIRE(animation->tween(0.75f) == Result::InsufficientCondition);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
@@ -297,6 +323,69 @@ TEST_CASE("Lottie Asset Resolver", "[tvgLottie]")
         //Test that setting/unsetting resolver after load
         REQUIRE(picture->resolver(resolver, nullptr) == Result::InsufficientCondition);
         REQUIRE(picture->resolver(nullptr, nullptr) == Result::InsufficientCondition);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+
+TEST_CASE("Lottie Audio Layer", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        int callCount = 0;
+        LottieAudioResolver received{};
+
+        auto resolver = [&](const LottieAudioResolver& info, void*) {
+            ++callCount;
+            received = info;
+        };
+
+        //Negative: register resolver before loaded
+        REQUIRE(animation->resolver(resolver, nullptr) == Result::InsufficientCondition);
+
+        REQUIRE(picture->load(TEST_DIR"/audio_layer.json") == Result::Success);
+
+        //Frame updates without a registered resolver
+        REQUIRE(animation->frame(15) == Result::Success);
+
+        //Test Audio Resolver
+        REQUIRE(animation->resolver(resolver, nullptr) == Result::Success);
+        REQUIRE(animation->frame(1) == Result::Success);
+        REQUIRE(callCount == 1);
+        REQUIRE(received.active == true);
+        REQUIRE(received.offset >= 0.0f);
+        REQUIRE(received.volume == Approx(100.0f).margin(0.1f));
+        REQUIRE(received.embedded == false);
+        REQUIRE(received.src != nullptr);
+        REQUIRE(received.size == 0);
+        REQUIRE(received.mimeType == nullptr);
+
+        //Resolver should not be invoked (no state change)
+        callCount = 0;
+        REQUIRE(animation->frame(5) == Result::Success);
+        REQUIRE(callCount == 0);
+
+        //Test Audio Resolver firing
+        REQUIRE(animation->frame(20) == Result::Success);
+        REQUIRE(callCount == 1);
+        REQUIRE(received.active == false);
+        REQUIRE(received.src != nullptr);   //source must remain identifiable on deactivation
+
+        //Test Audio Resolver seeks again
+        REQUIRE(animation->frame(6) == Result::Success);
+        REQUIRE(received.active == true);
+        REQUIRE(received.offset == Approx(6.0f / 60.0f).margin(0.01f));
+
+        //Test Audio Resolver unregistration
+        REQUIRE(animation->resolver(nullptr, nullptr) == Result::Success);
+        callCount = 0;
+        REQUIRE(animation->frame(25) == Result::Success);
+        REQUIRE(callCount == 0);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

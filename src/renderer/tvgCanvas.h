@@ -32,6 +32,7 @@ struct Canvas::Impl
     Scene* scene;
     RenderMethod* renderer;
     RenderRegion vport = {{0, 0}, {INT32_MAX, INT32_MAX}};
+    Array<RenderData> clips;
     Status status = Status::Synced;
 
     Impl() : scene(Scene::gen())
@@ -47,20 +48,20 @@ struct Canvas::Impl
         if (renderer->unref() == 0) delete(renderer);
     }
 
-    Result push(Paint* target, Paint* at)
+    Result add(Paint* target, Paint* at)
     {
         if (PAINT(target)->renderer && PAINT(target)->renderer != renderer) {
             TVGERR("RENDERER", "Target paint(%p) is already owned by a different renderer.", target);
             return Result::InsufficientCondition;
         }
 
-        //You cannot push paints during rendering.
+        //You cannot add paints during rendering.
         if (status == Status::Drawing) {
-            TVGLOG("RENDERER", "push() was called during drawing.");
+            TVGLOG("RENDERER", "add() was called during drawing.");
             return Result::InsufficientCondition;
         }
         status = Status::Painting;
-        return scene->push(target, at);
+        return scene->add(target, at);
     }
 
     Result remove(Paint* paint)
@@ -82,13 +83,14 @@ struct Canvas::Impl
             return Result::InsufficientCondition;
         }
 
-        Array<RenderData> clips;
         auto flag = RenderUpdateFlag::None;
 
         //TODO: All is too harsh, can be optimized.
         if (status == Status::Damaged) flag = RenderUpdateFlag::All;
 
         if (!renderer->preUpdate()) return Result::InsufficientCondition;
+
+        clips.clear();
 
         auto m = tvg::identity();
         PAINT(scene)->update(renderer, m, clips, 255, flag);

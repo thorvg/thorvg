@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <thread>
+#include <vector>
 #include <thorvg.h>
 #include "config.h"
 #include "catch.hpp"
@@ -27,7 +29,7 @@
 using namespace tvg;
 using namespace std;
 
-#ifdef THORVG_SW_RASTER_SUPPORT
+#ifdef THORVG_CPU_ENGINE_SUPPORT
 
 TEST_CASE("Missing Initialization", "[tvgSwCanvas]")
 {
@@ -59,7 +61,7 @@ TEST_CASE("Target Buffer", "[tvgSwCanvas]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
@@ -79,32 +81,32 @@ TEST_CASE("Pushing Paints", "[tvgSwCanvas]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         //Try all types of paints.
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
-        REQUIRE(canvas->push(Picture::gen()) == Result::Success);
-        REQUIRE(canvas->push(Scene::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Picture::gen()) == Result::Success);
+        REQUIRE(canvas->add(Scene::gen()) == Result::Success);
 
         //Cases by contexts.
         REQUIRE(canvas->update() == Result::Success);
 
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
 
         REQUIRE(canvas->remove() == Result::Success);
 
         Paint* paints[2];
 
         paints[0] = Shape::gen();
-        REQUIRE(canvas->push(paints[0]) == Result::Success);
+        REQUIRE(canvas->add(paints[0]) == Result::Success);
 
         //Negative case 1
-        REQUIRE(canvas->push(nullptr) == Result::InvalidArguments);
+        REQUIRE(canvas->add(nullptr) == Result::InvalidArguments);
 
         paints[1] = Shape::gen();
-        REQUIRE(canvas->push(paints[1]) == Result::Success);
+        REQUIRE(canvas->add(paints[1]) == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
 
         //Check list of paints
@@ -126,18 +128,18 @@ TEST_CASE("Update", "[tvgSwCanvas]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         REQUIRE(canvas->update() == Result::Success);
 
-        REQUIRE(canvas->push(Shape::gen()) == Result::Success);
+        REQUIRE(canvas->add(Shape::gen()) == Result::Success);
 
-        //No pushed shape
+        //No added shape
         auto shape = Shape::gen();
 
         //Normal case
-        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
         REQUIRE(canvas->update() == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->update() == Result::InsufficientCondition);
@@ -158,7 +160,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
         REQUIRE(canvas->sync() == Result::Success);
         REQUIRE(canvas->draw() == Result::InsufficientCondition);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         REQUIRE(canvas->draw() == Result::Success);
@@ -167,7 +169,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
         //Invalid Shape
         auto shape = Shape::gen();
         REQUIRE(shape);
-        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
 
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
@@ -177,7 +179,7 @@ TEST_CASE("Synchronized Drawing", "[tvgSwCanvas]")
         REQUIRE(shape2->appendRect(0, 0, 100, 100) == Result::Success);
         REQUIRE(shape2->fill(255, 255, 255, 255) == Result::Success);
 
-        REQUIRE(canvas->push(shape2) == Result::Success);
+        REQUIRE(canvas->add(shape2) == Result::Success);
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
     }
@@ -192,7 +194,7 @@ TEST_CASE("Asynchronous Drawing", "[tvgSwCanvas]")
         auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
         REQUIRE(canvas);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         for (int i = 0; i < 3; ++i) {
@@ -200,7 +202,7 @@ TEST_CASE("Asynchronous Drawing", "[tvgSwCanvas]")
             REQUIRE(shape);
             REQUIRE(shape->appendRect(0, 0, 100, 100) == Result::Success);
             REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
-            REQUIRE(canvas->push(shape) == Result::Success);
+            REQUIRE(canvas->add(shape) == Result::Success);
         }
 
         REQUIRE(canvas->draw() == Result::Success);
@@ -218,7 +220,7 @@ TEST_CASE("Viewport", "[tvgSwCanvas]")
 
         REQUIRE(canvas->viewport(25, 25, 100, 100) == Result::Success);
 
-        uint32_t buffer[100*100];
+        uint32_t buffer[100*100] = {};
         REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
 
         REQUIRE(canvas->viewport(25, 25, 50, 50) == Result::Success);
@@ -228,7 +230,7 @@ TEST_CASE("Viewport", "[tvgSwCanvas]")
         REQUIRE(shape->appendRect(0, 0, 100, 100) == Result::Success);
         REQUIRE(shape->fill(255, 255, 255, 255) == Result::Success);
 
-        REQUIRE(canvas->push(shape) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
 
         //Negative, not allowed
         REQUIRE(canvas->viewport(15, 25, 5, 5) == Result::InsufficientCondition);
@@ -242,4 +244,26 @@ TEST_CASE("Viewport", "[tvgSwCanvas]")
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
+
+TEST_CASE("Multi-Threading", "[tvgSwCanvas]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        std::vector<thread> workers;
+
+        auto worker = []() {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        };
+
+        for (unsigned int i = 0; i < thread::hardware_concurrency(); ++i) {
+            workers.emplace_back(worker);
+        }
+
+        for (auto& t : workers) {
+            t.join();
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif

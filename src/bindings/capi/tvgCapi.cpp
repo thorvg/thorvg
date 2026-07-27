@@ -68,15 +68,15 @@ TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op)
 }
 
 
-TVG_API Tvg_Canvas tvg_glcanvas_create()
+TVG_API Tvg_Canvas tvg_glcanvas_create(Tvg_Engine_Option op)
 {
-    return (Tvg_Canvas) GlCanvas::gen();
+    return (Tvg_Canvas) GlCanvas::gen(static_cast<EngineOption>(op));
 }
 
 
-TVG_API Tvg_Canvas tvg_wgcanvas_create()
+TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op)
 {
-    return (Tvg_Canvas) WgCanvas::gen();
+    return (Tvg_Canvas) WgCanvas::gen(static_cast<EngineOption>(op));
 }
 
 
@@ -110,17 +110,25 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
-
-TVG_API Tvg_Result tvg_canvas_push(Tvg_Canvas canvas, Tvg_Paint paint)
+TVG_API Tvg_Result tvg_wgcanvas_set_target_with_context(Tvg_Canvas canvas, const Tvg_WgContext* context, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type)
 {
-    if (canvas && paint) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->push((Paint*)paint);
+    if (canvas && context) {
+        auto ctx = reinterpret_cast<WgCanvas::Context*>(const_cast<Tvg_WgContext*>(context));
+        return (Tvg_Result) reinterpret_cast<WgCanvas*>(canvas)->target(*ctx, target, w, h, static_cast<ColorSpace>(cs), type);
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+TVG_API Tvg_Result tvg_canvas_add(Tvg_Canvas canvas, Tvg_Paint paint)
+{
+    if (canvas && paint) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->add((Paint*)paint);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
-TVG_API Tvg_Result tvg_canvas_push_at(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Paint at)
+TVG_API Tvg_Result tvg_canvas_insert(Tvg_Canvas canvas, Tvg_Paint target, Tvg_Paint at)
 {
-    if (canvas && target && at) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->push((Paint*)target, (Paint*) at);
+    if (canvas && target && at) return (Tvg_Result) reinterpret_cast<Canvas*>(canvas)->add((Paint*)target, (Paint*) at);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
@@ -190,6 +198,20 @@ TVG_API bool tvg_paint_get_visible(const Tvg_Paint paint)
     return false;
 }
 
+TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint)
+{
+    if (paint) return reinterpret_cast<const Paint*>(paint)->id;
+    return 0;
+}
+
+TVG_API Tvg_Result tvg_paint_set_id(Tvg_Paint paint, uint32_t id)
+{
+    if (paint) {
+        reinterpret_cast<Paint*>(paint)->id = id;
+        return TVG_RESULT_SUCCESS;
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API uint16_t tvg_paint_ref(Tvg_Paint paint)
 {
@@ -256,13 +278,16 @@ TVG_API Tvg_Paint tvg_paint_duplicate(Tvg_Paint paint)
     return nullptr;
 }
 
-
 TVG_API bool tvg_paint_intersects(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    if (paint) return reinterpret_cast<Paint*>(paint)->intersects(x, y, w, h);
-    return false;
+    return tvg_paint_intersects_region(paint, x, y, w, h, false);
 }
 
+TVG_API bool tvg_paint_intersects_region(Tvg_Paint paint, int32_t x, int32_t y, int32_t w, int32_t h, bool visibleOnly)
+{
+    if (paint) return reinterpret_cast<Paint*>(paint)->intersects(x, y, w, h, visibleOnly);
+    return false;
+}
 
 TVG_API Tvg_Result tvg_paint_set_opacity(Tvg_Paint paint, uint8_t opacity)
 {
@@ -627,10 +652,11 @@ TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, ui
 
 TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture_Asset_Resolver resolver, void* data)
 {
-    if (picture) return (Tvg_Result) reinterpret_cast<Picture*>(picture)->resolver([resolver](Paint* paint, const char* src, void* data) -> bool {
+    if (!picture) return TVG_RESULT_INVALID_ARGUMENT;
+    if (!resolver) return (Tvg_Result) reinterpret_cast<Picture*>(picture)->resolver(nullptr, nullptr);
+    return (Tvg_Result) reinterpret_cast<Picture*>(picture)->resolver([resolver](Paint* paint, const char* src, void* data) -> bool {
         return resolver(reinterpret_cast<Tvg_Paint>(paint), src, data);
     }, data);
-    return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
@@ -654,6 +680,14 @@ TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id)
     return nullptr;
 }
 
+TVG_API Tvg_Result tvg_picture_set_accessible(Tvg_Paint picture, bool accessible)
+{
+    if (picture) {
+        reinterpret_cast<Picture*>(picture)->accessible = accessible;
+        return TVG_RESULT_SUCCESS;
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API Tvg_Result tvg_picture_set_origin(Tvg_Paint picture, float x, float y)
 {
@@ -668,6 +702,12 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, flo
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+
+TVG_API Tvg_Result tvg_picture_set_filter(Tvg_Paint picture, Tvg_Filter_Method method)
+{
+    if (picture) return (Tvg_Result) reinterpret_cast<Picture*>(picture)->filter(FilterMethod(method));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 /************************************************************************/
 /* Gradient API                                                         */
@@ -801,16 +841,16 @@ TVG_API Tvg_Paint tvg_scene_new()
 }
 
 
-TVG_API Tvg_Result tvg_scene_push(Tvg_Paint scene, Tvg_Paint paint)
+TVG_API Tvg_Result tvg_scene_add(Tvg_Paint scene, Tvg_Paint paint)
 {
-    if (scene && paint) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push((Paint*)paint);
+    if (scene && paint) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add((Paint*)paint);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
-TVG_API Tvg_Result tvg_scene_push_at(Tvg_Paint scene, Tvg_Paint paint, Tvg_Paint at)
+TVG_API Tvg_Result tvg_scene_insert(Tvg_Paint scene, Tvg_Paint paint, Tvg_Paint at)
 {
-    if (scene && paint && at) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push((Paint*)paint, (Paint*)at);
+    if (scene && paint && at) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add((Paint*)paint, (Paint*)at);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
@@ -822,44 +862,44 @@ TVG_API Tvg_Result tvg_scene_remove(Tvg_Paint scene, Tvg_Paint paint)
 }
 
 
-TVG_API Tvg_Result tvg_scene_reset_effects(Tvg_Paint scene)
+TVG_API Tvg_Result tvg_scene_clear_effects(Tvg_Paint scene)
 {
-    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::ClearAll);
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add(SceneEffect::Clear);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
-TVG_API Tvg_Result tvg_scene_push_effect_drop_shadow(Tvg_Paint scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality)
+TVG_API Tvg_Result tvg_scene_add_effect_drop_shadow(Tvg_Paint scene, int r, int g, int b, int a, double angle, double distance, double sigma, int quality)
 {
-    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::DropShadow, r, g, b, a, angle, distance, sigma, quality);
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add(SceneEffect::DropShadow, r, g, b, a, angle, distance, sigma, quality);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
-TVG_API Tvg_Result tvg_scene_push_effect_gaussian_blur(Tvg_Paint scene, double sigma, int direction, int border, int quality)
+TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double sigma, int direction, int border, int quality)
 {
-    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::GaussianBlur, sigma, direction, border, quality);
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add(SceneEffect::GaussianBlur, sigma, direction, border, quality);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
-TVG_API Tvg_Result tvg_scene_push_effect_fill(Tvg_Paint scene, int r, int g, int b, int a)
+TVG_API Tvg_Result tvg_scene_add_effect_fill(Tvg_Paint scene, int r, int g, int b, int a)
 {
-    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::Fill, r, g, b, a);
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add(SceneEffect::Fill, r, g, b, a);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
-TVG_API Tvg_Result tvg_scene_push_effect_tint(Tvg_Paint scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity)
+TVG_API Tvg_Result tvg_scene_add_effect_tint(Tvg_Paint scene, int black_r, int black_g, int black_b, int white_r, int white_g, int white_b, double intensity)
 {
-    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::Tint, black_r, black_g, black_b, white_r, white_g, white_b, intensity);
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add(SceneEffect::Tint, black_r, black_g, black_b, white_r, white_g, white_b, intensity);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
 
-TVG_API Tvg_Result tvg_scene_push_effect_tritone(Tvg_Paint scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend)
+TVG_API Tvg_Result tvg_scene_add_effect_tritone(Tvg_Paint scene, int shadow_r, int shadow_g, int shadow_b, int midtone_r, int midtone_g, int midtone_b, int highlight_r, int highlight_g, int highlight_b, int blend)
 {
-    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->push(SceneEffect::Tritone, shadow_r, shadow_g, shadow_b, midtone_r, midtone_g, midtone_b, highlight_r, highlight_g, highlight_b, blend);
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add(SceneEffect::Tritone, shadow_r, shadow_g, shadow_b, midtone_r, midtone_g, midtone_b, highlight_r, highlight_g, highlight_b, blend);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
@@ -893,6 +933,13 @@ TVG_API Tvg_Result tvg_text_set_text(Tvg_Paint text, const char* utf8)
     if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->text(utf8);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
+
+
+ TVG_API const char* tvg_text_get_text(const Tvg_Paint text)
+ {
+    return text ? reinterpret_cast<Text*>(text)->text() : nullptr;
+ }
+
 
 
 TVG_API Tvg_Result tvg_text_align(Tvg_Paint text, float x, float y)
@@ -944,9 +991,29 @@ TVG_API Tvg_Result tvg_text_wrap_mode(Tvg_Paint text, Tvg_Text_Wrap mode)
 }
 
 
+TVG_API uint32_t tvg_text_line_count(Tvg_Paint text)
+{
+    if (text) return reinterpret_cast<Text*>(text)->lines();
+    return 0;
+}
+
+
 TVG_API Tvg_Result tvg_text_spacing(Tvg_Paint text, float letter, float line)
 {
     if (text) return (Tvg_Result) reinterpret_cast<Text*>(text)->spacing(letter, line);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metrics* metrics)
+{
+    if (text && metrics) return (Tvg_Result) reinterpret_cast<Text*>(text)->metrics(*reinterpret_cast<TextMetrics*>(metrics));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics, const char** next)
+{
+    if (text && metrics) return (Tvg_Result) reinterpret_cast<Text*>(text)->metrics(ch, *reinterpret_cast<GlyphMetrics*>(metrics), next);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
@@ -1121,6 +1188,11 @@ TVG_API uint32_t tvg_accessor_generate_id(const char* name)
     return Accessor::id(name);
 }
 
+TVG_API const char* tvg_accessor_get_name(Tvg_Accessor accessor, uint32_t id)
+{
+    if (accessor) return reinterpret_cast<Accessor*>(accessor)->name(id);
+    return nullptr;
+}
 
 /************************************************************************/
 /* Lottie Animation API                                                 */
@@ -1186,20 +1258,25 @@ TVG_API Tvg_Result tvg_lottie_animation_get_markers_cnt(Tvg_Animation animation,
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
+TVG_API TVG_DEPRECATED Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name)
+{
+    if (!name) return TVG_RESULT_INVALID_ARGUMENT;  // for backward compat.
+    return tvg_lottie_animation_get_marker_info(animation, idx, name, nullptr, nullptr);
+}
 
-TVG_API Tvg_Result tvg_lottie_animation_get_marker(Tvg_Animation animation, uint32_t idx, const char** name)
+TVG_API Tvg_Result tvg_lottie_animation_get_marker_info(Tvg_Animation animation, uint32_t idx, const char** name, float* begin, float* end)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    if (animation && name) {
-        *name = reinterpret_cast<LottieAnimation*>(animation)->marker(idx);
-        if (!(*name)) return TVG_RESULT_INVALID_ARGUMENT;
-        return TVG_RESULT_SUCCESS;
-    }
-    return TVG_RESULT_INVALID_ARGUMENT;
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    auto ret = reinterpret_cast<LottieAnimation*>(animation)->marker(idx, begin, end);
+    if (name) *name = ret;
+    if (ret) return TVG_RESULT_SUCCESS;
+    auto markerCnt = reinterpret_cast<LottieAnimation*>(animation)->markersCnt();
+    if (markerCnt > 0 && idx >= markerCnt) return TVG_RESULT_INVALID_ARGUMENT;
+    return TVG_RESULT_INSUFFICIENT_CONDITION;
 #endif
     return TVG_RESULT_NOT_SUPPORTED;
 }
-
 
 TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float from, float to, float progress)
 {
@@ -1210,22 +1287,44 @@ TVG_API Tvg_Result tvg_lottie_animation_tween(Tvg_Animation animation, float fro
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
-
-TVG_API Tvg_Result tvg_lottie_animation_assign(Tvg_Animation animation, const char* layer, uint32_t ix, const char* var, float val)
+TVG_API Tvg_Result tvg_lottie_animation_tween_to(Tvg_Animation animation, float to)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->assign(layer, ix, var, val);
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tweenTo(to);
     return TVG_RESULT_INVALID_ARGUMENT;
 #endif
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
+TVG_API Tvg_Result tvg_lottie_animation_tween_go(Tvg_Animation animation, float progress)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->tween(progress);
+    return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
 
 TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uint8_t value)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
     if (animation) return (Tvg_Result) reinterpret_cast<LottieAnimation*>(animation)->quality(value);
     return TVG_RESULT_INVALID_ARGUMENT;
+#endif
+    return TVG_RESULT_NOT_SUPPORTED;
+}
+
+
+TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animation, Tvg_Audio_Resolver resolver, void* data)
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    if (!animation) return TVG_RESULT_INVALID_ARGUMENT;
+    auto anim = reinterpret_cast<tvg::LottieAnimation*>(animation);
+    if (!resolver) return (Tvg_Result) anim->resolver(nullptr, nullptr);
+    return (Tvg_Result) anim->resolver([resolver](const tvg::LottieAudioResolver& in, void* data) {
+        Tvg_Audio_Info info{in.src, in.mimeType, in.size, in.offset, in.volume, in.active, in.embedded};
+        resolver(&info, data);
+    }, data);
 #endif
     return TVG_RESULT_NOT_SUPPORTED;
 }

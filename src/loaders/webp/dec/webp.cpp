@@ -569,20 +569,6 @@ static void DefaultFeatures(WebPBitstreamFeatures* const features) {
   memset(features, 0, sizeof(*features));
 }
 
-static VP8StatusCode GetFeatures(const uint8_t* const data, size_t data_size,
-                                 WebPBitstreamFeatures* const features) {
-  if (features == NULL || data == NULL) {
-    return VP8_STATUS_INVALID_PARAM;
-  }
-  DefaultFeatures(features);
-
-  // Only parse enough of the data to retrieve the features.
-  return ParseHeadersInternal(data, data_size,
-                              &features->width, &features->height,
-                              &features->has_alpha, &features->has_animation,
-                              &features->format, NULL);
-}
-
 //------------------------------------------------------------------------------
 // Cropping and rescaling.
 
@@ -648,7 +634,6 @@ int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
 /* External Class Implementation                                        */
 /************************************************************************/
 
-
 uint8_t* WebPDecodeBGRA(const uint8_t* data, size_t data_size,
                         int* width, int* height) {
   return Decode(MODE_bgrA, data, data_size, width, height, NULL);
@@ -663,8 +648,8 @@ int WebPGetInfo(const uint8_t* data, size_t data_size,
                 int* width, int* height) {
   WebPBitstreamFeatures features;
 
-  if (GetFeatures(data, data_size, &features) != VP8_STATUS_OK) {
-    return 0;
+  if (WebPGetFeatures(data, data_size, &features) != VP8_STATUS_OK) {
+      return 0;
   }
 
   if (width != NULL) {
@@ -675,4 +660,16 @@ int WebPGetInfo(const uint8_t* data, size_t data_size,
   }
 
   return 1;
+}
+
+VP8StatusCode WebPGetFeatures(const uint8_t* data, size_t data_size,
+                              WebPBitstreamFeatures* features)
+{
+    DefaultFeatures(features);
+
+    // Only parse enough of the data to retrieve the features.
+    return ParseHeadersInternal(data, data_size,
+                                &features->width, &features->height,
+                                &features->has_alpha, &features->has_animation,
+                                &features->format, NULL);
 }

@@ -7,10 +7,12 @@ fi
 
 if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     echo "Run Valgrind"
-    echo "valgrind --leak-check=yes ./tvgUnitTests"
+    VALGRIND_SUPPRESSIONS="${GITHUB_WORKSPACE}/.github/workflows/valgrind.supp"
+    VALGRIND_CMD="env LIBGL_ALWAYS_SOFTWARE=1 valgrind --suppressions=${VALGRIND_SUPPRESSIONS} --leak-check=yes ./tvgUnitTests"
+    echo "$VALGRIND_CMD"
     cd ./build/test
 
-    valgrind --leak-check=yes ./tvgUnitTests > memcheck_valgrind.txt 2>&1
+    env LIBGL_ALWAYS_SOFTWARE=1 valgrind --suppressions="$VALGRIND_SUPPRESSIONS" --leak-check=yes ./tvgUnitTests > memcheck_valgrind.txt 2>&1
 
 
     PAYLOAD_MEMCHECK=`cat memcheck_valgrind.txt`
@@ -18,19 +20,19 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
 
     echo $COMMENTS_URL
     echo "MEMCHECK errors:"
-    echo $PAYLOAD_MEMCHECK
+    echo "$PAYLOAD_MEMCHECK"
 
     DEFINITELY_LOST_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'definitely lost:\s*\K[0-9]+(?=\s*bytes in)')
     ERROR_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'ERROR SUMMARY:\s*\K[0-9]+(?=\s*errors)')
     if [[ $ERROR_NUMBER != 0 || $DEFINITELY_LOST_NUMBER != 0 || $PAYLOAD_MEMCHECK == *"Invalid read "* || $PAYLOAD_MEMCHECK == *"Invalid write "* ]]; then
         OUTPUT+=$'\n**MEMCHECK(VALGRIND) RESULT**:\n'
-        OUTPUT+=$'\n`valgrind --leak-check=yes ./tvgUnitTests`\n'
+        OUTPUT+=$'\n`'"$VALGRIND_CMD"$'`\n'
         OUTPUT+=$'\n```\n'
         OUTPUT+="$PAYLOAD_MEMCHECK"
         OUTPUT+=$'\n```\n' 
 
         (
-            echo '<details><summary>Valgrind output</sumary>'
+            echo '<details><summary>Valgrind output</summary>'
             echo
             echo "$OUTPUT"
             echo
@@ -42,4 +44,3 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
         curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/vnd.github.VERSION.text+json" --data "$PAYLOAD" "$COMMENTS_URL"
     fi
 fi
-

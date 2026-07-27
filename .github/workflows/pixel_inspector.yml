@@ -1,0 +1,147 @@
+name: Pixel Inspector
+
+on: pull_request
+
+permissions:
+  contents: read
+
+env:
+  THORVG_PIXEL_GOLDEN_REF: v1.1.0
+  WGPU_NATIVE_VERSION: v29.0.1.1
+
+jobs:
+  pixel_inspector:
+    name: Golden vs PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/local/lib/x86_64-linux-gnu/pkgconfig
+      LD_LIBRARY_PATH: /usr/local/lib:/usr/local/lib/x86_64-linux-gnu
+      LIBGL_ALWAYS_SOFTWARE: 1
+
+    steps:
+      - name: Checkout ThorVG PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: thorvg
+          fetch-depth: 0
+
+      - name: Checkout Pixel-Inspector
+        uses: actions/checkout@v4
+        with:
+          repository: thorvg/thorvg.pixel-inspector
+          path: tvg-pixel-inspector
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build pkg-config valgrind curl jq unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+
+      - name: Install Chrome if missing
+        run: |
+          if ! command -v google-chrome >/dev/null 2>&1; then
+            curl -fsSL -o /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo apt-get install -y /tmp/google-chrome.deb
+          fi
+
+      - name: Install wgpu_native
+        run: bash thorvg/.github/workflows/install_wgpu_native.sh
+
+      - name: Run pixel comparison
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+
+          run_phase() (
+            ref="$1"
+            prefix="$2"
+            shift 2
+
+            rm -rf "$prefix"
+
+            cd "$GITHUB_WORKSPACE/thorvg"
+            git checkout "$ref"
+            meson setup "$GITHUB_WORKSPACE/build-thorvg" . --wipe \
+              --prefix "$prefix" \
+              --libdir lib \
+              -Dengines=all \
+              -Dloaders=all \
+              -Dextra=lottie_exp,openmp
+            ninja -C "$GITHUB_WORKSPACE/build-thorvg"
+            ninja -C "$GITHUB_WORKSPACE/build-thorvg" install
+
+            cd "$GITHUB_WORKSPACE/tvg-pixel-inspector"
+            export PKG_CONFIG_PATH="$prefix/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+            export LD_LIBRARY_PATH="$prefix/lib:${LD_LIBRARY_PATH:-}"
+
+            echo "pkg-config thorvg version: $(pkg-config --modversion thorvg-1)"
+            echo "pkg-config thorvg libdir: $(pkg-config --variable=libdir thorvg-1)"
+
+            meson setup build --wipe
+            ninja -C build
+
+            log_file="$GITHUB_WORKSPACE/pixel-inspector-$(basename "$prefix").log"
+            if ! ./build/src/tvg-pixel-inspector "$@" > "$log_file" 2>&1; then
+              echo "pixel-inspector failed. Last 50 log lines:"
+              tail -50 "$log_file"
+            fi
+          )
+
+          PR_REF="$(git -C "$GITHUB_WORKSPACE/thorvg" rev-parse HEAD)"
+          echo "test_ref=PR merge ($PR_REF)"
+
+          run_phase "$THORVG_PIXEL_GOLDEN_REF" "$GITHUB_WORKSPACE/install-golden" --update-golden
+          run_phase "$PR_REF" "$GITHUB_WORKSPACE/install-pr"
+
+      - name: Export report tabs to PDFs
+        if: always()
+        run: |
+          set -euo pipefail
+
+          REPORT_DIR="$GITHUB_WORKSPACE/tvg-pixel-inspector/output"
+          REPORT_HTML="$REPORT_DIR/reporter.html"
+          if [ -f "$REPORT_HTML" ]; then
+            BACKENDS="$(grep -oE 'data-tab="[a-z]+"' "$REPORT_HTML" | sed -E 's/.*"(.*)".*/\1/' | grep -vx 'all' || true)"
+            if [ -z "$BACKENDS" ]; then
+              echo "No backend tabs found in $REPORT_HTML; skipping PDF export."
+            fi
+
+            for BACKEND in $BACKENDS; do
+              REPORT_PDF="$REPORT_DIR/reporter.$BACKEND.pdf"
+              google-chrome \
+                --headless \
+                --disable-gpu \
+                --no-sandbox \
+                --print-to-pdf="$REPORT_PDF" \
+                "file://$REPORT_HTML#$BACKEND" \
+                && echo "Wrote $REPORT_PDF" || echo "Failed to print $REPORT_PDF"
+            done
+          else
+            echo "Report HTML not found: $REPORT_HTML"
+          fi
+
+      - name: Upload report PDFs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thorvg-pixel-report
+          path: tvg-pixel-inspector/output/reporter.*.pdf
+          if-no-files-found: warn
+
+      - name: Save PR number
+        if: always()
+        run: |
+          mkdir -p tvg-pixel-inspector/output
+          echo "${{ github.event.pull_request.number }}" > tvg-pixel-inspector/output/pr-number.txt
+
+      - name: Upload pixel report summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thorvg-pixel-summary
+          path: |
+            tvg-pixel-inspector/output/reporter.md
+            tvg-pixel-inspector/output/pr-number.txt
+          if-no-files-found: warn

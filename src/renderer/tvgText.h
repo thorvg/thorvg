@@ -27,7 +27,7 @@
 #include "tvgMath.h"
 #include "tvgShape.h"
 #include "tvgFill.h"
-#include "tvgLoader.h"
+#include "tvgLoaderMgr.h"
 
 namespace tvg
 {
@@ -39,6 +39,7 @@ struct TextImpl : Text
     FontLoader* loader = nullptr;
     FontMetrics fm;
     char* utf8 = nullptr;
+    uint32_t utf8len = 0;
     float outlineWidth = 0.0f;
     float italicShear = 0.0f;
     bool updated = false;
@@ -62,8 +63,7 @@ struct TextImpl : Text
     Result text(const char* utf8)
     {
         tvg::free(this->utf8);
-        if (utf8) this->utf8 = tvg::duplicate(utf8);
-        else this->utf8 = nullptr;
+        this->utf8 = tvg::duplicate(utf8, SIZE_MAX, &utf8len);
         updated = true;
         impl.mark(RenderUpdateFlag::Path);
 
@@ -107,7 +107,7 @@ struct TextImpl : Text
         return to<ShapeImpl>(shape)->bounds();
     }
 
-    bool render(RenderMethod* renderer)
+    bool render(RenderMethod* renderer, TVG_UNUSED CompositionFlag flag)
     {
         if (!loader || !fm.engine) return true;
         renderer->blend(impl.blendMethod);
@@ -118,12 +118,26 @@ struct TextImpl : Text
     {
         if (!loader) return false;
         if (updated) {
-            if (loader->get(fm, utf8, to<ShapeImpl>(shape)->rs.path)) {
+            if (loader->get(fm, utf8, utf8len, to<ShapeImpl>(shape)->rs.path)) {
                 loader->transform(shape, fm, italicShear);
             }
             updated = false;
         }
         return true;
+    }
+
+    Result metrics(TextMetrics& metrics)
+    {
+        if (!loader || fm.fontSize <= 0.0f) return Result::InsufficientCondition;
+        loader->metrics(fm, metrics);
+        return Result::Success;
+    }
+
+    Result metrics(const char* ch, GlyphMetrics& metrics, const char** next)
+    {
+        if (!loader || fm.fontSize <= 0.0f) return Result::InsufficientCondition;
+        if (ch && loader->metrics(fm, ch, metrics, next)) return Result::Success;
+        return Result::InvalidArguments;
     }
 
     bool skip(RenderUpdateFlag flag)
@@ -138,6 +152,12 @@ struct TextImpl : Text
         fm.wrap = mode;
         updated = true;
         impl.mark(RenderUpdateFlag::Path);
+    }
+
+    uint32_t lines()
+    {
+        if (load()) return fm.lines;
+        return 0;
     }
 
     void layout(float w, float h)
@@ -182,10 +202,10 @@ struct TextImpl : Text
         return true;
     }
 
-    bool intersects(const RenderRegion& region)
+    bool intersects(const RenderRegion& region, TVG_UNUSED bool visibleOnly)
     {
         if (!load()) return false;
-        return to<ShapeImpl>(shape)->intersects(region);
+        return to<ShapeImpl>(shape)->intersects(region, false);
     }
 
     bool bounds(Point* pt4, const Matrix& m, bool obb)
@@ -212,6 +232,7 @@ struct TextImpl : Text
         }
 
         dup->utf8 = tvg::duplicate(utf8);
+        dup->utf8len = utf8len;
         dup->italicShear = italicShear;
         dup->outlineWidth = outlineWidth;
         dup->updated = true;
@@ -219,7 +240,7 @@ struct TextImpl : Text
         return text;
     }
 
-    Iterator* iterator()
+    AccessorIterator* iterator()
     {
         return nullptr;
     }

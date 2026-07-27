@@ -67,11 +67,10 @@ PngLoader::~PngLoader()
     lodepng_state_cleanup(&state);
 }
 
-
-bool PngLoader::open(const char* path)
+bool PngLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (unsigned char*)LoadModule::open(path, size))) return false;
+    if (!(data = (unsigned char*)Loader::open(path, size))) return false;
 
     lodepng_state_init(&state);
 
@@ -86,8 +85,7 @@ bool PngLoader::open(const char* path)
 #endif
 }
 
-
-bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const char* rpath, bool copy)
+bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
 {
     unsigned int width, height;
     if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
@@ -114,7 +112,7 @@ bool PngLoader::read()
 {
     if (!data || w == 0 || h == 0) return false;
 
-    if (!LoadModule::read()) return true;
+    if (!Loader::read()) return true;
 
     TaskScheduler::request(this);
 

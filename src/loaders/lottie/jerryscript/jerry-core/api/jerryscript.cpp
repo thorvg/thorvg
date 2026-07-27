@@ -38,6 +38,7 @@
 static inline void
 jerry_api_enable (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #ifndef JERRY_NDEBUG
   JERRY_CONTEXT (status_flags) |= ECMA_STATUS_API_ENABLED;
 #endif /* JERRY_NDEBUG */
@@ -51,6 +52,7 @@ jerry_api_enable (void)
 static inline void
 jerry_api_disable (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
 #ifndef JERRY_NDEBUG
   JERRY_CONTEXT (status_flags) &= (uint32_t) ~ECMA_STATUS_API_ENABLED;
 #endif /* JERRY_NDEBUG */
@@ -83,6 +85,7 @@ jerry_init (jerry_init_flag_t flags) /**< combination of Jerry flags */
   JERRY_UNUSED (total_size);
 #endif /* JERRY_EXTERNAL_CONTEXT */
 
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   jerry_context_t *context_p = &JERRY_CONTEXT_STRUCT;
   memset (context_p, 0, sizeof (jerry_context_t));
 
@@ -111,6 +114,7 @@ jerry_init (jerry_init_flag_t flags) /**< combination of Jerry flags */
 void
 jerry_cleanup (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   for (jerry_context_data_header_t *this_p = JERRY_CONTEXT (context_data_p); this_p != NULL; this_p = this_p->next_p)
   {
     if (this_p->manager_p->deinit_cb)
@@ -627,6 +631,20 @@ jerry_object_set_native_ptr (jerry_value_t object, /**< object to set native poi
     ecma_create_native_pointer_property (object_p, native_pointer_p, native_info_p);
   }
 } /* jerry_object_set_native_ptr */
+
+/**
+ * Register external magic string array
+ */
+void
+jerry_register_magic_strings (const jerry_char_t *const *ext_strings_p, /**< character arrays, representing
+                                                                         *   external magic strings' contents */
+                              uint32_t count, /**< number of the strings */
+                              const jerry_length_t *str_lengths_p) /**< lengths of all strings */
+{
+  lit_magic_strings_ex_set ((const lit_utf8_byte_t *const *) ext_strings_p,
+                            count,
+                            (const lit_utf8_size_t *) str_lengths_p);
+} /* jerry_register_magic_strings */
 
 
 /**

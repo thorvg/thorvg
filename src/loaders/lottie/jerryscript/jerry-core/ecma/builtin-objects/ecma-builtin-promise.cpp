@@ -466,6 +466,7 @@ ecma_value_t
 ecma_builtin_promise_dispatch_construct (const ecma_value_t *arguments_list_p, /**< arguments list */
                                          uint32_t arguments_list_len) /**< number of arguments */
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (arguments_list_len == 0 || arguments_list_p != NULL);
 
   if (arguments_list_len == 0 || !ecma_op_is_callable (arguments_list_p[0]))

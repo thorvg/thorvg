@@ -28,6 +28,7 @@
 bool
 vm_is_strict_mode (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   JERRY_ASSERT (JERRY_CONTEXT (vm_top_context_p) != NULL);
 
   return JERRY_CONTEXT (vm_top_context_p)->status_flags & VM_FRAME_CTX_IS_STRICT;
@@ -48,6 +49,7 @@ vm_is_strict_mode (void)
 bool
 vm_is_direct_eval_form_call (void)
 {
+  JERRY_DEFINE_CURRENT_CONTEXT ();
   return (JERRY_CONTEXT (status_flags) & ECMA_STATUS_DIRECT_EVAL) != 0;
 } /* vm_is_direct_eval_form_call */
 
