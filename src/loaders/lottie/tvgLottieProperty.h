@@ -964,6 +964,8 @@ struct LottieBitmap : LottieProperty, AssetSrc
             picture->unref();
             picture = nullptr;
         }
+
+        size = 0;
     }
 
     uint32_t frameCnt() override { return 0; }
@@ -984,6 +986,14 @@ struct LottieBitmap : LottieProperty, AssetSrc
 
         width = rhs.width;
         height = rhs.height;
+
+        if (shallow) {
+            data = rhs.data;
+            mimeType = rhs.mimeType;
+            size = rhs.size;
+            rhs.data = nullptr;
+            rhs.mimeType = nullptr;
+        } else if (rhs.size == 0 && rhs.path) path = tvg::duplicate(rhs.path);
     }
 };
 
