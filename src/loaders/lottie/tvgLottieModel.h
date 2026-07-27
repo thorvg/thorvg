@@ -955,6 +955,8 @@ struct LottieImage : LottieObject
         if (release) bitmap.release();
         else backup = new LottieBitmap(bitmap);
         bitmap.copy(*static_cast<LottieBitmap*>(prop), false);
+        resolved = bitmap.picture && bitmap.picture->size(nullptr, nullptr) == Result::Success;
+
         return backup;
     }
 
