@@ -45,6 +45,10 @@ if webp_loader
     endif
 endif
 
+if gif_loader
+    subdir('gif')
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(
