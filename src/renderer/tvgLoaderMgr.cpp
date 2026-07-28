@@ -69,104 +69,60 @@ static Inlist<tvg::Loader> _activeLoaders;
 static tvg::Loader* _find(FileType type)
 {
     switch (type) {
-        case FileType::Png: {
-#ifdef THORVG_PNG_LOADER_SUPPORT
-            return new PngLoader;
-#endif
-            break;
-        }
-        case FileType::Jpg: {
-#ifdef THORVG_JPG_LOADER_SUPPORT
-            return new JpgLoader;
-#endif
-            break;
-        }
-        case FileType::Webp: {
-#ifdef THORVG_WEBP_LOADER_SUPPORT
-            return new WebpLoader;
-#endif
-            break;
-        }
-        case FileType::Svg: {
 #ifdef THORVG_SVG_LOADER_SUPPORT
-            return new SvgLoader;
+        case FileType::Svg: return new SvgLoader;
 #endif
-            break;
-        }
-        case FileType::Sfnt: {
-#ifdef THORVG_SFNT_LOADER_SUPPORT
-            return new SfntLoader;
-#endif
-            break;
-        }
-        case FileType::Lot: {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
-            return new LottieLoader;
+        case FileType::Lot: return new LottieLoader;
 #endif
-            break;
-        }
-        case FileType::Raw: {
-            return new RawLoader;
-            break;
-        }
-        default: {
-            break;
-        }
+#ifdef THORVG_SFNT_LOADER_SUPPORT
+        case FileType::Sfnt: return new SfntLoader;
+#endif
+#ifdef THORVG_PNG_LOADER_SUPPORT
+        case FileType::Png: return new PngLoader;
+#endif
+#ifdef THORVG_JPG_LOADER_SUPPORT
+        case FileType::Jpg: return new JpgLoader;
+#endif
+#ifdef THORVG_WEBP_LOADER_SUPPORT
+        case FileType::Webp: return new WebpLoader;
+#endif
+        case FileType::Raw: return new RawLoader;
+        default: break;
     }
 
 #ifdef THORVG_LOG_ENABLED
-    const char* format;
-    switch (type) {
-        case FileType::Svg: {
-            format = "SVG";
-            break;
+    auto toString = [](FileType type) {
+        switch (type) {
+            case FileType::Svg:  return "SVG";
+            case FileType::Lot:  return "LOT";
+            case FileType::Sfnt: return "SFNT";
+            case FileType::Png:  return "PNG";
+            case FileType::Jpg:  return "JPG";
+            case FileType::Webp: return "WEBP";
+            case FileType::Raw:  return "RAW";
+            case FileType::Gif:  return "GIF";
+            default:             return "???";
         }
-        case FileType::Sfnt: {
-            format = "SFNT";
-            break;
-        }
-        case FileType::Lot: {
-            format = "LOT";
-            break;
-        }
-        case FileType::Raw: {
-            format = "RAW";
-            break;
-        }
-        case FileType::Png: {
-            format = "PNG";
-            break;
-        }
-        case FileType::Jpg: {
-            format = "JPG";
-            break;
-        }
-        case FileType::Webp: {
-            format = "WEBP";
-            break;
-        }
-        default: {
-            format = "???";
-            break;
-        }
-    }
-    TVGLOG("RENDERER", "%s format is not supported", format);
+    };
+    TVGLOG("RENDERER", "%s format is not supported", toString(type));
 #endif
     return nullptr;
 }
 
 #ifdef THORVG_FILE_IO_SUPPORT
-static tvg::Loader* _findByPath(const char* filename)
+static tvg::Loader* _findByPath(const char* filename, bool& invalid)
 {
     auto ext = fileext(filename);
-    if (!ext) return nullptr;
-
-    if (!strcmp(ext, "svg")) return _find(FileType::Svg);
-    if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(FileType::Lot);
-    if (!strcmp(ext, "png")) return _find(FileType::Png);
-    if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
-    if (!strcmp(ext, "webp")) return _find(FileType::Webp);
-    if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc") || !strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Sfnt);
+    if (ext) {
+        if (!strcmp(ext, "svg")) return _find(FileType::Svg);
+        if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(FileType::Lot);
+        if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc") || !strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Sfnt);
+        if (!strcmp(ext, "png")) return _find(FileType::Png);
+        if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
+        if (!strcmp(ext, "webp")) return _find(FileType::Webp);
+    }
+    invalid = true;  // invalid file path outside ThorVG's scope.
     return nullptr;
 }
 #endif
@@ -178,12 +134,12 @@ static FileType _convert(const char* mimeType)
     auto type = FileType::Unknown;
 
     if (!strcmp(mimeType, "svg") || !strcmp(mimeType, "svg+xml")) type = FileType::Svg;
-    else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Sfnt;
     else if (!strcmp(mimeType, "lot") || !strcmp(mimeType, "lottie+json")) type = FileType::Lot;
-    else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
+    else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Sfnt;
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
     else if (!strcmp(mimeType, "jpg") || !strcmp(mimeType, "jpeg")) type = FileType::Jpg;
     else if (!strcmp(mimeType, "webp")) type = FileType::Webp;
+    else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
     else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType);
 
     return type;
@@ -255,14 +211,12 @@ bool LoaderMgr::retrieve(Loader* loader)
     return true;
 }
 
-tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool* invalid)
+tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool& invalid)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    *invalid = false;
-
     if (auto loader = _findFromCache(filename)) return loader;
 
-    if (auto loader = _findByPath(filename)) {
+    if (auto loader = _findByPath(filename, invalid)) {
         if (loader->open(filename, ops)) {
             if (loader->cache(filename)) {
                 ScopedLock lock(_key);
@@ -270,6 +224,7 @@ tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool*
             }
             return loader;
         }
+        invalid = true;
         delete (loader);
     }
     // Unknown MimeType. Try with the candidates in the order
@@ -285,7 +240,6 @@ tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool*
             delete (loader);
         }
     }
-    *invalid = true;
 #endif
     return nullptr;
 }
