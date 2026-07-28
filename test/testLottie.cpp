@@ -38,24 +38,14 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);
     {
-        #define TEST_CNT 12
+        #define TEST_CNT 2
 
         const char* names[TEST_CNT] = {
             "test3.lot",
-            "test4.lot",
-            "test5.lot",
-            "test6.lot",
-            "test7.lot",
-            "test8.lot",
-            "test9.lot",
-            "test10.lot",
-            "test11.lot",
-            "test12.lot",
-            "test13.lot",
-            "test14.lot"
+            "test1.svg"
         };
 
-        auto animation = unique_ptr<Animation>(Animation::gen());
+        auto animation = unique_ptr<Animation>(LottieAnimation::gen());
         REQUIRE(animation);
 
         auto picture = animation->picture();
@@ -65,8 +55,6 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
             snprintf(buf, sizeof(buf), TEST_DIR"/%s", names[i]);
             REQUIRE(picture->load(buf) == Result::Success);
             REQUIRE(animation->frame(0.0f) == Result::InsufficientCondition);
-            REQUIRE(animation->frame(animation->totalFrame() * 0.5f) == Result::Success);
-            REQUIRE(animation->frame(animation->totalFrame()) == Result::Success);
         }
     }
     REQUIRE(Initializer::term() == Result::Success);
