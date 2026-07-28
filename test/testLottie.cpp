@@ -55,7 +55,7 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
             "test14.lot"
         };
 
-        auto animation = unique_ptr<Animation>(Animation::gen());
+        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
         REQUIRE(animation);
 
         auto picture = animation->picture();
@@ -68,6 +68,24 @@ TEST_CASE("Lottie Coverages", "[tvgLottie]")
             REQUIRE(animation->frame(animation->totalFrame() * 0.5f) == Result::Success);
             REQUIRE(animation->frame(animation->totalFrame()) == Result::Success);
         }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("Lottie Negative", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        REQUIRE(picture->load(TEST_DIR"/test1.svg") == Result::Success);
+        REQUIRE(animation->frame(0.0f) == Result::NonSupport);
+        REQUIRE(animation->frame(animation->totalFrame() * 0.5f) == Result::NonSupport);
+        REQUIRE(animation->frame(animation->totalFrame()) == Result::NonSupport);
+        REQUIRE(animation->tweenTo(50.0f) == Result::InsufficientCondition);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
