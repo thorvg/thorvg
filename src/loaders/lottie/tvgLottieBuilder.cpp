@@ -976,8 +976,9 @@ void LottieBuilder::updateImage(LottieGroup* layer)
 
     //resolve an image asset if need
     if (resolver && !image->resolved) {
-        resolver->func(picture, image->bitmap.path, resolver->data);
-        picture->size(image->bitmap.width, image->bitmap.height);
+        auto& bitmap = image->bitmap;
+        if (bitmap.width != 0.0f && bitmap.height != 0.0f) resolver->func(picture, bitmap.path, resolver->data);
+        if (bitmap.width >= 0.0f && bitmap.height >= 0.0f) picture->size(bitmap.width, bitmap.height);
         image->resolved = true;
     }
 
