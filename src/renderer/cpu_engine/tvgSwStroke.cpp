@@ -666,7 +666,12 @@ static void _beginSubPath(SwStroke& stroke, const Point& to, bool closed)
 
 static void _endSubPath(SwStroke& stroke)
 {
-    if (stroke.closedSubPath) {
+    //a degenerate (zero-length) subpath has no real direction to close a loop with.
+    //treat it the same as an open path so round/square caps still render as a dot,
+    //even though it was technically closed (e.g. moveTo(x,y); close();).
+    auto degenerate = tvg::zero(stroke.subPathLength) && stroke.center == stroke.subPathStart;
+
+    if (stroke.closedSubPath && !degenerate) {
         //close the path if needed
         if (stroke.center != stroke.subPathStart) _lineTo(stroke, stroke.subPathStart);
 

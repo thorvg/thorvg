@@ -178,10 +178,15 @@ void WgStroker::close()
 {
     if (length(mState.prevPt - mState.firstPt) > 0.015625f) {
         lineTo(mState.firstPt);
+        join(mState.firstPtDir);
+    } else if (mState.firstPtDir.x == 0.f && mState.firstPtDir.y == 0.f) {
+        // moveTo + close with nothing actually drawn in between (degenerate subpath):
+        // draw a cap dot instead of joining, matching the sw_engine's zero-length behavior.
+        cap();
+    } else {
+        // join firstPt with prevPt
+        join(mState.firstPtDir);
     }
-
-    // join firstPt with prevPt
-    join(mState.firstPtDir);
 }
 
 
