@@ -21,7 +21,7 @@ source_file = [
 omp_dep = []
 
 if openmp
-    omp_dep = dependency('openmp', required: false)
+    omp_dep = dependency('openmp')
 endif
 
 engine_dep += [declare_dependency(

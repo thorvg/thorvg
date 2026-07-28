@@ -539,11 +539,12 @@ void shapeDelFill(SwShape& shape)
 
 bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool)
 {
+    // TODO: We can skip generation here if the stroke hasn't been updated.
     if (rshape->strokeWidth() > 0.0f) {
         auto outline = _genOutline(rshape, mpool, 0, rshape->trimpath());
         if (!outline) return false;
 
-        strokeReset(shape.stroke, rshape, m, mpool, 0);
+        shapeResetStroke(shape, rshape, m, mpool, 0);
         strokeParseOutline(shape.stroke, *outline, mpool, 0);
 
         auto func = [](SwStrokeBorder* border, const Matrix& m, Point& min, Point& max) {

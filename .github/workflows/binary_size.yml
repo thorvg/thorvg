@@ -21,6 +21,7 @@ jobs:
             key: x86_64-gcc
             runs_on: ubuntu-24.04
             extra_packages: 'libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
+            engines: 'all'
             cc: gcc
             cxx: g++
             c_args: ''
@@ -32,6 +33,7 @@ jobs:
             key: x86_64-clang
             runs_on: ubuntu-24.04
             extra_packages: 'clang lld libomp-dev libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
+            engines: 'all'
             cc: clang
             cxx: clang++
             c_args: ''
@@ -40,10 +42,13 @@ jobs:
             cpp_link_args: ''
 
           # x86 32-bit 
+          # wgpu-native currently does not ship a 32-bit Linux build,
+          # so the wg engine is excluded from this config.
           - label: x86 gcc (32-bit)
             key: x86-gcc
             runs_on: ubuntu-24.04
             extra_packages: 'gcc-multilib g++-multilib'
+            engines: 'cpu, gl'
             cc: gcc
             cxx: g++
             c_args: '-m32'
@@ -56,6 +61,7 @@ jobs:
             key: arm64-clang
             runs_on: ubuntu-24.04-arm
             extra_packages: 'clang lld libomp-dev libturbojpeg0-dev libpng-dev libwebp-dev libgles-dev'
+            engines: 'all'
             cc: clang
             cxx: clang++
             c_args: ''
@@ -112,9 +118,15 @@ jobs:
 
         sudo chown -R "$USER:$USER" "$APT_CACHE_DIR"
 
+    - name: Install wgpu_native
+      if: contains(matrix.engines, 'all') || contains(matrix.engines, 'wg')
+      run: |
+        bash .github/workflows/install_wgpu_native.sh
+
     # Build both revisions, strip, and collect report files per matrix entry.
     - name: Build and collect sizes
       env:
+        ENGINES: ${{ matrix.engines }}
         CC: ${{ matrix.cc }}
         CXX: ${{ matrix.cxx }}
         C_ARGS: ${{ matrix.c_args }}
@@ -130,7 +142,7 @@ jobs:
           local src_dir="$1" build_dir="$2"
           local meson_args=(
             -Dloaders="all"
-            -Dengines="cpu, gl"
+            -Dengines="$ENGINES"
             -Dsavers="all"
             -Dbindings="capi"
             -Dstatic=true
