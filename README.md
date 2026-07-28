@@ -165,7 +165,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
     - [C++ Examples](#c-examples)
     - [Playground](#playground)
   - [Tools](#tools)
-    - [ThorVG Viewer](#thorvg-viewer)
+    - [ThorVG View](#thorvg-view)
     - [VS Code LiveView](#vs-code-liveview)
     - [Lottie to GIF](#lottie-to-gif)
     - [SVG to PNG](#svg-to-png)
@@ -540,15 +540,15 @@ The [ThorVG Playground](https://www.thorvg.org/playground) is an interactive web
 <br />
 <br />
 ## Tools
-### ThorVG Viewer
-ThorVG provides a resource verification tool for the ThorVG engine. The [ThorVG viewer](https://thorvg.github.io/thorvg.viewer/) enables instant rendering directly in the web browser using the ThorVG WebAssembly binary, allowing real-time editing of vector elements. It does not upload your resources to any external server and supports exporting to formats such as GIF, ensuring that designer copyrights remain protected.</br>
+### ThorVG View
+ThorVG provides a resource verification tool for the ThorVG engine. The [ThorVG view](https://thorvg.github.io/thorvg.view/) enables instant rendering directly in the web browser using the ThorVG WebAssembly binary, allowing real-time editing of vector elements. It does not upload your resources to any external server and supports exporting to formats such as GIF, ensuring that designer copyrights remain protected.</br>
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg/assets/3711518/edadcc5e-3bbf-489d-a9a1-9570079c7d55"/>
 </p>
 
 ### VS Code LiveView
-A [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=thorvg.thorvg-liveview) that integrates ThorVG Viewer for previewing Lottie animations and SVG files directly inside the editor.
+A [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=thorvg.thorvg-liveview) that integrates ThorVG View for previewing Lottie animations and SVG files directly inside the editor.
 </br>
 
 <p align="center">
@@ -631,7 +631,7 @@ ThorVG is designed to be portable and extensible across various platforms. The f
 * [ThorVG Janitor](https://github.com/thorvg/thorvg.janitor) - A demo game showcasing ThorVG’s real-time rendering features.
 * [ThorVG Swift](https://github.com/thorvg/thorvg.swift) - Swift bindings for rendering vector graphics with ThorVG.
 * [ThorVG Unity](https://github.com/thorvg/thorvg.unity) – ThorVG integration for Unity using C#.
-* [ThorVG Viewer](https://github.com/thorvg/thorvg.viewer) - A browser-based viewer for ThorVG using WebAssembly.
+* [ThorVG View](https://github.com/thorvg/thorvg.view) - A browser-based preview tool for ThorVG.
 * [ThorVG VS Code](https://github.com/thorvg/thorvg.vscode) - ThorVG VS Code Extensions.
 * [ThorVG Web](https://github.com/thorvg/thorvg.web) - WebAssembly-based integration of ThorVG for web apps.
 
@@ -669,6 +669,7 @@ ThorVG provides flexible image loading capabilities, supporting both static and 
 
 The following outlines the dependencies for these optional features:
 
+* **CPU Engine**: [OpenMP 2.0](https://www.openmp.org/) (optional)
 * **GL Engine**: [OpenGL 3.3](https://www.khronos.org/opengl/), [OpenGL ES 3.0](https://www.khronos.org/opengles/), or a browser with [WebGL2](https://www.khronos.org/webgl/) support.
 * **WG Engine**: [wgpu-native v29.0.1.1](https://github.com/gfx-rs/wgpu-native) or a browser with [WebGPU](https://www.w3.org/TR/webgpu/) support.
 * **PNG Loader** (external): [libpng](https://github.com/pnggroup/libpng)
