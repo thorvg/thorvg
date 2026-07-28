@@ -32,7 +32,7 @@ struct LoaderMgr
 {
     static bool init();
     static bool term();
-    static Loader* loader(const char* filename, const LoaderOps* ops, bool* invalid);
+    static Loader* loader(const char* filename, const LoaderOps* ops, bool& invalid);
     static Loader* loader(const char* data, uint32_t size, const char* mimeType, const LoaderOps* ops, bool copy);
     static Loader* loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy);
     static Loader* loader(const char* name, const char* data, uint32_t size, const char* mimeType, const LoaderOps* ops, bool copy);
