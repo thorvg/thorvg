@@ -75,7 +75,7 @@ private:
     template<typename T> void parseSlotProperty(T& prop);
 
     LottieObject* parseObject(const char* type);
-    LottieObject* parseAsset();
+    LottieObject* parseAsset(LottieProperty::Type type = LottieProperty::Type::Invalid);
     void parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
     void parseAudio(LottieAudio* audio, const char* data, const char* subPath, bool embedded);
     void parseVolume(LottieLayer* layer);

@@ -162,6 +162,14 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
         REQUIRE(animation->apply(id9) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
         REQUIRE(animation->del(id9) == Result::Success);
+
+        //Slot Test 7: Image without the dimensions
+        const char* imageSlot2 = R"({"path_img":{"p":{"id":"image_0","u":"images/","p":"logo.png","e":0}}})";
+        auto id10 = animation->gen(imageSlot2);
+        REQUIRE(id10 > 0);
+        REQUIRE(animation->apply(id10) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->del(id10) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

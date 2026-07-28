@@ -948,8 +948,8 @@ struct LottieBitmap : LottieProperty
     Picture *picture = nullptr;
     char* mimeType = nullptr;
     uint32_t size = 0;
-    float width = 0.0f;
-    float height = 0.0f;
+    float width = -1.0f;
+    float height = -1.0f;
 
     LottieBitmap() : LottieProperty(LottieProperty::Type::Image) {}
 
