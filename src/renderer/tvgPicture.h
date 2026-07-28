@@ -336,6 +336,16 @@ struct PictureImpl : Picture
     {
         if (loader) loader->access(cb);
     }
+
+    template<class T>
+    T* fetch(FileType expect)
+    {
+        if (loader) {
+            if (loader->type == expect) return static_cast<T*>(loader);
+            TVGERR("RENDERER", "Invalid loaded data type (expected: %d, got: %d)", (int)expect, (int)loader->type);
+        }
+        return nullptr;
+    }
 };
 
 }

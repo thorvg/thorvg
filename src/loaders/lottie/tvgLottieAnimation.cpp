@@ -30,7 +30,7 @@ LottieAnimation::LottieAnimation() = default;
 LottieAnimation::~LottieAnimation() = default;
 
 #define FETCH_LOADER(RET_VAL) \
-    auto loader = static_cast<LottieLoader*>(tvg::to<PictureImpl>(pImpl->picture)->loader); \
+    auto loader = tvg::to<PictureImpl>(pImpl->picture)->fetch<LottieLoader>(FileType::Lot); \
     if (!loader) return RET_VAL
 
 
@@ -101,7 +101,7 @@ Result LottieAnimation::tween(float progress) noexcept
 Result LottieAnimation::tweenTo(float to) noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
-    if (static_cast<LottieLoader*>(loader)->tweenTo(to)) return Result::Success;
+    if (loader->tweenTo(to)) return Result::Success;
     return Result::InsufficientCondition;
 }
 
