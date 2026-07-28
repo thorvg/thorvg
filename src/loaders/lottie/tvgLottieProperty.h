@@ -935,6 +935,7 @@ struct LottieTextDoc : LottieProperty
 
 struct LottieAsset : LottieProperty, AssetSrc
 {
+    bool sized = false;
     float width = 0.0f;
     float height = 0.0f;
 
@@ -968,8 +969,11 @@ struct LottieAsset : LottieProperty, AssetSrc
         }
         size = rhs.size;
         external = rhs.external;
-        width = rhs.width;
-        height = rhs.height;
+        sized = rhs.sized;
+        if (sized) {
+            width = rhs.width;
+            height = rhs.height;
+        }
     }
 };
 

@@ -1028,14 +1028,15 @@ void LottieParser::parseAudio(LottieAudio* audio, const char* data, const char* 
     parseAssetSource(audio->src, data, subPath, "data:audio/", embedded, audio->src.external);
 }
 
-void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, float width, float height, bool embedded)
+void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, float width, float height, bool sized, bool embedded)
 {
     if (!parseAssetSource(image->asset, data, subPath, "data:image/", embedded, image->asset.external)) return;
+    image->asset.sized = sized;
     image->asset.width = width;
     image->asset.height = height;
 }
 
-LottieObject* LottieParser::parseAsset()
+LottieObject* LottieParser::parseAsset(LottieProperty::Type type)
 {
     enterObject();
 
@@ -1048,6 +1049,7 @@ LottieObject* LottieParser::parseAsset()
     const char* subPath = nullptr;
     float width = 0.0f;
     float height = 0.0f;
+    auto sized = false;
     auto embedded = false;
 
     while (auto key = nextObjectKey()) {
@@ -1062,17 +1064,18 @@ LottieObject* LottieParser::parseAsset()
         else if (KEY_AS("layers")) obj = parseLayers();
         else if (KEY_AS("u")) subPath = getString();
         else if (KEY_AS("p")) data = getString();
-        else if (KEY_AS("w")) width = getFloat();
-        else if (KEY_AS("h")) height = getFloat();
+        else if (KEY_AS("w")) { width = getFloat(); sized = true; }
+        else if (KEY_AS("h")) { height = getFloat(); sized = true; }
         else if (KEY_AS("e")) embedded = getInt();
         else if (KEY_AS("sid")) sid = getString();
         else skip();
     }
     if (data) {
-        if (!strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
-            obj = new LottieImage;
-            parseImage(static_cast<LottieImage*>(obj), data, subPath, width, height, embedded);
-            if (sid) registerSlot(static_cast<LottieImage*>(obj), sid, static_cast<LottieImage*>(obj)->asset);
+        if (type == LottieProperty::Type::Image || !strncmp(data, "data:image/", 11) || sized) {
+            auto asset = new LottieImage;
+            parseImage(asset, data, subPath, width, height, sized, embedded);
+            if (sid) registerSlot(asset, sid, asset->asset);
+            obj = asset;
         } else if (!strncmp(data, "data:audio/", 11) || !embedded) {
             obj = new LottieAudio;
             parseAudio(static_cast<LottieAudio*>(obj), data, subPath, embedded);
@@ -1724,7 +1727,7 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
         case LottieProperty::Type::Image: {
             LottieObject* obj = nullptr;
             while (auto key = nextObjectKey()) {
-                if (KEY_AS("p")) obj = parseAsset();
+                if (KEY_AS("p")) obj = parseAsset(slot->type);
                 else skip();
             }
             if (!obj) return nullptr;
