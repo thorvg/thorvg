@@ -136,11 +136,12 @@ struct PictureImpl : Picture
     {
         if (vector || bitmap) return Result::InsufficientCondition;
 
-        bool invalid;  //Invalid Path
         PictureOps ops = {resolver, nullptr, accessible};
-        auto loader = LoaderMgr::loader(filename, &ops, &invalid);
+        auto invalid = false;  // invalid path
+        auto loader = LoaderMgr::loader(filename, &ops, invalid);
+        if (loader) return load(loader);
         if (invalid) return Result::InvalidArguments;
-        return load(loader);
+        return Result::NonSupport;
     }
 
     Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
