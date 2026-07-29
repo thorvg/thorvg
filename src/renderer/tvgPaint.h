@@ -54,6 +54,9 @@ struct Paint::Impl
         Matrix m;                 //input matrix
         float degree;             //rotation degree
         float scale;              //scale factor
+        float tx = 0.0f, ty = 0.0f;      //user-requested translate (raw, independent of origin)
+        float originOffset = 0.0f;       //extra offset applied when origin != TopLeft (e.g. local height for BottomLeft)
+        Origin origin = Origin::TopLeft; //origin reference point
         bool overriding;          //user transform?
 
         void update()
@@ -68,6 +71,15 @@ struct Paint::Impl
             m.e33 = 1.0f;
             tvg::scale(&m, {scale, scale});
             tvg::rotate(&m, degree);
+
+            //flip the linear (rotate/scale) block for a bottom-left origin
+            if (origin == Origin::BottomLeft) {
+                m.e21 = -m.e21;
+                m.e22 = -m.e22;
+            }
+
+            m.e13 = tx;
+            m.e23 = ty + originOffset;
         }
     } tr;
     RenderUpdateFlag renderFlag = RenderUpdateFlag::None;
@@ -240,6 +252,10 @@ struct Paint::Impl
         tvg::identity(&tr.m);
         tr.degree = 0.0f;
         tr.scale = 1.0f;
+        tr.tx = 0.0f;
+        tr.ty = 0.0f;
+        tr.origin = Origin::TopLeft;
+        tr.originOffset = 0.0f;
         tr.overriding = false;
 
         parent = nullptr;
@@ -273,9 +289,20 @@ struct Paint::Impl
     bool translate(float x, float y)
     {
         if (tr.overriding) return false;
-        if (tvg::equal(x, tr.m.e13) && tvg::equal(y, tr.m.e23)) return true;
-        tr.m.e13 = x;
-        tr.m.e23 = y;
+        if (tvg::equal(x, tr.tx) && tvg::equal(y, tr.ty)) return true;
+        tr.tx = x;
+        tr.ty = y;
+        mark(RenderUpdateFlag::Transform);
+
+        return true;
+    }
+
+    bool origin(Origin position, float offset)
+    {
+        if (tr.overriding) return false;
+        if (tr.origin == position && tvg::equal(offset, tr.originOffset)) return true;
+        tr.origin = position;
+        tr.originOffset = offset;
         mark(RenderUpdateFlag::Transform);
 
         return true;

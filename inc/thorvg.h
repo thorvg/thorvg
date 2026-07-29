@@ -322,6 +322,18 @@ enum struct Type : uint8_t
     RadialGradient         ///< RadialGradient class
 };
 
+/**
+ * @brief Enumeration specifying the origin reference point of a paint's coordinate system.
+ * 
+ * @see Paint::origin()
+ * 
+ * @since 1.2
+ */
+enum struct Origin : uint8_t
+{
+    TopLeft = 0, ///< Default. Origin at the top-left corner, with the horizontal and vertical axes pointing right and down.
+    BottomLeft  ///< Origin at the bottom-left corner, with the vertical axis pointing up.
+};
 
 /**
  * @brief A data structure representing a point in two-dimensional space.
@@ -777,6 +789,21 @@ struct TVG_API Paint
      * @since 1.0
      */
     static void rel(Paint* paint) noexcept;
+
+    /**
+     * @brief Sets the origin reference point for the paint's coordinate system.
+     *
+     * By default, the origin is at the top-left corner of the paint,
+     * with the horizontal and vertical axes pointing right and down.
+     *
+     * @param[in] position The origin position to apply. The default is @c Origin::TopLeft.
+     *
+     * @retval Result::InsufficientCondition in case a custom transform is applied.
+     * @see Paint::transform()
+     *
+     * @since 1.2
+     */
+    Result origin(Origin position) noexcept;
 
 protected:
     virtual ~Paint();

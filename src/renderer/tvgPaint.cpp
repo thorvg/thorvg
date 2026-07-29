@@ -472,3 +472,18 @@ bool Paint::visible() const noexcept
 {
     return !pImpl->hidden;
 }
+
+Result Paint::origin(Origin position) noexcept
+{
+    auto offset = 0.0f;
+
+    if (position == Origin::BottomLeft) {
+        Point pt4[4];
+        auto pm = tvg::identity();
+        if (!pImpl->bounds(pt4, &pm, false)) return Result::InsufficientCondition;
+        offset = pt4[3].y - pt4[0].y;  //local height (top-left → bottom-left)
+    }
+
+    if (pImpl->origin(position, offset)) return Result::Success;
+    return Result::InsufficientCondition;
+}
