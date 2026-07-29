@@ -1,13 +1,18 @@
 media_inc = ['.']
 system = host_machine.system()
 
-media_dep = []
-
 source_file = [
    'tvgMediaLoader.h',
-   'tvgMediaLoader.cpp',
    'tvgVideo.cpp'
 ]
+
+media_dep = []
+if system == 'darwin' or system == 'ios'
+    subdir('apple')
+else
+    # Use the fallback factory when no platform-specific media backend is available.
+    source_file += ['tvgMediaLoader.cpp']
+endif
 
 subloader_dep += [declare_dependency(
     dependencies : media_dep,
