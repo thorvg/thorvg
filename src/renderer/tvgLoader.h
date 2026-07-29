@@ -101,7 +101,7 @@ struct Loader
     virtual bool open(const char* path, const LoaderOps* ops) { return false; }
     virtual bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) { return false; }
     virtual bool resize(Paint* paint, float w, float h) { return false; }
-    virtual void sync() {};  // finish immediately if any async update jobs.
+    virtual bool sync() { return false; };  // finish immediately if any async update jobs, return true if something has been updated.
 
     virtual bool read()
     {

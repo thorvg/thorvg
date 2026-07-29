@@ -56,13 +56,12 @@ struct PictureImpl : Picture
 
     bool skip(RenderUpdateFlag flag)
     {
+        flag |= load();
         return (flag == RenderUpdateFlag::None);
     }
 
     bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
     {
-        load();
-
         auto pivot = Point{-origin.x * float(w), -origin.y * float(h)};
 
         if (bitmap) {
@@ -116,7 +115,7 @@ struct PictureImpl : Picture
     bool intersects(const RenderRegion& region, bool visibleOnly)
     {
         if (!impl.renderer) return false;
-        load();
+        impl.mark(load());
         if (impl.rd) return impl.renderer->intersectsImage(impl.rd, region);
         else if (vector) return PAINT(vector)->intersects(region, visibleOnly);
         return false;
@@ -178,7 +177,7 @@ struct PictureImpl : Picture
     {
         if (ret) TVGERR("RENDERER", "TODO: duplicate()");
 
-        load();
+        impl.mark(load());
 
         auto picture = Picture::gen();
         auto dup = to<PictureImpl>(picture);
@@ -206,7 +205,7 @@ struct PictureImpl : Picture
 
     AccessorIterator* iterator()
     {
-        load();
+        impl.mark(load());
 
         struct PictureIterator : AccessorIterator
         {
@@ -228,7 +227,7 @@ struct PictureImpl : Picture
     uint32_t* data(uint32_t* w, uint32_t* h)
     {
         //Try it, If not loaded yet.
-        load();
+        impl.mark(load());
 
         if (loader) {
             if (w) *w = static_cast<uint32_t>(loader->w);
@@ -241,12 +240,17 @@ struct PictureImpl : Picture
         else return nullptr;
     }
 
-    void load()
+    RenderUpdateFlag load()
     {
-        if (loader) {
-            if (vector) {
-                loader->sync();
-            } else if ((vector = loader->paint())) {
+        if (!loader) return RenderUpdateFlag::None;
+
+        // reload the next frame if any
+        if (vector || bitmap) {
+            // sync call must be guaranteed.
+            if (loader->sync() && bitmap) return RenderUpdateFlag::Image;
+        // load the first frame
+        } else {
+            if ((vector = loader->paint())) {
                 vector->ref();
                 PAINT(vector)->parent = this;
                 if (w != loader->w || h != loader->h) {
@@ -257,10 +261,12 @@ struct PictureImpl : Picture
                     loader->resize(vector, w, h);
                     resizing = false;
                 }
-            } else if (!bitmap) {
+            } else {
                 bitmap = loader->bitmap();
             }
         }
+        // animations updates the properties essentially. here update is not necessary.
+        return RenderUpdateFlag::None;
     }
 
     void needComposition(uint8_t opacity)
