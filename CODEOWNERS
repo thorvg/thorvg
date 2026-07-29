@@ -5,4 +5,5 @@
 /src/renderer/gpu_engine @wenjieshen
 /src/loaders/lottie @tinyjin @Nor-s
 /src/loaders/svg @JSUYA
+/src/loaders/png @Nor-s
 /.github/workflows @Nor-s
