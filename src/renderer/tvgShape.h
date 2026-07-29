@@ -96,8 +96,7 @@ struct ShapeImpl : Shape
 
     bool skip(RenderUpdateFlag flag)
     {
-        if (flag == RenderUpdateFlag::None) return true;
-        return false;
+        return (flag == RenderUpdateFlag::None);
     }
 
     bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, bool clipper)

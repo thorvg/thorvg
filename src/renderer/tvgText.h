@@ -142,8 +142,7 @@ struct TextImpl : Text
 
     bool skip(RenderUpdateFlag flag)
     {
-        if (flag == RenderUpdateFlag::None) return true;
-        return false;
+        return (flag == RenderUpdateFlag::None);
     }
 
     void wrapping(TextWrap mode)

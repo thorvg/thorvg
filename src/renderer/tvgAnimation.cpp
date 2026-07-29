@@ -40,7 +40,7 @@ Result Animation::frame(float no) noexcept
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
 
     if (!loader) return Result::InsufficientCondition;
-    if (!loader->animatable()) return Result::NonSupport;
+    if (!loader->playable) return Result::NonSupport;
 
     if (static_cast<AnimLoader*>(loader)->frame(no)) {
         PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
@@ -59,10 +59,7 @@ Picture* Animation::picture() const noexcept
 float Animation::curFrame() const noexcept
 {
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
-
-    if (!loader) return 0;
-    if (!loader->animatable()) return 0;
-
+    if (!loader || !loader->playable) return 0;
     return static_cast<AnimLoader*>(loader)->curFrame();
 }
 
@@ -70,10 +67,7 @@ float Animation::curFrame() const noexcept
 float Animation::totalFrame() const noexcept
 {
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
-
-    if (!loader) return 0;
-    if (!loader->animatable()) return 0;
-
+    if (!loader || !loader->playable) return 0;
     return static_cast<AnimLoader*>(loader)->totalFrame();
 }
 
@@ -81,10 +75,7 @@ float Animation::totalFrame() const noexcept
 float Animation::duration() const noexcept
 {
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
-
-    if (!loader) return 0;
-    if (!loader->animatable()) return 0;
-
+    if (!loader || !loader->playable) return 0;
     return static_cast<AnimLoader*>(loader)->duration();
 }
 
@@ -93,7 +84,7 @@ Result Animation::segment(float begin, float end) noexcept
 {
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
-    if (!loader->animatable()) return Result::NonSupport;
+    if (!loader->playable) return Result::NonSupport;
 
     return static_cast<AnimLoader*>(loader)->segment(begin, end);
 }
@@ -103,7 +94,7 @@ Result Animation::segment(float *begin, float *end) noexcept
 {
     auto loader = to<PictureImpl>(pImpl->picture)->loader;
     if (!loader) return Result::InsufficientCondition;
-    if (!loader->animatable()) return Result::NonSupport;
+    if (!loader->playable) return Result::NonSupport;
     if (!begin && !end) return Result::InvalidArguments;
 
     static_cast<AnimLoader*>(loader)->segment(begin, end);
