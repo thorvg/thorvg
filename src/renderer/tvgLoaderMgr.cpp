@@ -337,13 +337,25 @@ tvg::Loader* LoaderMgr::font(const char* name)
 {
     ScopedLock lock(_key);
     INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->type != FileType::Sfnt) continue;
-        if (loader->cached && tvg::equal(name, static_cast<FontLoader*>(loader)->name)) {
+        if (loader->type != FileType::Sfnt || !loader->cached) continue;
+        auto font = static_cast<FontLoader*>(loader);
+        if (tvg::equal(name, font->name) || (font->alias && tvg::equal(name, font->alias))) {
             ++loader->sharing;
             return loader;
         }
     }
     return nullptr;
+}
+
+void LoaderMgr::aliasing(Loader* loader, const char* name)
+{
+    if (!loader || !name || loader->type != FileType::Sfnt) return;
+
+    ScopedLock lock(_key);
+    auto font = static_cast<FontLoader*>(loader);
+    if (tvg::equal(name, font->name)) return;
+    tvg::free(font->alias);
+    font->alias = tvg::duplicate(name);
 }
 
 tvg::Loader* LoaderMgr::anyfont()
