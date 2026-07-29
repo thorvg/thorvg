@@ -3280,22 +3280,13 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
     SvgNode *node = nullptr, *parent = nullptr;
     attrs = xmlFindAttributesTag(content, length);
 
-    if (!attrs) {
-        //Parse the empty tag
-        attrs = content;
-        while ((attrs != nullptr) && *attrs != '>') attrs++;
-        if (empty) attrs--;
-    }
-
-    if (attrs) {
-        //Find out the tag name starting from content till sz length
-        sz = attrs - content;
-        while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
-        if ((unsigned)sz >= sizeof(tagName)) return;
-        strncpy(tagName, content, sz);
-        tagName[sz] = '\0';
-        attrsLength = length - sz;
-    }
+    //Find out the tag name starting from content till sz length
+    sz = attrs - content;
+    while ((sz > 0) && (isspace((unsigned char)content[sz - 1]))) sz--;
+    if ((unsigned)sz >= sizeof(tagName)) return;
+    strncpy(tagName, content, sz);
+    tagName[sz] = '\0';
+    attrsLength = length - sz;
 
     if (ctx->gradientStack.count > 0 && !ctx->gradientStack.last()) {
         if (!empty) ctx->gradientStack.push(nullptr);
@@ -3789,20 +3780,12 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgParserContext* ctx, const ch
     int attrsLength = 0;
     attrs = xmlFindAttributesTag(content, length);
 
-    if (!attrs) {
-        //Parse the empty tag
-        attrs = content;
-        while ((attrs != nullptr) && *attrs != '>') attrs++;
-    }
-
-    if (attrs) {
-        sz = attrs - content;
-        while ((sz > 0) && (isspace((unsigned char)content[sz - 1]))) sz--;
-        if ((unsigned)sz >= sizeof(tagName)) return false;
-        strncpy(tagName, content, sz);
-        tagName[sz] = '\0';
-        attrsLength = length - sz;
-    }
+    sz = attrs - content;
+    while ((sz > 0) && (isspace((unsigned char)content[sz - 1]))) sz--;
+    if ((unsigned)sz >= sizeof(tagName)) return false;
+    strncpy(tagName, content, sz);
+    tagName[sz] = '\0';
+    attrsLength = length - sz;
 
     if ((method = _findGroupFactory(tagName))) {
         if (!ctx->doc) {
