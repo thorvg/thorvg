@@ -49,6 +49,10 @@
     #include "tvgLottieLoader.h"
 #endif
 
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    #include "tvgMediaLoader.h"
+#endif
+
 #include "tvgRawLoader.h"
 
 uintptr_t HASH_KEY(const char* data)
@@ -87,6 +91,9 @@ static tvg::Loader* _find(FileType type)
 #ifdef THORVG_WEBP_LOADER_SUPPORT
         case FileType::Webp: return new WebpLoader;
 #endif
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+        case FileType::Media: return MediaLoader::gen();
+#endif
         case FileType::Raw: return new RawLoader;
         default: break;
     }
@@ -100,6 +107,7 @@ static tvg::Loader* _find(FileType type)
             case FileType::Png:  return "PNG";
             case FileType::Jpg:  return "JPG";
             case FileType::Webp: return "WEBP";
+            case FileType::Media: return "MEDIA";
             case FileType::Raw:  return "RAW";
             case FileType::Gif:  return "GIF";
             default:             return "???";
@@ -121,6 +129,7 @@ static tvg::Loader* _findByPath(const char* filename, bool& invalid)
         if (!strcmp(ext, "png")) return _find(FileType::Png);
         if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
         if (!strcmp(ext, "webp")) return _find(FileType::Webp);
+        if (!strcmp(ext, "mp4")) return _find(FileType::Media);  // TODO: add common media formats        
     }
     invalid = true;  // invalid file path outside ThorVG's scope.
     return nullptr;
@@ -139,6 +148,7 @@ static FileType _convert(const char* mimeType)
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
     else if (!strcmp(mimeType, "jpg") || !strcmp(mimeType, "jpeg")) type = FileType::Jpg;
     else if (!strcmp(mimeType, "webp")) type = FileType::Webp;
+    else if (!strcmp(mimeType, "mp4")) type = FileType::Media;  // TODO: add common media formats
     else if (!strcmp(mimeType, "raw")) type = FileType::Raw;
     else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType);
 
