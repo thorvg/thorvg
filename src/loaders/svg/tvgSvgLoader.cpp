@@ -1061,6 +1061,7 @@ static void _handleFilterAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, c
 
 static void _handleMaskTypeAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
+    if (node->type != SvgNodeType::Mask) return;
     node->node.mask.type = _toMaskType(value);
 }
 
@@ -3395,6 +3396,8 @@ static void _svgLoaderParserText(SvgParserContext* ctx, const char* content, uns
 {
     auto node = ctx->parser->node;
 
+    if (node->type != SvgNodeType::Text && node->type != SvgNodeType::Tspan) return;
+
     if (_hasTspanChild(node)) {
         auto run = _createNode(node, SvgNodeType::Tspan);
         run->node.text.x = FLT_MAX;
@@ -3576,8 +3579,8 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
 static void _cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style)
 {
     ARRAY_FOREACH(p, postponeds) {
-        auto nodeIdPair = *p;
-        _cssApplyClass(nodeIdPair.node, nodeIdPair.id, style);
+        auto node = p->node;
+        _cssApplyClass(node, node->style->cssClass, style);
     }
 }
 
