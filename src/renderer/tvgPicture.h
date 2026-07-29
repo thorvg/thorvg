@@ -56,7 +56,8 @@ struct PictureImpl : Picture
 
     bool skip(RenderUpdateFlag flag)
     {
-        return (flag == RenderUpdateFlag::None);
+        // The media have its own playback update
+        return !loader || (flag == RenderUpdateFlag::None && loader->type != FileType::Media);
     }
 
     bool update(RenderMethod* renderer, const Matrix& transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, TVG_UNUSED bool clipper)
@@ -307,7 +308,8 @@ struct PictureImpl : Picture
     RenderRegion bounds()
     {
         if (vector) return vector->pImpl->bounds();
-        return impl.renderer->region(impl.rd);
+        else if (impl.renderer) return impl.renderer->region(impl.rd);
+        return {};
     }
 
     Result load(Loader* loader)
