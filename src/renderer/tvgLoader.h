@@ -150,10 +150,10 @@ struct ImageLoader : Loader
 
     float w = 0, h = 0;  // default image size
     RenderSurface surface;
+    bool playable = false;  // true if this loader supports playback
 
-    ImageLoader(FileType type) : Loader(type) {}
+    ImageLoader(FileType type, bool playable = false) : Loader(type), playable(playable) {}
 
-    virtual bool animatable() { return false; }  // true if this loader supports animation.
     virtual Paint* paint() { return nullptr; }
     virtual const AccessorEntity* access(uint32_t id) { return nullptr; }
     virtual void access(AccessorCallback& cb) {}
@@ -170,7 +170,7 @@ struct AnimLoader : ImageLoader
     float segmentBegin = 0.0f;
     float segmentEnd;  // initialize the value with the total frame number
 
-    AnimLoader(FileType type) : ImageLoader(type) {}
+    AnimLoader(FileType type) : ImageLoader(type, true) {}
     virtual ~AnimLoader() {}
 
     virtual bool frame(float no) = 0;  // set the current frame number
@@ -184,8 +184,6 @@ struct AnimLoader : ImageLoader
         if (begin) *begin = segmentBegin;
         if (end) *end = segmentEnd;
     }
-
-    bool animatable() override { return true; }
 };
 
 struct FontMetrics
