@@ -543,5 +543,5 @@ const char* xmlFindAttributesTag(const char* buf, unsigned bufLength)
         }
     }
 
-    return nullptr;
+    return itrEnd;
 }
