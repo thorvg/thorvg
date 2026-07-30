@@ -22,28 +22,6 @@
 
 #include "tvgWgSolidBatch.h"
 
-struct WgSolidBatchTask : WgRenderTask
-{
-    Array<WgRenderDataShape*> shapes;
-    WgSolidBatchRange range{};
-
-    WgSolidBatchTask(WgRenderDataShape* first, WgRenderDataShape* second) : shapes{2}
-    {
-        shapes.push(first);
-        shapes.push(second);
-    }
-
-    void stage(WgCompositor& compositor) override
-    {
-        compositor.requestSolidBatch(shapes, range);
-    }
-
-    void run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder) override
-    {
-        compositor.renderSolidBatch(range);
-    }
-};
-
 static inline bool eligible(const WgRenderDataShape* renderData, BlendMethod blendMethod)
 {
     if (blendMethod != BlendMethod::Normal) return false;
@@ -75,7 +53,7 @@ static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgRenderDataShape
 static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, WgRenderDataShape* first, WgRenderDataShape* renderData, Array<WgRenderTask*>& renderTaskList)
 {
     // Tasks are staged only after the tree is complete, so replacing its tail is safe.
-    auto batchTask = new WgSolidBatchTask(first, renderData);
+    auto batchTask = new WgBatchTask(first, renderData, false);
     sceneTask->children.last() = batchTask;
     renderTaskList.last() = batchTask;
     delete task;
@@ -85,7 +63,7 @@ static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, 
 
 static inline void append(WgRenderTask* task, WgRenderDataShape* renderData)
 {
-    static_cast<WgSolidBatchTask*>(task)->shapes.push(renderData);
+    static_cast<WgBatchTask*>(task)->shapes.push(renderData);
 }
 
 bool WgSolidBatch::draw(WgSceneTask* sceneTask, WgRenderDataShape* renderData, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
