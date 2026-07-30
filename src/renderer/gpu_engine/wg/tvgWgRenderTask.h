@@ -25,15 +25,17 @@
  
 #include "tvgWgCompositor.h"
 
-// base class for any renderable objects 
-struct WgRenderTask {
+// base class for any renderable objects
+struct WgRenderTask
+{
     virtual ~WgRenderTask() {}
     virtual void stage(WgCompositor& compositor) = 0;
     virtual void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) = 0;
 };
 
 // task for single shape rendering
-struct WgPaintTask: public WgRenderTask {
+struct WgPaintTask : WgRenderTask
+{
     // shape render properties
     WgRenderDataPaint* renderData{};
     BlendMethod blendMethod{};
@@ -46,9 +48,21 @@ struct WgPaintTask: public WgRenderTask {
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
 };
 
+struct WgBatchTask : WgRenderTask
+{
+    Array<WgRenderDataShape*> shapes;
+    WgSolidBatchRange solidRange;
+    WgStencilBatchRange stencilRange;
+    bool stencilBatch{};
+
+    WgBatchTask(WgRenderDataShape* first, WgRenderDataShape* second, bool stencilBatch);
+    void stage(WgCompositor& compositor) override;
+    void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
+};
+
 // task for scene rendering with blending, composition and effect
-struct WgSceneTask: public WgRenderTask {
-public:
+struct WgSceneTask : WgRenderTask
+{
     // parent scene (nullptr for root scene)
     WgSceneTask* parent{};
     // children can be shapes or scenes tasks
@@ -68,7 +82,7 @@ public:
     void stage(WgCompositor& compositor) override;
     // run all, including all shapes drawing, blending, composition and effect
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
-private:
+
     void runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
     void runEffect(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
 };

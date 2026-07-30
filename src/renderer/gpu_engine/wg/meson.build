@@ -11,6 +11,7 @@ source_file = [
     'tvgWgShaderSrc.h',
     'tvgWgShaderTypes.h',
     'tvgWgSolidBatch.h',
+    'tvgWgStencilBatch.h',
     'tvgWgTextureMgr.h',
     'tvgWgTessellator.h',
     'tvgWgBindGroups.cpp',
@@ -25,6 +26,7 @@ source_file = [
     'tvgWgShaderSrc.cpp',
     'tvgWgShaderTypes.cpp',
     'tvgWgSolidBatch.cpp',
+    'tvgWgStencilBatch.cpp',
     'tvgWgTextureMgr.cpp',
     'tvgWgTessellator.cpp'
 ]
