@@ -227,6 +227,7 @@ bool WgRenderer::preRender()
     if (mContext.invalid()) return false;
 
     mSolidBatch = {};
+    mStencilBatch = {};
     mCompositor.reset(mContext);
 
     assert(mRenderTargetStack.count == 0);
@@ -254,6 +255,7 @@ bool WgRenderer::renderShape(RenderData data)
     WgSceneTask* sceneTask = mSceneTaskStack.last();
 
     if (mSolidBatch.draw(sceneTask, renderData, mBlendMethod, mRenderTaskList)) return true;
+    if (mStencilBatch.draw(sceneTask, renderData, mBlendMethod, mRenderTaskList)) return true;
 
     WgPaintTask* paintTask = new WgPaintTask(renderData, mBlendMethod);
     sceneTask->children.push(paintTask);

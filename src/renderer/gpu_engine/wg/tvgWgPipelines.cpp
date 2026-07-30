@@ -349,6 +349,13 @@ void WgPipelines::initialize(WgContext& context)
         layout_solid, vertexBufferLayoutsSolidBatch, 2,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
         depthStencilStateScene, multisampleState);
+    // render pipeline solid stencil batch cover (per-vertex color)
+    solid_stencil_batch = createRenderPipeline(
+        context.device, "The render pipeline solid stencil batch cover",
+        shader_solid, "vs_main", "fs_main",
+        layout_solid, vertexBufferLayoutsSolidBatch, 2,
+        WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
+        depthStencilStateShape, multisampleState);
     // render pipeline radial (no stencil)
     radial_conv = createRenderPipeline(
         context.device, "The render pipeline radial",
@@ -568,6 +575,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releaseRenderPipeline(image);
     releaseRenderPipeline(linear_conv);
     releaseRenderPipeline(radial_conv);
+    releaseRenderPipeline(solid_stencil_batch);
     releaseRenderPipeline(solid_batch);
     releaseRenderPipeline(solid_conv);
     releaseRenderPipeline(linear);
