@@ -29,7 +29,8 @@
 
 struct WgTextureMgr;
 
-struct WgImageData {
+struct WgImageData
+{
     WGPUTexture texture{};
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
@@ -144,14 +145,28 @@ public:
     void release(WgContext& context);
 };
 
-struct WgSolidBatchRange
+struct WgGeometryRange
 {
     size_t vertexOffset{};
     size_t indexOffset{};
-    size_t colorOffset{};
     uint32_t vertexCount{};
     uint32_t indexCount{};
+};
+
+struct WgSolidBatchRange : WgGeometryRange
+{
+    size_t colorOffset{};
     RenderRegion viewport{};
+};
+
+struct WgStencilBatchRange
+{
+    WgGeometryRange stencil{};
+    WgGeometryRange cover{};
+    size_t colorOffset{};
+    RenderRegion viewport{};
+    FillRule fillRule{};
+    bool solidOnly{};
 };
 
 // gaussian blur, drop shadow, fill, tint, tritone
@@ -192,6 +207,8 @@ class WgStageBufferGeometry {
 private:
     Array<uint8_t> vbuffer;
     Array<uint8_t> ibuffer;
+    void appendBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgGeometryRange& range, WgMeshData WgRenderDataShape::*meshMember);
+
 public:
     WGPUBuffer vbuffer_gpu{};
     WGPUBuffer ibuffer_gpu{};
@@ -200,6 +217,7 @@ public:
     void append(WgRenderDataShape* renderDataShape);
     void append(WgRenderDataPicture* renderDataPicture);
     void appendSolidBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range);
+    void appendStencilBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgStencilBatchRange& range);
     void initialize(WgContext& context){};
     void release(WgContext& context);
     void clear();

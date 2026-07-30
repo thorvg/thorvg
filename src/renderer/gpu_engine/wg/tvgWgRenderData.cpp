@@ -519,11 +519,25 @@ void WgStageBufferGeometry::append(WgRenderDataPicture* renderDataPicture)
 
 void WgStageBufferGeometry::appendSolidBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range)
 {
-    uint32_t vertexCount = 0;
-    uint32_t indexCount = 0;
+    appendBatch(renderDataShapes, range, &WgRenderDataShape::meshShape);
+    if (colors.vbuffer.reserved < colors.vbuffer.count + range.vertexCount)
+        colors.vbuffer.grow(std::max(range.vertexCount, colors.vbuffer.reserved));
+    range.colorOffset = colors.vbuffer.count * sizeof(RenderColor);
 
     ARRAY_FOREACH(shape, renderDataShapes) {
         const auto& mesh = (*shape)->meshShape;
+        colors.appendRepeated((*shape)->solidShape.packedColor(), mesh.vbuffer.count);
+    }
+}
+
+void WgStageBufferGeometry::appendBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgGeometryRange& range, WgMeshData WgRenderDataShape::*meshMember)
+{
+    assert(renderDataShapes.count > 1);
+
+    uint32_t vertexCount = 0;
+    uint32_t indexCount = 0;
+    ARRAY_FOREACH(p, renderDataShapes) {
+        const auto& mesh = (*p)->*meshMember;
         vertexCount += mesh.vbuffer.count;
         indexCount += mesh.ibuffer.count;
     }
@@ -535,21 +549,17 @@ void WgStageBufferGeometry::appendSolidBatch(const Array<WgRenderDataShape*>& re
         vbuffer.grow(std::max(vertexBytes, vbuffer.reserved));
     if (ibuffer.reserved < ibuffer.count + indexBytes)
         ibuffer.grow(std::max(indexBytes, ibuffer.reserved));
-    if (colors.vbuffer.reserved < colors.vbuffer.count + vertexCount)
-        colors.vbuffer.grow(std::max(vertexCount, colors.vbuffer.reserved));
 
     range.vertexOffset = vbuffer.count;
     range.indexOffset = ibuffer.count;
-    range.colorOffset = colors.vbuffer.count * sizeof(RenderColor);
     range.vertexCount = vertexCount;
     range.indexCount = indexCount;
 
     uint32_t baseVertex = 0;
     auto vertexDst = vbuffer.data + vbuffer.count;
     auto indexDst = ibuffer.data + ibuffer.count;
-
-    ARRAY_FOREACH(shape, renderDataShapes) {
-        const auto& mesh = (*shape)->meshShape;
+    ARRAY_FOREACH(p, renderDataShapes) {
+        const auto& mesh = (*p)->*meshMember;
         const uint32_t meshVertexBytes = mesh.vbuffer.count * sizeof(Point);
         memcpy(vertexDst, mesh.vbuffer.data, meshVertexBytes);
         vertexDst += meshVertexBytes;
@@ -561,10 +571,15 @@ void WgStageBufferGeometry::appendSolidBatch(const Array<WgRenderDataShape*>& re
         }
 
         baseVertex += mesh.vbuffer.count;
-        colors.appendRepeated((*shape)->solidShape.packedColor(), mesh.vbuffer.count);
     }
     vbuffer.count += vertexBytes;
     ibuffer.count += indexBytes;
+}
+
+void WgStageBufferGeometry::appendStencilBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgStencilBatchRange& range)
+{
+    appendBatch(renderDataShapes, range.stencil, &WgRenderDataShape::meshShape);
+    appendBatch(renderDataShapes, range.cover, &WgRenderDataShape::meshBBox);
 }
 
 void WgStageBufferGeometry::release(WgContext& context)
@@ -616,8 +631,7 @@ void WgStageBufferSolidColor::appendRepeated(const RenderColor& value, uint32_t 
 
 void WgStageBufferSolidColor::flush(WgContext& context)
 {
-    if (vbuffer.count > 0)
-        context.allocateBufferVertex(vbuffer_gpu, vbuffer.data, vbuffer.count * sizeof(RenderColor));
+    if (vbuffer.count > 0) context.allocateBufferVertex(vbuffer_gpu, vbuffer.data, vbuffer.count * sizeof(RenderColor));
 }
 
 //***********************************************************************
