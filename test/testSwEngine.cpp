@@ -407,4 +407,57 @@ TEST_CASE("Intersection", "[tvgSwEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Trimpath Normalization", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        //binary-exact offsets so folded and reference pairs rasterize identically
+        auto render = [](float begin, float end) {
+            vector<uint32_t> buffer(100 * 100, 0);
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas);
+            REQUIRE(canvas->target(buffer.data(), 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
+
+            auto shape = Shape::gen();
+            REQUIRE(shape);
+            REQUIRE(shape->appendCircle(50, 50, 40, 40) == Result::Success);
+            REQUIRE(shape->strokeFill(255, 255, 255, 255) == Result::Success);
+            REQUIRE(shape->strokeWidth(4) == Result::Success);
+            REQUIRE(shape->trimpath(begin, end) == Result::Success);
+            REQUIRE(canvas->add(shape) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+            return buffer;
+        };
+
+        auto pixels = [](const vector<uint32_t>& buffer) {
+            auto cnt = 0u;
+            for (auto px : buffer) {
+                if (px > 0) ++cnt;
+            }
+            return cnt;
+        };
+
+        //regression: inputs within [-1, 2] behave as before
+        REQUIRE(render(1.25f, 1.5f) == render(0.25f, 0.5f));
+        REQUIRE(render(-0.75f, -0.5f) == render(0.25f, 0.5f));
+
+        //offsets beyond one period wrap instead of rendering nothing
+        auto wrapped = render(4.25f, 4.5f);
+        REQUIRE(pixels(wrapped) > 0);
+        REQUIRE(wrapped == render(0.25f, 0.5f));
+        REQUIRE(render(-5.75f, -5.5f) == render(0.25f, 0.5f));
+        //crossing the seam
+        REQUIRE(render(10.875f, 11.125f) == render(0.875f, 1.125f));
+
+        //a span of a full period or longer covers the entire path
+        //(compared against (1, 2) rather than (0, 1), since the latter disables
+        //trimming and draws a closed shape whose seam rasterizes differently)
+        auto full = render(16.0f, 18.5f);
+        REQUIRE(pixels(full) > pixels(wrapped));
+        REQUIRE(full == render(1.0f, 2.0f));
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
