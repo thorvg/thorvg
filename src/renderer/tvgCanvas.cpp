@@ -248,6 +248,36 @@ Result WgCanvas::target(const Context& context, void* target, uint32_t w, uint32
     return Result::NonSupport;
 }
 
+
+Result WgCanvas::targetView(void* device, void* commandEncoder, void* view, uint32_t w, uint32_t h, ColorSpace cs) noexcept
+{
+#ifdef THORVG_WG_ENGINE_SUPPORT
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
+
+    // A per-frame re-target rotates only the caller's encoder/view; the internal
+    // render target is unchanged, so paints must not be re-tessellated. Only a size
+    // or colorspace change (or the first target) reallocates the render target and
+    // truly damages the paint data. Compare against the renderer's current target
+    // before the call mutates it.
+    auto prev = pImpl->renderer->mainSurface();
+    bool damaged = !prev || prev->w != w || prev->h != h || prev->cs != cs;
+
+    auto ret = static_cast<WgRenderer*>(pImpl->renderer)->targetView((WGPUDevice)device, (WGPUCommandEncoder)commandEncoder, (WGPUTextureView)view, w, h, cs);
+    if (ret != Result::Success) return ret;
+
+    pImpl->vport = {{0, 0}, {(int32_t)w, (int32_t)h}};
+    pImpl->renderer->viewport(pImpl->vport);
+    if (damaged) pImpl->status = Status::Damaged;  // new target invalidates paint data
+
+    //FIXME: The value must be associated with an individual canvas instance.
+    ImageLoader::cs = static_cast<ColorSpace>(cs);
+
+    return Result::Success;
+#endif
+    return Result::NonSupport;
+}
+
+
 WgCanvas* WgCanvas::gen(EngineOption op) noexcept
 {
 #ifdef THORVG_WG_ENGINE_SUPPORT

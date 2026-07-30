@@ -151,7 +151,6 @@ void WgContext::releaseTexture(WGPUTexture& texture)
         wgpuTextureRelease(texture);
         texture = nullptr;
     }
-    
 }
 
 
@@ -211,7 +210,7 @@ bool WgContext::allocateBufferIndex(WGPUBuffer& buffer, const uint32_t* data, ui
 
 void WgContext::releaseBuffer(WGPUBuffer& buffer)
 {
-    if (buffer) { 
+    if (buffer) {
         wgpuBufferDestroy(buffer);
         wgpuBufferRelease(buffer);
         buffer = nullptr;
@@ -260,5 +259,5 @@ void WgContext::submit()
 
 bool WgContext::invalid()
 {
-    return !instance || !device;
+    return !queue;
 }
