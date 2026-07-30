@@ -36,6 +36,7 @@
 /************************************************************************/
 
 static bool _appendClipShape(SvgParserContext& ctx, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, const Matrix* transform);
+static bool _applyClip(SvgParserContext& ctx, Paint* paint, Paint* content, const SvgNode* node, const SvgNode* clipNode, const Box& vBox, const string& svgPath, Paint** result);
 static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, const Box& vBox, const string& svgPath, bool mask, int depth);
 static Paint* _applyPatternProperty(SvgParserContext& ctx, Shape* vg, SvgNode* node, SvgNode* patternNode, const Box& vBox, const string& svgPath);
 
@@ -220,64 +221,187 @@ static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry)
     shape->close();
 }
 
-static bool _appendClipChild(SvgParserContext& ctx, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath)
+static bool _appendClipChild(SvgParserContext& ctx, SvgNode* node, Shape* shape, const Box& vBox, const string& svgPath, Paint** clipped)
 {
+    Matrix finalTransform;
+    const Matrix* transform = nullptr;
+
     //The SVG standard allows only for 'use' nodes that point directly to a basic shape.
     if (node->type == SvgNodeType::Use) {
-        if (node->child.count != 1) return false;
+        if (node->child.count != 1) {
+            *clipped = nullptr;
+            return false;
+        }
         auto child = *(node->child.data);
-        auto finalTransform = tvg::identity();
+        finalTransform = tvg::identity();
         if (node->transform) finalTransform = *node->transform;
         if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
             finalTransform *= {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
         }
         if (child->transform) finalTransform *= *child->transform;
 
-        return _appendClipShape(ctx, child, shape, vBox, svgPath, tvg::identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform);
+        transform = tvg::identity((const Matrix*)(&finalTransform)) ? nullptr : &finalTransform;
+        node = child;
     }
-    return _appendClipShape(ctx, node, shape, vBox, svgPath, nullptr);
+
+    if (!_appendClipShape(ctx, node, shape, vBox, svgPath, transform)) {
+        *clipped = nullptr;
+        return false;
+    }
+
+    // Apply Clip Chaining
+    if (auto clipNode = node->style->clipPath.node) {
+        if (node->style->clipPath.applying) {
+            TVGLOG("SVG", "Multiple composition tried! Check out circular dependency?");
+            *clipped = nullptr;
+            return false;
+        }
+        return _applyClip(ctx, shape, shape, node, clipNode, vBox, svgPath, clipped);
+    }
+
+    *clipped = shape;
+    return true;
 }
 
-
-static Matrix _compositionTransform(Paint* paint, const SvgNode* node, const SvgNode* compNode, SvgNodeType type)
+static Matrix _useTransform(const SvgNode* node)
 {
     auto m = tvg::identity();
+    if (node->transform) m = *node->transform;
+    if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
+        m *= {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
+    }
+    return m;
+}
+
+static Matrix _compositionTransform(Paint* content, const SvgNode* node, const SvgNode* compNode, SvgNodeType type)
+{
+    auto m = tvg::identity();
+    auto userSpace = (type == SvgNodeType::Mask) ? compNode->node.mask.maskContentUserSpace : compNode->node.clip.userSpace;
     //The initial mask transformation ignored according to the SVG standard.
-    if (node->transform && type != SvgNodeType::Mask) {
+    if (node->type == SvgNodeType::Use) {
+        if (type != SvgNodeType::Mask || !userSpace) m = _useTransform(node);
+    } else if (node->transform && type != SvgNodeType::Mask) {
         m = *node->transform;
     }
     if (compNode->transform) {
         m *= *compNode->transform;
     }
-    auto userSpace = (type == SvgNodeType::Mask) ? compNode->node.mask.maskContentUserSpace : compNode->node.clip.userSpace;
     if (!userSpace) {
-        auto bbox = _bounds(paint);
+        auto bbox = Box{};
+        if (node->type == SvgNodeType::Use) {
+            auto useTransform = _useTransform(node);
+            Matrix inv;
+            auto prevTransform = content->transform();
+            if (inverse(&useTransform, &inv)) content->transform(inv * prevTransform);
+            bbox = _bounds(content);
+            content->transform(prevTransform);
+        } else {
+            bbox = _bounds(content);
+        }
         m *= {bbox.w, 0, bbox.x, 0, bbox.h, bbox.y, 0, 0, 1};
     }
     return m;
 }
 
-static bool _applyClip(SvgParserContext& ctx, Paint* paint, const SvgNode* node, const SvgNode* clipNode, const Box& vBox, const string& svgPath)
+static bool _clipperUnion(SvgParserContext& ctx, Paint* content, const SvgNode* node, const SvgNode* clipNode, const Box& vBox, const string& svgPath, Paint** region)
 {
     node->style->clipPath.applying = true;
 
-    auto clipper = Shape::gen();
-    auto valid = false; //Composite only when valid shapes exist
-
+    Paint* unionRegion = nullptr;
+    Scene* scene = nullptr;
     ARRAY_FOREACH(p, clipNode->child) {
-        if (_appendClipChild(ctx, *p, clipper, vBox, svgPath)) valid = true;
-    }
-
-    if (valid) {
-        Matrix finalTransform = _compositionTransform(paint, node, clipNode, SvgNodeType::ClipPath);
-        clipper->transform(finalTransform);
-        paint->clip(clipper);
-    } else {
-        Paint::rel(clipper);
+        auto child = Shape::gen();
+        Paint* clipped = nullptr;
+        if (!_appendClipChild(ctx, *p, child, vBox, svgPath, &clipped)) {
+            Paint::rel(child);
+            continue;
+        }
+        child->fill(255, 255, 255, 255);
+        if (!unionRegion) unionRegion = clipped;
+        else {
+            if (!scene) {
+                scene = Scene::gen();
+                scene->add(unionRegion);
+                unionRegion = scene;
+            }
+            scene->add(clipped);
+        }
     }
 
     node->style->clipPath.applying = false;
-    return valid;
+
+    if (!unionRegion) {
+        *region = nullptr;
+        return false;
+    }
+
+    unionRegion->transform(_compositionTransform(content, node, clipNode, SvgNodeType::ClipPath));
+    *region = unionRegion;
+    return true;
+}
+
+static bool _applyClip(SvgParserContext& ctx, Paint* paint, Paint* content, const SvgNode* node, const SvgNode* clipNode, const Box& vBox, const string& svgPath, Paint** result)
+{
+    Paint* region = nullptr;
+    if (!_clipperUnion(ctx, content, node, clipNode, vBox, svgPath, &region)) {
+        *result = nullptr;
+        return false;
+    }
+
+    paint->mask(region, MaskMethod::Alpha);
+
+    *result = paint;
+    if (auto innerClipNode = clipNode->style->clipPath.node) {
+        if (!innerClipNode->style->clipPath.applying) {
+            innerClipNode->style->clipPath.applying = true;
+            auto scene = Scene::gen();
+            scene->add(paint);
+            if (!_applyClip(ctx, scene, content, node, innerClipNode, vBox, svgPath, result)) {
+                scene->opacity(0);
+                *result = scene;
+            }
+            innerClipNode->style->clipPath.applying = false;
+        }
+    }
+    return true;
+}
+
+static Scene* _applyMask(SvgParserContext& ctx, Paint* content, Scene* target, const SvgNode* node, const SvgNode* maskNode, const Box& vBox, const string& svgPath, bool wrap)
+{
+    node->style->mask.applying = true;
+
+    Scene* result = target;
+    if (auto mask = _sceneBuildHelper(ctx, maskNode, vBox, svgPath, true, 0)) {
+        auto& maskData = maskNode->node.mask;
+        auto nodeTransform = (node->type == SvgNodeType::Use) ? _useTransform(node) : (node->transform ? *node->transform : tvg::identity());
+        if (!maskData.maskContentUserSpace) {
+            Matrix finalTransform = _compositionTransform(content, node, maskNode, SvgNodeType::Mask);
+            mask->transform(finalTransform);
+        } else if (!tvg::identity((const Matrix*)(&nodeTransform))) {
+            mask->transform(nodeTransform);
+        }
+
+        auto bbox = _bounds(content);
+        auto clipper = Shape::gen();
+        if (maskData.userSpace) {
+            clipper->appendRect(maskData.box.x, maskData.box.y, maskData.box.w, maskData.box.h);
+            if (!tvg::identity((const Matrix*)(&nodeTransform))) clipper->transform(nodeTransform);
+        } else {
+            auto box = _objectBoundingBox(maskData.box, bbox);
+            clipper->appendRect(box.x, box.y, box.w, box.h);
+        }
+        mask->clip(clipper);
+
+        if (wrap) {
+            auto scene = Scene::gen();
+            scene->add(target);
+            result = scene;
+        }
+        result->mask(mask, maskData.type == SvgMaskType::Luminance ? MaskMethod::Luma : MaskMethod::Alpha);
+    }
+
+    node->style->mask.applying = false;
+    return result;
 }
 
 static Paint* _applyBlend(Paint* paint, const SvgNode* node)
@@ -309,38 +433,16 @@ static Paint* _applyComposition(SvgParserContext& ctx, Paint* paint, const SvgNo
     scene->add(paint);
 
     if (clipNode) {
-        if (!_applyClip(ctx, scene, node, clipNode, vBox, svgPath)) {
+        Paint* clipped = nullptr;
+        if (!_applyClip(ctx, scene, paint, node, clipNode, vBox, svgPath, &clipped)) {
             Paint::rel(scene);
             return nullptr;
         }
+        scene = static_cast<Scene*>(clipped);
     }
 
-    /* Mask */
-    if (maskNode) {
-        node->style->mask.applying = true;
+    if (maskNode) scene = _applyMask(ctx, paint, scene, node, maskNode, vBox, svgPath, clipNode != nullptr);
 
-        if (auto mask = _sceneBuildHelper(ctx, maskNode, vBox, svgPath, true, 0)) {
-            auto& maskData = maskNode->node.mask;
-            if (!maskData.maskContentUserSpace) {
-                Matrix finalTransform = _compositionTransform(paint, node, maskNode, SvgNodeType::Mask);
-                mask->transform(finalTransform);
-            } else if (node->transform) {
-                mask->transform(*node->transform);
-            }
-            auto bbox = _bounds(paint);
-            auto clipper = Shape::gen();
-            if (maskData.userSpace) {
-                clipper->appendRect(maskData.box.x, maskData.box.y, maskData.box.w, maskData.box.h);
-                if (node->transform) clipper->transform(*node->transform);
-            } else {
-                auto box = _objectBoundingBox(maskData.box, bbox);
-                clipper->appendRect(box.x, box.y, box.w, box.h);
-            }
-            mask->clip(clipper);
-            scene->mask(mask, maskData.type == SvgMaskType::Luminance ? MaskMethod::Luma : MaskMethod::Alpha);
-        }
-        node->style->mask.applying = false;
-    }
     return scene;
 }
 
@@ -571,16 +673,6 @@ static bool _appendClipShape(SvgParserContext& ctx, SvgNode* node, Shape* shape,
         }
     }
 
-    //Apply Clip Chaining
-    if (auto clipNode = node->style->clipPath.node) {
-        if (clipNode->child.count == 0) return false;
-        if (node->style->clipPath.applying) {
-            TVGLOG("SVG", "Multiple composition tried! Check out circular dependency?");
-            return false;
-        }
-        return _applyClip(ctx, shape, node, clipNode, vBox, svgPath);
-    }
-
     return true;
 }
 
@@ -796,51 +888,51 @@ static Matrix _calculateAspectRatioMatrix(AspectRatioAlign align, AspectRatioMee
     return {sx, 0, -tvx, 0, sy, -tvy, 0, 0, 1};
 }
 
+static Matrix _symbolTransform(const SvgNode* node, const Box& vBox)
+{
+    auto& symbol = node->node.use.symbol->node.symbol;
+    auto width = (symbol.hasWidth ? symbol.w : vBox.w);
+    if (node->node.use.isWidthSet) width = node->node.use.w;
+    auto height = (symbol.hasHeight ? symbol.h : vBox.h);
+    if (node->node.use.isHeightSet) height = node->node.use.h;
+    auto vw = (symbol.hasViewBox ? symbol.vw : width);
+    auto vh = (symbol.hasViewBox ? symbol.vh : height);
+
+    auto mViewBox = tvg::identity();
+    if ((!tvg::equal(width, vw) || !tvg::equal(height, vh)) && vw > 0 && vh > 0) {
+        Box box = {symbol.vx, symbol.vy, vw, vh};
+        mViewBox = _calculateAspectRatioMatrix(symbol.align, symbol.meetOrSlice, width, height, box);
+    } else if (!tvg::zero(symbol.vx) || !tvg::zero(symbol.vy)) {
+        mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
+    }
+
+    // mSceneTransform = mUseTransform * mSymbolTransform * mViewBox
+    Matrix mSceneTransform = mViewBox;
+    if (node->node.use.symbol->transform) {
+        mSceneTransform = *node->node.use.symbol->transform * mViewBox;
+    }
+    return _useTransform(node) * mSceneTransform;
+}
+
 static Scene* _useBuildHelper(SvgParserContext& ctx, const SvgNode* node, const Box& vBox, const string& svgPath, int depth)
 {
     auto scene = _sceneBuildHelper(ctx, node, vBox, svgPath, false, depth + 1);
 
-    // mUseTransform = mUseTransform * mTranslate
-    auto mUseTransform = tvg::identity();
-    if (node->transform) mUseTransform = *node->transform;
-    if (node->node.use.x != 0.0f || node->node.use.y != 0.0f) {
-        Matrix mTranslate = {1, 0, node->node.use.x, 0, 1, node->node.use.y, 0, 0, 1};
-        mUseTransform *= mTranslate;
-    }
-
     if (node->node.use.symbol) {
-        auto symbol = node->node.use.symbol->node.symbol;
-        auto width = (symbol.hasWidth ? symbol.w : vBox.w);
-        if (node->node.use.isWidthSet) width = node->node.use.w;
-        auto height = (symbol.hasHeight ? symbol.h : vBox.h);;
-        if (node->node.use.isHeightSet) height = node->node.use.h;
-        auto vw = (symbol.hasViewBox ? symbol.vw : width);
-        auto vh = (symbol.hasViewBox ? symbol.vh : height);
-
-        auto mViewBox = tvg::identity();
-        if ((!tvg::equal(width, vw) || !tvg::equal(height, vh)) && vw > 0 && vh > 0) {
-            Box box = {symbol.vx, symbol.vy, vw, vh};
-            mViewBox = _calculateAspectRatioMatrix(symbol.align, symbol.meetOrSlice, width, height, box);
-        } else if (!tvg::zero(symbol.vx) || !tvg::zero(symbol.vy)) {
-            mViewBox = {1, 0, -symbol.vx, 0, 1, -symbol.vy, 0, 0, 1};
-        }
-
-        // mSceneTransform = mUseTransform * mSymbolTransform * mViewBox
-        Matrix mSceneTransform = mViewBox;
-        if (node->node.use.symbol->transform) {
-            mSceneTransform = *node->node.use.symbol->transform * mViewBox;
-        }
-        mSceneTransform = mUseTransform * mSceneTransform;
-        scene->transform(mSceneTransform);
-
         if (!node->node.use.symbol->node.symbol.overflowVisible) {
+            auto& symbol = node->node.use.symbol->node.symbol;
+            auto width = (symbol.hasWidth ? symbol.w : vBox.w);
+            if (node->node.use.isWidthSet) width = node->node.use.w;
+            auto height = (symbol.hasHeight ? symbol.h : vBox.h);
+            if (node->node.use.isHeightSet) height = node->node.use.h;
+
             auto viewBoxClip = Shape::gen();
             viewBoxClip->appendRect(0, 0, width, height);
 
             // mClipTransform = mUseTransform * mSymbolTransform
-            Matrix mClipTransform = mUseTransform;
+            Matrix mClipTransform = _useTransform(node);
             if (node->node.use.symbol->transform) {
-                mClipTransform = mUseTransform * *node->node.use.symbol->transform;
+                mClipTransform = mClipTransform * *node->node.use.symbol->transform;
             }
             viewBoxClip->transform(mClipTransform);
 
@@ -852,14 +944,6 @@ static Scene* _useBuildHelper(SvgParserContext& ctx, const SvgNode* node, const 
         return scene;
     }
 
-    if (auto clipper = PAINT(scene)->clipper) {
-        auto& clipTransform = clipper->transform();
-        Matrix inv;
-        if (node->transform && inverse(node->transform, &inv)) clipTransform = inv * clipTransform;
-        clipTransform = mUseTransform * clipTransform ;
-    }
-
-    scene->transform(mUseTransform);
     return scene;
 }
 
@@ -1075,8 +1159,14 @@ static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, cons
     if (!_isGroupType(node->type) && !mask) return nullptr;
 
     auto scene = Scene::gen();
-    // For a Symbol node, the viewBox transformation has to be applied first - see _useBuildHelper()
-    if (!mask && node->transform && node->type != SvgNodeType::Symbol && node->type != SvgNodeType::Use) scene->transform(*node->transform);
+    // For a Symbol node, the viewBox transformation has to be applied first - see _symbolTransform()
+    if (!mask && node->type != SvgNodeType::Symbol) {
+        if (node->type == SvgNodeType::Use) {
+            scene->transform(node->node.use.symbol ? _symbolTransform(node, vBox) : _useTransform(node));
+        } else if (node->transform) {
+            scene->transform(*node->transform);
+        }
+    }
     if (!node->style->display || node->style->opacity == 0) return scene;
 
     ARRAY_FOREACH(p, node->child) {
