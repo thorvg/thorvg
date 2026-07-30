@@ -52,9 +52,9 @@ TEST_CASE("Save a lottie into gif", "[tvgSavers]") {
         REQUIRE(saver);
 
         REQUIRE(saver->background(bg) == Result::Success);
-        REQUIRE(saver->save(animation, TEST_DIR"/test.gif") == Result::Success);
+        REQUIRE(saver->save(animation, TEST_DIR"/test_saved.gif") == Result::Success);
         REQUIRE(saver->sync() == Result::Success);
-        REQUIRE(remove(TEST_DIR"/test.gif") == 0);
+        REQUIRE(remove(TEST_DIR"/test_saved.gif") == 0);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
