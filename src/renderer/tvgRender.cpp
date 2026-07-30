@@ -639,6 +639,13 @@ static void _get(float& begin, float& end)
     begin -= shift;
     end -= shift;
 
+    //a span of a full period or longer covers the entire path
+    if (fabsf(end - begin) >= 1.0f) {
+        begin = 0.0f;
+        end = 1.0f;
+        return;
+    }
+
     auto loop = true;
 
     if (begin > 1.0f && end > 1.0f) loop = false;
