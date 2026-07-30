@@ -634,6 +634,11 @@ static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* in
 
 static void _get(float& begin, float& end)
 {
+    //fold both values by one common integer offset to keep the span's length and orientation
+    auto shift = floorf(begin);
+    begin -= shift;
+    end -= shift;
+
     auto loop = true;
 
     if (begin > 1.0f && end > 1.0f) loop = false;
