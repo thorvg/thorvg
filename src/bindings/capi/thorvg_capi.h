@@ -529,7 +529,7 @@ TVG_API Tvg_Canvas tvg_swcanvas_create(Tvg_Engine_Option op);
  * @param[in] h The height of the raster image.
  * @param[in] cs The colorspace value defining the way the 32-bits colors should be read/written.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENTS An invalid canvas or buffer pointer passed or one of the @p stride, @p w or @p h being zero.
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid canvas or buffer pointer passed or one of the @p stride, @p w or @p h being zero.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
  * @retval TVG_RESULT_NOT_SUPPORTED The software engine is not supported.
  *
@@ -3378,6 +3378,8 @@ TVG_API Tvg_Paint tvg_video_get_picture(Tvg_Video video);
  *
  * @param[in] video The video object.
  *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the video is not loaded.
+ *
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_video_play(Tvg_Video video);
@@ -3387,6 +3389,8 @@ TVG_API Tvg_Result tvg_video_play(Tvg_Video video);
  *
  * @param[in] video The video object.
  *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the video is not started playing.
+ *
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_video_pause(Tvg_Video video);
@@ -3395,6 +3399,8 @@ TVG_API Tvg_Result tvg_video_pause(Tvg_Video video);
  * @brief Stops playback and rewinds to the start.
  *
  * @param[in] video The video object.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the video is not loaded.
  *
  * @note Experimental API
  */
@@ -3406,6 +3412,9 @@ TVG_API Tvg_Result tvg_video_stop(Tvg_Video video);
  * @param[in] video The video object.
  * @param[in] seconds The target playback position in seconds.
  *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the video is not loaded.
+ * @retval TVG_RESULT_INVALID_ARGUMENT If @p seconds is out of range.
+ *
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_video_seek(Tvg_Video video, float seconds);
@@ -3415,6 +3424,9 @@ TVG_API Tvg_Result tvg_video_seek(Tvg_Video video, float seconds);
  *
  * @param[in] video The video object.
  * @param[in] on @c true to repeat playback, @c false to play once.
+ *               The initial value is @c false.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the video is not loaded.
  *
  * @see tvg_video_get_loop()
  *
@@ -3438,6 +3450,10 @@ TVG_API bool tvg_video_get_loop(Tvg_Video video);
  *
  * @param[in] video The video object.
  * @param[in] volume The audio volume level in the range [0.0, 1.0].
+ *                   The initial value is @c 1.0.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT If @p volume is out of range.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the video is not loaded.
  *
  * @see tvg_video_get_volume()
  *
@@ -3463,6 +3479,9 @@ TVG_API float tvg_video_get_volume(Tvg_Video video);
  *
  * @param[in] video The video object.
  * @param[in] on @c true to mute the audio, @c false to unmute.
+ *               The initial value is @c false.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the video is not loaded.
  *
  * @see tvg_video_get_muted()
  *
