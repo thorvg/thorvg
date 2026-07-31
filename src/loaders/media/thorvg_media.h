@@ -62,6 +62,7 @@ struct TVG_API Video final
      * @brief Enables or disables repeated playback.
      *
      * @param[in] on @c true to repeat playback, @c false otherwise.
+     *               The initial value is @c false.
      *
      * @retval Result::InsufficientCondition If the video is not loaded.
      *
@@ -112,6 +113,7 @@ struct TVG_API Video final
      *
      * @param[in] volume The volume level in the range [0.0, 1.0],
      *                   where 0.0 is silent and 1.0 is the original volume.
+     *                   The Initial value is @c 1.0.
      *
      * @retval Result::InsufficientCondition If the video is not loaded.
      * @retval Result::InvalidArguments If @p volume is out of range.
@@ -126,8 +128,6 @@ struct TVG_API Video final
      *
      * @return The current volume level in the range [0.0, 1.0].
      *
-     * @note It returns @c 0, if the video is not loaded.
-     *
      * @see Video::volume(float)
      */
     float volume() const noexcept;
@@ -139,7 +139,8 @@ struct TVG_API Video final
      * volume level. Unmuting restores audio playback using the previously
      * configured volume.
      *
-     * @param[in] on @c true to mute the audio, @c false to unmute it.
+     * @param[in] on @c true to mute the audio or @c false to unmute it.
+     *            The initial value is @c false.
      *
      * @retval Result::InsufficientCondition If the video is not loaded.
      *
@@ -152,8 +153,6 @@ struct TVG_API Video final
      * @brief Retrieves whether the video audio is currently muted.
      *
      * @return @c true if the audio is muted, @c false otherwise.
-     *
-     * @note It returns @c false, if the video is not loaded.
      *
      * @see Video::mute()
      */
