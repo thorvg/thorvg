@@ -44,8 +44,7 @@ struct AvfMediaLoader : MediaLoader
     AVPlayerLooper* looper = nil;
     id endObserver = nil;
     dispatch_source_t timer = nullptr;
-    bool playing = false;
-    bool repeating = false;
+    bool started = false;  // true after play(), including pause; false after stop() or EOS
 
     // Decoded frame ring buffer and synchronized publication state
     uint32_t* frames[BUFFER_COUNT] = {};
@@ -55,6 +54,7 @@ struct AvfMediaLoader : MediaLoader
     uint32_t write = 0;
     uint32_t latest = 0;
     bool frameUpdated = false;
+    bool eosPending = false;
 
     // Lifecycle
     AvfMediaLoader();
@@ -63,7 +63,6 @@ struct AvfMediaLoader : MediaLoader
     // Loader interface
     bool open(const char* path, const LoaderOps* ops) override;
     bool read() override;
-    bool close() override;
     bool sync() override;
 
     // Playback controls
