@@ -55,19 +55,15 @@ static void _unrefQueue()
     ScopedLock lock(_queueKey);
     if (_queueRefCnt == 0 || --_queueRefCnt > 0) return;
 
-#if !OS_OBJECT_USE_OBJC
     dispatch_release(_queue);
-#endif
     _queue = nullptr;
 }
 
 static float _seconds(CMTime time)
 {
     if (!CMTIME_IS_NUMERIC(time)) return 0.0f;
-
     auto seconds = CMTimeGetSeconds(time);
-    if (!isfinite(seconds) || seconds < 0.0) return 0.0f;
-    return static_cast<float>(seconds);
+    return static_cast<float>((seconds < 0.0) ? 0.0 : seconds);
 }
 
 static NSDictionary* _pixelAttrs()
@@ -78,7 +74,8 @@ static NSDictionary* _pixelAttrs()
 static AVPlayerItemVideoOutput* _videoOutput(AVPlayerItem* item)
 {
     for (AVPlayerItemOutput* output in item.outputs) {
-        if ([output isKindOfClass:[AVPlayerItemVideoOutput class]]) return (AVPlayerItemVideoOutput*)output;
+        if ([output isKindOfClass:[AVPlayerItemVideoOutput class]])
+            return static_cast<AVPlayerItemVideoOutput*>(output);
     }
 
     auto output = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:_pixelAttrs()];
@@ -91,7 +88,8 @@ static AVPlayerItemVideoOutput* _videoOutput(AVPlayerItem* item)
 static AVVideoComposition* _composition(AVAsset* asset, AVAssetTrack* track, CGSize& displaySize)
 {
     auto transform = track.preferredTransform;
-    if (transform.a == 1.0 && transform.b == 0.0 && transform.c == 0.0 && transform.d == 1.0 && transform.tx == 0.0 && transform.ty == 0.0) return nil;
+    if (transform.a == 1.0 && transform.b == 0.0 && transform.c == 0.0 && transform.d == 1.0 && transform.tx == 0.0 && transform.ty == 0.0)
+        return nil;
 
     __block AVVideoComposition* composition = nil;
     auto semaphore = dispatch_semaphore_create(0);
@@ -102,20 +100,25 @@ static AVVideoComposition* _composition(AVAsset* asset, AVAssetTrack* track, CGS
     }];
 
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-#if !OS_OBJECT_USE_OBJC
     dispatch_release(semaphore);
-#endif
 
     if (!composition) return nil;
     displaySize = composition.renderSize;
     return composition;
 }
 
-static void _resetFrame(AvfMediaLoader& loader, float seconds)
+static void _resetFrame(AvfMediaLoader& loader, float seconds, bool eos = false)
 {
     ScopedLock lock(loader.key);
     loader.latestTime = seconds;
     loader.frameUpdated = false;
+    loader.eosPending = eos;
+}
+
+static void _clearEos(AvfMediaLoader& loader)
+{
+    ScopedLock lock(loader.key);
+    loader.eosPending = false;
 }
 
 // Copy a decoded CVPixelBuffer into ThorVG-owned frame ring buffer.
@@ -123,7 +126,7 @@ static bool _push(AvfMediaLoader& loader, CVPixelBufferRef pixelBuffer, float se
 {
     auto width = static_cast<uint32_t>(CVPixelBufferGetWidth(pixelBuffer));
     auto height = static_cast<uint32_t>(CVPixelBufferGetHeight(pixelBuffer));
-    if (width == 0 || height == 0 || width != loader.surface.w || height != loader.surface.h) return false;
+    if (width != loader.surface.w || height != loader.surface.h) return false;
 
     // Copy the decoded pixel buffer into the loader-owned ring buffer.
     if (CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly) != kCVReturnSuccess) return false;
@@ -136,6 +139,8 @@ static bool _push(AvfMediaLoader& loader, CVPixelBufferRef pixelBuffer, float se
     if (src) {
         auto dst = loader.frames[loader.write];
         if (!dst) dst = loader.frames[loader.write] = tvg::malloc<uint32_t>(rowBytes * height);
+        // CVPixelBuffer rows may include hardware-specific padding.
+        // https://developer.apple.com/library/archive/qa/qa1829/_index.html
         if (srcStride == rowBytes) memcpy(dst, src, rowBytes * height);
         else {
             for (auto y = 0U; y < height; ++y) {
@@ -154,23 +159,59 @@ static bool _push(AvfMediaLoader& loader, CVPixelBufferRef pixelBuffer, float se
     return ret;
 }
 
-static void _clearItems(AvfMediaLoader& loader)
+static void _tick(AvfMediaLoader& loader)
 {
-    [loader.looper disableLooping];
-    [loader.looper release];
-    loader.looper = nil;
+    auto item = loader.player.currentItem;
+    if (!item) return;
 
-    [loader.player removeAllItems];
+    auto output = _videoOutput(item);
+    if (!output) return;
+
+    auto time = item.currentTime;
+    if (!CMTIME_IS_NUMERIC(time)) return;
+
+    // Poll only if AVFoundation has a decoded frame for this item's current time.
+    if (![output hasNewPixelBufferForItemTime:time]) return;
+
+    if (auto buffer = [output copyPixelBufferForItemTime:time itemTimeForDisplay:nullptr]) {
+        _push(loader, buffer, _seconds(time));
+        CVPixelBufferRelease(buffer);
+    }
 }
 
-static void _stopTimer(AvfMediaLoader& loader)
+static void _startTimer(AvfMediaLoader& loader)
+{
+    if (loader.timer) return;
+
+    auto state = &loader;
+    loader.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, loader.queue);
+    if (!loader.timer) return;
+    dispatch_source_set_event_handler(loader.timer, ^{
+        _tick(*state);
+    });
+
+    // Derive the poll interval from the track frame rate.
+    auto fps = static_cast<double>(loader.track.nominalFrameRate);
+    if (fps <= 0.0) {
+        auto seconds = _seconds(loader.track.minFrameDuration);
+        if (seconds > 0.0f) fps = 1.0 / seconds;
+    }
+    // Match AVVideoComposition's 30 FPS fallback when the track frame rate is unknown.
+    // https://developer.apple.com/documentation/avfoundation/avvideocomposition/videocomposition%28withpropertiesof%3Acompletionhandler%3A%29
+    if (!isfinite(fps) || fps <= 0.0) fps = 30.0;
+
+    auto interval = static_cast<uint64_t>(NSEC_PER_SEC / fps);
+
+    dispatch_source_set_timer(loader.timer, dispatch_time(DISPATCH_TIME_NOW, 0), interval, NSEC_PER_MSEC);
+    dispatch_resume(loader.timer);
+}
+
+static void _cancelTimer(AvfMediaLoader& loader)
 {
     if (!loader.timer) return;
 
     dispatch_source_cancel(loader.timer);
-#if !OS_OBJECT_USE_OBJC
     dispatch_release(loader.timer);
-#endif
     loader.timer = nullptr;
 }
 
@@ -182,7 +223,7 @@ static bool _readStillFrame(AvfMediaLoader& loader, float seconds)
 
     auto reader = [[AVAssetReader alloc] initWithAsset:loader.asset error:nil];
     if (!reader) {
-        TVGLOG("AVF", "Failed to create asset reader.");
+        TVGERR("AVF", "Failed to create asset reader.");
         return false;
     }
 
@@ -223,30 +264,33 @@ static bool _readStillFrame(AvfMediaLoader& loader, float seconds)
 static void _finishPlayback(AvfMediaLoader& loader)
 {
     [loader.player pause];
-    _stopTimer(loader);
-    loader.playing = false;
-    _resetFrame(loader, loader.totalTime);
+    _cancelTimer(loader);
+    _resetFrame(loader, loader.totalTime, true);
     _readStillFrame(loader, loader.totalTime);
 }
 
-static bool _buildQueue(AvfMediaLoader& loader, float start)
+static bool _buildQueue(AvfMediaLoader& loader)
 {
-    _clearItems(loader);
-
     auto item = [[AVPlayerItem alloc] initWithAsset:loader.asset];
     if (!item) return false;
     if (loader.composition) item.videoComposition = loader.composition;
 
-    auto seek = start > 0.0f;
-    auto time = CMTimeMakeWithSeconds(static_cast<double>(start), TIMESCALE);
-
-    // Keep playback looper-backed; loop state only decides whether the end observer stops.
+    // Keep playback looper-backed; the end observer stops playback when looping is off.
     loader.looper = [[AVPlayerLooper alloc] initWithPlayer:loader.player templateItem:item timeRange:kCMTimeRangeInvalid];
-    for (AVPlayerItem* loopItem in loader.looper.loopingPlayerItems) _videoOutput(loopItem);
-    if (seek) [loader.player seekToTime:time toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
+    for (AVPlayerItem* loopItem in loader.looper.loopingPlayerItems) {
+        _videoOutput(loopItem);
+    }
 
     [item release];
     return loader.player.currentItem != nil;
+}
+
+static void _removeEndObserver(AvfMediaLoader& loader)
+{
+    if (!loader.endObserver) return;
+    [loader.player removeTimeObserver:loader.endObserver];
+    [loader.endObserver release];
+    loader.endObserver = nil;
 }
 
 static void _startEndObserver(AvfMediaLoader& loader)
@@ -256,85 +300,8 @@ static void _startEndObserver(AvfMediaLoader& loader)
     auto end = CMTimeMakeWithSeconds(static_cast<double>(loader.totalTime), TIMESCALE);
     auto state = &loader;
     loader.endObserver = [[loader.player addBoundaryTimeObserverForTimes:@[[NSValue valueWithCMTime:end]] queue:loader.queue usingBlock:^{
-        if (!state->player || !state->playing || state->repeating) return;
         _finishPlayback(*state);
     }] retain];
-}
-
-static void _tick(AvfMediaLoader& loader)
-{
-    auto item = loader.player.currentItem;
-    if (!item) return;
-
-    auto output = _videoOutput(item);
-    if (!output) return;
-
-    auto time = item.currentTime;
-    if (!CMTIME_IS_NUMERIC(time)) return;
-
-    // Poll only if AVFoundation has a decoded frame for this item's current time.
-    if (![output hasNewPixelBufferForItemTime:time]) return;
-
-    if (auto buffer = [output copyPixelBufferForItemTime:time itemTimeForDisplay:nullptr]) {
-        _push(loader, buffer, _seconds(time));
-        CVPixelBufferRelease(buffer);
-    }
-}
-
-static void _startTimer(AvfMediaLoader& loader)
-{
-    auto created = false;
-    if (!loader.timer) {
-        auto state = &loader;
-        loader.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, loader.queue);
-        dispatch_source_set_event_handler(loader.timer, ^{
-            if (state->playing) _tick(*state);
-        });
-        created = true;
-    }
-
-    // Derive the poll interval from the track frame rate.
-    constexpr auto DefaultFps = 30.0;
-    auto track = loader.track;
-    auto fps = DefaultFps;
-    if (track.nominalFrameRate > 0.0f) {
-        fps = track.nominalFrameRate;
-    } else {
-        auto seconds = _seconds(track.minFrameDuration);
-        if (seconds > 0.0) fps = 1.0 / seconds;
-    }
-    if (!isfinite(fps) || fps <= 0.0) fps = DefaultFps;
-
-    auto interval = static_cast<uint64_t>(NSEC_PER_SEC / fps);
-    if (interval == 0) interval = 1;
-
-    dispatch_source_set_timer(loader.timer, dispatch_time(DISPATCH_TIME_NOW, 0), interval, NSEC_PER_MSEC);
-
-    if (created) dispatch_resume(loader.timer);
-}
-
-static void _close(AvfMediaLoader& loader)
-{
-    _stopTimer(loader);
-    [loader.player pause];
-    loader.playing = false;
-    _clearItems(loader);
-
-    if (loader.endObserver) {
-        [loader.player removeTimeObserver:loader.endObserver];
-        [loader.endObserver release];
-        loader.endObserver = nil;
-    }
-
-    [loader.player release];
-    [loader.composition release];
-    [loader.track release];
-    [loader.asset release];
-
-    loader.player = nil;
-    loader.composition = nil;
-    loader.track = nil;
-    loader.asset = nil;
 }
 
 /************************************************************************/
@@ -349,7 +316,16 @@ AvfMediaLoader::AvfMediaLoader()
 AvfMediaLoader::~AvfMediaLoader()
 {
     dispatch_sync(queue, ^{
-        _close(*this);
+        _removeEndObserver(*this);
+        _cancelTimer(*this);
+        [player pause];
+        [looper disableLooping];
+        [looper release];
+        [player removeAllItems];
+        [player release];
+        [composition release];
+        [track release];
+        [asset release];
     });
 
     for (auto data : frames) {
@@ -367,7 +343,7 @@ bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     auto url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];
     auto asset = [[AVURLAsset alloc] initWithURL:url options:nil];
     if (!asset || !asset.playable) {
-        TVGLOG("AVF", "Failed to open media: %s", path);
+        TVGERR("AVF", "Failed to open media: %s", path);
         [asset release];
         return false;
     }
@@ -382,19 +358,17 @@ bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     }];
 
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-#if !OS_OBJECT_USE_OBJC
     dispatch_release(semaphore);
-#endif
 
     if (!track) {
-        TVGLOG("AVF", "No video track found: %s", path);
+        TVGERR("AVF", "No video track found: %s", path);
         [asset release];
         return false;
     }
 
     auto duration = _seconds(asset.duration);
     if (duration <= TIME_EPSILON) {
-        TVGLOG("AVF", "Invalid media duration: %s", path);
+        TVGERR("AVF", "Invalid media duration: %s", path);
         [track release];
         [asset release];
         return false;
@@ -408,52 +382,34 @@ bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     composition = _composition(asset, track, displaySize);
     w = static_cast<float>(fabs(displaySize.width));
     h = static_cast<float>(fabs(displaySize.height));
+    if (w == 0 || h == 0) return false;
 
     totalTime = duration;
-    curTime = 0.0f;
 
-    return true;
+    player = [[AVQueuePlayer alloc] init];
+    if (!player) return false;
+
+    // Prepare playback; the timer starts only when play() is called.
+    player.automaticallyWaitsToMinimizeStalling = NO;
+    player.volume = audioVolume;
+    player.muted = muted;
+    _startEndObserver(*this);
+
+    return _buildQueue(*this);
 }
 
 bool AvfMediaLoader::read()
 {
     if (!Loader::read()) return true;
-    if (!asset || !track || w == 0 || h == 0) return false;
 
-    surface.cs = ColorSpace::ARGB8888S;
     surface.w = static_cast<uint32_t>(w);
     surface.h = static_cast<uint32_t>(h);
     surface.stride = surface.w;
     surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = false;
     surface.alphaIgnored = true;
 
     // Prime the first frame so Picture can render immediately after load().
-    _readStillFrame(*this, 0.0f);
-    sync();
-
-    // Prepare playback; the timer starts only when play() is called.
-    player = [[AVQueuePlayer alloc] init];
-    if (!player) return false;
-
-    player.automaticallyWaitsToMinimizeStalling = NO;
-    player.volume = audioVolume;
-    player.muted = muted;
-    _startEndObserver(*this);
-    paused = true;
-
-    return _buildQueue(*this, 0.0f);
-}
-
-bool AvfMediaLoader::close()
-{
-    if (!Loader::close()) return false;
-
-    dispatch_sync(queue, ^{
-        _close(*this);
-    });
-
-    return true;
+    return _readStillFrame(*this, 0.0f) && sync();
 }
 
 bool AvfMediaLoader::sync()
@@ -461,11 +417,14 @@ bool AvfMediaLoader::sync()
     ScopedLock lock(key);
 
     curTime = latestTime;
+    if (eosPending) {
+        started = false;
+        paused = true;
+        eosPending = false;
+    }
     if (!frameUpdated) return false;
 
     auto frame = frames[latest];
-    if (!frame) return false;
-
     auto size = surface.stride * surface.h * surface.channelSize;
     if (!surface.data) surface.data = tvg::malloc<pixel_t>(size);
     memcpy(surface.data, frame, size);
@@ -478,13 +437,12 @@ bool AvfMediaLoader::sync()
 
 Result AvfMediaLoader::play()
 {
-    if (!player) return Result::InsufficientCondition;
-
     auto restart = curTime >= totalTime;
+    _clearEos(*this);
+    started = true;
     paused = false;
     dispatch_async(queue, ^{
         if (restart) [player seekToTime:kCMTimeZero toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
-        playing = true;
         [player play];
         _startTimer(*this);
     });
@@ -493,27 +451,25 @@ Result AvfMediaLoader::play()
 
 Result AvfMediaLoader::pause()
 {
-    if (!player) return Result::InsufficientCondition;
+    if (!started) return Result::InsufficientCondition;
 
     paused = true;
     dispatch_async(queue, ^{
-        playing = false;
         [player pause];
-        _stopTimer(*this);
+        _cancelTimer(*this);
     });
     return Result::Success;
 }
 
 Result AvfMediaLoader::stop()
 {
-    if (!player) return Result::InsufficientCondition;
-
+    _clearEos(*this);
     curTime = 0.0f;
+    started = false;
     paused = true;
     dispatch_async(queue, ^{
         [player pause];
-        _stopTimer(*this);
-        playing = false;
+        _cancelTimer(*this);
         _resetFrame(*this, 0.0f);
 
         [player seekToTime:kCMTimeZero toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
@@ -524,24 +480,21 @@ Result AvfMediaLoader::stop()
 
 Result AvfMediaLoader::seek(float seconds)
 {
-    if (seconds < 0.0f || (totalTime > 0.0f && seconds > totalTime)) return Result::InvalidArguments;
-    if (!player) return Result::InsufficientCondition;
-
+    _clearEos(*this);
     curTime = seconds;
-    auto loop = looping;
     dispatch_async(queue, ^{
-        auto end = totalTime > 0.0f && seconds >= totalTime;
+        auto end = seconds >= totalTime;
         _resetFrame(*this, seconds);
 
         if (end) {
             [player.currentItem cancelPendingSeeks];
             [player seekToTime:kCMTimeZero toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
-            if (!loop) _finishPlayback(*this);
+            if (endObserver) _finishPlayback(*this);
             else _readStillFrame(*this, seconds);
             return;
         }
 
-        if (!playing) _readStillFrame(*this, seconds);
+        if (!timer) _readStillFrame(*this, seconds);
         [player.currentItem cancelPendingSeeks];
         [player seekToTime:CMTimeMakeWithSeconds(static_cast<double>(seconds), TIMESCALE) toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
     });
@@ -552,7 +505,8 @@ Result AvfMediaLoader::loop(bool on)
 {
     looping = on;
     dispatch_async(queue, ^{
-        repeating = on;
+        if (on) _removeEndObserver(*this);
+        else _startEndObserver(*this);
     });
     return Result::Success;
 }
@@ -560,14 +514,14 @@ Result AvfMediaLoader::loop(bool on)
 Result AvfMediaLoader::volume(float volume)
 {
     audioVolume = volume;
-    if (player) player.volume = volume;
+    player.volume = volume;
     return Result::Success;
 }
 
 Result AvfMediaLoader::mute(bool on)
 {
     muted = on;
-    if (player) player.muted = on;
+    player.muted = on;
     return Result::Success;
 }
 
