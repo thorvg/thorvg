@@ -76,6 +76,7 @@ namespace tvg
         Png,
         Jpg,
         Webp,
+        Media,
         Raw,
         Gif,
         Unknown

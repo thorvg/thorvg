@@ -27,6 +27,12 @@
 // WgPaintTask
 //***********************************************************************
 
+void WgPaintTask::stage(WgCompositor& compositor)
+{
+    if (renderData->type() == tvg::Type::Shape) compositor.requestShape((WgRenderDataShape*)renderData);
+    else if (renderData->type() == tvg::Type::Picture) compositor.requestImage((WgRenderDataPicture*)renderData);
+}
+
 void WgPaintTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {
     if (renderData->type() == tvg::Type::Shape)
@@ -39,6 +45,13 @@ void WgPaintTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
 //***********************************************************************
 // WgSceneTask
 //***********************************************************************
+
+void WgSceneTask::stage(WgCompositor& compositor)
+{
+    ARRAY_FOREACH(task, children) {
+        (*task)->stage(compositor);
+    }
+}
 
 void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {

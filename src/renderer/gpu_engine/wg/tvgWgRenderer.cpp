@@ -160,8 +160,8 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     // update paint settings
     if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) {
-        rds->renderSettingsShape.update(mContext, mTargetSurface.cs, opacity);
-        rds->renderSettingsStroke.update(mContext, mTargetSurface.cs, opacity);
+        rds->solidShape.opacity = rds->renderSettingsShape.updateOpacity(mTargetSurface.cs, opacity);
+        rds->solidStroke.opacity = rds->renderSettingsStroke.updateOpacity(mTargetSurface.cs, opacity);
         rds->fillRule = rshape.rule;
     }
 
@@ -173,8 +173,9 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         if (rshape.fill && (!data || (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform)))) {
             bool updateColorRamp = !data || ((flags & RenderUpdateFlag::Gradient) != RenderUpdateFlag::None);
             rds->renderSettingsShape.update(mContext, rshape.fill, &transform, updateColorRamp);
-        } else if (!data || (flags & RenderUpdateFlag::Color)) {
-            rds->renderSettingsShape.update(mContext, rshape.color);
+        } else if (!data || (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {
+            rds->solidShape.color = rshape.color;
+            rds->renderSettingsShape.fillType = WgRenderSettingsType::Solid;
         }
     }
     // update strokes render settings
@@ -182,8 +183,9 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         if (rshape.stroke->fill && (!data || (flags & (RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)))) {
             bool updateColorRamp = !data || ((flags & RenderUpdateFlag::GradientStroke) != RenderUpdateFlag::None);
             rds->renderSettingsStroke.update(mContext, rshape.stroke->fill, nullptr, updateColorRamp);
-        } else if (!data || (flags & RenderUpdateFlag::Stroke)) {
-            rds->renderSettingsStroke.update(mContext, rshape.stroke->color);
+        } else if (!data || (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke))) {
+            rds->solidStroke.color = rshape.stroke->color;
+            rds->renderSettingsStroke.fillType = WgRenderSettingsType::Solid;
         }
     }
 
@@ -199,7 +201,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     // update paint settings
     rdp->viewport = vport;
     rdp->transform = transform;
-    if (!data || (flags & (RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) rdp->renderSettings.update(mContext, surface->cs, opacity);
+    if (!data || (flags & (RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) rdp->renderSettings.updateOpacity(surface->cs, opacity);
 
     auto updateSurface = !data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image));
     if (updateSurface) rdp->updateSurface(surface, transform);
@@ -224,6 +226,7 @@ bool WgRenderer::preRender()
 {
     if (mContext.invalid()) return false;
 
+    mSolidBatch = {};
     mCompositor.reset(mContext);
 
     assert(mRenderTargetStack.count == 0);
@@ -247,11 +250,14 @@ bool WgRenderer::preRender()
 
 bool WgRenderer::renderShape(RenderData data)
 {
-    WgPaintTask* paintTask = new WgPaintTask((WgRenderDataPaint*)data, mBlendMethod);
+    auto renderData = (WgRenderDataShape*)data;
     WgSceneTask* sceneTask = mSceneTaskStack.last();
+
+    if (mSolidBatch.draw(sceneTask, renderData, mBlendMethod, mRenderTaskList)) return true;
+
+    WgPaintTask* paintTask = new WgPaintTask(renderData, mBlendMethod);
     sceneTask->children.push(paintTask);
     mRenderTaskList.push(paintTask);
-    mCompositor.requestShape((WgRenderDataShape*)data);
     return true;
 }
 
@@ -262,13 +268,15 @@ bool WgRenderer::renderImage(RenderData data)
     WgSceneTask* sceneTask = mSceneTaskStack.last();
     sceneTask->children.push(paintTask);
     mRenderTaskList.push(paintTask);
-    mCompositor.requestImage((WgRenderDataPicture*)data);
     return true;
 }
 
 
 bool WgRenderer::postRender()
 {
+    WgSceneTask* sceneTaskRoot = mSceneTaskStack.last();
+    sceneTaskRoot->stage(mCompositor);
+
     // flush stage data to gpu
     mCompositor.flush(mContext);
 
@@ -276,7 +284,6 @@ bool WgRenderer::postRender()
     WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
 
     // run rendering (all the fun is here)
-    WgSceneTask* sceneTaskRoot = mSceneTaskStack.last();
     sceneTaskRoot->run(mContext, mCompositor, commandEncoder);
 
     // execute and release command encoder
@@ -585,7 +592,8 @@ bool WgRenderer::region(RenderEffect* effect)
 
 bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_UNUSED bool direct)
 {
-    mSceneTaskStack.last()->effect = effect;
+    auto sceneTask = mSceneTaskStack.last();
+    sceneTask->effect = effect;
     return true;
 }
 

@@ -105,7 +105,7 @@ const char* cShaderSrc_Linear = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, gradient: GradSettings };
 
 // uniforms
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
@@ -142,7 +142,7 @@ const char* cShaderSrc_Radial = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, gradient: GradSettings };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
@@ -280,7 +280,7 @@ const char* cShaderSrc_Linear_Blend = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, gradient: GradSettings };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
@@ -328,7 +328,7 @@ const char* cShaderSrc_Radial_Blend = R"(
 struct VertexInput { @location(0) position: vec2f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
-struct PaintSettings { options: vec4f, color: vec4f, gradient: GradSettings };
+struct PaintSettings { options: vec4f, gradient: GradSettings };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;

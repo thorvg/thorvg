@@ -1066,6 +1066,7 @@ static void _handleFilterAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, c
 
 static void _handleMaskTypeAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
+    if (node->type != SvgNodeType::Mask) return;
     node->node.mask.type = _toMaskType(value);
 }
 
@@ -3285,22 +3286,13 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
     SvgNode *node = nullptr, *parent = nullptr;
     attrs = xmlFindAttributesTag(content, length);
 
-    if (!attrs) {
-        //Parse the empty tag
-        attrs = content;
-        while ((attrs != nullptr) && *attrs != '>') attrs++;
-        if (empty) attrs--;
-    }
-
-    if (attrs) {
-        //Find out the tag name starting from content till sz length
-        sz = attrs - content;
-        while ((sz > 0) && (isspace(content[sz - 1]))) sz--;
-        if ((unsigned)sz >= sizeof(tagName)) return;
-        strncpy(tagName, content, sz);
-        tagName[sz] = '\0';
-        attrsLength = length - sz;
-    }
+    //Find out the tag name starting from content till sz length
+    sz = attrs - content;
+    while ((sz > 0) && (isspace((unsigned char)content[sz - 1]))) sz--;
+    if ((unsigned)sz >= sizeof(tagName)) return;
+    strncpy(tagName, content, sz);
+    tagName[sz] = '\0';
+    attrsLength = length - sz;
 
     if (ctx->gradientStack.count > 0 && !ctx->gradientStack.last()) {
         if (!empty) ctx->gradientStack.push(nullptr);
@@ -3399,6 +3391,8 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
 static void _svgLoaderParserText(SvgParserContext* ctx, const char* content, unsigned int length)
 {
     auto node = ctx->parser->node;
+
+    if (node->type != SvgNodeType::Text && node->type != SvgNodeType::Tspan) return;
 
     if (_hasTspanChild(node)) {
         auto run = _createNode(node, SvgNodeType::Tspan);
@@ -3581,8 +3575,8 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
 static void _cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style)
 {
     ARRAY_FOREACH(p, postponeds) {
-        auto nodeIdPair = *p;
-        _cssApplyClass(nodeIdPair.node, nodeIdPair.id, style);
+        auto node = p->node;
+        _cssApplyClass(node, node->style->cssClass, style);
     }
 }
 
@@ -3794,20 +3788,12 @@ static bool _svgLoaderParserForValidCheckXmlOpen(SvgParserContext* ctx, const ch
     int attrsLength = 0;
     attrs = xmlFindAttributesTag(content, length);
 
-    if (!attrs) {
-        //Parse the empty tag
-        attrs = content;
-        while ((attrs != nullptr) && *attrs != '>') attrs++;
-    }
-
-    if (attrs) {
-        sz = attrs - content;
-        while ((sz > 0) && (isspace((unsigned char)content[sz - 1]))) sz--;
-        if ((unsigned)sz >= sizeof(tagName)) return false;
-        strncpy(tagName, content, sz);
-        tagName[sz] = '\0';
-        attrsLength = length - sz;
-    }
+    sz = attrs - content;
+    while ((sz > 0) && (isspace((unsigned char)content[sz - 1]))) sz--;
+    if ((unsigned)sz >= sizeof(tagName)) return false;
+    strncpy(tagName, content, sz);
+    tagName[sz] = '\0';
+    attrsLength = length - sz;
 
     if ((method = _findGroupFactory(tagName))) {
         if (!ctx->doc) {

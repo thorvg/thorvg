@@ -36,9 +36,8 @@ void PngLoader::run(unsigned tid)
 
     state.info_raw.colortype = LCT_RGBA;   //request this image format
 
-    if (lodepng_decode(&surface.buf8, &width, &height, &state, data, size)) {
-        TVGERR("PNG", "Failed to decode image");
-    }
+    if (lodepng_decode(&surface.buf8, &width, &height, &state, data, size)) TVGERR("PNG", "Failed to decode image");
+    else if (state.info_png.iccp_defined && lodepng_toSrgb(surface.buf8, surface.buf8, width, height, &state)) TVGERR("PNG", "Unsupported ICC color profile");
 
     //setup the surface
     surface.stride = width;

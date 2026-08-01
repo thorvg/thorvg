@@ -24,7 +24,7 @@
 #define _TVG_WG_RENDERER_H_
 
 #include "tvgRender.h"
-#include "tvgWgRenderTask.h"
+#include "tvgWgSolidBatch.h"
 #include "tvgWgTextureMgr.h"
 
 struct WgRenderer : RenderMethod
@@ -83,6 +83,7 @@ private:
     Array<WgRenderTarget*> mRenderTargetStack;
     Array<WgSceneTask*> mSceneTaskStack;
     Array<WgRenderTask*> mRenderTaskList;
+    WgSolidBatch mSolidBatch;
 
     // render target pool
     WgRenderTargetPool mRenderTargetPool;
