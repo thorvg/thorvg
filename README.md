@@ -409,25 +409,11 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_canvaios.png">
 </p>
 
-### Crank Storyboard
-[Crank Software](https://www.cranksoftware.com/) Storyboard Engine integrates ThorVG for SVG rendering in embedded and industrial HMI applications.
-
-<p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_crank.png">
-</p>
-
 ### dotLottie
 [dotLottie](https://dotlottie.io/) is an open-source format for packaging Lottie animations and assets. Its player uses ThorVG for efficient rendering.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_dotlottie.png">
-</p>
-
-### Espressif
-[Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official ESP-IDF component, enabling easy integration and vector graphics rendering on ESP32 and ESP32-P4 devices.
-
-<p align="center">
-  <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
 </p>
 
 ### Flux Audio
@@ -444,15 +430,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_godot.png">
 </p>
 
-### LibreScoot
-[LibreScoot](https://librescoot.org/en/) is an open-source embedded mobility platform leveraging ThorVG for GPU-free Lottie boot animation rendering.
-
-<p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_librescoot.png">
-</p>
-
 ### Lottie Creator
-
 [Lottie Creator](https://creator.lottiefiles.com/) leverages ThorVG to power its Canvas engine with fast, scalable vector rendering for interactive animations.
 
 <p align="center">
@@ -464,13 +442,6 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
-</p>
-
-### MetaModule
-[MetaModule](https://4mscompany.com/metamodule) leverages ThorVG as a lightweight vector rasterization backend for efficient UI rendering in its embedded modular synthesizer platform.
-
-<p align="center">
-  <img width="400" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_metamodule.png">
 </p>
 
 ### MorphOS
@@ -487,18 +458,11 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_openvela.png">
 </p>
 
-### Segger
-[SEGGER](https://www.segger.com/) adopts ThorVG as a GPU driver to enable high-performance vector rendering for embedded GUI applications.
+### Paragraphic
+[Paragraphic](https://paragraphic.design/), a cross-platform parametric graphic design application using ThorVG for realtime vector graphics rendering.
 
 <p align="center">
-  <img width="650" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
-</p>
-
-### TinyPiXOS
-[TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for efficient, high-quality GUI rendering.
-
-<p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tinypixos.png">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_paragraphic.png">
 </p>
 
 ### Tizen
@@ -507,7 +471,17 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tizen.png">
 </p>
-</br>
+
+### More Projects
+- [Crank Software](https://www.cranksoftware.com/) integrates ThorVG into Storyboard Engine for SVG rendering in embedded and industrial HMIs.
+- [Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official ESP-IDF component for ESP32 and ESP32-P4 vector graphics.
+- [Flowmux](https://flowmux.org/) uses ThorVG to power its inline terminal image viewer, rendering SVG, Lottie, and other bitmap graphics.
+- [GodSVG](https://godsvg.com/) is an open-source, cross-platform SVG editor that uses ThorVG for realtime vector graphics rendering.
+- [LibreScoot](https://librescoot.org/en/) uses ThorVG for GPU-free Lottie boot animations on its embedded mobility platform.
+- [MetaModule](https://4mscompany.com/metamodule) uses ThorVG as a lightweight vector rasterization backend for its modular synthesizer UI.
+- [SEGGER](https://www.segger.com/) uses ThorVG as a GPU driver for high-performance vector rendering in embedded GUIs.
+- [TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for efficient, high-quality GUI rendering.
+- [Vagabond](https://store.steampowered.com/app/1673090/Vagabond/) uses ThorVG for vector graphics rendering in its procedurally generated 2D sandbox RPG.
 
 Would you like us to showcase your project with ThorVG? Feel free to [open an issue](https://github.com/thorvg/thorvg/issues) or submit a pull request!
 
@@ -515,7 +489,7 @@ Would you like us to showcase your project with ThorVG? Feel free to [open an is
 <br />
 <br />
 ## Interactive App
-Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS!
+Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS! [Give it a try!](https://thorvg-janitor.vercel.app/)
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/user-attachments/assets/8a4bd16a-bb72-4b41-b007-eadc2220d1eb"/>
@@ -562,12 +536,6 @@ To use the `tvg-lottie2gif`, you must turn on this feature in the build option:
 ```
 meson setup builddir -Dtools=lottie2gif -Dsavers=gif
 ```
-To use the 'tvg-lottie2gif' converter, you need to provide the 'Lottie files' parameter. This parameter can be a file name with the '.json' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.json' extension within that directory and all its subdirectories.<br />
-<br />
-Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.<br />
-<br />
-Both flags, if provided, are applied to all of the `.json` files.
-
 The usage examples of the `tvg-lottie2gif`:
 ```
 Usage:
@@ -594,14 +562,6 @@ To use the `tvg-svg2png`, you must turn on this feature in the build option:
 ```
 meson setup builddir -Dtools=svg2png
 ```
-To use the 'tvg-svg2png' converter, you need to provide the 'SVG files' parameter. This parameter can be a file name with the '.svg' extension or a directory name. It also accepts multiple files or directories separated by spaces. If a directory is specified, the converter will search for files with the '.svg' extension within that directory and all its subdirectories.<br />
-<br />
-Optionally, you can specify the image resolution in the 'WxH' format, with two numbers separated by an 'x' sign, following the '-r' flag.<br />
-<br />
-The background color can be set with the `-b` flag. The `bgColor` parameter should be passed as a three-bytes hexadecimal value in the `ffffff` format. The default background is transparent.<br />
-<br />
-Both flags, if provided, are applied to all of the `.svg` files.
-
 The usage examples of the `tvg-svg2png`:
 ```
 Usage:
@@ -659,7 +619,6 @@ For comprehensive and well-structured technical information, please visit the [D
 <br />
 ## References
 - [Universal Motion Graphics across All Platforms: Unleashing Creativity with ThorVG](https://youtu.be/qhHMycRPQ9M?si=RXAag3Fxm8R7W_I0)
-- [Canva Enhances iOS Lottie Rendering: 80% Faster and 70% More Efficient with ThorVG](https://lottiefiles.com/blog/working-with-lottie-animations/canva-enhances-ios-rendering-faster-and-efficient-with-thorvg)
 
 [Back to contents](#contents)
 <br />
@@ -683,9 +642,9 @@ The following outlines the dependencies for these optional features:
 ThorVG stands as a purely open-source initiative. We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
 
 * [Individuals](https://github.com/thorvg/thorvg/blob/main/CONTRIBUTORS.md)
+* [Canva Pty Ltd](https://www.canva.com/)
 * [Godot](https://godotengine.org/)
 * [LVGL](https://lvgl.io/)
-* [Canva Pty Ltd](https://www.canva.com/)
 
 [Back to contents](#contents)
 <br />
@@ -713,12 +672,17 @@ If you’re interested in partnering with ThorVG, we’d love to hear from you. 
 <br />
 <br />
 ## Sponsors
-We sincerely thank our sponsors and supporters who help drive the continuous evolution of ThorVG. Your support is more than a contribution — it is an investment in a high-performance, accessible graphics engine built for real-world production.
+We sincerely thank all of our sponsors, past and present, whose financial support has helped shape the evolution of ThorVG. Your generosity is more than a contribution—it is an investment in a high-performance, accessible graphics engine built for real-world production.
 <br/>
 <br/>
 <p align="center", href="https://www.lottiefiles.com">
   <a href="https://www.lottiefiles.com">
   <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_lottiefiles.jpg"  alt="LottieFiles">
+  </a>
+</p>
+<p align="center", href="https://paragraphic.design/">
+  <a href="https://paragraphic.design/">
+  <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/sponsor_paragraphic.png"  alt="Paragraphic">
   </a>
 </p>
 <br/>
