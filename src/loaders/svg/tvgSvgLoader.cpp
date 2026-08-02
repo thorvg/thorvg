@@ -461,6 +461,7 @@ static unsigned char _parseColor(const char* value, char** end)
 }
 
 
+// sorted by name
 static constexpr struct
 {
     const char* name;
@@ -694,7 +695,7 @@ static bool _toColor(const char* str, uint8_t& r, uint8_t&g, uint8_t& b, char** 
             }
         }
     } else {
-        //Handle named color (binary search)
+        // Handle named color (binary search) - colors[] must remain sorted
         int low = 0, high = static_cast<int>(sizeof(colors) / sizeof(colors[0])) - 1;
         while (low <= high) {
             auto mid = (low + high) / 2;
