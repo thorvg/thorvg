@@ -23,7 +23,7 @@
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
 
-struct WebpLoader : ImageLoader, Task
+struct WebpLoader : BitmapLoader, Task
 {
     WebpLoader();
     ~WebpLoader();

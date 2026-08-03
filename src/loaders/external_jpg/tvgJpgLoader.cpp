@@ -39,11 +39,9 @@ void JpgLoader::clear()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
+JpgLoader::JpgLoader() : BitmapLoader(FileType::Jpg), jpegDecompressor(tjInitDecompress())
 {
-    jpegDecompressor = tjInitDecompress();
 }
-
 
 JpgLoader::~JpgLoader()
 {
@@ -102,7 +100,7 @@ bool JpgLoader::read()
     //determine the image format
     ColorSpace cs;
     TJPF format;
-    if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
+    if (BitmapLoader::cs == ColorSpace::ARGB8888 || BitmapLoader::cs == ColorSpace::ARGB8888S) {
         format = TJPF_BGRX;
         cs = ColorSpace::ARGB8888;
     } else {

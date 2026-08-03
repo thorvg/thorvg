@@ -64,7 +64,7 @@ struct Loader
 
     FileType type;               // current loader file type
     atomic<uint16_t> sharing{};  // reference count
-    bool readied = false;        // read done already.
+    bool readied = false;        // read done already
     bool cached = false;         // cached for sharing
 
     Loader(FileType type) : type(type) {}
@@ -148,22 +148,28 @@ struct Loader
 
 struct ImageLoader : Loader
 {
-    static atomic<ColorSpace> cs;  // desired value
-
     float w = 0, h = 0;  // default image size
-    RenderSurface surface;
-    bool playable = false;  // true if this loader supports playback
+    bool playable;       // true if this loader supports playback
 
     ImageLoader(FileType type, bool playable = false) : Loader(type), playable(playable) {}
 
-    virtual Paint* paint() { return nullptr; }
     virtual const AccessorEntity* access(uint32_t id) { return nullptr; }
     virtual void access(AccessorCallback& cb) {}
+    virtual Paint* paint() { return nullptr; }
+    virtual RenderSurface* bitmap() { return nullptr; }
+};
 
-    virtual RenderSurface* bitmap()
+struct BitmapLoader : ImageLoader
+{
+    static atomic<ColorSpace> cs;  // desired value
+
+    RenderSurface surface;
+
+    BitmapLoader(FileType type, bool playable = false) : ImageLoader(type, playable) {}
+
+    RenderSurface* bitmap() override
     {
-        if (surface.data) return &surface;
-        return nullptr;
+        return surface.data ? &surface : nullptr;
     }
 };
 

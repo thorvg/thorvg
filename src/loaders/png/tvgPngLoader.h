@@ -26,7 +26,7 @@
 #include "tvgLodePng.h"
 #include "tvgTaskScheduler.h"
 
-struct PngLoader : ImageLoader, Task
+struct PngLoader : BitmapLoader, Task
 {
     PngLoader();
     ~PngLoader();
