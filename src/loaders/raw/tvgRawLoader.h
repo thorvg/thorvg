@@ -23,7 +23,7 @@
 #ifndef _TVG_RAW_LOADER_H_
 #define _TVG_RAW_LOADER_H_
 
-struct RawLoader : ImageLoader
+struct RawLoader : BitmapLoader
 {
     bool copy = false;
 

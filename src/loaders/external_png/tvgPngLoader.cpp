@@ -37,7 +37,7 @@ void PngLoader::clear()
 /* External Class Implementation                                        */
 /************************************************************************/
 
-PngLoader::PngLoader() : ImageLoader(FileType::Png)
+PngLoader::PngLoader() : BitmapLoader(FileType::Png)
 {
     image = tvg::calloc<png_image>(1, sizeof(png_image));
     image->version = PNG_IMAGE_VERSION;
@@ -88,7 +88,7 @@ bool PngLoader::read()
     ColorSpace cs;
 
     // TODO: we can acquire a pre-multiplied image. See "png_structrp"
-    if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
+    if (BitmapLoader::cs == ColorSpace::ARGB8888 || BitmapLoader::cs == ColorSpace::ARGB8888S) {
         image->format = PNG_FORMAT_BGRA;
         cs = ColorSpace::ARGB8888S;
     } else {

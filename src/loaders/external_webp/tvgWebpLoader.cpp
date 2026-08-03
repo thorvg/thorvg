@@ -38,7 +38,7 @@ void WebpLoader::run(unsigned tid)
     ColorSpace cs;
 
     // request premultiplied image data
-    if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
+    if (BitmapLoader::cs == ColorSpace::ARGB8888 || BitmapLoader::cs == ColorSpace::ARGB8888S) {
         config.output.colorspace = MODE_bgrA;
         if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
         cs = ColorSpace::ARGB8888;
@@ -55,7 +55,7 @@ void WebpLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
+WebpLoader::WebpLoader() : BitmapLoader(FileType::Webp)
 {
 }
 
@@ -126,5 +126,5 @@ RenderSurface* WebpLoader::bitmap()
 {
     this->done();
 
-    return ImageLoader::bitmap();
+    return BitmapLoader::bitmap();
 }

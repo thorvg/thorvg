@@ -25,7 +25,7 @@
 
 #include "tvgLoader.h"
 
-struct MediaLoader : ImageLoader
+struct MediaLoader : BitmapLoader
 {
     float curTime = 0.0f;      // current playback position in seconds
     float totalTime = 0.0f;    // media duration in seconds
@@ -34,7 +34,7 @@ struct MediaLoader : ImageLoader
     bool muted = false;
     bool looping = false;
 
-    MediaLoader() : ImageLoader(FileType::Media, true) {}
+    MediaLoader() : BitmapLoader(FileType::Media, true) {}
     virtual ~MediaLoader(){};
 
     virtual Result play() = 0;                // start or resume playback

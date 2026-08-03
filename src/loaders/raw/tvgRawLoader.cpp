@@ -23,11 +23,9 @@
 #include "tvgLoader.h"
 #include "tvgRawLoader.h"
 
-
-RawLoader::RawLoader() : ImageLoader(FileType::Raw)
+RawLoader::RawLoader() : BitmapLoader(FileType::Raw)
 {
 }
-
 
 RawLoader::~RawLoader()
 {

@@ -27,7 +27,7 @@
 #include "tvgTaskScheduler.h"
 #include "tvgJpgd.h"
 
-struct JpgLoader : ImageLoader, Task
+struct JpgLoader : BitmapLoader, Task
 {
     JpgLoader();
     ~JpgLoader();

@@ -130,7 +130,7 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
     pImpl->status = Status::Damaged;  // Paints must be updated again with this new target.
 
     //FIXME: The value must be associated with an individual canvas instance.
-    ImageLoader::cs = static_cast<ColorSpace>(cs);
+    BitmapLoader::cs = static_cast<ColorSpace>(cs);
 
     return Result::Success;
 #endif
@@ -181,7 +181,7 @@ Result GlCanvas::target(void* display, void* surface, void* context, int32_t id,
     pImpl->status = Status::Damaged;  // Paints must be updated again with this new target.
 
     //FIXME: The value must be associated with an individual canvas instance.
-    ImageLoader::cs = static_cast<ColorSpace>(cs);
+    BitmapLoader::cs = static_cast<ColorSpace>(cs);
 
     return Result::Success;
 #endif
@@ -241,7 +241,7 @@ Result WgCanvas::target(const Context& context, void* target, uint32_t w, uint32
     pImpl->status = Status::Damaged;  // Paints must be updated again with this new target.
 
     //FIXME: The value must be associated with an individual canvas instance.
-    ImageLoader::cs = static_cast<ColorSpace>(cs);
+    BitmapLoader::cs = static_cast<ColorSpace>(cs);
 
     return Result::Success;
 #endif

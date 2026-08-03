@@ -47,7 +47,7 @@ void PngLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-PngLoader::PngLoader() : ImageLoader(FileType::Png)
+PngLoader::PngLoader() : BitmapLoader(FileType::Png)
 {
     lodepng_state_init(&state);
 }
@@ -117,5 +117,5 @@ bool PngLoader::read()
 RenderSurface* PngLoader::bitmap()
 {
     this->done();
-    return ImageLoader::bitmap();
+    return BitmapLoader::bitmap();
 }
