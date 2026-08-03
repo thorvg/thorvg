@@ -461,6 +461,7 @@ static unsigned char _parseColor(const char* value, char** end)
 }
 
 
+// sorted by name
 static constexpr struct
 {
     const char* name;
@@ -491,8 +492,8 @@ static constexpr struct
     { "darkcyan", 0xff008b8b },
     { "darkgoldenrod", 0xffb8860b },
     { "darkgray", 0xffa9a9a9 },
-    { "darkgrey", 0xffa9a9a9 },
     { "darkgreen", 0xff006400 },
+    { "darkgrey", 0xffa9a9a9 },
     { "darkkhaki", 0xffbdb76b },
     { "darkmagenta", 0xff8b008b },
     { "darkolivegreen", 0xff556b2f },
@@ -520,9 +521,9 @@ static constexpr struct
     { "gold", 0xffffd700 },
     { "goldenrod", 0xffdaa520 },
     { "gray", 0xff808080 },
-    { "grey", 0xff808080 },
     { "green", 0xff008000 },
     { "greenyellow", 0xffadff2f },
+    { "grey", 0xff808080 },
     { "honeydew", 0xfff0fff0 },
     { "hotpink", 0xffff69b4 },
     { "indianred", 0xffcd5c5c },
@@ -538,8 +539,8 @@ static constexpr struct
     { "lightcyan", 0xffe0ffff },
     { "lightgoldenrodyellow", 0xfffafad2 },
     { "lightgray", 0xffd3d3d3 },
-    { "lightgrey", 0xffd3d3d3 },
     { "lightgreen", 0xff90ee90 },
+    { "lightgrey", 0xffd3d3d3 },
     { "lightpink", 0xffffb6c1 },
     { "lightsalmon", 0xffffa07a },
     { "lightseagreen", 0xff20b2aa },
@@ -694,14 +695,19 @@ static bool _toColor(const char* str, uint8_t& r, uint8_t&g, uint8_t& b, char** 
             }
         }
     } else {
-        //Handle named color
-        for (unsigned int i = 0; i < (sizeof(colors) / sizeof(colors[0])); i++) {
-            if (!strcasecmp(colors[i].name, str)) {
-                r = ((uint8_t*)(&(colors[i].value)))[2];
-                g = ((uint8_t*)(&(colors[i].value)))[1];
-                b = ((uint8_t*)(&(colors[i].value)))[0];
+        // Handle named color (binary search) - colors[] must remain sorted
+        int low = 0, high = static_cast<int>(sizeof(colors) / sizeof(colors[0])) - 1;
+        while (low <= high) {
+            auto mid = (low + high) / 2;
+            auto cmp = strcasecmp(str, colors[mid].name);
+            if (cmp == 0) {
+                r = ((uint8_t*)(&(colors[mid].value)))[2];
+                g = ((uint8_t*)(&(colors[mid].value)))[1];
+                b = ((uint8_t*)(&(colors[mid].value)))[0];
                 return true;
             }
+            if (cmp < 0) high = mid - 1;
+            else low = mid + 1;
         }
     }
     return false;
