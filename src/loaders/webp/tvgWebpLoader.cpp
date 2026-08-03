@@ -55,7 +55,7 @@ void WebpLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-WebpLoader::WebpLoader() : ImageLoader(FileType::Webp)
+WebpLoader::WebpLoader() : BitmapLoader(FileType::Webp)
 {
 }
 
@@ -113,7 +113,7 @@ bool WebpLoader::read()
 
     if (!data || w == 0 || h == 0) return false;
 
-    surface.cs = ImageLoader::cs;
+    surface.cs = BitmapLoader::cs;
 
     TaskScheduler::request(this);
 
@@ -132,6 +132,5 @@ bool WebpLoader::close()
 RenderSurface* WebpLoader::bitmap()
 {
     this->done();
-
-    return ImageLoader::bitmap();
+    return BitmapLoader::bitmap();
 }

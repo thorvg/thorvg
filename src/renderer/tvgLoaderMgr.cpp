@@ -65,7 +65,7 @@ uintptr_t HASH_KEY(const char* data)
 /************************************************************************/
 
 // TODO: remove it.
-atomic<ColorSpace> ImageLoader::cs{ColorSpace::ARGB8888};
+atomic<ColorSpace> BitmapLoader::cs{ColorSpace::ARGB8888};
 
 static Key _key;
 static Inlist<tvg::Loader> _activeLoaders;

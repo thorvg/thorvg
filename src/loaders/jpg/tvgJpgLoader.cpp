@@ -47,7 +47,7 @@ void JpgLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader() : ImageLoader(FileType::Jpg)
+JpgLoader::JpgLoader() : BitmapLoader(FileType::Jpg)
 {
 
 }
@@ -97,8 +97,6 @@ bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps
     return true;
 }
 
-
-
 bool JpgLoader::read()
 {
     if (!Loader::read()) return true;
@@ -122,5 +120,5 @@ bool JpgLoader::close()
 RenderSurface* JpgLoader::bitmap()
 {
     this->done();
-    return ImageLoader::bitmap();
+    return BitmapLoader::bitmap();
 }

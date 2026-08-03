@@ -26,7 +26,7 @@
 #include <png.h>
 #include "tvgLoader.h"
 
-struct PngLoader : ImageLoader
+struct PngLoader : BitmapLoader
 {
     PngLoader();
     ~PngLoader();
