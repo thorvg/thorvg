@@ -35,21 +35,18 @@ void WebpLoader::clear()
 
 void WebpLoader::run(unsigned tid)
 {
+    ColorSpace cs;
+    uint8_t* buf8;
+
     // static loader WebPDecodeRGBA/WebPDecodeBGRA returns a premultiplied version.
     if (surface.cs == ColorSpace::ARGB8888 || surface.cs == ColorSpace::ARGB8888S) {
-        surface.buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
-        surface.cs = ColorSpace::ARGB8888;
+        buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
+        cs = ColorSpace::ARGB8888;
     } else  {
-        surface.buf8 = WebPDecodeRGBA(data, size, nullptr, nullptr);
-        surface.cs = ColorSpace::ABGR8888;
+        buf8 = WebPDecodeRGBA(data, size, nullptr, nullptr);
+        cs = ColorSpace::ABGR8888;
     }
-
-    surface.stride = static_cast<uint32_t>(w);
-    surface.w = static_cast<uint32_t>(w);
-    surface.h = static_cast<uint32_t>(h);
-    surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = true;
-
+    surface.setup((pixel_t*)buf8, static_cast<uint32_t>(w), static_cast<uint32_t>(w), static_cast<uint32_t>(h), sizeof(uint32_t), cs);
     clear();
 }
 

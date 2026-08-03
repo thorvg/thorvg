@@ -39,12 +39,7 @@ void PngLoader::run(unsigned tid)
     if (lodepng_decode(&surface.buf8, &width, &height, &state, data, size)) TVGERR("PNG", "Failed to decode image");
     else if (state.info_png.iccp_defined && lodepng_toSrgb(surface.buf8, surface.buf8, width, height, &state)) TVGERR("PNG", "Unsupported ICC color profile");
 
-    //setup the surface
-    surface.stride = width;
-    surface.w = width;
-    surface.h = height;
-    surface.cs = ColorSpace::ABGR8888S;
-    surface.channelSize = sizeof(uint32_t);
+    surface.setup(surface.buf32, width, width, height, sizeof(uint32_t), ColorSpace::ABGR8888S);
 }
 
 
