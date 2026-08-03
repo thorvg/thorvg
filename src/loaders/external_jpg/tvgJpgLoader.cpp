@@ -100,17 +100,17 @@ bool JpgLoader::read()
     if (w == 0 || h == 0) return false;
 
     //determine the image format
+    ColorSpace cs;
     TJPF format;
     if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
         format = TJPF_BGRX;
-        surface.cs = ColorSpace::ARGB8888;
+        cs = ColorSpace::ARGB8888;
     } else {
         format = TJPF_RGBX;
-        surface.cs = ColorSpace::ABGR8888;
+        cs = ColorSpace::ABGR8888;
     }
 
     auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[format]);
-    if (!image) return false;
 
     //decompress jpg image
     if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), format, 0) < 0) {
@@ -120,15 +120,7 @@ bool JpgLoader::read()
         return false;
     }
 
-    //setup the surface
-    surface.buf8 = image;
-    surface.stride = w;
-    surface.w = w;
-    surface.h = h;
-    surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = true;
-    surface.alphaIgnored = true;
-
+    surface.setup((pixel_t*)image, w, w, h, sizeof(uint32_t), cs, true);
     clear();
     return true;
 }

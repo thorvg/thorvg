@@ -35,24 +35,19 @@ void WebpLoader::run(unsigned tid)
     WebPDecoderConfig config;
     if (!WebPInitDecoderConfig(&config)) return;
 
+    ColorSpace cs;
+
     // request premultiplied image data
     if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
         config.output.colorspace = MODE_bgrA;
         if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
-        surface.buf8 = config.output.u.RGBA.rgba;
-        surface.cs = ColorSpace::ARGB8888;
+        cs = ColorSpace::ARGB8888;
     } else {
         config.output.colorspace = MODE_rgbA;
         if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
-        surface.buf8 = config.output.u.RGBA.rgba;
-        surface.cs = ColorSpace::ABGR8888;
+        cs = ColorSpace::ABGR8888;
     }
-
-    surface.stride = (uint32_t)w;
-    surface.w = (uint32_t)w;
-    surface.h = (uint32_t)h;
-    surface.channelSize = sizeof(uint32_t);
-    surface.premultiplied = true;
+    surface.setup((pixel_t*)config.output.u.RGBA.rgba, (uint32_t)w, (uint32_t)w, (uint32_t)h, sizeof(uint32_t), cs);
 }
 
 

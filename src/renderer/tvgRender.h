@@ -74,9 +74,7 @@ struct RenderSurface
     bool premultiplied = false;         //Alpha-premultiplied
     bool alphaIgnored = false;          // If true, the alpha channel can be ignored.
 
-    RenderSurface()
-    {
-    }
+    RenderSurface() = default;
 
     RenderSurface(const RenderSurface* rhs)
     {
@@ -88,6 +86,18 @@ struct RenderSurface
         channelSize = rhs->channelSize;
         premultiplied = rhs->premultiplied;
         alphaIgnored = rhs->alphaIgnored;
+    }
+
+    void setup(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, uint8_t channelSize, ColorSpace cs, bool alphaIgnored = false)
+    {
+        this->data = data;
+        this->stride = stride;
+        this->w = w;
+        this->h = h;
+        this->channelSize = channelSize;
+        this->cs = cs;
+        this->premultiplied = (cs == ColorSpace::ABGR8888 || cs == ColorSpace::ARGB8888);
+        this->alphaIgnored = alphaIgnored;
     }
 };
 
