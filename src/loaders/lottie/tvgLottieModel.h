@@ -1100,6 +1100,17 @@ struct LottieLayer : LottieGroup
     float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
     LottieProperty* property(uint16_t ix) override;
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        if (timeRemap.sid == prop->sid) {
+            if (release) timeRemap.release();
+            else backup = new LottieFloat(timeRemap);
+            timeRemap.copy(*static_cast<LottieFloat*>(prop), false);
+        }
+        return backup;
+    }
+
     char* name = nullptr;
     LottieLayer* parent = nullptr;
     LottieFloat timeRemap = -1.0f;

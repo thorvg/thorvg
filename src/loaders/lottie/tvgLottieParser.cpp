@@ -1256,7 +1256,7 @@ LottieObject* LottieParser::parseGroup()
 
 void LottieParser::parseTimeRemap(LottieLayer* layer)
 {
-    parseProperty(layer->timeRemap);
+    parseProperty(layer->timeRemap, layer);
 }
 
 
