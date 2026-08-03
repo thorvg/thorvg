@@ -459,7 +459,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 </p>
 
 ### Paragraphic
-[Paragraphic](https://paragraphic.design/), a cross-platform parametric graphic design application using ThorVG to render SVG vector graphics.
+[Paragraphic](https://paragraphic.design/), a cross-platform parametric graphic design application using ThorVG for realtime vector graphics rendering.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_paragraphic.png">
@@ -475,6 +475,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 ### More Projects
 - [Crank Software](https://www.cranksoftware.com/) integrates ThorVG into Storyboard Engine for SVG rendering in embedded and industrial HMIs.
 - [Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official ESP-IDF component for ESP32 and ESP32-P4 vector graphics.
+- [Flowmux](https://flowmux.org/) uses ThorVG to power its inline terminal image viewer, rendering SVG, Lottie, and other bitmap graphics.
 - [GodSVG](https://godsvg.com/) is an open-source, cross-platform SVG editor that uses ThorVG for realtime vector graphics rendering.
 - [LibreScoot](https://librescoot.org/en/) uses ThorVG for GPU-free Lottie boot animations on its embedded mobility platform.
 - [MetaModule](https://4mscompany.com/metamodule) uses ThorVG as a lightweight vector rasterization backend for its modular synthesizer UI.
@@ -671,7 +672,7 @@ If you’re interested in partnering with ThorVG, we’d love to hear from you. 
 <br />
 <br />
 ## Sponsors
-We sincerely thank our sponsors and supporters who help drive the continuous evolution of ThorVG. Your support is more than a contribution — it is an investment in a high-performance, accessible graphics engine built for real-world production.
+We sincerely thank all of our sponsors, past and present, whose financial support has helped shape the evolution of ThorVG. Your generosity is more than a contribution—it is an investment in a high-performance, accessible graphics engine built for real-world production.
 <br/>
 <br/>
 <p align="center", href="https://www.lottiefiles.com">

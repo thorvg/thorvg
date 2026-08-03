@@ -85,12 +85,15 @@ bool PngLoader::read()
 
     if (w == 0 || h == 0) return false;
 
+    ColorSpace cs;
+
+    // TODO: we can acquire a pre-multiplied image. See "png_structrp"
     if (ImageLoader::cs == ColorSpace::ARGB8888 || ImageLoader::cs == ColorSpace::ARGB8888S) {
         image->format = PNG_FORMAT_BGRA;
-        surface.cs = ColorSpace::ARGB8888S;
+        cs = ColorSpace::ARGB8888S;
     } else {
         image->format = PNG_FORMAT_RGBA;
-        surface.cs = ColorSpace::ABGR8888S;
+        cs = ColorSpace::ABGR8888S;
     }
 
     auto buffer = tvg::malloc<png_byte>(PNG_IMAGE_SIZE((*image)));
@@ -99,14 +102,7 @@ bool PngLoader::read()
         return false;
     }
 
-    //setup the surface
-    surface.buf32 = reinterpret_cast<uint32_t*>(buffer);
-    surface.stride = (uint32_t)w;
-    surface.w = (uint32_t)w;
-    surface.h = (uint32_t)h;
-    surface.channelSize = sizeof(uint32_t);
-    //TODO: we can acquire a pre-multiplied image. See "png_structrp"
-    surface.premultiplied = false;
+    surface.setup(reinterpret_cast<pixel_t*>(buffer), (uint32_t)w, (uint32_t)w, (uint32_t)h, sizeof(uint32_t), cs);
 
     clear();
 
