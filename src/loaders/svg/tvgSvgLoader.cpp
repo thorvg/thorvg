@@ -1108,8 +1108,8 @@ static void _handleTextAnchorAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* nod
 static SvgBaseline _toBaseline(const char* str)
 {
     if (STR_AS(str, "alphabetic")) return SvgBaseline::Alphabetic;
-    if (STR_AS(str, "before-edge") || STR_AS(str, "text-before-edge")) return SvgBaseline::BeforeEdge;
-    if (STR_AS(str, "after-edge") || STR_AS(str, "text-after-edge") || STR_AS(str, "ideographic")) return SvgBaseline::AfterEdge;
+    if (STR_AS(str, "before-edge") || STR_AS(str, "text-before-edge") || STR_AS(str, "text-top")) return SvgBaseline::BeforeEdge;
+    if (STR_AS(str, "after-edge") || STR_AS(str, "text-after-edge") || STR_AS(str, "ideographic") || STR_AS(str, "text-bottom")) return SvgBaseline::AfterEdge;
     if (STR_AS(str, "central")) return SvgBaseline::Central;
     if (STR_AS(str, "middle")) return SvgBaseline::Middle;
     if (STR_AS(str, "hanging")) return SvgBaseline::Hanging;
@@ -1121,6 +1121,18 @@ static void _handleAlignmentBaselineAttr(TVG_UNUSED SvgParserContext* ctx, SvgNo
 {
     node->style->flags |= SvgStyleFlags::AlignmentBaseline;
     node->style->alignmentBaseline = _toBaseline(value);
+}
+
+static void _handleDominantBaselineAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    auto baseline = _toBaseline(value);
+    // unrecognized keywords keep the inherited value, as in the css cascade
+    if (baseline == SvgBaseline::Auto && !STR_AS(value, "auto")) return;
+    // svg 1.1 keyword set only (https://www.w3.org/TR/SVG11/text.html#DominantBaselineProperty):
+    // browsers drop the css-level text-top/text-bottom (https://www.w3.org/TR/css-inline-3/#dominant-baseline-property), keeping the inherited value
+    if (STR_AS(value, "text-top") || STR_AS(value, "text-bottom")) return;
+    node->style->flags |= SvgStyleFlags::DominantBaseline;
+    node->style->dominantBaseline = baseline;
 }
 
 static void _handleCssClassAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
@@ -1170,7 +1182,8 @@ static constexpr struct
     STYLE_DEF(filter, Filter, SvgStyleFlags::Filter),
     STYLE_DEF(mix-blend-mode, MixBlendMode, SvgStyleFlags::BlendMode),
     STYLE_DEF(text-anchor, TextAnchor, SvgStyleFlags::TextAnchor),
-    STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline)};
+    STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline),
+    STYLE_DEF(dominant-baseline, DominantBaseline, SvgStyleFlags::DominantBaseline)};
 // clang-format on
 
 static SvgXmlSpace _toXmlSpace(const char* str)
@@ -2995,6 +3008,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
     if (!(child->stroke.flags & SvgStrokeFlags::Join)) child->stroke.join = parent->stroke.join;
     if (!(child->stroke.flags & SvgStrokeFlags::Miterlimit)) child->stroke.miterlimit = parent->stroke.miterlimit;
     if (!(child->flags & SvgStyleFlags::TextAnchor)) child->textAnchor = parent->textAnchor;
+    if (!(child->flags & SvgStyleFlags::DominantBaseline)) child->dominantBaseline = parent->dominantBaseline;
 }
 
 
@@ -3013,6 +3027,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::BlendMode) to->blendMode = from->blendMode;
     if (from->flags & SvgStyleFlags::TextAnchor) to->textAnchor = from->textAnchor;
     if (from->flags & SvgStyleFlags::AlignmentBaseline) to->alignmentBaseline = from->alignmentBaseline;
+    if (from->flags & SvgStyleFlags::DominantBaseline) to->dominantBaseline = from->dominantBaseline;
 
     //Fill
     to->fill.flags = (to->fill.flags | from->fill.flags);
