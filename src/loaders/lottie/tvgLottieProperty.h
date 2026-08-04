@@ -938,16 +938,9 @@ struct LottieTextDoc : LottieProperty
     void prepare() {}
 };
 
-
-struct LottieBitmap : LottieProperty
+struct LottieBitmap : LottieProperty, AssetSrc
 {
-    union {
-        char* data = nullptr;
-        char* path;
-    };
     Picture *picture = nullptr;
-    char* mimeType = nullptr;
-    uint32_t size = 0;
     float width = 0.0f;
     float height = 0.0f;
 
@@ -965,16 +958,12 @@ struct LottieBitmap : LottieProperty
 
     void release()
     {
+        AssetSrc::release();
+
         if (picture) {
             picture->unref();
             picture = nullptr;
         }
-
-        tvg::free(data);
-        tvg::free(mimeType);
-
-        data = nullptr;
-        mimeType = nullptr;
     }
 
     uint32_t frameCnt() override { return 0; }
