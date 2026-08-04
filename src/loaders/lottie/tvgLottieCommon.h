@@ -118,7 +118,7 @@ struct AssetSrc
 
 static inline int32_t REMAP255(float val)
 {
-    return (int32_t)nearbyintf(val * 255.0f);
+    return (int32_t)nearbyintf(tvg::clamp(val, 0.0f, 1.0f) * 255.0f);
 }
 
 static inline RGB32 operator-(const RGB32& lhs, const RGB32& rhs)
