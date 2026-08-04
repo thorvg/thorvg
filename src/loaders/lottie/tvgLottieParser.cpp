@@ -996,69 +996,47 @@ void LottieParser::parseVolume(LottieLayer* layer)
     }
 }
 
+bool LottieParser::parseAssetSource(AssetSrc& src, const char* data, const char* subPath, bool embedded, const char* type, bool& external)
+{
+    auto dlen = strlen(data);
+    if (dlen == 0) return false;
+
+    auto typeLen = strlen(type);
+    if (embedded && !strncmp(data, type, typeLen)) {
+        auto mime = data + typeLen;
+        auto semi = strstr(mime, ";");
+        if (!semi) return false;
+        src.mimeType = duplicate(mime, semi - mime);
+        auto b64 = strstr(semi, ",");
+        if (!b64) return false;
+        ++b64;
+        src.size = b64Decode(b64, dlen - (b64 - data), &src.data);
+    } else if (!strncmp(data, "https://", 8) || !strncmp(data, "http://", 7)) {
+        src.path = duplicate(data);
+    } else {
+        auto subPathLen = subPath ? strlen(subPath) : 0;
+        auto len = strlen(dirName) + subPathLen + dlen + 2;
+        src.path = tvg::malloc<char>(len);
+        snprintf(src.path, len, "%s/%s%s", dirName, subPath ? subPath : "", data);
+        external = true;
+    }
+    return true;
+}
 
 void LottieParser::parseAudio(LottieAudio* audio, const char* data, const char* subPath, bool embedded)
 {
-    auto dlen = strlen(data);
-    if (dlen == 0) return;
-
-    if (embedded && !strncmp(data, "data:audio/", 11)) {
-        auto mime = data + 11;
-        auto semi = strstr(mime, ";");
-        if (!semi) return;
-        audio->mimeType = duplicate(mime, semi - mime);
-        auto b64 = strstr(semi, ",");
-        if (!b64) return;
-        ++b64;
-        audio->size = b64Decode(b64, dlen - (b64 - data), &audio->data);
-    } else if (!strncmp(data, "https://", 8) || !strncmp(data, "http://", 7)) {
-        audio->path = duplicate(data);
-    } else {
-        auto subPathLen = subPath ? strlen(subPath) : 0;
-        auto len = strlen(dirName) + subPathLen + dlen + 2;
-        audio->path = tvg::malloc<char>(len);
-        snprintf(audio->path, len, "%s/%s%s", dirName, subPath ? subPath : "", data);
-    }
+    auto external = false;
+    parseAssetSource(audio->src, data, subPath, embedded, "data:audio/", external);
 }
-
 
 void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
 {
-    auto dlen = strlen(data);
-    if (dlen == 0) return;
-
     auto external = false;
-
-    //embedded image resource. should start with "data:"
-    //header look like "data:image/png;base64," so need to skip till ','.
-    if (embedded && !strncmp(data, "data:image/", 11)) {
-        //figure out the mimetype
-        auto mimeType = data + 11;
-        auto needle = strstr(mimeType, ";");
-        if (!needle) return;
-        image->bitmap.mimeType = duplicate(mimeType, needle - mimeType);
-        //b64 data
-        auto b64Data = strstr(needle, ",");
-        if (!b64Data) return;
-        ++b64Data;
-        size_t length = dlen - (b64Data - data);
-        image->bitmap.size = b64Decode(b64Data, length, &image->bitmap.data);
-    //remote image resource (https:// or http://)
-    } else if (!strncmp(data, "https://", 8) || !strncmp(data, "http://", 7)) {
-        image->bitmap.path = duplicate(data);
-    //external image resource
-    } else {
-        auto subPathLen = subPath ? strlen(subPath) : 0;
-        auto len = strlen(dirName) + subPathLen + dlen + 2;
-        image->bitmap.path = tvg::malloc<char>(len);
-        snprintf(image->bitmap.path, len, "%s/%s%s", dirName, subPath ? subPath : "", data);
-        external = true;
-    }
+    if (!parseAssetSource(image->bitmap, data, subPath, embedded, "data:image/", external)) return;
     image->bitmap.width = width;
     image->bitmap.height = height;
     image->prepare(external);
 }
-
 
 LottieObject* LottieParser::parseAsset()
 {

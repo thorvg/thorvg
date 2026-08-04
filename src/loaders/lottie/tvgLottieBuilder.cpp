@@ -1720,30 +1720,18 @@ void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, flo
 
     auto ctrl = layer->audio();
     auto active = frameNo >= layer->inFrame && frameNo < layer->outFrame;
+    auto volume = active ? ctrl->volume(frameNo, tween, exps) : 100.0f;
 
-    auto volume = 100.0f;
-    if (active) volume = tvg::clamp(ctrl->volume(frameNo, tween, exps), 0.0f, 100.0f);
-
-    auto changed = (active != ctrl->prevActive) ||
-                   (active && !tvg::equal(volume, ctrl->prevVolume));
-
-    if (changed) {
-        auto asset = static_cast<LottieAudio*>(layer->children.first());
-
-        LottieAudioResolver info{};
-        info.src      = asset->data;          //identifies the source on both activation and deactivation
-        info.mimeType = asset->mimeType;
-        info.size     = asset->size;
-        info.embedded = (asset->size > 0);
-        info.volume   = volume;
-        info.active   = active;
-        if (active) info.offset = (layer->remap(comp, frameNo, exps) - layer->remap(comp, layer->inFrame, exps)) / comp->frameRate;
-
+    // audio condition is changed
+    if ((active != ctrl->prevActive) || (active && !tvg::equal(volume, ctrl->prevVolume))) {
+        auto& src = static_cast<LottieAudio*>(layer->children.first())->src;
+        auto offset = active ? (layer->remap(comp, frameNo, exps) - layer->remap(comp, layer->inFrame, exps)) / comp->frameRate : 0.0f;
+        LottieAudioResolver info = {src.data, src.mimeType, src.size, offset, volume, active, (src.size > 0)};
         audioResolver.func(info, audioResolver.data);
     }
 
-    ctrl->prevActive = active;
     ctrl->prevVolume = volume;
+    ctrl->prevActive = active;
 }
 
 

@@ -943,7 +943,6 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
     }
 };
 
-
 struct LottieImage : LottieObject
 {
     LottieBitmap bitmap;
@@ -961,25 +960,15 @@ struct LottieImage : LottieObject
     void prepare(bool external);
 };
 
-
 struct LottieAudio : LottieObject
 {
-    union {
-        char* data = nullptr;
-        char* path;
-    };
-    char* mimeType = nullptr;
-    uint32_t size = 0;
+    AssetSrc src;
 
-    LottieAudio() { LottieObject::type = LottieObject::Audio; }
-
-    ~LottieAudio()
+    LottieAudio()
     {
-        tvg::free(data);
-        tvg::free(mimeType);
+        LottieObject::type = LottieObject::Audio;
     }
 };
-
 
 struct LottieRepeater : LottieObject
 {
@@ -1013,7 +1002,6 @@ struct LottieRepeater : LottieObject
     LottieOpacity endOpacity = 255;
     bool inorder = true;        //true: higher,  false: lower
 };
-
 
 struct LottieOffsetPath : LottieObject
 {
