@@ -42,6 +42,9 @@ struct LottieProperty;
 #define DEFAULT_COND (!tween.active || !frames || (frames->count == 1))
 
 
+enum Dim : uint8_t { DimX = 0, DimY = 1, DimCnt = 2 };
+
+
 template<typename T>
 struct LottieScalarFrame
 {
@@ -70,6 +73,8 @@ struct LottieScalarFrame
     void prepare(TVG_UNUSED LottieScalarFrame* next)
     {
     }
+
+    void setInterpolator(LottieInterpolator* ip, TVG_UNUSED Dim dim) { interpolator = ip; }
 };
 
 
@@ -78,42 +83,58 @@ struct LottieVectorFrame
 {
     T value;                    //keyframe value
     float no;                   //frame number
-    LottieInterpolator* interpolator;
+    LottieInterpolator* interpolator[DimCnt] = {};
     T outTangent, inTangent;
     float length;
     bool hasTangent = false;
     bool hold = false;
 
+    Point progress(float t)
+    {
+        auto tx = interpolator[DimX] ? interpolator[DimX]->progress(t) : t;
+        auto ty = interpolator[DimY] ? interpolator[DimY]->progress(t) : tx;
+        return {tx, ty};
+    }
+
     T interpolate(LottieVectorFrame* next, float frameNo)
     {
         auto t = (frameNo - no) / (next->no - no);
-        if (interpolator) t = interpolator->progress(t);
+        auto p = progress(t);
 
         if (hold) {
-            if (t < 1.0f) return value;
-            else return next->value;
+            if (p.x < 1.0f) return value;
+            return next->value;
         }
 
         if (hasTangent) {
             Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-            return bz.at(bz.atApprox(t * length, length));
-        } else {
-            return tvg::lerp(value, next->value, t);
+            return bz.at(bz.atApprox(p.x * length, length));
         }
+
+        return {tvg::lerp(value.x, next->value.x, p.x), tvg::lerp(value.y, next->value.y, p.y)};
     }
 
     float angle(LottieVectorFrame* next, float frameNo)
     {
-        if (!hasTangent) {
-            Point dp = next->value - value;
+        auto t = (frameNo - no) / (next->no - no);
+
+        //spatial bezier
+        if (hasTangent) {
+            if (interpolator[DimX]) t = interpolator[DimX]->progress(t);
+            Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
+            t = bz.atApprox(t * length, length);
+            return bz.angle(t >= 1.0f ? 0.99f : (t <= 0.0f ? 0.01f : t));
+        }
+
+        //per-dimension easing
+        if (interpolator[DimY]) {
+            auto p1 = progress(t);
+            auto p2 = progress(tvg::clamp(t + 0.001f, 0.0f, 1.0f));
+            Point dp = {(next->value.x - value.x) * (p2.x - p1.x), (next->value.y - value.y) * (p2.y - p1.y)};
             return rad2deg(tvg::atan(dp));
         }
 
-        auto t = (frameNo - no) / (next->no - no);
-        if (interpolator) t = interpolator->progress(t);
-        Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-        t = bz.atApprox(t * length, length);
-        return bz.angle(t >= 1.0f ? 0.99f : (t <= 0.0f ? 0.01f : t));
+        return rad2deg(tvg::atan(next->value - value));
     }
 
     void prepare(LottieVectorFrame* next)
@@ -121,6 +142,8 @@ struct LottieVectorFrame
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
         length = bz.lengthApprox();
     }
+
+    void setInterpolator(LottieInterpolator* ip, Dim dim) { interpolator[dim] = ip; }
 };
 
 
