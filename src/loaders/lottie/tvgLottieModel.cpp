@@ -353,36 +353,36 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
         if (cidx == clast || aidx == color.input->count) break;
         if ((*color.input)[cidx] == (*color.input)[aidx]) {
             cs.offset = (*color.input)[cidx];
-            cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-            cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-            cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
-            cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
+            cs.r = remap255((*color.input)[cidx + 1]);
+            cs.g = remap255((*color.input)[cidx + 2]);
+            cs.b = remap255((*color.input)[cidx + 3]);
+            cs.a = remap255((*color.input)[aidx + 1]);
             cidx += 4;
             aidx += 2;
         } else if ((*color.input)[cidx] < (*color.input)[aidx]) {
             cs.offset = (*color.input)[cidx];
-            cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-            cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-            cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
+            cs.r = remap255((*color.input)[cidx + 1]);
+            cs.g = remap255((*color.input)[cidx + 2]);
+            cs.b = remap255((*color.input)[cidx + 3]);
             //generate alpha value
             if (output.count > 0) {
                 auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
-                cs.a = tvg::lerp<uint8_t>(output.last().a, (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f), p);
-            } else cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
+                cs.a = tvg::lerp<uint8_t>(output.last().a, remap255((*color.input)[aidx + 1]), p);
+            } else cs.a = remap255((*color.input)[aidx + 1]);
             cidx += 4;
         } else {
             cs.offset = (*color.input)[aidx];
-            cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
+            cs.a = remap255((*color.input)[aidx + 1]);
             //generate color value
             if (output.count > 0) {
                 auto p = ((*color.input)[aidx] - output.last().offset) / ((*color.input)[cidx] - output.last().offset);
-                cs.r = tvg::lerp<uint8_t>(output.last().r, (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f), p);
-                cs.g = tvg::lerp<uint8_t>(output.last().g, (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f), p);
-                cs.b = tvg::lerp<uint8_t>(output.last().b, (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f), p);
+                cs.r = tvg::lerp<uint8_t>(output.last().r, remap255((*color.input)[cidx + 1]), p);
+                cs.g = tvg::lerp<uint8_t>(output.last().g, remap255((*color.input)[cidx + 2]), p);
+                cs.b = tvg::lerp<uint8_t>(output.last().b, remap255((*color.input)[cidx + 3]), p);
             } else {
-                cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-                cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-                cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
+                cs.r = remap255((*color.input)[cidx + 1]);
+                cs.g = remap255((*color.input)[cidx + 2]);
+                cs.b = remap255((*color.input)[cidx + 3]);
             }
             aidx += 2;
         }
@@ -393,9 +393,9 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
     //color remains
     while (cidx + 3 < clast) {
         cs.offset = (*color.input)[cidx];
-        cs.r = (uint8_t)nearbyint((*color.input)[cidx + 1] * 255.0f);
-        cs.g = (uint8_t)nearbyint((*color.input)[cidx + 2] * 255.0f);
-        cs.b = (uint8_t)nearbyint((*color.input)[cidx + 3] * 255.0f);
+        cs.r = remap255((*color.input)[cidx + 1]);
+        cs.g = remap255((*color.input)[cidx + 2]);
+        cs.b = remap255((*color.input)[cidx + 3]);
         cs.a = (output.count > 0) ? output.last().a : 255;
         if (cs.a < 255) opaque = false;
         output.push(cs);
@@ -405,7 +405,7 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
     //alpha remains
     while (aidx < color.input->count) {
         cs.offset = (*color.input)[aidx];
-        cs.a = (uint8_t)nearbyint((*color.input)[aidx + 1] * 255.0f);
+        cs.a = remap255((*color.input)[aidx + 1]);
         if (cs.a < 255) opaque = false;
         if (output.count > 0) {
             cs.r = output.last().r;

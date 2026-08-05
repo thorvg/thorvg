@@ -749,12 +749,7 @@ struct LottieColorStop : LottieProperty
         Array<Fill::ColorStop> result;
 
         for (auto i = 0; i < count; ++i, ++s, ++e) {
-            auto offset = tvg::lerp(s->offset, e->offset, t);
-            auto r = tvg::lerp(s->r, e->r, t);
-            auto g = tvg::lerp(s->g, e->g, t);
-            auto b = tvg::lerp(s->b, e->b, t);
-            auto a = tvg::lerp(s->a, e->a, t);
-            result.push({offset, r, g, b, a});
+            result.push(tvg::lerp(*s, *e, t));
         }
         return fill->colorStops(result.data, count);
     }

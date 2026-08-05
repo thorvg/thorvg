@@ -270,11 +270,7 @@ public:
         if (fromCnt != toCnt) TVGLOG("LOTTIE", "Tweening has different numbers of color data in consecutive frames.");
 
         for (uint32_t i = 0; i < std::min(fromCnt, toCnt); ++i, ++to, ++from) {
-            const_cast<Fill::ColorStop*>(to)->offset = tvg::lerp(from->offset, to->offset, progress);
-            const_cast<Fill::ColorStop*>(to)->r = tvg::lerp(from->r, to->r, progress);
-            const_cast<Fill::ColorStop*>(to)->g = tvg::lerp(from->g, to->g, progress);
-            const_cast<Fill::ColorStop*>(to)->b = tvg::lerp(from->b, to->b, progress);
-            const_cast<Fill::ColorStop*>(to)->a = tvg::lerp(from->a, to->a, progress);
+            *const_cast<Fill::ColorStop*>(to) = lerp(*from, *to, progress);
         }
 
         // capture the current

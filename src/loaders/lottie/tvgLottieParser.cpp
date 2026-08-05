@@ -336,9 +336,9 @@ bool LottieParser::getValue(RGB32& color)
         if (!nextArrayValue()) return false;
     }
 
-    color.r = REMAP255(getFloat());
-    color.g = REMAP255(getFloat());
-    color.b = REMAP255(getFloat());
+    color.r = remap255<int32_t>(getFloat());
+    color.g = remap255<int32_t>(getFloat());
+    color.b = remap255<int32_t>(getFloat());
 
     while (nextArrayValue()) getFloat(); //drop
 

@@ -22,6 +22,7 @@
 
 #include "tvgWgShaderTypes.h"
 #include <cassert>
+#include <cstring>
 #include "tvgMath.h"
 #include "tvgFill.h"
 
@@ -144,46 +145,47 @@ void WgShaderTypeGradientData::update(const Fill* fill)
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = fill->colorStops(&stops);
     if (stopCnt == 0) return;
+
+    auto assign = [](uint8_t* dst, const Fill::ColorStop& color) {
+        std::memcpy(dst, &color.r, 4);
+    };
+
     static Array<Fill::ColorStop> sstops(stopCnt);
     sstops.clear();
     sstops.push(stops[0]);
+
     // filter by increasing offset
-    for (uint32_t i = 1; i < stopCnt; i++)
-        if (sstops.last().offset < stops[i].offset)
-            sstops.push(stops[i]);
-        else if (sstops.last().offset == stops[i].offset)
-            sstops.last() = stops[i];
+    for (uint32_t i = 1; i < stopCnt; i++) {
+        if (sstops.last().offset < stops[i].offset) sstops.push(stops[i]);
+        else if (sstops.last().offset == stops[i].offset) sstops.last() = stops[i];
+    }
+
     // head
     uint32_t range_s = 0;
     uint32_t range_e = uint32_t(sstops[0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
-    for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
-        data[ti * 4 + 0] = sstops[0].r;
-        data[ti * 4 + 1] = sstops[0].g;
-        data[ti * 4 + 2] = sstops[0].b;
-        data[ti * 4 + 3] = sstops[0].a;
+    auto dst = data + range_s * 4;
+    for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++, dst += 4) {
+        assign(dst, sstops[0]);
     }
+
     // body
     for (uint32_t di = 1; di < sstops.count; di++) {
-        range_s = uint32_t(sstops[di-1].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
-        range_e = uint32_t(sstops[di-0].offset * (WG_TEXTURE_GRADIENT_SIZE-1));
+        range_s = uint32_t(sstops[di - 1].offset * (WG_TEXTURE_GRADIENT_SIZE - 1));
+        range_e = uint32_t(sstops[di - 0].offset * (WG_TEXTURE_GRADIENT_SIZE - 1));
         float delta = 1.0f/(range_e - range_s);
-        for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++) {
-            float t = (ti - range_s) * delta;
-            data[ti * 4 + 0] = tvg::lerp(sstops[di-1].r, sstops[di].r, t);
-            data[ti * 4 + 1] = tvg::lerp(sstops[di-1].g, sstops[di].g, t);
-            data[ti * 4 + 2] = tvg::lerp(sstops[di-1].b, sstops[di].b, t);
-            data[ti * 4 + 3] = tvg::lerp(sstops[di-1].a, sstops[di].a, t);
+        dst = data + range_s * 4;
+        for (uint32_t ti = range_s; (ti < range_e) && (ti < WG_TEXTURE_GRADIENT_SIZE); ti++, dst += 4) {
+            assign(dst, tvg::lerp(sstops[di - 1], sstops[di], (ti - range_s) * delta));
         }
     }
+
     // tail
     const tvg::Fill::ColorStop& colorStopLast = sstops.last();
     range_s = uint32_t(colorStopLast.offset * (WG_TEXTURE_GRADIENT_SIZE-1));
     range_e = WG_TEXTURE_GRADIENT_SIZE;
-    for (uint32_t ti = range_s; ti < range_e; ti++) {
-        data[ti * 4 + 0] = colorStopLast.r;
-        data[ti * 4 + 1] = colorStopLast.g;
-        data[ti * 4 + 2] = colorStopLast.b;
-        data[ti * 4 + 3] = colorStopLast.a;
+    dst = data + range_s * 4;
+    for (uint32_t ti = range_s; ti < range_e; ti++, dst += 4) {
+        assign(dst, colorStopLast);
     }
 }
 

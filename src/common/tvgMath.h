@@ -82,6 +82,12 @@ static inline constexpr const T& clamp(const T& v, const T& min, const T& max)
     return v;
 }
 
+template<typename T = uint8_t>
+static inline T remap255(float val)
+{
+    return static_cast<T>(nearbyintf(val * 255.0f));
+}
+
 /************************************************************************/
 /* Matrix functions                                                     */
 /************************************************************************/
@@ -400,6 +406,28 @@ static inline bool closed(const Point& lhs, const Point& rhs, float tolerance)
 }
 
 /************************************************************************/
+/* Point3 functions                                                     */
+/************************************************************************/
+
+struct Point3
+{
+    float x, y, z;
+};
+
+static inline Point3 operator+(const Point3& a, const Point3& b)
+{
+    return {a.x + b.x, a.y + b.y, a.z + b.z};
+}
+static inline Point3 operator-(const Point3& a, const Point3& b)
+{
+    return {a.x - b.x, a.y - b.y, a.z - b.z};
+}
+static inline Point3 operator*(const Point3& a, float t)
+{
+    return {a.x * t, a.y * t, a.z * t};
+}
+
+/************************************************************************/
 /* Line functions                                                       */
 /************************************************************************/
 
@@ -544,6 +572,16 @@ static inline T lerp(const T &start, const T &end, float t)
 static inline uint8_t lerp(const uint8_t& start, const uint8_t& end, float t)
 {
     return static_cast<uint8_t>(clamp(static_cast<int>(start + (end - start) * t), 0, 255));
+}
+
+static inline Fill::ColorStop lerp(const Fill::ColorStop& from, const Fill::ColorStop& to, float t)
+{
+    return {
+        tvg::lerp(from.offset, to.offset, t),
+        tvg::lerp(from.r, to.r, t),
+        tvg::lerp(from.g, to.g, t),
+        tvg::lerp(from.b, to.b, t),
+        tvg::lerp(from.a, to.a, t)};
 }
 }
 
