@@ -23,8 +23,8 @@
 "svg":
   - src/loaders/svg/**/*
 
-"tvg":
-  - src/loaders/tvg/**/*
+"media":
+  - src/loaders/media/**/*
 
 "test":
   - test/**/*
