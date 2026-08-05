@@ -249,6 +249,24 @@ struct LottieMask
     bool inverse = false;
 };
 
+// Property (Slot) Override Helper
+struct LottieOverride
+{
+    // Applies a slot property override to the first target with a matching sid.
+    // The original property is either saved as a backup or released before the
+    // override is copied into the target.
+    template<typename T>
+    static bool apply(T& target, LottieProperty* prop, LottieProperty*& backup, bool release)
+    {
+        if (target.sid != prop->sid) return false;
+        if (release) target.release();
+        else backup = new T(target);
+        target.copy(*static_cast<T*>(prop), false);
+        return true;
+    }
+
+#define OVERRIDE(target) LottieOverride::apply(target, prop, backup, release)
+};
 
 struct LottieObject
 {
@@ -390,51 +408,8 @@ struct LottieTextRange : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (style.fillColor.sid == prop->sid) {
-            if (release) style.fillColor.release();
-            else backup = new LottieColor(style.fillColor);
-            style.fillColor.copy(*static_cast<LottieColor*>(prop), false);
-        } else if (style.strokeColor.sid == prop->sid) {
-            if (release) style.strokeColor.release();
-            else backup = new LottieColor(style.strokeColor);
-            style.strokeColor.copy(*static_cast<LottieColor*>(prop), false);
-        } else if (style.position.sid == prop->sid) {
-            if (release) style.position.release();
-            else backup = new LottieVector(style.position);
-            style.position.copy(*static_cast<LottieVector*>(prop), false);
-        } else if (style.scale.sid == prop->sid) {
-            if (release) style.scale.release();
-            else backup = new LottieScalar(style.scale);
-            style.scale.copy(*static_cast<LottieScalar*>(prop), false);
-        } else if (style.rotation.sid == prop->sid) {
-            if (release) style.rotation.release();
-            else backup = new LottieFloat(style.rotation);
-            style.rotation.copy(*static_cast<LottieFloat*>(prop), false);
-        } else if (style.letterSpace.sid == prop->sid) {
-            if (release) style.letterSpace.release();
-            else backup = new LottieFloat(style.letterSpace);
-            style.letterSpace.copy(*static_cast<LottieFloat*>(prop), false);
-        } else if (style.lineSpace.sid == prop->sid) {
-            if (release) style.lineSpace.release();
-            else backup = new LottieFloat(style.lineSpace);
-            style.lineSpace.copy(*static_cast<LottieFloat*>(prop), false);
-        } else if (style.strokeWidth.sid == prop->sid) {
-            if (release) style.strokeWidth.release();
-            else backup = new LottieFloat(style.strokeWidth);
-            style.strokeWidth.copy(*static_cast<LottieFloat*>(prop), false);
-        } else if (style.fillOpacity.sid == prop->sid) {
-            if (release) style.fillOpacity.release();
-            else backup = new LottieOpacity(style.fillOpacity);
-            style.fillOpacity.copy(*static_cast<LottieOpacity*>(prop), false);
-        } else if (style.strokeOpacity.sid == prop->sid) {
-            if (release) style.strokeOpacity.release();
-            else backup = new LottieOpacity(style.strokeOpacity);
-            style.strokeOpacity.copy(*static_cast<LottieOpacity*>(prop), false);
-        } else if (style.opacity.sid == prop->sid) {
-            if (release) style.opacity.release();
-            else backup = new LottieOpacity(style.opacity);
-            style.opacity.copy(*static_cast<LottieOpacity*>(prop), false);
-        }
+        OVERRIDE(style.fillColor) || OVERRIDE(style.strokeColor) || OVERRIDE(style.position) || OVERRIDE(style.scale) || OVERRIDE(style.rotation) || OVERRIDE(style.letterSpace) ||
+        OVERRIDE(style.lineSpace) || OVERRIDE(style.strokeWidth) || OVERRIDE(style.fillOpacity) || OVERRIDE(style.strokeOpacity) || OVERRIDE(style.opacity);
         return backup;
     }
 };
@@ -525,9 +500,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (release) doc.release();
-        else backup = new LottieTextDoc(doc);
-        doc.copy(*static_cast<LottieTextDoc*>(prop), false);
+        OVERRIDE(doc);
         return backup;
     }
 
@@ -743,31 +716,7 @@ struct LottieTransform : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (rotation.sid == prop->sid) {
-            if (release) rotation.release();
-            else backup = new LottieFloat(rotation);
-            rotation.copy(*static_cast<LottieFloat*>(prop), false);
-        } else if (scale.sid == prop->sid) {
-            if (release) scale.release();
-            else backup = new LottieScalar(scale);
-            scale.copy(*static_cast<LottieScalar*>(prop), false);
-        } else if (position.sid == prop->sid) {
-            if (release) position.release();
-            else backup = new LottieVector(position);
-            position.copy(*static_cast<LottieVector*>(prop), false);
-        } else if (opacity.sid == prop->sid) {
-            if (release) opacity.release();
-            else backup = new LottieOpacity(opacity);
-            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
-        } else if (skewAngle.sid == prop->sid) {
-            if (release) skewAngle.release();
-            else backup = new LottieFloat(skewAngle);
-            skewAngle.copy(*static_cast<LottieFloat*>(prop), false);
-        } else if (skewAxis.sid == prop->sid) {
-            if (release) skewAxis.release();
-            else backup = new LottieFloat(skewAxis);
-            skewAxis.copy(*static_cast<LottieFloat*>(prop), false);
-        }
+        OVERRIDE(rotation) || OVERRIDE(scale) || OVERRIDE(position) || OVERRIDE(opacity) || OVERRIDE(skewAngle) || OVERRIDE(skewAxis);
         return backup;
     }
 
@@ -804,15 +753,7 @@ struct LottieSolid : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (color.sid == prop->sid) {
-            if (release) color.release();
-            else backup = new LottieColor(color);
-            color.copy(*static_cast<LottieColor*>(prop), false);
-        } else if (opacity.sid == prop->sid) {
-            if (release) opacity.release();
-            else backup = new LottieOpacity(opacity);
-            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
-        }
+        OVERRIDE(color) || OVERRIDE(opacity);
         return backup;
     }
 };
@@ -881,16 +822,8 @@ struct LottieGradient : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (colorStops.sid == prop->sid) {
-            if (release) colorStops.release();
-            else backup = new LottieColorStop(colorStops);
-            colorStops.copy(*static_cast<LottieColorStop*>(prop), false);
-            prepare();
-        } else if (opacity.sid == prop->sid) {
-            if (release) opacity.release();
-            else backup = new LottieOpacity(opacity);
-            opacity.copy(*static_cast<LottieOpacity*>(prop), false);
-        }
+        if (OVERRIDE(colorStops)) prepare();
+        else OVERRIDE(opacity);
         return backup;
     }
 
@@ -945,9 +878,7 @@ struct LottieImage : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (release) bitmap.release();
-        else backup = new LottieBitmap(bitmap);
-        bitmap.copy(*static_cast<LottieBitmap*>(prop), false);
+        OVERRIDE(bitmap);
         return backup;
     }
 
@@ -1085,11 +1016,7 @@ struct LottieLayer : LottieGroup
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        if (timeRemap.sid == prop->sid) {
-            if (release) timeRemap.release();
-            else backup = new LottieFloat(timeRemap);
-            timeRemap.copy(*static_cast<LottieFloat*>(prop), false);
-        }
+        OVERRIDE(timeRemap);
         return backup;
     }
 
@@ -1176,6 +1103,7 @@ struct LottieLayer : LottieGroup
     }
 };
 
+#undef OVERRIDE
 
 struct LottieSlot
 {
