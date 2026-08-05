@@ -9,3 +9,7 @@ endif
 if lottie2gif
    subdir('lottie2gif')
 endif
+
+if aa_poc
+   subdir('aa_poc')
+endif

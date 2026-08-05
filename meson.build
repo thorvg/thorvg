@@ -50,6 +50,11 @@ endif
 all_tools = get_option('tools').contains('all')
 lottie2gif = all_tools or get_option('tools').contains('lottie2gif')
 svg2png = all_tools or get_option('tools').contains('svg2png')
+aa_poc = get_option('tools').contains('aa_poc')
+
+if aa_poc and not gl_engine
+    error('aa_poc requires the GL engine (-Dengines=gl)')
+endif
 
 # Loaders
 all_loaders = get_option('loaders').contains('all')
@@ -244,6 +249,7 @@ summary(
   {
     'Svg2Png': svg2png,
     'Lottie2Gif': lottie2gif,
+    'AA POC': aa_poc,
   },
   section: 'Tool',
   bool_yn: true,
