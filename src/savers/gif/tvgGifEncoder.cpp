@@ -265,11 +265,11 @@ static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastE
     _splitPalette(image+subPixelsA*4, subPixelsB, splitElt, lastElt,  splitElt+splitDist, splitDist/2, treeNode*2+1, pal);
 }
 
-
 // Finds all pixels that have changed from the previous image and
 // moves them to the from of the buffer.
 // This allows us to build a palette optimized for the colors of the
 // changed pixels only.
+// With no previous frame, every visible pixel counts as changed.
 static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numPixels, bool transparent)
 {
     int numChanged = 0;
@@ -277,7 +277,7 @@ static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numP
 
     for (int ii=0; ii < numPixels; ++ii) {
         if (frame[3] >= TRANSPARENT_THRESHOLD) {
-            if (transparent || (lastFrame[0] != frame[0] || lastFrame[1] != frame[1] || lastFrame[2] != frame[2])) {
+            if (!lastFrame || transparent || (lastFrame[0] != frame[0] || lastFrame[1] != frame[1] || lastFrame[2] != frame[2])) {
                 writeIter[0] = frame[0];
                 writeIter[1] = frame[1];
                 writeIter[2] = frame[2];
@@ -285,7 +285,7 @@ static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numP
                 writeIter += 4;
             }
         }
-        lastFrame += 4;
+        if (lastFrame) lastFrame += 4;
         frame += 4;
     }
 
@@ -303,7 +303,7 @@ static void _makePalette(GifWriter* writer, const uint8_t* lastFrame, const uint
     memcpy(writer->tmpImage, nextFrame, imageSize);
 
     int numPixels = (int)(width * height);
-    if (lastFrame) numPixels = _pickChangedPixels(lastFrame, writer->tmpImage, numPixels, transparent);
+    numPixels = _pickChangedPixels(lastFrame, writer->tmpImage, numPixels, transparent);
 
     const int lastElt = 1 << bitDepth;
     const int splitElt = lastElt/2;
@@ -598,6 +598,8 @@ bool gifBegin(GifWriter* writer, const char* filename, uint32_t width, uint32_t 
 
         fputc(0, writer->f); // block terminator
     }
+
+    memset(&writer->pal, 0, sizeof(GifPalette));
 
     return true;
 }
