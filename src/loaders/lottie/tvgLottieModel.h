@@ -380,16 +380,10 @@ struct LottieTextRange : LottieObject
     void color(float frameNo, RGB32& fillColor, RGB32& strokeColor, float factor, LottieTween& tween, LottieExpressions* exps)
     {
         if (style.flags.fillColor) {
-            auto color = style.fillColor(frameNo, tween, exps);
-            fillColor.r = tvg::lerp<uint8_t>(fillColor.r, color.r, factor);
-            fillColor.g = tvg::lerp<uint8_t>(fillColor.g, color.g, factor);
-            fillColor.b = tvg::lerp<uint8_t>(fillColor.b, color.b, factor);
+            fillColor = tvg::lerp(fillColor, style.fillColor(frameNo, tween, exps), factor);
         }
         if (style.flags.strokeColor) {
-            auto color = style.strokeColor(frameNo, tween, exps);
-            strokeColor.r = tvg::lerp<uint8_t>(strokeColor.r, color.r, factor);
-            strokeColor.g = tvg::lerp<uint8_t>(strokeColor.g, color.g, factor);
-            strokeColor.b = tvg::lerp<uint8_t>(strokeColor.b, color.b, factor);
+            strokeColor = tvg::lerp(strokeColor, style.strokeColor(frameNo, tween, exps), factor);
         }
     }
 
@@ -790,7 +784,7 @@ struct LottieTransform : LottieObject
     struct Dimension3
     {
         LottieFloat rx = 0.0f, ry = 0.0f;  // use the rotation for z rotation
-        LottieScalar3 orient = Point3{0.0f, 0.0f, 0.0f};
+        LottieScalar3 orient = {};
     }* ddd = nullptr;
 };
 
