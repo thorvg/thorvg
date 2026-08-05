@@ -418,8 +418,7 @@ bool AvfMediaLoader::sync()
 
     curTime = latestTime;
     if (eosPending) {
-        started = false;
-        paused = true;
+        state = State::Stopped;
         eosPending = false;
     }
     if (!frameUpdated) return false;
@@ -439,8 +438,6 @@ Result AvfMediaLoader::play()
 {
     auto restart = curTime >= totalTime;
     _clearEos(*this);
-    started = true;
-    paused = false;
     dispatch_async(queue, ^{
         if (restart) [player seekToTime:kCMTimeZero toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
         [player play];
@@ -451,9 +448,6 @@ Result AvfMediaLoader::play()
 
 Result AvfMediaLoader::pause()
 {
-    if (!started) return Result::InsufficientCondition;
-
-    paused = true;
     dispatch_async(queue, ^{
         [player pause];
         _cancelTimer(*this);
@@ -464,9 +458,6 @@ Result AvfMediaLoader::pause()
 Result AvfMediaLoader::stop()
 {
     _clearEos(*this);
-    curTime = 0.0f;
-    started = false;
-    paused = true;
     dispatch_async(queue, ^{
         [player pause];
         _cancelTimer(*this);
@@ -481,7 +472,6 @@ Result AvfMediaLoader::stop()
 Result AvfMediaLoader::seek(float seconds)
 {
     _clearEos(*this);
-    curTime = seconds;
     dispatch_async(queue, ^{
         auto end = seconds >= totalTime;
         _resetFrame(*this, seconds);
@@ -503,7 +493,6 @@ Result AvfMediaLoader::seek(float seconds)
 
 Result AvfMediaLoader::loop(bool on)
 {
-    looping = on;
     dispatch_async(queue, ^{
         if (on) _removeEndObserver(*this);
         else _startEndObserver(*this);
@@ -513,14 +502,12 @@ Result AvfMediaLoader::loop(bool on)
 
 Result AvfMediaLoader::volume(float volume)
 {
-    audioVolume = volume;
     player.volume = volume;
     return Result::Success;
 }
 
 Result AvfMediaLoader::mute(bool on)
 {
-    muted = on;
     player.muted = on;
     return Result::Success;
 }

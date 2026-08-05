@@ -27,10 +27,17 @@
 
 struct MediaLoader : BitmapLoader
 {
+    enum class State : uint8_t
+    {
+        Stopped,
+        Playing,
+        Paused
+    };
+
     float curTime = 0.0f;      // current playback position in seconds
     float totalTime = 0.0f;    // media duration in seconds
     float audioVolume = 1.0f;  // [0 - 1]
-    bool paused = false;
+    State state = State::Stopped;
     bool muted = false;
     bool looping = false;
 

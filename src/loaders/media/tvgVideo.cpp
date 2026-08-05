@@ -64,32 +64,46 @@ Video::~Video()
 Result Video::play() noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
-    return loader->play();
+    auto ret = loader->play();
+    if (ret == Result::Success) loader->state = MediaLoader::State::Playing;
+    return ret;
 }
 
 Result Video::pause() noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
-    return loader->pause();
+    if (loader->state == MediaLoader::State::Stopped) return Result::InsufficientCondition;
+    auto ret = loader->pause();
+    if (ret == Result::Success) loader->state = MediaLoader::State::Paused;
+    return ret;
 }
 
 Result Video::stop() noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
-    return loader->stop();
+    auto ret = loader->stop();
+    if (ret == Result::Success) {
+        loader->curTime = 0.0f;
+        loader->state = MediaLoader::State::Stopped;
+    }
+    return ret;
 }
 
 Result Video::seek(float seconds) noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
     if (seconds < 0.0f || seconds > loader->totalTime) return Result::InvalidArguments;
-    return loader->seek(seconds);
+    auto ret = loader->seek(seconds);
+    if (ret == Result::Success) loader->curTime = seconds;
+    return ret;
 }
 
 Result Video::loop(bool on) noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
-    return loader->loop(on);
+    auto ret = loader->loop(on);
+    if (ret == Result::Success) loader->looping = on;
+    return ret;
 }
 
 bool Video::loop() noexcept
@@ -119,7 +133,9 @@ Result Video::volume(float volume) noexcept
 {
     if (volume < 0.0f || volume > 1.0f) return Result::InvalidArguments;
     FETCH_LOADER(Result::InsufficientCondition);
-    return loader->volume(volume);
+    auto ret = loader->volume(volume);
+    if (ret == Result::Success) loader->audioVolume = volume;
+    return ret;
 }
 
 float Video::volume() const noexcept
@@ -131,7 +147,9 @@ float Video::volume() const noexcept
 Result Video::mute(bool on) noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
-    return loader->mute(on);
+    auto ret = loader->mute(on);
+    if (ret == Result::Success) loader->muted = on;
+    return ret;
 }
 
 bool Video::muted() const noexcept

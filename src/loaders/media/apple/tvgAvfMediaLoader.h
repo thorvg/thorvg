@@ -44,7 +44,6 @@ struct AvfMediaLoader : MediaLoader
     AVPlayerLooper* looper = nil;
     id endObserver = nil;
     dispatch_source_t timer = nullptr;
-    bool started = false;  // true after play(), including pause; false after stop() or EOS
 
     // Decoded frame ring buffer and synchronized publication state
     uint32_t* frames[BUFFER_COUNT] = {};
