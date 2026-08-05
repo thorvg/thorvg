@@ -186,7 +186,7 @@ public:
     void release(WgContext& context);
 };
 
-class WgStageBufferSolidColor;
+struct WgStageBufferSolidColor;
 
 class WgStageBufferGeometry {
 private:
