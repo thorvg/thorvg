@@ -790,7 +790,7 @@ struct LottieTransform : LottieObject
     struct Dimension3
     {
         LottieFloat rx = 0.0f, ry = 0.0f;  // use the rotation for z rotation
-        LottieScalar3 orient = Point3{0.0f, 0.0f, 0.0f};
+        LottieScalar3 orient = {};
     }* ddd = nullptr;
 };
 
