@@ -34,7 +34,6 @@ struct WgImageData {
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
 
-    void update(WgContext& context, const RenderSurface* surface, FilterMethod filter);
     void update(WgContext& context, const Fill* fill);
     void release(WgContext& context);
 };

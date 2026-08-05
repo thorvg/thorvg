@@ -616,7 +616,8 @@ bool WgRenderer::preUpdate()
 
 bool WgRenderer::postUpdate()
 {
-    return true;
+    if (mContext.invalid()) return false;
+    return mTextures.flushPreprocess(mContext);
 }
 
 

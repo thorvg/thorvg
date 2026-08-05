@@ -120,11 +120,6 @@ private:
         const WGPUVertexBufferLayout *vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
         const WGPUColorWriteMask writeMask, const WGPUTextureFormat colorTargetFormat, const WGPUBlendState blendState,
         const WGPUDepthStencilState depthStencilState, const WGPUMultisampleState multisampleState);
-    WGPUComputePipeline createComputePipeline(
-        WGPUDevice device, const char* pipelineLabel,
-        const WGPUShaderModule shaderModule, const char* entryPoint,
-        const WGPUPipelineLayout pipelineLayout);
-    void releaseComputePipeline(WGPUComputePipeline& computePipeline);
     void releaseRenderPipeline(WGPURenderPipeline& renderPipeline);
     void releasePipelineLayout(WGPUPipelineLayout& pipelineLayout);
     void releaseShaderModule(WGPUShaderModule& shaderModule);
