@@ -153,6 +153,7 @@ struct LottieExpressions
     }
 
     void update(float curTime);
+    void bounds(LottieLayer* layer);
 
 private:
     LottieExpressions();
@@ -204,6 +205,7 @@ struct LottieExpressions
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
     bool result(TVG_UNUSED float, TVG_UNUSED TextDocument& doc, TVG_UNUSED LottieExpression*) { return false; }
     void update(TVG_UNUSED float) {}
+    void bounds(TVG_UNUSED LottieLayer*) {}
 };
 
 #endif //THORVG_LOTTIE_EXPRESSIONS_SUPPORT
