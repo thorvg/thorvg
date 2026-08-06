@@ -583,6 +583,13 @@ struct LottiePath : LottieShape
         return nullptr;
     }
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(pathset);
+        return backup;
+    }
+
     LottiePathSet pathset;
 };
 
