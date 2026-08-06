@@ -297,8 +297,6 @@ void LottieFont::prepare()
 
 void LottieImage::prepare(bool external)
 {
-    LottieObject::type = LottieObject::Image;
-
     //Prepare the Picture image
     auto result = Result::Unknown;
     auto picture = Picture::gen();
@@ -473,7 +471,7 @@ Fill* LottieGradient::fill(float frameNo, uint8_t opacity, LottieTween& tween, L
 }
 
 
-LottieGroup::LottieGroup()
+LottieGroup::LottieGroup(LottieObject::Type type) : LottieObject(type)
 {
     reqFragment = false;
     buildDone = false;
@@ -494,10 +492,8 @@ LottieProperty* LottieGroup::property(uint16_t ix)
 }
 
 
-void LottieGroup::prepare(LottieObject::Type type)
+void LottieGroup::prepare()
 {
-    LottieObject::type = type;
-
     if (children.count == 0) return;
 
     size_t strokeCnt = 0;
@@ -566,7 +562,7 @@ void LottieGroup::prepare(LottieObject::Type type)
     }
 }
 
-LottieLayer::LottieLayer()
+LottieLayer::LottieLayer() : LottieGroup(LottieObject::Layer)
 {
     autoOrient = false;
     matteSrc = false;
@@ -617,7 +613,7 @@ void LottieLayer::prepare(RGB32* color)
         statical.pooler.push(obj);
     }
 
-    LottieGroup::prepare(LottieObject::Layer);
+    LottieGroup::prepare();
 }
 
 
