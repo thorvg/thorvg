@@ -1038,6 +1038,17 @@ void LottieParser::parseImage(LottieImage* image, const char* data, const char* 
     image->prepare(external);
 }
 
+void LottieParser::parseMedia(LottieMedia* media, const char* data, const char* subPath, bool embedded, float width, float height)
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    auto external = false;
+    if (!parseAssetSource(media->video, data, subPath, embedded, "data:video/", external)) return;
+    media->video.width = width;
+    media->video.size = height;
+    media->prepare(external);
+#endif
+}
+
 LottieObject* LottieParser::parseAsset()
 {
     enterObject();
@@ -1072,15 +1083,19 @@ LottieObject* LottieParser::parseAsset()
         else skip();
     }
     if (data) {
-        if (!strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
-            auto asset = new LottieImage;
-            parseImage(asset, data, subPath, embedded, width, height);
-            if (sid) registerSlot(asset, sid, asset->bitmap);
-            obj = asset;
+        if (!strncmp(data, "data:image/", 11)) {
+            obj = new LottieImage;
+            parseImage(static_cast<LottieImage*>(obj), data, subPath, embedded, width, height);
+            if (sid) registerSlot(static_cast<LottieImage*>(obj), sid, static_cast<LottieImage*>(obj)->bitmap);
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+        } else if (!strncmp(data, "data:video/", 11)) {
+            obj = new LottieMedia;
+            parseMedia(static_cast<LottieMedia*>(obj), data, subPath, embedded, width, height);
+            if (sid) registerSlot(static_cast<LottieMedia*>(obj), sid, static_cast<LottieMedia*>(obj)->video);
+#endif
         } else if (!strncmp(data, "data:audio/", 11) || !embedded) {
-            auto asset = new LottieAudio;
-            parseAudio(asset, data, subPath, embedded);
-            obj = asset;
+            obj = new LottieAudio;
+            parseAudio(static_cast<LottieAudio*>(obj), data, subPath, embedded);
         } else TVGLOG("LOTTIE", "Unexpected data type");
     }
     if (obj) obj->id = id;

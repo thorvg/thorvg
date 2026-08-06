@@ -168,6 +168,7 @@ struct LottieProperty
         ColorStop,
         TextDoc,
         Image,
+        Video,  // thorvg custom for video support
         Scalar3
     };
     enum class Loop : uint8_t {None = 0, InCycle = 1, InPingPong, InOffset, InContinue, OutCycle, OutPingPong, OutOffset, OutContinue};
@@ -180,10 +181,10 @@ struct LottieProperty
     LottieProperty(Type type = Type::Invalid) : type(type) {}
     virtual ~LottieProperty() {}
 
-    virtual uint32_t frameCnt() = 0;
-    virtual uint32_t nearest(float frameNo) = 0;
-    virtual float frameNo(int32_t key) = 0;
-    virtual float loop(float frameNo, uint32_t key, Loop mode, float inout) = 0;
+    virtual uint32_t frameCnt() { return 0; }
+    virtual uint32_t nearest(float frameNo) { return 0; }
+    virtual float frameNo(int32_t key) { return 0; }
+    virtual float loop(float frameNo, TVG_UNUSED uint32_t key, TVG_UNUSED Loop mode, TVG_UNUSED float inout) { return frameNo; }
 
     bool copy(LottieProperty* rhs, bool shallow)
     {
@@ -961,10 +962,17 @@ struct LottieBitmap : LottieProperty, AssetSrc
         }
     }
 
-    uint32_t frameCnt() override { return 0; }
-    uint32_t nearest(float frameNo) override { return 0; }
-    float frameNo(int32_t key) override { return 0; }
-    float loop(float frameNo, TVG_UNUSED uint32_t key, TVG_UNUSED Loop mode, TVG_UNUSED float inout) override { return frameNo; }
+    bool prepare(bool external)
+    {
+        auto result = Result::Unknown;
+        picture = Picture::gen();
+        if (size > 0) result = picture->load(data, size, mimeType);
+        else if (external) result = picture->load(path);
+        picture->size(width, height);
+        picture->ref();
+
+        return result == Result::Success;
+    }
 
     void copy(LottieBitmap& rhs, bool shallow = true)
     {
@@ -980,6 +988,41 @@ struct LottieBitmap : LottieProperty, AssetSrc
         width = rhs.width;
         height = rhs.height;
     }
+};
+
+struct LottieVideo : LottieProperty, AssetSrc
+{
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    tvg::Video* video = nullptr;
+    float width = 0.0f;
+    float height = 0.0f;
+
+    LottieVideo() : LottieProperty(LottieProperty::Type::Video) {}
+
+    ~LottieVideo()
+    {
+        release();
+    }
+
+    bool prepare(bool external)
+    {
+        auto result = Result::Unknown;
+        video = Video::gen();
+        auto picture = video->picture();
+        if (size > 0) result = picture->load((const char*)data, size, mimeType);
+        else if (external) result = picture->load(path);
+        picture->size(width, height);
+
+        return result == Result::Success;
+    }
+
+    void release()
+    {
+        AssetSrc::release();
+        delete (video);
+        video = nullptr;
+    }
+#endif
 };
 
 using LottieFloat = LottieGenericProperty<LottieScalarFrame<float>, float, LottieProperty::Type::Float>;

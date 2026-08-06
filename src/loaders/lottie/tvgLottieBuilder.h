@@ -193,7 +193,7 @@ private:
     void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo);
     void updatePrecomp(LottieComposition* comp, LottieLayer* precomp, float frameNo, LottieTween& tween);
     void updateSolid(LottieLayer* layer);
-    void updateImage(LottieGroup* layer);
+    void updateImage(LottieLayer* layer, float frameNo);
     void updateURLFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc);
     void updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc);
     bool updateTextRange(LottieText* text, float frameNo, Shape* shape, const TextDocument& doc, RenderText& ctx);

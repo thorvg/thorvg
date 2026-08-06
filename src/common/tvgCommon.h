@@ -39,6 +39,10 @@
 #include "config.h"
 #include "thorvg.h"
 
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    #include "thorvg_media.h"
+#endif
+
 using namespace std;
 using namespace tvg;
 

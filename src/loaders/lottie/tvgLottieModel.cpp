@@ -294,22 +294,6 @@ void LottieFont::prepare()
     if (b64src) Text::load(name, b64src, size, mime, false);
 }
 
-
-void LottieImage::prepare(bool external)
-{
-    LottieObject::type = LottieObject::Image;
-
-    //Prepare the Picture image
-    auto result = Result::Unknown;
-    auto picture = Picture::gen();
-    if (bitmap.size > 0) result = picture->load(bitmap.data, bitmap.size, bitmap.mimeType);
-    else if (external) result = picture->load(bitmap.path);
-    if (result == Result::Success) resolved = true;
-    picture->size(bitmap.width, bitmap.height);
-    bitmap.picture = picture;
-    picture->ref();
-}
-
 void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieTween& tween, LottieExpressions* exps)
 {
     start = tvg::clamp(this->start(frameNo, tween, exps) * 0.01f, 0.0f, 1.0f);

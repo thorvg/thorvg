@@ -275,7 +275,8 @@ struct LottieObject
         PuckerBloat,
         ZigZag,
         TextRange,
-        Audio
+        Audio,
+        Media
     };
 
     virtual ~LottieObject()
@@ -942,6 +943,16 @@ struct LottieImage : LottieObject
     LottieBitmap bitmap;
     bool resolved = false;
 
+    LottieImage()
+    {
+        LottieObject::type = LottieObject::Image;
+    }
+
+    void prepare(bool external)
+    {
+        resolved = bitmap.prepare(external);
+    }
+
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
@@ -950,8 +961,33 @@ struct LottieImage : LottieObject
         bitmap.copy(*static_cast<LottieBitmap*>(prop), false);
         return backup;
     }
+};
 
-    void prepare(bool external);
+struct LottieMedia : LottieObject
+{
+    LottieVideo video;
+    bool resolved = false;
+
+    LottieMedia()
+    {
+        LottieObject::type = LottieObject::Media;
+    }
+
+    void prepare(bool external)
+    {
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+        resolved = video.prepare(external);
+#endif
+    }
+
+    void play(float progress)
+    {
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+        // TDOO: play or seek
+#endif
+    }
+
+    // TODO: override?
 };
 
 struct LottieAudio : LottieObject
@@ -962,6 +998,8 @@ struct LottieAudio : LottieObject
     {
         LottieObject::type = LottieObject::Audio;
     }
+
+    // TODO: override?
 };
 
 struct LottieRepeater : LottieObject

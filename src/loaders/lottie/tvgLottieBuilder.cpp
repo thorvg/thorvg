@@ -961,30 +961,48 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
 }
 
 
-void LottieBuilder::updateImage(LottieGroup* layer)
+void LottieBuilder::updateImage(LottieLayer* layer, float frameNo)
 {
     if (layer->children.empty()) return;
 
-    auto image = static_cast<LottieImage*>(layer->children.first());
-    if (image->type != LottieObject::Type::Image) {
-        TVGERR("LOTTIE", "Expected image data.");
-        return;
-    }
+    auto obj = layer->children.first();
+    if (obj->type == LottieObject::Type::Image) {
+        auto image = static_cast<LottieImage*>(obj);
+        auto picture = image->bitmap.picture;
+        if (!picture) return;
 
-    auto picture = image->bitmap.picture;
-    if (!picture) return;
+        //resolve an image asset if need
+        if (resolver && !image->resolved) {
+            resolver->func(picture, image->bitmap.path, resolver->data);
+            picture->size(image->bitmap.width, image->bitmap.height);
+            image->resolved = true;
+        }
 
-    //resolve an image asset if need
-    if (resolver && !image->resolved) {
-        resolver->func(picture, image->bitmap.path, resolver->data);
-        picture->size(image->bitmap.width, image->bitmap.height);
-        image->resolved = true;
-    }
+        //LottieImage can be shared among other layers
+        layer->scene->add(picture->refCnt() == 1 ? picture : picture->duplicate());
 
-    //LottieImage can be shared among other layers
-    layer->scene->add(picture->refCnt() == 1 ? picture : picture->duplicate());
+    } else if (obj->type == LottieObject::Type::Media) {
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+        auto video = static_cast<LottieMedia*>(obj);
+        auto picture = media->video.picture;
+        if (!picture) return;
+
+        //resolve an image asset if need
+        if (resolver && !video->resolved) {
+            resolver->func(picture, media->video.path, resolver->data);
+            picture->size(media->video.width, media->video.height);
+            video->resolved = true;
+        }
+
+        // FIXME: allow share?
+        if (picture->refCnt() > 1) TVGERR("LOTTIE", "video is shared?");
+        layer->scene->add(picture);
+
+        auto progress = (frameNo - layer->inFrame) / (layer->outFrame - layer->inFrame);
+        video->play(progress);
+#endif
+    } else TVGERR("LOTTIE", "Expected image/video data.");
 }
-
 
 void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc)
 {
@@ -1580,7 +1598,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
             break;
         }
         case LottieLayer::Image: {
-            updateImage(layer);
+            updateImage(layer, frameNo);
             break;
         }
         case LottieLayer::Text: {
