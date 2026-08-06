@@ -1717,14 +1717,13 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
             break;
         }
         case LottieProperty::Type::ColorStop: {
-            auto obj = new LottieGradient;
+            LottieGradient obj(slot->context.parent->type);
             while (auto key = nextObjectKey()) {
-                if (KEY_AS("p")) parseColorStop(obj);
+                if (KEY_AS("p")) parseColorStop(&obj);
                 else skip();
             }
-            obj->prepare();
-            prop = new LottieColorStop(obj->colorStops);
-            delete(obj);
+            obj.prepare();
+            prop = new LottieColorStop(obj.colorStops);
             break;
         }
         case LottieProperty::Type::TextDoc: {

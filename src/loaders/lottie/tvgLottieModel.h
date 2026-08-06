@@ -50,7 +50,6 @@ struct LottieStroke
         delete(dashattr);
     }
 
-
     LottieFloat& dashValue()
     {
         if (!dashattr) dashattr = new DashAttr;
@@ -86,6 +85,7 @@ struct LottieEffect
 {
     enum Type : uint8_t {Custom = 5, Tint = 20, Fill, Stroke, Tritone, DropShadow = 25, GaussianBlur = 29};
 
+    LottieEffect(Type type) : type(type) {}
     virtual ~LottieEffect() {}
 
     unsigned long nm;  //encoded by djb2
@@ -108,10 +108,7 @@ struct LottieFxCustom : LottieEffect
     char* name = nullptr;
     Array<Property> props;
 
-    LottieFxCustom()
-    {
-        type = LottieEffect::Custom;
-    }
+    LottieFxCustom() : LottieEffect(LottieEffect::Custom) {}
 
     ~LottieFxCustom()
     {
@@ -162,10 +159,7 @@ struct LottieFxFill : LottieEffect
     //LottieSlider vFeather;
     LottieFloat opacity;
 
-    LottieFxFill()
-    {
-        type = LottieEffect::Fill;
-    }
+    LottieFxFill() : LottieEffect(LottieEffect::Fill) {}
 };
 
 struct LottieFxStroke : LottieEffect
@@ -182,10 +176,7 @@ struct LottieFxStroke : LottieEffect
     //LottieFloat space;
     //LottieInteger style;
 
-    LottieFxStroke()
-    {
-        type = LottieEffect::Stroke;
-    }
+    LottieFxStroke() : LottieEffect(LottieEffect::Stroke) {}
 };
 
 struct LottieFxTint : LottieEffect
@@ -194,10 +185,7 @@ struct LottieFxTint : LottieEffect
     LottieColor white;
     LottieFloat intensity;
 
-    LottieFxTint()
-    {
-        type = LottieEffect::Tint;
-    }
+    LottieFxTint() : LottieEffect(LottieEffect::Tint) {}
 };
 
 struct LottieFxTritone : LottieEffect
@@ -207,10 +195,7 @@ struct LottieFxTritone : LottieEffect
     LottieColor dark;
     LottieOpacity blend;
 
-    LottieFxTritone()
-    {
-        type = LottieEffect::Tritone;
-    }
+    LottieFxTritone() : LottieEffect(LottieEffect::Tritone) {}
 };
 
 struct LottieFxDropShadow : LottieEffect
@@ -221,10 +206,7 @@ struct LottieFxDropShadow : LottieEffect
     LottieFloat distance = 0.0f;
     LottieFloat blurness = 0.0f;
 
-    LottieFxDropShadow()
-    {
-        type = LottieEffect::DropShadow;
-    }
+    LottieFxDropShadow() : LottieEffect(LottieEffect::DropShadow) {}
 };
 
 struct LottieFxGaussianBlur : LottieEffect
@@ -233,10 +215,7 @@ struct LottieFxGaussianBlur : LottieEffect
     LottieInteger direction = 0;
     LottieInteger wrap = 0;
 
-    LottieFxGaussianBlur()
-    {
-        type = LottieEffect::GaussianBlur;
-    }
+    LottieFxGaussianBlur() : LottieEffect(LottieEffect::GaussianBlur) {}
 };
 
 
@@ -296,9 +275,8 @@ struct LottieObject
         Audio
     };
 
-    virtual ~LottieObject()
-    {
-    }
+    LottieObject(Type type) : type(type) {}
+    virtual ~LottieObject() {}
 
     virtual LottieProperty* override(LottieProperty* prop, bool release)
     {
@@ -347,9 +325,8 @@ struct LottieTextRange : LottieObject
     enum Shape : uint8_t { Square = 1, RampUp, RampDown, Triangle, Round, Smooth };
     enum Unit : uint8_t { Percent = 1, Index };
 
-    LottieTextRange()
+    LottieTextRange() : LottieObject(LottieObject::TextRange)
     {
-        LottieObject::type = LottieObject::TextRange;
         style.flags.fillColor = 0;
         style.flags.strokeColor = 0;
         style.flags.strokeWidth = 0;
@@ -492,10 +469,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
         LottieScalar anchor{};
     } alignOp;
 
-    LottieText()
-    {
-        LottieObject::type = LottieObject::Text;
-    }
+    LottieText() : LottieObject(LottieObject::Text) {}
 
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
@@ -527,10 +501,7 @@ struct LottieTrimpath : LottieObject
 {
     enum Type : uint8_t { Simultaneous = 1, Individual = 2 };
 
-    LottieTrimpath()
-    {
-        LottieObject::type = LottieObject::Trimpath;
-    }
+    LottieTrimpath() : LottieObject(LottieObject::Trimpath) {}
 
     bool mergeable() override
     {
@@ -566,19 +537,13 @@ struct LottieShape : LottieObject, LottieRenderPooler<Shape>
         return true;
     }
 
-    LottieShape(LottieObject::Type type)
-    {
-        LottieObject::type = type;
-    }
+    LottieShape(LottieObject::Type type) : LottieObject(type) {}
 };
 
 
 struct LottieRoundedCorner : LottieObject
 {
-    LottieRoundedCorner()
-    {
-        LottieObject::type = LottieObject::RoundedCorner;
-    }
+    LottieRoundedCorner() : LottieObject(LottieObject::RoundedCorner) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -687,10 +652,7 @@ struct LottieTransform : LottieObject
         delete (ddd);
     }
 
-    LottieTransform()
-    {
-        LottieObject::type = LottieObject::Transform;
-    }
+    LottieTransform() : LottieObject(LottieObject::Transform) {}
 
     bool mergeable() override
     {
@@ -740,6 +702,8 @@ struct LottieTransform : LottieObject
 
 struct LottieSolid : LottieObject 
 {
+    LottieSolid(LottieObject::Type type) : LottieObject(type) {}
+
     LottieColor color = RGB32{255, 255, 255};
     LottieOpacity opacity = 255;
 
@@ -761,10 +725,7 @@ struct LottieSolid : LottieObject
 
 struct LottieSolidStroke : LottieSolid, LottieStroke
 {
-    LottieSolidStroke()
-    {
-        LottieObject::type = LottieObject::SolidStroke;
-    }
+    LottieSolidStroke() : LottieSolid(LottieObject::SolidStroke) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -780,10 +741,7 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
 
 struct LottieSolidFill : LottieSolid
 {
-    LottieSolidFill()
-    {
-        LottieObject::type = LottieObject::SolidFill;
-    }
+    LottieSolidFill() : LottieSolid(LottieObject::SolidFill) {}
 
     FillRule rule = FillRule::NonZero;
 };
@@ -791,6 +749,8 @@ struct LottieSolidFill : LottieSolid
 
 struct LottieGradient : LottieObject
 {
+    LottieGradient(LottieObject::Type type) : LottieObject(type) {}
+
     bool prepare()
     {
         if (!colorStops.populated) {
@@ -843,10 +803,7 @@ struct LottieGradient : LottieObject
 
 struct LottieGradientFill : LottieGradient
 {
-    LottieGradientFill()
-    {
-        LottieObject::type = LottieObject::GradientFill;
-    }
+    LottieGradientFill() : LottieGradient(LottieObject::GradientFill) {}
 
     FillRule rule = FillRule::NonZero;
 };
@@ -854,10 +811,7 @@ struct LottieGradientFill : LottieGradient
 
 struct LottieGradientStroke : LottieGradient, LottieStroke
 {
-    LottieGradientStroke()
-    {
-        LottieObject::type = LottieObject::GradientStroke;
-    }
+    LottieGradientStroke() : LottieGradient(LottieObject::GradientStroke) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -872,6 +826,8 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 
 struct LottieImage : LottieObject
 {
+    LottieImage() : LottieObject(LottieObject::Image) {}
+
     LottieBitmap bitmap;
     bool resolved = false;
 
@@ -889,18 +845,12 @@ struct LottieAudio : LottieObject
 {
     AssetSrc src;
 
-    LottieAudio()
-    {
-        LottieObject::type = LottieObject::Audio;
-    }
+    LottieAudio() : LottieObject(LottieObject::Audio) {}
 };
 
 struct LottieRepeater : LottieObject
 {
-    LottieRepeater()
-    {
-        LottieObject::type = LottieObject::Repeater;
-    }
+    LottieRepeater() : LottieObject(LottieObject::Repeater) {}
 
     LottieProperty* property(uint16_t ix) override
     {
@@ -930,10 +880,7 @@ struct LottieRepeater : LottieObject
 
 struct LottieOffsetPath : LottieObject
 {
-    LottieOffsetPath()
-    {
-        LottieObject::type = LottieObject::OffsetPath;
-    }
+    LottieOffsetPath() : LottieObject(LottieObject::OffsetPath) {}
 
     LottieFloat offset = 0.0f;
     LottieFloat miterLimit = 4.0f;
@@ -942,20 +889,14 @@ struct LottieOffsetPath : LottieObject
 
 struct LottiePuckerBloat : LottieObject
 {
-    LottiePuckerBloat()
-    {
-        LottieObject::type = LottieObject::PuckerBloat;
-    }
+    LottiePuckerBloat() : LottieObject(LottieObject::PuckerBloat) {}
 
     LottieFloat amount = 0.0f;
 };
 
 struct LottieZigZag : LottieObject
 {
-    LottieZigZag()
-    {
-        LottieObject::type = LottieObject::ZigZag;
-    }
+    LottieZigZag() : LottieObject(LottieObject::ZigZag) {}
 
     LottieFloat amplitude = 0.0f;
     LottieInteger frequency = 0;
@@ -964,14 +905,14 @@ struct LottieZigZag : LottieObject
 
 struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
 {
-    LottieGroup();
+    LottieGroup(LottieObject::Type type = LottieObject::Group);
 
     virtual ~LottieGroup()
     {
         ARRAY_FOREACH(p, children) delete(*p);
     }
 
-    void prepare(LottieObject::Type type = LottieObject::Group);
+    void prepare();
     bool mergeable() override { return allowMerge; }
     LottieProperty* property(uint16_t ix) override;
 
