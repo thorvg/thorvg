@@ -481,6 +481,8 @@ void LottieParser::parsePropertyInternal(T& prop)
 
 void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProperty& prop)
 {
+    if (!obj) return;   //overriding requires an owner object
+
     auto val = djb2Encode(sid);
 
     //append object if the slot already exists.
@@ -1708,6 +1710,14 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
         case LottieProperty::Type::Color: {
             prop = new LottieColor;
             parseSlotProperty(*static_cast<LottieColor*>(prop));
+            break;
+        }
+        case LottieProperty::Type::PathSet: {
+            prop = new LottiePathSet;
+            while (auto key = nextObjectKey()) {
+                if (KEY_AS("p")) getPathSet(nullptr, *static_cast<LottiePathSet*>(prop));
+                else skip();
+            }
             break;
         }
         case LottieProperty::Type::ColorStop: {

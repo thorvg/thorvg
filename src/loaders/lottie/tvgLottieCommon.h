@@ -43,6 +43,22 @@ struct PathSet
         to.pts.data = pts;
         to.pts.count = ptsCnt;
     }
+
+    void copy(const PathSet& rhs)
+    {
+        ptsCnt = rhs.ptsCnt;
+        cmdsCnt = rhs.cmdsCnt;
+
+        if (rhs.pts) {
+            pts = tvg::malloc<Point>(sizeof(Point) * ptsCnt);
+            memcpy(pts, rhs.pts, sizeof(Point) * ptsCnt);
+        } else pts = nullptr;
+
+        if (rhs.cmds) {
+            cmds = tvg::malloc<PathCommand>(sizeof(PathCommand) * cmdsCnt);
+            memcpy(cmds, rhs.cmds, sizeof(PathCommand) * cmdsCnt);
+        } else cmds = nullptr;
+    }
 };
 
 struct RGB32

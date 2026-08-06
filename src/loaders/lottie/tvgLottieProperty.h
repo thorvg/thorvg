@@ -458,6 +458,11 @@ struct LottiePathSet : LottieProperty
 
     LottiePathSet() : LottieProperty(LottieProperty::Type::PathSet) {}
 
+    LottiePathSet(const LottiePathSet& rhs)
+    {
+        copy(const_cast<LottiePathSet&>(rhs));
+    }
+
     ~LottiePathSet()
     {
         release();
@@ -472,6 +477,7 @@ struct LottiePathSet : LottieProperty
 
         tvg::free(value.cmds);
         tvg::free(value.pts);
+        value = PathSet();
 
         if (!frames) return;
 
@@ -481,6 +487,31 @@ struct LottiePathSet : LottieProperty
         }
         tvg::free(frames->data);
         tvg::free(frames);
+        frames = nullptr;
+    }
+
+    void copy(LottiePathSet& rhs, bool shallow = true)
+    {
+        if (LottieProperty::copy(&rhs, shallow)) return;
+
+        if (rhs.frames) {
+            if (shallow) {
+                frames = rhs.frames;
+                rhs.frames = nullptr;
+            } else {
+                frames = tvg::calloc<Array<LottieScalarFrame<PathSet>>>(1, sizeof(Array<LottieScalarFrame<PathSet>>));
+                *frames = *rhs.frames;
+                for (uint32_t i = 0; i < rhs.frames->count; ++i) {
+                    (*frames)[i].value.copy((*rhs.frames)[i].value);
+                }
+            }
+        } else {
+            frames = nullptr;
+            if (shallow) {
+                value = rhs.value;
+                rhs.value = PathSet();
+            } else value.copy(rhs.value);
+        }
     }
 
     uint32_t nearest(float frameNo) override
