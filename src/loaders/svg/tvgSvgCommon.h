@@ -173,7 +173,8 @@ enum struct SvgStyleFlags
     Filter = 0x80000,
     BlendMode = 0x100000,
     TextAnchor = 0x200000,
-    AlignmentBaseline = 0x400000
+    AlignmentBaseline = 0x400000,
+    FontWeight = 0x800000
 };
 
 constexpr bool operator&(SvgStyleFlags a, SvgStyleFlags b)
@@ -543,6 +544,23 @@ enum class SvgBaseline : uint8_t
     Mathematical
 };
 
+enum class SvgFontWeight : int16_t
+{
+    Invalid = 0,
+    Inherit = -1,
+    Bolder = -2,
+    Lighter = -3,
+    Weight100 = 100,
+    Weight200 = 200,
+    Weight300 = 300,
+    Normal = 400,
+    Weight500 = 500,
+    Weight600 = 600,
+    Bold = 700,
+    Weight800 = 800,
+    Weight900 = 900
+};
+
 struct SvgStyleProperty
 {
     SvgStyleFill fill;
@@ -555,6 +573,7 @@ struct SvgStyleProperty
     char* cssClass;
     float textAnchor;  // 0=start, 0.5=middle, 1=end
     SvgBaseline alignmentBaseline;
+    SvgFontWeight fontWeight;
     SvgStyleFlags flags;
     SvgStyleFlags flagsImportance; //indicates the importance of the flag - if set, higher priority is applied (https://drafts.csswg.org/css-cascade-4/#importance)
     bool curColorSet;
