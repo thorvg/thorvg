@@ -126,8 +126,7 @@ const char* Initializer::version(uint32_t* major, uint32_t* minor, uint32_t* mic
     return nullptr;
 }
 
-
-uint16_t THORVG_VERSION_NUMBER()
+uint16_t tvg::THORVG_VERSION_NUMBER()
 {
     return _version;
 }
