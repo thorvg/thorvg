@@ -947,9 +947,9 @@ static Scene* _useBuildHelper(SvgParserContext& ctx, const SvgNode* node, const 
     return scene;
 }
 
-static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox, const Box& viewport)
+static void _applyTextFill(SvgStyleProperty* style, Text* text, const SvgTextNode& textNode, const Box& vBox, const Box& viewport)
 {
-    //If fill property is nullptr then do nothing
+    // If fill property is nullptr then do nothing
     if (style->fill.paint.none) {
         //Do nothing
     } else if (style->fill.paint.gradient) {
@@ -962,13 +962,10 @@ static void _applyTextFill(SvgStyleProperty* style, Text* text, const Box& vBox,
     } else if (style->fill.paint.url) {
         //TODO: Apply the color pointed by url
         TVGLOG("SVG", "The fill's url not supported.");
-    } else if (style->fill.paint.curColor) {
-        //Apply the current style color
-        text->fill(style->color.r, style->color.g, style->color.b);
-        text->opacity(style->fill.opacity);
     } else {
-        //Apply the fill color
-        text->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b);
+        const auto& color = style->fill.paint.curColor ? style->color : style->fill.paint.color;
+        text->fill(color.r, color.g, color.b);
+        if (style->fontWeight >= SvgFontWeight::Weight600) text->outline(textNode.fontSize * 0.03f, color.r, color.g, color.b);
         text->opacity(style->fill.opacity);
     }
 }
@@ -1135,7 +1132,7 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
             if (text) {
                 text->align(child->style->textAnchor, 0.0f);
                 _updatePos(text, textNode, child->style->textAnchor, textPos);
-                _applyTextFill(child->style, text, vBox, ctx.parser->global);
+                _applyTextFill(child->style, text, textNode, vBox, ctx.parser->global);
                 auto paint = _applyFilter(ctx, text, child, vBox, svgPath);
                 paint = _applyComposition(ctx, paint, child, vBox, svgPath);
                 paint = _applyBlend(paint, child);
@@ -1160,7 +1157,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
         auto text = _buildText(textNode, xmlSpace, node->transform, _effectiveBaseline(node->style));
         if (!text) return nullptr;
         text->align(node->style->textAnchor, 0.0f);
-        _applyTextFill(node->style, text, vBox, ctx.parser->global);
+        _applyTextFill(node->style, text, *textNode, vBox, ctx.parser->global);
         auto p = _applyFilter(ctx, text, node, vBox, svgPath);
         p = _applyComposition(ctx, p, node, vBox, svgPath);
         return _applyBlend(p, node);
@@ -1174,7 +1171,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
     if (auto text = _buildText(textNode, xmlSpace, nullptr, _effectiveBaseline(node->style))) {
         text->align(node->style->textAnchor, 0.0f);
         _updatePos(text, *textNode, node->style->textAnchor, textPos);
-        _applyTextFill(node->style, text, vBox, ctx.parser->global);
+        _applyTextFill(node->style, text, *textNode, vBox, ctx.parser->global);
         scene->add(text);
     }
 
