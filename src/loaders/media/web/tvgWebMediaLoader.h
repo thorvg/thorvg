@@ -26,38 +26,18 @@
 #include <emscripten/val.h>
 #include "tvgMediaLoader.h"
 
-struct WebMediaLoader;
-
 EMSCRIPTEN_DECLARE_VAL_TYPE(WebMediaPlayer)
 EMSCRIPTEN_DECLARE_VAL_TYPE(WebMediaState)
 
-// WebAssembly glue interface
-struct WebPlayer
+struct WebMediaLoader : MediaLoader
 {
-    WebMediaPlayer js;
+    WebMediaPlayer js = WebMediaPlayer(emscripten::val::undefined());
 
-    static WebPlayer* gen(WebMediaLoader* loader, const char* data, uint32_t size);
-    ~WebPlayer();
+    ~WebMediaLoader() override;
 
     // 0 = not ready, 1 = metadata, 2 = new frame
     int sync(uint32_t* buf, uint32_t* size, float* time, float* duration);
 
-    void play();
-    void pause();
-    void stop();
-    void seek(float seconds);
-    void loop(bool on);
-    void volume(float volume);
-    void mute(bool on);
-};
-
-struct WebMediaLoader : MediaLoader
-{
-    WebPlayer* player = nullptr;
-
-    ~WebMediaLoader() override;
-
-    // Loader interface
     bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
     RenderSurface* bitmap() override;
     bool sync() override;

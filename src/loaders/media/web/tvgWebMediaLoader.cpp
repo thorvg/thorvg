@@ -40,24 +40,7 @@ EMSCRIPTEN_BINDINGS(tvg_web_media)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-WebPlayer* WebPlayer::gen(WebMediaLoader* loader, const char* data, uint32_t size)
-{
-    auto generator = val::module_property("createMediaPlayer");
-    if (generator.isUndefined()) return nullptr;
-
-    auto bytes = val::global("Uint8Array").new_(val(typed_memory_view(size, reinterpret_cast<const uint8_t*>(data))));
-    auto js = generator(reinterpret_cast<uintptr_t>(loader), bytes);
-    if (js.isNull()) return nullptr;
-
-    return new WebPlayer{WebMediaPlayer(js)};
-}
-
-WebPlayer::~WebPlayer()
-{
-    js.call<void>("dispose");
-}
-
-int WebPlayer::sync(uint32_t* buf, uint32_t* size, float* time, float* duration)
+int WebMediaLoader::sync(uint32_t* buf, uint32_t* size, float* time, float* duration)
 {
     auto state = js.call<WebMediaState>("sync");
     if (state.isNull()) return 0;
@@ -76,58 +59,26 @@ int WebPlayer::sync(uint32_t* buf, uint32_t* size, float* time, float* duration)
     return 2;
 }
 
-void WebPlayer::play()
-{
-    js.call<void>("play");
-}
-
-void WebPlayer::pause()
-{
-    js.call<void>("pause");
-}
-
-void WebPlayer::stop()
-{
-    js.call<void>("stop");
-}
-
-void WebPlayer::seek(float seconds)
-{
-    js.call<void>("seek", seconds);
-}
-
-void WebPlayer::loop(bool on)
-{
-    js.call<void>("loop", on);
-}
-
-void WebPlayer::volume(float volume)
-{
-    js.call<void>("volume", volume);
-}
-
-void WebPlayer::mute(bool on)
-{
-    js.call<void>("mute", on);
-}
-
-
 WebMediaLoader::~WebMediaLoader()
 {
-    delete(player);
+    if (!js.isUndefined() && !js.isNull()) js.call<void>("dispose");
     tvg::free(surface.buf32);
 }
 
 bool WebMediaLoader::open(const char* data, uint32_t size, const LoaderOps* ops, bool copy)
 {
-    player = WebPlayer::gen(this, data, size);
-    return player != nullptr;
+    auto generator = val::module_property("createMediaPlayer");
+    if (generator.isUndefined()) return false;
+
+    auto bytes = val::global("Uint8Array").new_(val(typed_memory_view(size, reinterpret_cast<const uint8_t*>(data))));
+    js = WebMediaPlayer(generator(reinterpret_cast<uintptr_t>(this), bytes));
+    return !js.isNull();
 }
 
 bool WebMediaLoader::sync()
 {
     float time;
-    if (player->sync(surface.buf32, nullptr, &time, nullptr) < 2) return false;
+    if (sync(surface.buf32, nullptr, &time, nullptr) < 2) return false;
 
     curTime = time;
     surface.premultiplied = false;
@@ -140,7 +91,7 @@ RenderSurface* WebMediaLoader::bitmap()
 
     uint32_t size[2];
     float duration, time;
-    if (player->sync(nullptr, size, &time, &duration)) {
+    if (sync(nullptr, size, &time, &duration)) {
         surface.buf32 = tvg::calloc<uint32_t>(size[0] * size[1], sizeof(uint32_t));
         surface.stride = size[0];
         surface.w = size[0];
@@ -158,14 +109,14 @@ RenderSurface* WebMediaLoader::bitmap()
 Result WebMediaLoader::play()
 {
     paused = false;
-    player->play();
+    js.call<void>("play");
     return Result::Success;
 }
 
 Result WebMediaLoader::pause()
 {
     paused = true;
-    player->pause();
+    js.call<void>("pause");
     return Result::Success;
 }
 
@@ -173,35 +124,35 @@ Result WebMediaLoader::stop()
 {
     paused = true;
     curTime = 0.0f;
-    player->stop();
+    js.call<void>("stop");
     return Result::Success;
 }
 
 Result WebMediaLoader::seek(float seconds)
 {
     curTime = seconds;
-    player->seek(seconds);
+    js.call<void>("seek", seconds);
     return Result::Success;
 }
 
 Result WebMediaLoader::loop(bool on)
 {
     looping = on;
-    player->loop(on);
+    js.call<void>("loop", on);
     return Result::Success;
 }
 
 Result WebMediaLoader::volume(float volume)
 {
     audioVolume = volume;
-    player->volume(volume);
+    js.call<void>("volume", volume);
     return Result::Success;
 }
 
 Result WebMediaLoader::mute(bool on)
 {
     muted = on;
-    player->mute(on);
+    js.call<void>("mute", on);
     return Result::Success;
 }
 
