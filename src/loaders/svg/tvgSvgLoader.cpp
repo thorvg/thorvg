@@ -233,6 +233,32 @@ static int _toOpacity(const char* str)
     return 255;
 }
 
+static SvgFontWeight _toFontWeight(const char* str)
+{
+    if (STR_AS(str, "normal")) return SvgFontWeight::Normal;
+    if (STR_AS(str, "bold")) return SvgFontWeight::Bold;
+    if (STR_AS(str, "inherit")) return SvgFontWeight::Inherit;
+    if (STR_AS(str, "bolder")) return SvgFontWeight::Bolder;
+    if (STR_AS(str, "lighter")) return SvgFontWeight::Lighter;
+
+    char* end = nullptr;
+    auto weight = strtol(str, &end, 10);
+    end = (char*)svgUtilSkipWhiteSpace(end, nullptr);
+    if (*end) return SvgFontWeight::Invalid;
+
+    switch (weight) {
+        case 100: return SvgFontWeight::Weight100;
+        case 200: return SvgFontWeight::Weight200;
+        case 300: return SvgFontWeight::Weight300;
+        case 400: return SvgFontWeight::Normal;
+        case 500: return SvgFontWeight::Weight500;
+        case 600: return SvgFontWeight::Weight600;
+        case 700: return SvgFontWeight::Bold;
+        case 800: return SvgFontWeight::Weight800;
+        case 900: return SvgFontWeight::Weight900;
+        default: return SvgFontWeight::Invalid;
+    }
+}
 
 static SvgMaskType _toMaskType(const char* str)
 {
@@ -1105,6 +1131,12 @@ static void _handleTextAnchorAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* nod
     else node->style->textAnchor = 0.0f;
 }
 
+static void _handleFontWeightAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    node->style->fontWeight = _toFontWeight(value);
+    node->style->flags |= SvgStyleFlags::FontWeight;
+}
+
 static SvgBaseline _toBaseline(const char* str)
 {
     if (STR_AS(str, "alphabetic")) return SvgBaseline::Alphabetic;
@@ -1170,7 +1202,8 @@ static constexpr struct
     STYLE_DEF(filter, Filter, SvgStyleFlags::Filter),
     STYLE_DEF(mix-blend-mode, MixBlendMode, SvgStyleFlags::BlendMode),
     STYLE_DEF(text-anchor, TextAnchor, SvgStyleFlags::TextAnchor),
-    STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline)};
+    STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline),
+    STYLE_DEF(font-weight, FontWeight, SvgStyleFlags::FontWeight)};
 // clang-format on
 
 static SvgXmlSpace _toXmlSpace(const char* str)
@@ -1208,6 +1241,10 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
                 }
                 value = duplicate(value, size);
                 importance = true;
+            }
+            if (styleTags[i].flag == SvgStyleFlags::FontWeight && _toFontWeight(value) == SvgFontWeight::Invalid) {
+                if (importance) tvg::free(const_cast<char*>(value));
+                return true;
             }
             if (style) {
                 if (importance || !(node->style->flagsImportance & styleTags[i].flag)) {
@@ -1440,6 +1477,7 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
     node->style->stroke.scale = 1.0;
     node->style->paintOrder = _toPaintOrder("fill stroke");
     node->style->display = true;
+    node->style->fontWeight = SvgFontWeight::Normal;
     node->parent = parent;
     node->type = type;
     node->xmlSpace = SvgXmlSpace::None;
@@ -2953,6 +2991,13 @@ static SvgStyleGradient* _cloneGradient(SvgStyleGradient* from)
 
 static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* parent)
 {
+    auto parentWeight = parent ? parent->fontWeight : SvgFontWeight::Normal;
+    if (!(child->flags & SvgStyleFlags::FontWeight) || child->fontWeight == SvgFontWeight::Inherit) child->fontWeight = parentWeight;
+    else if (child->fontWeight == SvgFontWeight::Bolder) child->fontWeight = parentWeight <= SvgFontWeight::Weight300 ? SvgFontWeight::Normal : parentWeight <= SvgFontWeight::Weight500 ? SvgFontWeight::Bold
+                                                                                                                                                                                         : SvgFontWeight::Weight900;
+    else if (child->fontWeight == SvgFontWeight::Lighter) child->fontWeight = parentWeight <= SvgFontWeight::Weight500 ? SvgFontWeight::Weight100 : parentWeight <= SvgFontWeight::Bold ? SvgFontWeight::Normal
+                                                                                                                                                                                        : SvgFontWeight::Bold;
+
     if (!parent) return;
 
     //Inherit the property of parent if not present in child.
@@ -3013,6 +3058,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::BlendMode) to->blendMode = from->blendMode;
     if (from->flags & SvgStyleFlags::TextAnchor) to->textAnchor = from->textAnchor;
     if (from->flags & SvgStyleFlags::AlignmentBaseline) to->alignmentBaseline = from->alignmentBaseline;
+    if (from->flags & SvgStyleFlags::FontWeight) to->fontWeight = from->fontWeight;
 
     //Fill
     to->fill.flags = (to->fill.flags | from->fill.flags);
