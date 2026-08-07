@@ -300,10 +300,12 @@ void LottieImage::prepare(bool external)
     //Prepare the Picture image
     auto result = Result::Unknown;
     auto picture = Picture::gen();
-    if (bitmap.size > 0) result = picture->load(bitmap.data, bitmap.size, bitmap.mimeType);
-    else if (external) result = picture->load(bitmap.path);
+    if (bitmap.width != 0.0f && bitmap.height != 0.0f) {
+        if (bitmap.size > 0) result = picture->load(bitmap.data, bitmap.size, bitmap.mimeType);
+        else if (external) result = picture->load(bitmap.path);
+    }
     if (result == Result::Success) resolved = true;
-    picture->size(bitmap.width, bitmap.height);
+    if (bitmap.width >= 0.0f && bitmap.height >= 0.0f) picture->size(bitmap.width, bitmap.height);
     bitmap.picture = picture;
     picture->ref();
 }
