@@ -6,5 +6,6 @@
 /src/loaders/lottie @tinyjin @Nor-s
 /src/loaders/svg @JSUYA
 /src/loaders/png @Nor-s
-/src/loaders/media @Nor-s
+/src/loaders/media/apple @Nor-s
+/src/loaders/media/web @tinyjin
 /.github/workflows @Nor-s
