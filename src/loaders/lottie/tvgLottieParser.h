@@ -80,7 +80,7 @@ private:
     void parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
     void parseAudio(LottieAudio* audio, const char* data, const char* subPath, bool embedded);
     void parseVolume(LottieLayer* layer);
-    LottieLayer* parseLayer(LottieLayer* precomp);
+    LottieLayer* parseLayer(LottieRootLayer* precomp);
     LottieObject* parseGroup();
     LottieRect* parseRect();
     LottieEllipse* parseEllipse();
@@ -92,7 +92,7 @@ private:
     LottiePolyStar* parsePolyStar();
     LottieRoundedCorner* parseRoundedCorner();
     LottieGradientFill* parseGradientFill();
-    LottieLayer* parseLayers(LottieLayer* root);
+    LottieRootLayer* parseLayers();
     LottieMask* parseMask();
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();

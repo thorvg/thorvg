@@ -421,7 +421,10 @@ struct LottieFont
     float ascent = 0.0f;
     Origin origin = Local;
 
-    void prepare();
+    void prepare()
+    {
+        if (b64src) Text::load(name, b64src, size, mime, false);
+    }
 };
 
 struct LottieMarker
@@ -941,8 +944,33 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
     bool allowMerge : 1;    //if this group is consisted of simple (transformed) shapes.
 };
 
+struct LottieRootLayer : LottieGroup
+{
+    LottieFloat timeRemap = -1.0f;
 
-struct LottieLayer : LottieGroup
+    float timeStretch = 1.0f;
+    float w = 0.0f, h = 0.0f;
+    float inFrame = 0.0f;
+    float outFrame = 0.0f;
+    float startFrame = 0.0f;
+
+    bool effect = false;  // true if any effect is activated in its tree
+
+    LottieRootLayer(LottieObject::Type type = LottieObject::Composition) : LottieGroup(type) {}
+
+    float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
+    LottieLayer* layerById(unsigned long id);
+    LottieLayer* layerByIdx(int16_t ix);
+
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(timeRemap);
+        return backup;
+    }
+};
+
+struct LottieLayer : LottieRootLayer
 {
     enum Type : uint8_t {Precomp = 0, Solid, Image, Null, Shape, Text, Audio};
 
@@ -951,32 +979,17 @@ struct LottieLayer : LottieGroup
 
     bool mergeable() override { return false; }
     void prepare(RGB32* color = nullptr);
-    float remap(LottieComposition* comp, float frameNo, LottieExpressions* exp);
     LottieProperty* property(uint16_t ix) override;
-
-    LottieProperty* override(LottieProperty* prop, bool release) override
-    {
-        LottieProperty* backup = nullptr;
-        OVERRIDE(timeRemap);
-        return backup;
-    }
 
     char* name = nullptr;
     LottieLayer* parent = nullptr;
-    LottieFloat timeRemap = -1.0f;
-    LottieLayer* comp = nullptr;  //Precompositor, current layer is belonges.
+    LottieRootLayer* precomp = nullptr;  // precompositor, the current layer is belonges.
     LottieTransform* transform = nullptr;
     Array<LottieMask*> masks;
     Array<LottieEffect*> effects;
     LottieLayer* matteTarget = nullptr;
 
     LottieRenderPooler<tvg::Shape> statical;  //static pooler for solid fill and clipper
-
-    float timeStretch = 1.0f;
-    float w = 0.0f, h = 0.0f;
-    float inFrame = 0.0f;
-    float outFrame = 0.0f;
-    float startFrame = 0.0f;
 
     struct AudioControl {
         LottieFloat volume = 100.0f;
@@ -997,7 +1010,6 @@ struct LottieLayer : LottieGroup
 
     MaskMethod matteType = MaskMethod::None;
     Type type = Null;
-    bool effect : 1;        // true if any effect is activated in its tree
     bool autoOrient : 1;
     bool matteSrc : 1;
 
@@ -1019,26 +1031,6 @@ struct LottieLayer : LottieGroup
     {
         ARRAY_FOREACH(p, effects) {
             if (ix == (*p)->ix) return *p;
-        }
-        return nullptr;
-    }
-
-    LottieLayer* layerById(unsigned long id)
-    {
-        ARRAY_FOREACH(p, children) {
-            if ((*p)->type != LottieObject::Type::Layer) continue;
-            auto layer = static_cast<LottieLayer*>(*p);
-            if (layer->id == id) return layer;
-        }
-        return nullptr;
-    }
-
-    LottieLayer* layerByIdx(int16_t ix)
-    {
-        ARRAY_FOREACH(p, children) {
-            if ((*p)->type != LottieObject::Type::Layer) continue;
-            auto layer = static_cast<LottieLayer*>(*p);
-            if (layer->ix == ix) return layer;
         }
         return nullptr;
     }
@@ -1129,7 +1121,7 @@ struct LottieComposition
         if (frameNo >= root->outFrame) frameNo = root->outFrame - 1;
     }
 
-    LottieLayer* root = nullptr;
+    LottieRootLayer* root = nullptr;
     char* version = nullptr;
     char* name = nullptr;
     float w, h;
