@@ -27,7 +27,7 @@
 
 
 /************************************************************************/
-/* Internal Class Implementation                                        */
+/* LottieTextFollowPath                                                 */
 /************************************************************************/
 
 Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
@@ -56,10 +56,6 @@ Point LottieTextFollowPath::split(float dLen, float lenSearched, float& angle)
     }
     return {};
 }
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
 
 void LottieTextFollowPath::rewind()
 {
@@ -179,6 +175,9 @@ Point LottieTextFollowPath::position(float lenSearched, float& angle)
     return {};
 }
 
+/************************************************************************/
+/* LottieSlot                                                           */
+/************************************************************************/
 
 void LottieSlot::reset()
 {
@@ -206,6 +205,9 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
     if (!byDefault) overridden = true;
 }
 
+/************************************************************************/
+/* LottieTextRange                                                      */
+/************************************************************************/
 
 float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 {
@@ -288,12 +290,9 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
     return f * this->maxAmount(frameNo) * 0.01f;
 }
 
-
-void LottieFont::prepare()
-{
-    if (b64src) Text::load(name, b64src, size, mime, false);
-}
-
+/************************************************************************/
+/* LottieImage                                                          */
+/************************************************************************/
 
 void LottieImage::prepare(bool external)
 {
@@ -307,6 +306,10 @@ void LottieImage::prepare(bool external)
     bitmap.picture = picture;
     picture->ref();
 }
+
+/************************************************************************/
+/* LottieTrimpath                                                       */
+/************************************************************************/
 
 void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieTween& tween, LottieExpressions* exps)
 {
@@ -333,6 +336,9 @@ void LottieTrimpath::segment(float frameNo, float& start, float& end, LottieTwee
     end += o;
 }
 
+/************************************************************************/
+/* LottieGradient                                                       */
+/************************************************************************/
 
 uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 {
@@ -470,6 +476,9 @@ Fill* LottieGradient::fill(float frameNo, uint8_t opacity, LottieTween& tween, L
     return fill;
 }
 
+/************************************************************************/
+/* LottieGroup                                                          */
+/************************************************************************/
 
 LottieGroup::LottieGroup(LottieObject::Type type) : LottieObject(type)
 {
@@ -562,11 +571,44 @@ void LottieGroup::prepare()
     }
 }
 
-LottieLayer::LottieLayer() : LottieGroup(LottieObject::Layer)
+/************************************************************************/
+/* LottieRootLayer                                                      */
+/************************************************************************/
+
+float LottieRootLayer::remap(LottieComposition* comp, float frameNo, LottieExpressions* exp)
+{
+    if (timeRemap.frames || timeRemap.value >= 0.0f) return comp->frameAtTime(timeRemap(frameNo, exp));
+    return (frameNo - startFrame) / timeStretch;
+}
+
+LottieLayer* LottieRootLayer::layerById(unsigned long id)
+{
+    ARRAY_FOREACH(p, children) {
+        if ((*p)->type != LottieObject::Type::Layer) continue;
+        auto layer = static_cast<LottieLayer*>(*p);
+        if (layer->id == id) return layer;
+    }
+    return nullptr;
+}
+
+LottieLayer* LottieRootLayer::layerByIdx(int16_t ix)
+{
+    ARRAY_FOREACH(p, children) {
+        if ((*p)->type != LottieObject::Type::Layer) continue;
+        auto layer = static_cast<LottieLayer*>(*p);
+        if (layer->ix == ix) return layer;
+    }
+    return nullptr;
+}
+
+/************************************************************************/
+/* LottieLayer                                                          */
+/************************************************************************/
+
+LottieLayer::LottieLayer() : LottieRootLayer(LottieObject::Layer)
 {
     autoOrient = false;
     matteSrc = false;
-    effect = false;
 }
 
 LottieLayer::~LottieLayer()
@@ -616,18 +658,15 @@ void LottieLayer::prepare(RGB32* color)
     LottieGroup::prepare();
 }
 
-
-float LottieLayer::remap(LottieComposition* comp, float frameNo, LottieExpressions* exp)
-{
-    if (timeRemap.frames || timeRemap.value >= 0.0f) return comp->frameAtTime(timeRemap(frameNo, exp));
-    return (frameNo - startFrame) / timeStretch;
-}
+/************************************************************************/
+/* LottieComposition                                                    */
+/************************************************************************/
 
 LottieComposition::~LottieComposition()
 {
     if (!initiated && root) Paint::rel(root->scene);
 
-    delete(root);
+    delete (root);
     tvg::free(version);
     tvg::free(name);
 
@@ -636,8 +675,8 @@ LottieComposition::~LottieComposition()
         tvg::free(*p);
     }
 
-    ARRAY_FOREACH(p, assets) delete(*p);
-    ARRAY_FOREACH(p, fonts) delete(*p);
-    ARRAY_FOREACH(p, slots) delete(*p);
-    ARRAY_FOREACH(p, markers) delete(*p);
+    ARRAY_FOREACH(p, assets) delete (*p);
+    ARRAY_FOREACH(p, fonts) delete (*p);
+    ARRAY_FOREACH(p, slots) delete (*p);
+    ARRAY_FOREACH(p, markers) delete (*p);
 }
