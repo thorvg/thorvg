@@ -994,7 +994,7 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     if (paint->font(doc.name) != Result::Success) {
         char* src;
         bool free = false;
-        if (text->font && text->font->path) src = text->font->path;
+        if (text->font && text->font->path && tvg::equal(doc.name, text->font->name)) src = text->font->path;
         else {
             auto len = (strlen(doc.name) + 6);
             src = tvg::malloc<char>(sizeof(char) * len);
@@ -1003,7 +1003,7 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
         }
         if (!resolver || !resolver->func(paint, src, resolver->data)) {
             paint->font(nullptr);  //fallback to any available font
-        }
+        } else LoaderMgr::aliasing(to<TextImpl>(paint)->loader, doc.name);
         if (free) tvg::free(src);
     }
 
