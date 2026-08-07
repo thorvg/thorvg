@@ -834,7 +834,7 @@ struct LottieImage : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        OVERRIDE(bitmap);
+        if (OVERRIDE(bitmap)) resolved = bitmap.picture && bitmap.picture->size(nullptr, nullptr) == Result::Success;
         return backup;
     }
 
