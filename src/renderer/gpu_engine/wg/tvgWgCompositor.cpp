@@ -292,6 +292,44 @@ void WgCompositor::requestSolidBatch(const Array<WgRenderDataShape*>& renderData
     range.viewport = renderDataShapes[0]->viewport;
 }
 
+void WgCompositor::requestStencilBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgStencilBatchRange& range)
+{
+    assert(renderDataShapes.count > 1);
+    stageBufferGeometry.appendStencilBatch(renderDataShapes, range);
+    range.viewport = renderDataShapes[0]->viewport;
+    range.fillRule = renderDataShapes[0]->fillRule;
+    range.solidOnly = true;
+
+    bool colorsStarted = false;
+    uint32_t pendingColorCount = 0;
+    ARRAY_FOREACH(p, renderDataShapes) {
+        auto renderData = *p;
+        assert(!renderData->convex);
+        assert(renderData->fillRule == range.fillRule);
+        auto& settings = renderData->renderSettingsShape;
+        const auto count = renderData->meshBBox.vbuffer.count;
+
+        if (settings.fillType == WgRenderSettingsType::Solid) {
+            if (!colorsStarted) {
+                range.colorOffset = static_cast<size_t>(stageBufferSolidColor.vbuffer.count) * sizeof(RenderColor);
+                if (pendingColorCount) {
+                    stageBufferSolidColor.appendRepeated({}, pendingColorCount);
+                }
+                colorsStarted = true;
+            }
+            stageBufferSolidColor.appendRepeated(renderData->solidShape.packedColor(), count);
+        } else {
+            assert(settings.fillType == WgRenderSettingsType::Linear || settings.fillType == WgRenderSettingsType::Radial);
+            range.solidOnly = false;
+            settings.bindGroupInd = stageBufferPaint.append(settings.settings);
+            if (colorsStarted) {
+                stageBufferSolidColor.appendRepeated({}, count);
+            } else pendingColorCount += count;
+        }
+    }
+}
+
+
 void WgCompositor::renderShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod)
 {
     assert(renderData);
@@ -345,6 +383,77 @@ void WgCompositor::renderSolidBatch(const WgSolidBatchRange& range)
     wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, stageBufferGeometry.ibuffer_gpu, WGPUIndexFormat_Uint32, range.indexOffset, indexSize);
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, range.indexCount, 1, 0, 0, 0);
 }
+
+void WgCompositor::renderStencilBatch(const Array<WgRenderDataShape*>& renderDataShapes, const WgStencilBatchRange& range)
+{
+    assert(renderPassEncoder);
+    assert(renderDataShapes.count > 1);
+    assert(range.stencil.vertexCount > 0 && range.stencil.indexCount > 0);
+    assert(range.cover.vertexCount > 0 && range.cover.indexCount > 0);
+
+    const uint64_t stencilVertexSize = static_cast<uint64_t>(range.stencil.vertexCount) * sizeof(Point);
+    const uint64_t stencilIndexSize = static_cast<uint64_t>(range.stencil.indexCount) * sizeof(uint32_t);
+    const uint64_t coverVertexSize = static_cast<uint64_t>(range.cover.vertexCount) * sizeof(Point);
+    const uint64_t coverIndexSize = static_cast<uint64_t>(range.cover.indexCount) * sizeof(uint32_t);
+
+    wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, range.viewport.x(), range.viewport.y(), range.viewport.w(), range.viewport.h());
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetPipeline(renderPassEncoder, range.fillRule == FillRule::NonZero ? pipelines.nonzero : pipelines.evenodd);
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, stageBufferGeometry.vbuffer_gpu, range.stencil.vertexOffset, stencilVertexSize);
+    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, stageBufferGeometry.ibuffer_gpu, WGPUIndexFormat_Uint32, range.stencil.indexOffset, stencilIndexSize);
+    wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, range.stencil.indexCount, 1, 0, 0, 0);
+
+    wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
+    wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, stageBufferGeometry.vbuffer_gpu, range.cover.vertexOffset, coverVertexSize);
+    wgpuRenderPassEncoderSetIndexBuffer(renderPassEncoder, stageBufferGeometry.ibuffer_gpu, WGPUIndexFormat_Uint32, range.cover.indexOffset, coverIndexSize);
+
+    // Keep the common all-solid case identical to the original two-draw path.
+    if (range.solidOnly) {
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid_stencil_batch);
+        wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 1, stageBufferSolidColor.vbuffer_gpu, range.colorOffset, static_cast<uint64_t>(range.cover.vertexCount) * sizeof(RenderColor));
+        wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, range.cover.indexCount, 1, 0, 0, 0);
+        return;
+    }
+
+    uint32_t firstIndex = 0;
+    bool colorsBound = false;
+
+    auto p = renderDataShapes.begin();
+    const auto end = renderDataShapes.end();
+    while (p < end) {
+        auto renderData = *p;
+        auto& settings = renderData->renderSettingsShape;
+        const auto batchFirstIndex = firstIndex;
+
+        do {
+            const auto indexCount = renderData->meshBBox.ibuffer.count;
+            const uint64_t nextIndex = static_cast<uint64_t>(firstIndex) + indexCount;
+            assert(indexCount > 0 && firstIndex <= range.cover.indexCount && nextIndex <= range.cover.indexCount);
+            firstIndex = static_cast<uint32_t>(nextIndex);
+            if (++p == end || settings.fillType != WgRenderSettingsType::Solid) break;
+            renderData = *p;
+        } while (renderData->renderSettingsShape.fillType == WgRenderSettingsType::Solid);
+
+        if (settings.fillType == WgRenderSettingsType::Solid) {
+            if (!colorsBound) {
+                wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 1, stageBufferSolidColor.vbuffer_gpu, range.colorOffset, static_cast<uint64_t>(range.cover.vertexCount) * sizeof(RenderColor));
+                colorsBound = true;
+            }
+            wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solid_stencil_batch);
+        } else {
+            assert(settings.fillType == WgRenderSettingsType::Linear || settings.fillType == WgRenderSettingsType::Radial);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupInd], 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
+            wgpuRenderPassEncoderSetPipeline(renderPassEncoder, settings.fillType == WgRenderSettingsType::Linear ? pipelines.linear : pipelines.radial);
+        }
+        wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, firstIndex - batchFirstIndex, 1, batchFirstIndex, 0, 0);
+    }
+
+    assert(firstIndex == range.cover.indexCount);
+}
+
 
 void WgCompositor::renderImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod)
 {

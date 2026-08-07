@@ -23,6 +23,24 @@
 #include "tvgWgRenderTask.h"
 #include <iostream>
 
+WgBatchTask::WgBatchTask(WgRenderDataShape* first, WgRenderDataShape* second, bool stencilBatch) : shapes{2}, stencilBatch(stencilBatch)
+{
+    shapes.push(first);
+    shapes.push(second);
+}
+
+void WgBatchTask::stage(WgCompositor& compositor)
+{
+    if (stencilBatch) compositor.requestStencilBatch(shapes, stencilRange);
+    else compositor.requestSolidBatch(shapes, solidRange);
+}
+
+void WgBatchTask::run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder)
+{
+    if (stencilBatch) compositor.renderStencilBatch(shapes, stencilRange);
+    else compositor.renderSolidBatch(solidRange);
+}
+
 //***********************************************************************
 // WgPaintTask
 //***********************************************************************

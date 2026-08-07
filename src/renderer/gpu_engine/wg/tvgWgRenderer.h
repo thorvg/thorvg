@@ -25,6 +25,7 @@
 
 #include "tvgRender.h"
 #include "tvgWgSolidBatch.h"
+#include "tvgWgStencilBatch.h"
 #include "tvgWgTextureMgr.h"
 
 struct WgRenderer : RenderMethod
@@ -84,6 +85,7 @@ private:
     Array<WgSceneTask*> mSceneTaskStack;
     Array<WgRenderTask*> mRenderTaskList;
     WgSolidBatch mSolidBatch;
+    WgStencilBatch mStencilBatch;
 
     // render target pool
     WgRenderTargetPool mRenderTargetPool;

@@ -46,6 +46,17 @@ struct WgPaintTask: public WgRenderTask {
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
 };
 
+struct WgBatchTask: public WgRenderTask {
+    Array<WgRenderDataShape*> shapes;
+    WgSolidBatchRange solidRange;
+    WgStencilBatchRange stencilRange;
+    bool stencilBatch{};
+
+    WgBatchTask(WgRenderDataShape* first, WgRenderDataShape* second, bool stencilBatch);
+    void stage(WgCompositor& compositor) override;
+    void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
+};
+
 // task for scene rendering with blending, composition and effect
 struct WgSceneTask: public WgRenderTask {
 public:
