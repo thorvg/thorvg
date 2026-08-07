@@ -259,7 +259,7 @@
         typedef void (*PFNGLCLEARCOLORPROC)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
         typedef void (*PFNGLCLEARSTENCILPROC)(GLint s);
         typedef void (*PFNGLCLEARDEPTHPROC)(GLdouble depth);
-        typedef void (*PFNGLCLEARDEPTHFPROC)(GLdouble depth); // GLES
+        typedef void (*PFNGLCLEARDEPTHFPROC)(GLfloat depth);  // GLES
         typedef void (*PFNGLCOLORMASKPROC)(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
         typedef void (*PFNGLDEPTHMASKPROC)(GLboolean flag);
         typedef void (*PFNGLDISABLEPROC)(GLenum cap);

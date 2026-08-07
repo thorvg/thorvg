@@ -26,9 +26,11 @@
 #include "tvgGlCommon.h"
 #include "tvgInlist.h"
 
+class GlStateCache;
+
 struct TextureMgr
 {
-    GLuint retain(const RenderSurface* surface, FilterMethod filter);
+    GLuint retain(GlStateCache& state, const RenderSurface* surface, FilterMethod filter);
     GLuint release(const RenderSurface* surface, FilterMethod filter, GLuint texId);
     void clear();
 
@@ -47,7 +49,7 @@ struct TextureMgr
     };
 
     SurfaceEntry* find(const RenderSurface* surface);
-    static void upload(GLuint texId, const RenderSurface* surface, FilterMethod filter);
+    static void upload(GlStateCache& state, GLuint texId, const RenderSurface* surface, FilterMethod filter);
 
     tvg::Inlist<SurfaceEntry> surfaces;  // Cached textures keyed by RenderSurface.
     uint16_t stamp = 1;                  // Non-zero rolling stamp for stale texture ownership checks.

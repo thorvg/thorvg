@@ -35,6 +35,11 @@ constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
 
+// Texture allocation and parameter setup must choose a unit explicitly instead
+// of inheriting the last draw-time sampler unit. This unit is not reserved:
+// sampler 0 reuses it and the state cache restores its draw binding as needed.
+constexpr GLenum TVG_GL_TEXTURE_SETUP_UNIT = GL_TEXTURE0;
+
 // All GPU matrices use column major order.
 static inline void getMatrix3(const Matrix& mat3, float* matOut)
 {

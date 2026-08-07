@@ -86,7 +86,7 @@ static uint32_t* drawStencilGeometry(GlRenderTask* task, GlStageBuffer* gpuBuffe
     auto indexOffset = gpuBuffer->reserveIndex(buffer->index.count * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
     if (buffer->index.count > 0) memcpy(indices, buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
-    task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
+    task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
     task->setDrawRange(indexOffset, buffer->index.count);
     return indices;
 }
