@@ -54,14 +54,14 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
 
 static constexpr struct {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } boxTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(Box, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(Box, y)},
-    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(Box, w)},
-    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(Box, h)}
+    {"x", offsetof(Box, x), sizeof("x"), SvgParserLengthType::Horizontal},
+    {"y", offsetof(Box, y), sizeof("y"), SvgParserLengthType::Vertical},
+    {"width", offsetof(Box, w), sizeof("width"), SvgParserLengthType::Horizontal},
+    {"height", offsetof(Box, h), sizeof("height"), SvgParserLengthType::Vertical}
 };
 
 static void _copyId(char** to, const char* from)
@@ -96,18 +96,18 @@ static bool _parseNumber(const char** content, const char** end, float* number)
 
 static constexpr struct
 {
-    AspectRatioAlign align;
     const char* tag;
+    AspectRatioAlign align;
 } alignTags[] = {
-    { AspectRatioAlign::XMinYMin, "xMinYMin" },
-    { AspectRatioAlign::XMidYMin, "xMidYMin" },
-    { AspectRatioAlign::XMaxYMin, "xMaxYMin" },
-    { AspectRatioAlign::XMinYMid, "xMinYMid" },
-    { AspectRatioAlign::XMidYMid, "xMidYMid" },
-    { AspectRatioAlign::XMaxYMid, "xMaxYMid" },
-    { AspectRatioAlign::XMinYMax, "xMinYMax" },
-    { AspectRatioAlign::XMidYMax, "xMidYMax" },
-    { AspectRatioAlign::XMaxYMax, "xMaxYMax" },
+    { "xMinYMin", AspectRatioAlign::XMinYMin },
+    { "xMidYMin", AspectRatioAlign::XMidYMin },
+    { "xMaxYMin", AspectRatioAlign::XMaxYMin },
+    { "xMinYMid", AspectRatioAlign::XMinYMid },
+    { "xMidYMid", AspectRatioAlign::XMidYMid },
+    { "xMaxYMid", AspectRatioAlign::XMaxYMid },
+    { "xMinYMax", AspectRatioAlign::XMinYMax },
+    { "xMidYMax", AspectRatioAlign::XMidYMax },
+    { "xMaxYMax", AspectRatioAlign::XMaxYMax },
 };
 
 
@@ -289,12 +289,12 @@ static bool _toPaintOrder(const char* str)
  */
 static constexpr struct
 {
-    StrokeCap lineCap;
     const char* tag;
+    StrokeCap lineCap;
 } lineCapTags[] = {
-    { StrokeCap::Butt, "butt" },
-    { StrokeCap::Round, "round" },
-    { StrokeCap::Square, "square" }
+    { "butt", StrokeCap::Butt },
+    { "round", StrokeCap::Round },
+    { "square", StrokeCap::Square }
 };
 
 
@@ -308,12 +308,12 @@ _PARSE_TAG(StrokeCap, lineCap, LineCap, lineCapTags, StrokeCap::Butt)
  */
 static constexpr struct
 {
-    StrokeJoin lineJoin;
     const char* tag;
+    StrokeJoin lineJoin;
 } lineJoinTags[] = {
-    { StrokeJoin::Miter, "miter" },
-    { StrokeJoin::Round, "round" },
-    { StrokeJoin::Bevel, "bevel" }
+    { "miter", StrokeJoin::Miter },
+    { "round", StrokeJoin::Round },
+    { "bevel", StrokeJoin::Bevel }
 };
 
 
@@ -327,10 +327,10 @@ _PARSE_TAG(StrokeJoin, lineJoin, LineJoin, lineJoinTags, StrokeJoin::Miter)
  */
 static constexpr struct
 {
-    FillRule fillRule;
     const char* tag;
+    FillRule fillRule;
 } fillRuleTags[] = {
-    { FillRule::EvenOdd, "evenodd" }
+    { "evenodd", FillRule::EvenOdd }
 };
 
 
@@ -342,24 +342,24 @@ _PARSE_TAG(FillRule, fillRule, FillRule, fillRuleTags, FillRule::NonZero)
  */
 static constexpr struct
 {
-    BlendMethod blendMode;
     const char* tag;
+    BlendMethod blendMode;
 } blendModeTags[] = {
-    { BlendMethod::Multiply,   "multiply" },
-    { BlendMethod::Screen,     "screen" },
-    { BlendMethod::Overlay,    "overlay" },
-    { BlendMethod::Darken,     "darken" },
-    { BlendMethod::Lighten,    "lighten" },
-    { BlendMethod::ColorDodge, "color-dodge" },
-    { BlendMethod::ColorBurn,  "color-burn" },
-    { BlendMethod::HardLight,  "hard-light" },
-    { BlendMethod::SoftLight,  "soft-light" },
-    { BlendMethod::Difference, "difference" },
-    { BlendMethod::Exclusion,  "exclusion" },
-    { BlendMethod::Hue,        "hue" },
-    { BlendMethod::Saturation, "saturation" },
-    { BlendMethod::Color,      "color" },
-    { BlendMethod::Luminosity, "luminosity" }
+    { "multiply",    BlendMethod::Multiply },
+    { "screen",      BlendMethod::Screen },
+    { "overlay",     BlendMethod::Overlay },
+    { "darken",      BlendMethod::Darken },
+    { "lighten",     BlendMethod::Lighten },
+    { "color-dodge", BlendMethod::ColorDodge },
+    { "color-burn",  BlendMethod::ColorBurn },
+    { "hard-light",  BlendMethod::HardLight },
+    { "soft-light",  BlendMethod::SoftLight },
+    { "difference",  BlendMethod::Difference },
+    { "exclusion",   BlendMethod::Exclusion },
+    { "hue",         BlendMethod::Hue },
+    { "saturation",  BlendMethod::Saturation },
+    { "color",       BlendMethod::Color },
+    { "luminosity",  BlendMethod::Luminosity }
 };
 
 
@@ -745,15 +745,15 @@ enum class MatrixState {
 
 #define MATRIX_DEF(Name, Value)     \
     {                               \
-#Name, sizeof(#Name), Value \
+#Name, Value, sizeof(#Name)         \
     }
 
 
 static constexpr struct
 {
     const char* tag;
-    int sz;
     MatrixState state;
+    int sz;
 } matrixTags[] = {
     MATRIX_DEF(matrix, MatrixState::Matrix),
     MATRIX_DEF(translate, MatrixState::Translate),
@@ -1136,14 +1136,14 @@ static void _handleCssClassAttr(SvgParserContext* ctx, SvgNode* node, const char
 
 typedef void (*styleMethod)(SvgParserContext* ctx, SvgNode* node, const char* value);
 
-#define STYLE_DEF(Name, Name1, Flag) { #Name, sizeof(#Name), _handle##Name1##Attr, Flag }
+#define STYLE_DEF(Name, Name1, Flag) { #Name, _handle##Name1##Attr, sizeof(#Name), Flag }
 
 
 static constexpr struct
 {
     const char* tag;
-    int sz;
     styleMethod tagHandler;
+    int sz;
     SvgStyleFlags flag;
 } styleTags[] = {
     // hyphenated names below are macro identifiers, not subtraction; keep them intact
@@ -1641,13 +1641,13 @@ static SvgNode* _createPathNode(SvgParserContext* ctx, SvgNode* parent, const ch
 static constexpr struct
 {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } circleTags[] = {
-    {"cx", SvgParserLengthType::Horizontal, sizeof("cx"), offsetof(SvgCircleNode, cx)},
-    {"cy", SvgParserLengthType::Vertical, sizeof("cy"), offsetof(SvgCircleNode, cy)},
-    {"r", SvgParserLengthType::Diagonal, sizeof("r"), offsetof(SvgCircleNode, r)}
+    {"cx", offsetof(SvgCircleNode, cx), sizeof("cx"), SvgParserLengthType::Horizontal},
+    {"cy", offsetof(SvgCircleNode, cy), sizeof("cy"), SvgParserLengthType::Vertical},
+    {"r", offsetof(SvgCircleNode, r), sizeof("r"), SvgParserLengthType::Diagonal}
 };
 
 
@@ -1694,14 +1694,14 @@ static SvgNode* _createCircleNode(SvgParserContext* ctx, SvgNode* parent, const 
 static constexpr struct
 {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } ellipseTags[] = {
-    {"cx", SvgParserLengthType::Horizontal, sizeof("cx"), offsetof(SvgEllipseNode, cx)},
-    {"cy", SvgParserLengthType::Vertical, sizeof("cy"), offsetof(SvgEllipseNode, cy)},
-    {"rx", SvgParserLengthType::Horizontal, sizeof("rx"), offsetof(SvgEllipseNode, rx)},
-    {"ry", SvgParserLengthType::Vertical, sizeof("ry"), offsetof(SvgEllipseNode, ry)}
+    {"cx", offsetof(SvgEllipseNode, cx), sizeof("cx"), SvgParserLengthType::Horizontal},
+    {"cy", offsetof(SvgEllipseNode, cy), sizeof("cy"), SvgParserLengthType::Vertical},
+    {"rx", offsetof(SvgEllipseNode, rx), sizeof("rx"), SvgParserLengthType::Horizontal},
+    {"ry", offsetof(SvgEllipseNode, ry), sizeof("ry"), SvgParserLengthType::Vertical}
 };
 
 
@@ -1802,16 +1802,16 @@ static SvgNode* _createPolylineNode(SvgParserContext* ctx, SvgNode* parent, cons
 static constexpr struct
 {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } rectTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
-    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
-    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)},
-    {"rx", SvgParserLengthType::Horizontal, sizeof("rx"), offsetof(SvgRectNode, rx)},
-    {"ry", SvgParserLengthType::Vertical, sizeof("ry"), offsetof(SvgRectNode, ry)}
+    {"x", offsetof(SvgRectNode, x), sizeof("x"), SvgParserLengthType::Horizontal},
+    {"y", offsetof(SvgRectNode, y), sizeof("y"), SvgParserLengthType::Vertical},
+    {"width", offsetof(SvgRectNode, w), sizeof("width"), SvgParserLengthType::Horizontal},
+    {"height", offsetof(SvgRectNode, h), sizeof("height"), SvgParserLengthType::Vertical},
+    {"rx", offsetof(SvgRectNode, rx), sizeof("rx"), SvgParserLengthType::Horizontal},
+    {"ry", offsetof(SvgRectNode, ry), sizeof("ry"), SvgParserLengthType::Vertical}
 };
 
 
@@ -1867,14 +1867,14 @@ static SvgNode* _createRectNode(SvgParserContext* ctx, SvgNode* parent, const ch
 static constexpr struct
 {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } lineTags[] = {
-    {"x1", SvgParserLengthType::Horizontal, sizeof("x1"), offsetof(SvgLineNode, x1)},
-    {"y1", SvgParserLengthType::Vertical, sizeof("y1"), offsetof(SvgLineNode, y1)},
-    {"x2", SvgParserLengthType::Horizontal, sizeof("x2"), offsetof(SvgLineNode, x2)},
-    {"y2", SvgParserLengthType::Vertical, sizeof("y2"), offsetof(SvgLineNode, y2)}
+    {"x1", offsetof(SvgLineNode, x1), sizeof("x1"), SvgParserLengthType::Horizontal},
+    {"y1", offsetof(SvgLineNode, y1), sizeof("y1"), SvgParserLengthType::Vertical},
+    {"x2", offsetof(SvgLineNode, x2), sizeof("x2"), SvgParserLengthType::Horizontal},
+    {"y2", offsetof(SvgLineNode, y2), sizeof("y2"), SvgParserLengthType::Vertical}
 };
 
 
@@ -1930,14 +1930,14 @@ static char* _idFromHref(const char* href)
 static constexpr struct
 {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } imageTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgRectNode, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgRectNode, y)},
-    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgRectNode, w)},
-    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgRectNode, h)},
+    {"x", offsetof(SvgRectNode, x), sizeof("x"), SvgParserLengthType::Horizontal},
+    {"y", offsetof(SvgRectNode, y), sizeof("y"), SvgParserLengthType::Vertical},
+    {"width", offsetof(SvgRectNode, w), sizeof("width"), SvgParserLengthType::Horizontal},
+    {"height", offsetof(SvgRectNode, h), sizeof("height"), SvgParserLengthType::Vertical},
 };
 
 
@@ -2084,14 +2084,14 @@ static bool _checkPostponed(SvgNode* node, SvgNode* cloneNode, int depth)
 static constexpr struct
 {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } useTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgUseNode, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgUseNode, y)},
-    {"width", SvgParserLengthType::Horizontal, sizeof("width"), offsetof(SvgUseNode, w)},
-    {"height", SvgParserLengthType::Vertical, sizeof("height"), offsetof(SvgUseNode, h)}
+    {"x", offsetof(SvgUseNode, x), sizeof("x"), SvgParserLengthType::Horizontal},
+    {"y", offsetof(SvgUseNode, y), sizeof("y"), SvgParserLengthType::Vertical},
+    {"width", offsetof(SvgUseNode, w), sizeof("width"), SvgParserLengthType::Horizontal},
+    {"height", offsetof(SvgUseNode, h), sizeof("height"), SvgParserLengthType::Vertical}
 };
 
 
@@ -2167,14 +2167,14 @@ static SvgNode* _createUseNode(SvgParserContext* ctx, SvgNode* parent, const cha
 static constexpr struct
 {
     const char* tag;
-    SvgParserLengthType type;
-    int sz;
     size_t offset;
+    int sz;
+    SvgParserLengthType type;
 } textTags[] = {
-    {"x", SvgParserLengthType::Horizontal, sizeof("x"), offsetof(SvgTextNode, x)},
-    {"y", SvgParserLengthType::Vertical, sizeof("y"), offsetof(SvgTextNode, y)},
-    {"dx", SvgParserLengthType::Horizontal, sizeof("dx"), offsetof(SvgTextNode, dx)},
-    {"dy", SvgParserLengthType::Vertical, sizeof("dy"), offsetof(SvgTextNode, dy)}};
+    {"x", offsetof(SvgTextNode, x), sizeof("x"), SvgParserLengthType::Horizontal},
+    {"y", offsetof(SvgTextNode, y), sizeof("y"), SvgParserLengthType::Vertical},
+    {"dx", offsetof(SvgTextNode, dx), sizeof("dx"), SvgParserLengthType::Horizontal},
+    {"dy", offsetof(SvgTextNode, dy), sizeof("dy"), SvgParserLengthType::Vertical}};
 
 static bool _attrPrescanTextFontSize(void* data, const char* key, const char* value)
 {
@@ -2244,36 +2244,36 @@ static SvgNode* _createTspanNode(SvgParserContext* ctx, SvgNode* parent, const c
 static constexpr struct
 {
     const char* tag;
-    int sz;
     FactoryMethod tagHandler;
+    int sz;
 } graphicsTags[] = {
-    {"use", sizeof("use"), _createUseNode},
-    {"circle", sizeof("circle"), _createCircleNode},
-    {"ellipse", sizeof("ellipse"), _createEllipseNode},
-    {"path", sizeof("path"), _createPathNode},
-    {"polygon", sizeof("polygon"), _createPolygonNode},
-    {"rect", sizeof("rect"), _createRectNode},
-    {"polyline", sizeof("polyline"), _createPolylineNode},
-    {"line", sizeof("line"), _createLineNode},
-    {"image", sizeof("image"), _createImageNode},
-    {"text", sizeof("text"), _createTextNode},
-    {"feGaussianBlur", sizeof("feGaussianBlur"), _createGaussianBlurNode}};
+    {"use", _createUseNode, sizeof("use")},
+    {"circle", _createCircleNode, sizeof("circle")},
+    {"ellipse", _createEllipseNode, sizeof("ellipse")},
+    {"path", _createPathNode, sizeof("path")},
+    {"polygon", _createPolygonNode, sizeof("polygon")},
+    {"rect", _createRectNode, sizeof("rect")},
+    {"polyline", _createPolylineNode, sizeof("polyline")},
+    {"line", _createLineNode, sizeof("line")},
+    {"image", _createImageNode, sizeof("image")},
+    {"text", _createTextNode, sizeof("text")},
+    {"feGaussianBlur", _createGaussianBlurNode, sizeof("feGaussianBlur")}};
 
 static constexpr struct
 {
     const char* tag;
-    int sz;
     FactoryMethod tagHandler;
+    int sz;
 } groupTags[] = {
-    {"defs", sizeof("defs"), _createDefsNode},
-    {"g", sizeof("g"), _createGNode},
-    {"svg", sizeof("svg"), _createSvgNode},
-    {"mask", sizeof("mask"), _createMaskNode},
-    {"clipPath", sizeof("clipPath"), _createClipPathNode},
-    {"style", sizeof("style"), _createCssStyleNode},
-    {"symbol", sizeof("symbol"), _createSymbolNode},
-    {"filter", sizeof("filter"), _createFilterNode},
-    {"pattern", sizeof("pattern"), _createPatternNode}};
+    {"defs", _createDefsNode, sizeof("defs")},
+    {"g", _createGNode, sizeof("g")},
+    {"svg", _createSvgNode, sizeof("svg")},
+    {"mask", _createMaskNode, sizeof("mask")},
+    {"clipPath", _createClipPathNode, sizeof("clipPath")},
+    {"style", _createCssStyleNode, sizeof("style")},
+    {"symbol", _createSymbolNode, sizeof("symbol")},
+    {"filter", _createFilterNode, sizeof("filter")},
+    {"pattern", _createPatternNode, sizeof("pattern")}};
 
 #define FIND_FACTORY(Short_Name, Tags_Array)                                           \
     static FactoryMethod                                                               \
@@ -2481,18 +2481,18 @@ typedef void (*radialMethodRecalc)(SvgParserContext* ctx, SvgRadialGradient* rad
 
 #define RADIAL_DEF(Name, Name1, Flag)                                                    \
     {                                                                                    \
-#Name, sizeof(#Name), _handleRadial##Name1##Attr, _inheritRadial##Name1##Attr, _recalcRadial##Name1##Attr, _recalcInheritedRadial##Name1##Attr, Flag \
+#Name, _handleRadial##Name1##Attr, _inheritRadial##Name1##Attr, _recalcRadial##Name1##Attr, _recalcInheritedRadial##Name1##Attr, sizeof(#Name), Flag \
     }
 
 
 static constexpr struct
 {
     const char* tag;
-    int sz;
     radialMethod tagHandler;
     radialInheritMethod tagInheritHandler;
     radialMethodRecalc tagRecalc;
     radialMethodRecalc tagInheritedRecalc;
+    int sz;
     SvgGradientFlags flag;
 } radialTags[] = {
     RADIAL_DEF(cx, Cx, SvgGradientFlags::Cx),
@@ -2748,18 +2748,18 @@ typedef void (*Linear_Method_Recalc)(SvgParserContext* ctx, SvgLinearGradient* l
 
 #define LINEAR_DEF(Name, Name1, Flag)                                                    \
     {                                                                                    \
-#Name, sizeof(#Name), _handleLinear##Name1##Attr, _inheritLinear##Name1##Attr, _recalcLinear##Name1##Attr, _recalcInheritedLinear##Name1##Attr, Flag \
+#Name, _handleLinear##Name1##Attr, _inheritLinear##Name1##Attr, _recalcLinear##Name1##Attr, _recalcInheritedLinear##Name1##Attr, sizeof(#Name), Flag \
     }
 
 
 static constexpr struct
 {
     const char* tag;
-    int sz;
     Linear_Method tagHandler;
     Linear_Inherit_Method tagInheritHandler;
     Linear_Method_Recalc tagRecalc;
     Linear_Method_Recalc tagInheritedRecalc;
+    int sz;
     SvgGradientFlags flag;
 } linear_tags[] = {
     LINEAR_DEF(x1, X1, SvgGradientFlags::X1),
@@ -2827,7 +2827,7 @@ static SvgStyleGradient* _createLinearGradient(SvgParserContext* ctx, const char
 
 #define GRADIENT_DEF(Name, Name1)            \
     {                                        \
-#Name, sizeof(#Name), _create##Name1         \
+#Name, _create##Name1, sizeof(#Name)         \
     }
 
 
@@ -2839,8 +2839,8 @@ static SvgStyleGradient* _createLinearGradient(SvgParserContext* ctx, const char
 static constexpr struct
 {
     const char* tag;
-    int sz;
     GradientFactoryMethod tagHandler;
+    int sz;
 } gradientTags[] = {
     GRADIENT_DEF(linearGradient, LinearGradient),
     GRADIENT_DEF(radialGradient, RadialGradient)
