@@ -52,7 +52,7 @@
 #define TRANSPARENT_IDX 0
 #define TRANSPARENT_THRESHOLD 127
 #define BIT_DEPTH 8
-
+#define LEAF_NODE 0xff
 
 // Simple structure to write out the LZW-compressed portion of the image
 // one bit at a time
@@ -84,9 +84,10 @@ typedef struct
 // this is the major hotspot in the code at the moment.
 static void _getClosestPaletteColor( GifPalette* pPal, int r, int g, int b, int* bestInd, int* bestDiff, int treeRoot )
 {
-    // base case, reached the bottom of the tree
-    if (treeRoot > (1 << BIT_DEPTH) - 1) {
-        int ind = treeRoot-(1 << BIT_DEPTH);
+    // base case, reached a leaf or a node that holds a single color
+    if (treeRoot > (1 << BIT_DEPTH) - 1 || pPal->treeSplitElt[treeRoot] == LEAF_NODE) {
+        // A node marked LEAF_NODE keeps its palette entry in treeSplit
+        int ind = (treeRoot > (1 << BIT_DEPTH) - 1) ? treeRoot - (1 << BIT_DEPTH) : pPal->treeSplit[treeRoot];
         if(ind == TRANSPARENT_IDX) return;
 
         // check whether this color is better than the current winner
@@ -147,48 +148,22 @@ static void _swapPixels(uint8_t* image, int pixA, int pixB)
     image[pixB*4+3] = aA;
 }
 
-
-// just the partition operation from quicksort
-static int _partition(uint8_t* image, const int left, const int right, const int elt, int pivotIndex)
+// Moves every pixel whose 'elt' component is below splitVal to the front and
+// returns how many were moved. Since the comparison is one-sided, pixels that
+// share the same value always end up on the same side of the boundary.
+static int _partitionByValue(uint8_t* image, int numPixels, int elt, int splitVal)
 {
-    const int pivotValue = image[(pivotIndex)*4+elt];
-    _swapPixels(image, pivotIndex, right-1);
-    int storeIndex = left;
-    bool split = 0;
-
-    for (int ii = left; ii < right - 1; ++ii) {
-        int arrayVal = image[ii*4+elt];
-        if(arrayVal < pivotValue) {
+    int storeIndex = 0;
+    for (int ii = 0; ii < numPixels; ++ii) {
+        if (image[ii * 4 + elt] < splitVal) {
             _swapPixels(image, ii, storeIndex);
             ++storeIndex;
-        } else if(arrayVal == pivotValue) {
-            if (split) {
-                _swapPixels(image, ii, storeIndex);
-                ++storeIndex;
-            }
-            split = !split;
         }
     }
-    _swapPixels(image, storeIndex, right-1);
     return storeIndex;
 }
 
-
-// Perform an incomplete sort, finding all elements above and below the desired median
-static void _partitionByMedian(uint8_t* image, int left, int right, int com, int neededCenter)
-{
-    if (left < right-1) {
-        int pivotIndex = left + (right-left)/2;
-        pivotIndex = _partition(image, left, right, com, pivotIndex);
-
-        // Only "sort" the section of the array that contains the median
-        if(pivotIndex > neededCenter) _partitionByMedian(image, left, pivotIndex, com, neededCenter);
-        if(pivotIndex < neededCenter) _partitionByMedian(image, pivotIndex+1, right, com, neededCenter);
-    }
-}
-
-
-// Builds a palette by creating a balanced k-d tree of all pixels in the image
+// Builds a palette by creating a k-d tree of all pixels in the image
 static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastElt, int splitElt, int splitDist, int treeNode, GifPalette* pal)
 {
     if(lastElt <= firstElt || numPixels == 0) return;
@@ -241,28 +216,60 @@ static void _splitPalette(uint8_t* image, int numPixels, int firstElt, int lastE
     int gRange = maxG - minG;
     int bRange = maxB - minB;
 
-    // and split along that axis. (incidentally, this means this isn't a "proper" k-d tree but I don't know what else to call it)
+    // If every pixel in this range is the same color, there is nothing left to split.
+    // Fill the whole range with that color, then mark the node as a leaf.
+    if (rRange == 0 && gRange == 0 && bRange == 0) {
+        for (int ii = firstElt; ii < lastElt; ++ii) {
+            pal->r[ii] = image[0];
+            pal->g[ii] = image[1];
+            pal->b[ii] = image[2];
+        }
+        pal->treeSplitElt[treeNode] = LEAF_NODE;
+        pal->treeSplit[treeNode] = (uint8_t)firstElt;
+        return;
+    }
+
+    // Pick the axis with widest range, rather than cycling through
+    // the axes as the original k-d tree does.
     int splitCom = 1;
     if (bRange > gRange) splitCom = 2;
     if (rRange > bRange && rRange > gRange) splitCom = 0;
 
-    int subPixelsA = numPixels * (splitElt - firstElt) / (lastElt - firstElt);
-    int subPixelsB = numPixels-subPixelsA;
+    // Find the median value along that axis from a histogram of the component.
+    uint32_t hist[256] = {};
+    for (int ii = 0; ii < numPixels; ++ii)
+        ++hist[image[ii * 4 + splitCom]];
 
-    _partitionByMedian(image, 0, numPixels, splitCom, subPixelsA);
+    int acc = 0;
+    int splitVal = 0;
+    for (int v = 0; v < 256; ++v) {
+        acc += hist[v];
+        if (acc > numPixels / 2) {
+            splitVal = v;
+            break;
+        }
+    }
+
+    // If the median is the smallest value in this range,
+    // move the boundary up by one to keep its whole run on the left, otherwise
+    // the left subtree comes out empty and its palette entries go unwritten.
+    if (acc - (int)hist[splitVal] == 0) ++splitVal;
+
+    int subPixelsA = _partitionByValue(image, numPixels, splitCom, splitVal);
+    int subPixelsB = numPixels - subPixelsA;
 
     pal->treeSplitElt[treeNode] = (uint8_t)splitCom;
-    pal->treeSplit[treeNode] = image[subPixelsA*4+splitCom];
+    pal->treeSplit[treeNode] = (uint8_t)splitVal;
 
     _splitPalette(image, subPixelsA, firstElt, splitElt, splitElt-splitDist, splitDist/2, treeNode*2, pal);
     _splitPalette(image+subPixelsA*4, subPixelsB, splitElt, lastElt,  splitElt+splitDist, splitDist/2, treeNode*2+1, pal);
 }
 
-
 // Finds all pixels that have changed from the previous image and
 // moves them to the from of the buffer.
 // This allows us to build a palette optimized for the colors of the
 // changed pixels only.
+// With no previous frame, every visible pixel counts as changed.
 static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numPixels, bool transparent)
 {
     int numChanged = 0;
@@ -270,7 +277,7 @@ static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numP
 
     for (int ii=0; ii < numPixels; ++ii) {
         if (frame[3] >= TRANSPARENT_THRESHOLD) {
-            if (transparent || (lastFrame[0] != frame[0] || lastFrame[1] != frame[1] || lastFrame[2] != frame[2])) {
+            if (!lastFrame || transparent || (lastFrame[0] != frame[0] || lastFrame[1] != frame[1] || lastFrame[2] != frame[2])) {
                 writeIter[0] = frame[0];
                 writeIter[1] = frame[1];
                 writeIter[2] = frame[2];
@@ -278,7 +285,7 @@ static int _pickChangedPixels(const uint8_t* lastFrame, uint8_t* frame, int numP
                 writeIter += 4;
             }
         }
-        lastFrame += 4;
+        if (lastFrame) lastFrame += 4;
         frame += 4;
     }
 
@@ -296,7 +303,7 @@ static void _makePalette(GifWriter* writer, const uint8_t* lastFrame, const uint
     memcpy(writer->tmpImage, nextFrame, imageSize);
 
     int numPixels = (int)(width * height);
-    if (lastFrame) numPixels = _pickChangedPixels(lastFrame, writer->tmpImage, numPixels, transparent);
+    numPixels = _pickChangedPixels(lastFrame, writer->tmpImage, numPixels, transparent);
 
     const int lastElt = 1 << bitDepth;
     const int splitElt = lastElt/2;
@@ -591,6 +598,8 @@ bool gifBegin(GifWriter* writer, const char* filename, uint32_t width, uint32_t 
 
         fputc(0, writer->f); // block terminator
     }
+
+    memset(&writer->pal, 0, sizeof(GifPalette));
 
     return true;
 }
