@@ -1012,6 +1012,12 @@ static char* _processText(const char* text, SvgXmlSpace space)
     return processed;
 }
 
+static SvgBaseline _effectiveBaseline(const SvgStyleProperty* style)
+{
+    if (style->alignmentBaseline != SvgBaseline::Auto) return style->alignmentBaseline;
+    return style->dominantBaseline;
+}
+
 static void _applyTextBaseline(Text* text, SvgBaseline baseline, Matrix& transform)
 {
     if (baseline == SvgBaseline::Auto || baseline == SvgBaseline::Alphabetic) return;
@@ -1125,7 +1131,7 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
             if (textNode.x == FLT_MAX) textNode.x = textPos.x;
             if (textNode.y == FLT_MAX) textNode.y = textPos.y;
 
-            auto text = _buildText(&textNode, xmlSpace, nullptr, child->style->alignmentBaseline);
+            auto text = _buildText(&textNode, xmlSpace, nullptr, _effectiveBaseline(child->style));
             if (text) {
                 text->align(child->style->textAnchor, 0.0f);
                 _updatePos(text, textNode, child->style->textAnchor, textPos);
@@ -1151,7 +1157,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
     if (xmlSpace == SvgXmlSpace::None) xmlSpace = SvgXmlSpace::Default;
 
     if (!_hasPositionedTspan(node, 0)) {
-        auto text = _buildText(textNode, xmlSpace, node->transform, node->style->alignmentBaseline);
+        auto text = _buildText(textNode, xmlSpace, node->transform, _effectiveBaseline(node->style));
         if (!text) return nullptr;
         text->align(node->style->textAnchor, 0.0f);
         _applyTextFill(node->style, text, vBox, ctx.parser->global);
@@ -1165,7 +1171,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
 
     Point textPos = {textNode->x, textNode->y};
 
-    if (auto text = _buildText(textNode, xmlSpace, nullptr, node->style->alignmentBaseline)) {
+    if (auto text = _buildText(textNode, xmlSpace, nullptr, _effectiveBaseline(node->style))) {
         text->align(node->style->textAnchor, 0.0f);
         _updatePos(text, *textNode, node->style->textAnchor, textPos);
         _applyTextFill(node->style, text, vBox, ctx.parser->global);
