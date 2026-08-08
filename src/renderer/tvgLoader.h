@@ -39,6 +39,63 @@ struct AssetResolver
     void* data;
 };
 
+enum class DataOwnership : uint8_t
+{
+    Borrow = 0,  // the caller keeps it alive, thus shareable by its address
+    Copy,        // the loader duplicates and releases it
+    Transfer     // the loader takes it over, the caller must not touch it anymore
+};
+
+struct SourceData
+{
+    uint8_t* data = nullptr;
+    uint32_t size = 0;
+    bool owned = false;  // release the data on clear()
+
+    ~SourceData()
+    {
+        clear();
+    }
+
+    bool assign(const char* data, uint32_t size, bool copy, bool terminate = false)
+    {
+        clear();
+
+        if (copy) {
+            this->data = tvg::malloc<uint8_t>(terminate ? size + 1 : size);
+            if (!this->data) return false;
+            memcpy(this->data, data, size);
+            if (terminate) this->data[size] = '\0';
+            owned = true;
+        } else this->data = (uint8_t*)data;
+
+        this->size = size;
+
+        return true;
+    }
+
+    void own(char* data, uint32_t size)
+    {
+        clear();
+        this->data = (uint8_t*)data;
+        this->size = size;
+        owned = true;
+    }
+
+    void clear()
+    {
+        if (owned) tvg::free(data);
+        data = nullptr;
+        size = 0;
+        owned = false;
+    }
+
+    const char* text() const
+    {
+        return (const char*)data;
+    }
+};
+
 struct LoaderOps
 {
     Type caller;  // which requests this?
@@ -62,6 +119,7 @@ struct Loader
     uintptr_t hashkey = 0;
     char* hashpath = nullptr;
 
+    SourceData src;              // encoded source data
     FileType type;               // current loader file type
     atomic<uint16_t> sharing{};  // reference count
     bool readied = false;        // read done already
@@ -97,6 +155,13 @@ struct Loader
 
         hashpath = tvg::duplicate(path);
         cached = true;
+        return true;
+    }
+
+    bool adopt(const char* data)  // takes over the borrowed source data
+    {
+        if (src.data != (uint8_t*)data) return false;
+        src.owned = true;
         return true;
     }
 

@@ -36,7 +36,7 @@ void PngLoader::run(unsigned tid)
 
     state.info_raw.colortype = LCT_RGBA;   //request this image format
 
-    if (lodepng_decode(&surface.buf8, &width, &height, &state, data, size)) TVGERR("PNG", "Failed to decode image");
+    if (lodepng_decode(&surface.buf8, &width, &height, &state, src.data, src.size)) TVGERR("PNG", "Failed to decode image");
     else if (state.info_png.iccp_defined && lodepng_toSrgb(surface.buf8, surface.buf8, width, height, &state)) TVGERR("PNG", "Unsupported ICC color profile");
 
     surface.setup(surface.buf32, width, width, height, sizeof(uint32_t), ColorSpace::ABGR8888S);
@@ -56,7 +56,6 @@ PngLoader::PngLoader() : BitmapLoader(FileType::Png)
 PngLoader::~PngLoader()
 {
     done();
-    if (freeData) tvg::free(data);
     tvg::free(surface.buf8);
     lodepng_state_cleanup(&state);
 }
@@ -64,15 +63,17 @@ PngLoader::~PngLoader()
 bool PngLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (unsigned char*)Loader::open(path, size))) return false;
+    uint32_t size;
+    auto data = Loader::open(path, size);
+    if (!data) return false;
+    src.own(data, size);
 
     lodepng_state_init(&state);
 
     unsigned int width, height;
-    if (lodepng_inspect(&width, &height, &state, data, size) > 0) return false;
+    if (lodepng_inspect(&width, &height, &state, src.data, src.size) > 0) return false;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    freeData = true;
     return true;
 #else
     return false;
@@ -84,19 +85,10 @@ bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps
     unsigned int width, height;
     if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
 
-    if (copy) {
-        this->data = tvg::malloc<unsigned char>(size);
-        if (!this->data) return false;
-        memcpy((unsigned char *)this->data, data, size);
-        freeData = true;
-    } else {
-        this->data = (unsigned char *) data;
-        freeData = false;
-    }
+    if (!src.assign(data, size, copy)) return false;
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    this->size = size;
 
     return true;
 }
@@ -104,7 +96,7 @@ bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps
 
 bool PngLoader::read()
 {
-    if (!data || w == 0 || h == 0) return false;
+    if (!src.data || w == 0 || h == 0) return false;
 
     if (!Loader::read()) return true;
 

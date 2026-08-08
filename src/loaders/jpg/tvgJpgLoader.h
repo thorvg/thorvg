@@ -41,8 +41,6 @@ struct JpgLoader : BitmapLoader, Task
 
 private:
     jpeg_decoder* decoder = nullptr;
-    char* data = nullptr;
-    bool freeData = false;
 
     void clear();
     void run(unsigned tid) override;

@@ -29,10 +29,7 @@
 
 void JpgLoader::clear()
 {
-    if (freeData) tvg::free(data);
-    data = nullptr;
-    size = 0;
-    freeData = false;
+    src.clear();
 }
 
 /************************************************************************/
@@ -55,13 +52,15 @@ JpgLoader::~JpgLoader()
 bool JpgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (unsigned char*)Loader::open(path, size))) return false;
+    uint32_t size;
+    auto data = Loader::open(path, size);
+    if (!data) return false;
+    src.own(data, size);
 
     int width, height, subSample, colorSpace;
-    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
+    if (tjDecompressHeader3(jpegDecompressor, src.data, src.size, &width, &height, &subSample, &colorSpace) < 0) return false;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    freeData = true;
     return true;
 #else
     return false;
@@ -73,19 +72,10 @@ bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps
     int width, height, subSample, colorSpace;
     if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
 
-    if (copy) {
-        this->data = tvg::malloc<unsigned char>(size);
-        if (!this->data) return false;
-        memcpy((unsigned char *)this->data, data, size);
-        freeData = true;
-    } else {
-        this->data = (unsigned char *) data;
-        freeData = false;
-    }
+    if (!src.assign(data, size, copy)) return false;
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    this->size = size;
 
     return true;
 }
@@ -111,7 +101,7 @@ bool JpgLoader::read()
     auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[format]);
 
     //decompress jpg image
-    if (tjDecompress2(jpegDecompressor, data, size, image, static_cast<int>(w), 0, static_cast<int>(h), format, 0) < 0) {
+    if (tjDecompress2(jpegDecompressor, src.data, src.size, image, static_cast<int>(w), 0, static_cast<int>(h), format, 0) < 0) {
         TVGERR("JPG LOADER", "%s", tjGetErrorStr());
         tjFree(image);
         image = nullptr;

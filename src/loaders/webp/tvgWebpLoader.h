@@ -36,10 +36,6 @@ struct WebpLoader : BitmapLoader, Task
     RenderSurface* bitmap() override;
 
 private:
-    uint8_t* data = nullptr;
-    uint32_t size = 0;
-    bool freeData = false;
-
     void clear();
     void run(unsigned tid) override;
 };

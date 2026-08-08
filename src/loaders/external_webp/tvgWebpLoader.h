@@ -39,10 +39,6 @@ struct WebpLoader : BitmapLoader, Task
 
 private:
     void run(unsigned tid) override;
-
-    unsigned char* data = nullptr;
-    uint32_t size = 0;
-    bool freeData = false;
 };
 
 #endif //_TVG_WEBP_LOADER_H_

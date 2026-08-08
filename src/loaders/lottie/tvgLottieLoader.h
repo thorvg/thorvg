@@ -53,8 +53,6 @@ struct LottieCustomSlot
 
 struct LottieLoader : AnimLoader, Task
 {
-    const char* content = nullptr;      //lottie file data
-    uint32_t size = 0;                  //lottie data size
     float frameNo = 0.0f;               //current frame number
     float frameCnt = 0.0f;
     float frameRate = 0.0f;
@@ -67,7 +65,6 @@ struct LottieLoader : AnimLoader, Task
     Key key;
     char* dirName = nullptr;            //base resource directory
 
-    bool copy = false;                  //"content" is owned by this loader
     bool build = true;                  //require building the lottie scene
 
     LottieLoader();

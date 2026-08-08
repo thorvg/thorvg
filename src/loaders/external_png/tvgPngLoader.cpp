@@ -31,6 +31,7 @@ void PngLoader::clear()
     png_image_free(image);
     tvg::free(image);
     image = nullptr;
+    src.clear();
 }
 
 /************************************************************************/
@@ -67,7 +68,10 @@ bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps
 #ifdef THORVG_FILE_IO_SUPPORT
     image->opaque = nullptr;
 
-    if (!png_image_begin_read_from_memory(image, data, size)) return false;
+    // libpng reads the memory back on png_image_finish_read(), thus keep it alive
+    if (!src.assign(data, size, copy)) return false;
+
+    if (!png_image_begin_read_from_memory(image, src.data, src.size)) return false;
 
     w = (float)image->width;
     h = (float)image->height;

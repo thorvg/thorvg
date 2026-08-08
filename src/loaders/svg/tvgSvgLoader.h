@@ -30,10 +30,7 @@ struct SvgLoader : ImageLoader, Task
 {
     SvgParserContext ctx;
     string svgPath = "";
-    char* content = nullptr;
-    uint32_t size = 0;
     Scene* root = nullptr;
-    bool copy = false;
 
     SvgLoader();
     ~SvgLoader();

@@ -259,24 +259,35 @@ bool LoaderMgr::retrieve(const char* filename)
     return retrieve(_findFromCache(filename));
 }
 
-tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const LoaderOps* ops, bool copy)
+tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const LoaderOps* ops, DataOwnership ownership)
 {
+    auto shareable = (ownership == DataOwnership::Borrow);
+    auto copy = (ownership == DataOwnership::Copy);
+
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
-    if (!copy) {
+    if (shareable) {
         if (auto loader = _findFromCache(data, size, mimeType)) return loader;
     }
+
+    // The candidates borrow the data, so that a rejected trial leaves it intact
+    // for the next one. A loader which consumed the data during open() has
+    // nothing to take over, thus release it here.
+    auto accept = [&](tvg::Loader* loader) {
+        if (ownership == DataOwnership::Transfer) {
+            if (!loader->adopt(data)) tvg::free(const_cast<char*>(data));
+        } else if (shareable && loader->cache(HASH_KEY(data))) {
+            ScopedLock lock(_key);
+            _activeLoaders.back(loader);
+        }
+        return loader;
+    };
 
     // Try with the given MimeType
     if (mimeType) {
         if (auto loader = _findByType(mimeType)) {
-            if (loader->open(data, size, ops, copy)) {
-                if (!copy && loader->cache(HASH_KEY(data))) {
-                    ScopedLock lock(_key);
-                    _activeLoaders.back(loader);
-                }
-                return loader;
-            } else {
+            if (loader->open(data, size, ops, copy)) return accept(loader);
+            else {
                 TVGLOG("LOADER", "Given mimetype \"%s\" seems incorrect or not supported.", mimeType);
                 delete (loader);
             }
@@ -286,15 +297,13 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (!loader) continue;
-        if (loader->open(data, size, ops, copy)) {
-            if (!copy && loader->cache(HASH_KEY(data))) {
-                ScopedLock lock(_key);
-                _activeLoaders.back(loader);
-            }
-            return loader;
-        }
+        if (loader->open(data, size, ops, copy)) return accept(loader);
         delete (loader);
     }
+
+    // Nobody took the transferred data over, thus release it here.
+    if (ownership == DataOwnership::Transfer) tvg::free(const_cast<char*>(data));
+
     return nullptr;
 }
 

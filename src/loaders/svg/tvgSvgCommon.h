@@ -646,7 +646,6 @@ struct SvgParserContext
     Array<SvgStyleGradient*> gradients;
     Array<SvgStyleGradient*> gradientStack; //For stops
     Array<SvgNodeIdPair> nodesToStyle;
-    Array<char*> images;        //embedded images
     Array<FontFace> fonts;
 
     // TODO: We can remove map and directly use the name instead of id in ThorVG v2

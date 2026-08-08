@@ -22,6 +22,7 @@
 
 #include "tvgMath.h" /* to include math.h before cstring */
 #include "tvgShape.h"
+#include "tvgPicture.h"
 #include "tvgCompressor.h"
 #include "tvgFill.h"
 #include "tvgStr.h"
@@ -765,20 +766,12 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
         imageMimeTypeEncoding encoding;
         if (!_isValidImageMimeTypeAndEncoding(&href, &mimetype, &encoding)) return nullptr; //not allowed mime type or encoding
         char *decoded = nullptr;
-        if (encoding == imageMimeTypeEncoding::base64) {
-            auto size = b64Decode(href, strlen(href), &decoded);
-            if (picture->load(decoded, size, mimetype) != Result::Success) {
-                tvg::free(decoded);
-                return nullptr;
-            }
-        } else {
-            auto size = svgUtilURLDecode(href, &decoded);
-            if (picture->load(decoded, size, mimetype) != Result::Success) {
-                tvg::free(decoded);
-                return nullptr;
-            }
+        auto size = (encoding == imageMimeTypeEncoding::base64) ? b64Decode(href, strlen(href), &decoded) : svgUtilURLDecode(href, &decoded);
+        //hand it over, so that it outlives this build along with the loader
+        if (to<PictureImpl>(picture)->load(decoded, size, mimetype, nullptr, DataOwnership::Transfer) != Result::Success) {
+            Paint::rel(picture);
+            return nullptr;
         }
-        ctx.images.push(decoded);
     } else {
         if (!strncmp(href, "file://", sizeof("file://") - 1)) href += sizeof("file://") - 1;
         //TODO: protect against recursive svg image loading
@@ -1450,8 +1443,6 @@ Scene* svgSceneBuild(SvgParserContext& ctx, Box vBox, float w, float h, AspectRa
         _updateInvalidViewSize(docNode, vBox, w, h, viewFlag);
         if ((!tvg::equal(vBox.w, prevW) || !tvg::equal(vBox.h, prevH)) && _hasUserSpaceGradients(ctx)) {
             Paint::rel(docNode);
-            ARRAY_FOREACH(p, ctx.images) tvg::free(*p);
-            ctx.images.clear();
             docNode = _sceneBuildHelper(ctx, ctx.doc, vBox, svgPath, false, 0);
         }
     }

@@ -41,9 +41,6 @@ private:
     void clear();
 
     tjhandle jpegDecompressor;
-    unsigned char* data = nullptr;
-    uint32_t size = 0;
-    bool freeData = false;
 };
 
 #endif //_TVG_JPG_LOADER_H_

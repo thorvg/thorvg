@@ -3851,16 +3851,12 @@ void SvgLoader::clear(bool all)
 
     if (!all) return;
 
-    if (copy) tvg::free((char*)content);
+    src.clear();
 
     if (root) {
         root->unref();
         root = nullptr;
     }
-
-    size = 0;
-    content = nullptr;
-    copy = false;
 }
 
 
@@ -3873,7 +3869,7 @@ void SvgLoader::run(unsigned tid)
         TVGLOG("SVG", "The <viewBox> width and/or height set to 0 - rendering disabled.");
         root = Scene::gen();
     } else {
-        if (xmlParse(content, size, true, _svgLoaderParser, &(ctx))) {
+        if (xmlParse(src.text(), src.size, true, _svgLoaderParser, &(ctx))) {
             if (ctx.doc) {
                 auto defs = ctx.doc->node.doc.defs;
 
@@ -3941,9 +3937,6 @@ void SvgParserContext::clear(bool all)
 
     if (!all) return;
 
-    ARRAY_FOREACH(p, images) {
-        tvg::free(*p);
-    }
     ARRAY_FOREACH(p, fonts) {
         Text::unload(p->name);
         tvg::free(p->decoded);
@@ -3975,7 +3968,7 @@ bool SvgLoader::header()
     ctx.parser->flags = SvgStopStyleFlags::StopDefault;
     viewFlag = SvgViewFlag::None;
 
-    xmlParse(content, size, true, _svgLoaderParserForValidCheck, &(ctx));
+    xmlParse(src.text(), src.size, true, _svgLoaderParserForValidCheck, &(ctx));
 
     if (!ctx.doc || ctx.doc->type != SvgNodeType::Doc) {
         TVGLOG("SVG", "No SVG File. There is no <svg/>");
@@ -4039,14 +4032,7 @@ bool SvgLoader::open(const char* data, uint32_t size, const LoaderOps* ops, bool
 {
     if (ops->caller != tvg::Type::Picture) return false;
 
-    if (copy) {
-        content = tvg::malloc<char>(size + 1);
-        memcpy((char*)content, data, size);
-        content[size] = '\0';
-    } else content = (char*)data;
-
-    this->size = size;
-    this->copy = copy;
+    if (!src.assign(data, size, copy, true)) return false;
 
     ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
 
@@ -4058,9 +4044,10 @@ bool SvgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 #ifdef THORVG_FILE_IO_SUPPORT
     if (ops->caller != tvg::Type::Picture) return false;
 
-    if ((content = Loader::open(path, size, true))) {
+    uint32_t size;
+    if (auto content = Loader::open(path, size, true)) {
+        src.own(content, size);
         ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
-        copy = true;
         return header();
     }
 #endif
@@ -4083,7 +4070,7 @@ bool SvgLoader::resize(Paint* paint, float w, float h)
 
 bool SvgLoader::read()
 {
-    if (!content || size == 0) return false;
+    if (!src.data || src.size == 0) return false;
 
     if (!Loader::read() || root) return true;
 

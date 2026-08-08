@@ -27,9 +27,7 @@
 
 void WebpLoader::clear()
 {
-    if (freeData) tvg::free(data);
-    data = nullptr;
-    freeData = false;
+    src.clear();
 }
 
 
@@ -40,10 +38,10 @@ void WebpLoader::run(unsigned tid)
 
     // static loader WebPDecodeRGBA/WebPDecodeBGRA returns a premultiplied version.
     if (surface.cs == ColorSpace::ARGB8888 || surface.cs == ColorSpace::ARGB8888S) {
-        buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
+        buf8 = WebPDecodeBGRA(src.data, src.size, nullptr, nullptr);
         cs = ColorSpace::ARGB8888;
     } else  {
-        buf8 = WebPDecodeRGBA(data, size, nullptr, nullptr);
+        buf8 = WebPDecodeRGBA(src.data, src.size, nullptr, nullptr);
         cs = ColorSpace::ABGR8888;
     }
     surface.setup((pixel_t*)buf8, static_cast<uint32_t>(w), static_cast<uint32_t>(w), static_cast<uint32_t>(h), sizeof(uint32_t), cs);
@@ -70,14 +68,16 @@ WebpLoader::~WebpLoader()
 bool WebpLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (uint8_t*)Loader::open(path, size))) return false;
+    uint32_t size;
+    auto data = Loader::open(path, size);
+    if (!data) return false;
+    src.own(data, size);
 
     WebPBitstreamFeatures features;
-    if (WebPGetFeatures(data, size, &features)) return false;
+    if (WebPGetFeatures(src.data, src.size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
     surface.alphaIgnored = !features.has_alpha;
-    freeData = true;
     return true;
 #else
     return false;
@@ -86,22 +86,13 @@ bool WebpLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 
 bool WebpLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
 {
-    if (copy) {
-        this->data = tvg::malloc<uint8_t>(size);
-        if (!this->data) return false;
-        memcpy((uint8_t*)this->data, data, size);
-        freeData = true;
-    } else {
-        this->data = (uint8_t*) data;
-        freeData = false;
-    }
+    if (!src.assign(data, size, copy)) return false;
 
     WebPBitstreamFeatures features;
-    if (WebPGetFeatures(this->data, size, &features)) return false;
+    if (WebPGetFeatures(src.data, src.size, &features)) return false;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
     surface.alphaIgnored = !features.has_alpha;
-    this->size = size;
 
     return true;
 }
@@ -111,7 +102,7 @@ bool WebpLoader::read()
 {
     if (!Loader::read()) return true;
 
-    if (!data || w == 0 || h == 0) return false;
+    if (!src.data || w == 0 || h == 0) return false;
 
     surface.cs = BitmapLoader::cs;
 

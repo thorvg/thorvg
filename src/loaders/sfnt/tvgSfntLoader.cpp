@@ -242,10 +242,9 @@ uint32_t SfntLoader::feedLine(FontMetrics& fm, float box, float x, uint32_t begi
 void SfntLoader::clear()
 {
     if (nomap) {
-        if (freeData) tvg::free(reader->data);
         reader->data = nullptr;
         reader->size = 0;
-        freeData = false;
+        src.clear();
         nomap = false;
     } else {
 #ifdef THORVG_FILE_IO_SUPPORT
@@ -541,15 +540,11 @@ bool SfntLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 
 bool SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
 {
-    reader = gen((uint8_t*)data, size);
+    if (!src.assign(data, size, copy)) return false;
+
+    reader = gen(src.data, src.size);
     if (!reader) return false;
     nomap = true;
-
-    if (copy) {
-        reader->data = tvg::malloc<uint8_t>(size);
-        memcpy((char*)reader->data, data, reader->size);
-        freeData = true;
-    }
 
     return reader->header();
 }

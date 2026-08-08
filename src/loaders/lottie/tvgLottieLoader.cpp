@@ -41,7 +41,7 @@ LottieCustomSlot::~LottieCustomSlot()
 
 bool LottieLoader::prepare()
 {
-    LottieParser parser(content, dirName, builder->expressions());
+    LottieParser parser(src.text(), dirName, builder->expressions());
     if (!parser.parse()) return false;
     {
         ScopedLock lock(key);
@@ -70,10 +70,7 @@ void LottieLoader::run(unsigned tid)
 
 void LottieLoader::release()
 {
-    if (copy) {
-        tvg::free((char*)content);
-        content = nullptr;
-    }
+    src.clear();
 }
 
 
@@ -121,7 +118,7 @@ bool LottieLoader::header()
     auto endFrame = 0.0f;
     uint32_t depth = 0;
 
-    auto p = content;
+    auto p = src.text();
 
     while (*p != '\0') {
         if (*p == '{') {
@@ -212,14 +209,8 @@ bool LottieLoader::open(const char* data, uint32_t size, const LoaderOps* _ops, 
     auto ops = static_cast<const PictureOps*>(_ops);
     if (ops->caller != tvg::Type::Picture) return false;
 
-    if (copy) {
-        content = tvg::malloc<char>(size + 1);
-        memcpy((char*)content, data, size);
-        const_cast<char*>(content)[size] = '\0';
-    } else content = data;
+    if (!src.assign(data, size, copy, true)) return false;
 
-    this->size = size;
-    this->copy = copy;
     dirName = ops->rpath ? duplicate(ops->rpath) : duplicate(".");
     builder->resolver = ops->resolver;
 
@@ -231,9 +222,10 @@ bool LottieLoader::open(const char* path, const LoaderOps* ops)
 #ifdef THORVG_FILE_IO_SUPPORT
     if (ops->caller != tvg::Type::Picture) return false;
 
-    if ((content = Loader::open(path, size, true))) {
+    uint32_t size;
+    if (auto content = Loader::open(path, size, true)) {
+        src.own(content, size);
         dirName = tvg::dirname(path);
-        copy = true;
         builder->resolver = static_cast<const PictureOps*>(ops)->resolver;
         return header();
     }
@@ -264,7 +256,7 @@ bool LottieLoader::read()
     // the loading has been already completed
     if (!Loader::read()) return true;
 
-    if (!content || size == 0) return false;
+    if (!src.data || src.size == 0) return false;
 
     TaskScheduler::request(this);
 

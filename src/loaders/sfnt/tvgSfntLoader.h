@@ -43,7 +43,6 @@ struct SfntLoader : public FontLoader
     SfntReader* reader = nullptr;
     char* text = nullptr;
     bool nomap = false;
-    bool freeData = false;
 
     SfntLoader();
     ~SfntLoader();

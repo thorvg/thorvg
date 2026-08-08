@@ -39,9 +39,6 @@ struct PngLoader : BitmapLoader, Task
 
 private:
     LodePNGState state;
-    unsigned char* data = nullptr;
-    uint32_t size = 0;
-    bool freeData = false;
 
     void run(unsigned tid) override;
 };

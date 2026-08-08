@@ -29,10 +29,8 @@
 void JpgLoader::clear()
 {
     jpgdDelete(decoder);
-    if (freeData) tvg::free(data);
     decoder = nullptr;
-    data = nullptr;
-    freeData = false;
+    src.clear();
 }
 
 
@@ -77,18 +75,10 @@ bool JpgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 
 bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
 {
-    if (copy) {
-        this->data = tvg::malloc<char>(size);
-        if (!this->data) return false;
-        memcpy((char *)this->data, data, size);
-        freeData = true;
-    } else {
-        this->data = (char *) data;
-        freeData = false;
-    }
+    if (!src.assign(data, size, copy)) return false;
 
     int width, height;
-    decoder = jpgdHeader(this->data, size, &width, &height);
+    decoder = jpgdHeader(src.text(), src.size, &width, &height);
     if (!decoder) return false;
 
     w = static_cast<float>(width);

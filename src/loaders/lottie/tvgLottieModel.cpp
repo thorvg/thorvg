@@ -22,6 +22,7 @@
 
 #include "tvgMath.h"
 #include "tvgTaskScheduler.h"
+#include "tvgPicture.h"
 #include "tvgLottieModel.h"
 #include "tvgCompressor.h"
 
@@ -302,8 +303,12 @@ void LottieImage::prepare(bool external)
     //Prepare the Picture image
     auto result = Result::Unknown;
     auto picture = Picture::gen();
-    if (bitmap.size > 0) result = picture->load(bitmap.data, bitmap.size, bitmap.mimeType, nullptr, true);
-    else if (external) result = picture->load(bitmap.path);
+    if (bitmap.size > 0) {
+        //hand it over, as the slot override parsing releases it right after this
+        result = to<PictureImpl>(picture)->load(bitmap.data, bitmap.size, bitmap.mimeType, nullptr, DataOwnership::Transfer);
+        bitmap.data = nullptr;
+        bitmap.size = 0;
+    } else if (external) result = picture->load(bitmap.path);
     if (result == Result::Success) {
         resolved = true;
         bitmap.AssetSrc::release();

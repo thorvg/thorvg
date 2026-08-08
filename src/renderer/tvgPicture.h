@@ -147,11 +147,16 @@ struct PictureImpl : Picture
 
     Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
     {
-        if (!data || size <= 0) return Result::InvalidArguments;
-        if (vector || bitmap) return Result::InsufficientCondition;
+        return load(data, size, mimeType, rpath, copy ? DataOwnership::Copy : DataOwnership::Borrow);
+    }
+
+    Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, DataOwnership ownership)
+    {
+        if (!data || size <= 0) return reject(data, ownership, Result::InvalidArguments);
+        if (vector || bitmap) return reject(data, ownership, Result::InsufficientCondition);
 
         PictureOps ops = {resolver, rpath, accessible};
-        return load(LoaderMgr::loader(data, size, mimeType, &ops, copy));
+        return load(LoaderMgr::loader(data, size, mimeType, &ops, ownership));
     }
 
     Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
@@ -294,6 +299,13 @@ struct PictureImpl : Picture
         if (vector) return vector->pImpl->bounds();
         else if (impl.renderer) return impl.renderer->region(impl.rd);
         return {};
+    }
+
+    // the transferred data is consumed even if the request is rejected upfront.
+    static Result reject(const char* data, DataOwnership ownership, Result result)
+    {
+        if (ownership == DataOwnership::Transfer) tvg::free(const_cast<char*>(data));
+        return result;
     }
 
     Result load(Loader* loader)
