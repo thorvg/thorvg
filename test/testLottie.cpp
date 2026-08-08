@@ -195,6 +195,23 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
         REQUIRE(animation->apply(id11) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
         REQUIRE(animation->del(id11) == Result::Success);
+
+        //Slot Test 8: Bezier
+        const char* bezierSlot = R"({"bezier_path":{"p":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-50,-50],[50,-50],[0,50]]}}}})";
+        auto id12 = animation->gen(bezierSlot);
+        REQUIRE(id12 > 0);
+        REQUIRE(animation->apply(id12) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->apply(id12) == Result::Success);
+        REQUIRE(animation->del(id12) == Result::Success);
+
+        const char* bezierSlot2 = R"({"bezier_path":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"t":0,"s":[{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-50,-50],[50,-50],[0,50]]}]},{"t":100,"s":[{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-80,-80],[80,-80],[0,80]]}]}]}}})";
+        auto id13 = animation->gen(bezierSlot2);
+        REQUIRE(id13 > 0);
+        REQUIRE(animation->apply(id13) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->apply(id13) == Result::Success);
+        REQUIRE(animation->del(id13) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
