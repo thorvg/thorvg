@@ -25,6 +25,9 @@
 #import <CoreVideo/CoreVideo.h>
 #include <dispatch/dispatch.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "tvgAvfMediaLoader.h"
 
@@ -282,7 +285,7 @@ static bool _buildQueue(AvfMediaLoader& loader)
     }
 
     [item release];
-    return loader.player.currentItem != nil;
+    return loader.looper != nil;
 }
 
 static void _removeEndObserver(AvfMediaLoader& loader)
@@ -332,13 +335,52 @@ AvfMediaLoader::~AvfMediaLoader()
         tvg::free(data);
     }
     tvg::free(surface.data);
+    if (tempPath) {
+        ::unlink(tempPath.fileSystemRepresentation);
+        [tempPath release];
+    }
     _unrefQueue();
+}
+
+bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps* ops, TVG_UNUSED bool copy)
+{
+    // AVURLAsset cannot open a memory buffer directly, so expose it through a temporary file URL.
+    auto pathTemplate = [NSTemporaryDirectory() stringByAppendingPathComponent:@"thorvg-media-XXXXXX.mp4"];
+    auto path = ::strdup(pathTemplate.fileSystemRepresentation);
+    auto fd = ::mkstemps(path, 4);
+    if (fd < 0) {
+        ::free(path);
+        return false;
+    }
+
+    uint32_t offset = 0;
+    while (offset < size) {
+        auto written = ::write(fd, data + offset, size - offset);
+        if (written <= 0) {
+            ::close(fd);
+            ::unlink(path);
+            ::free(path);
+            return false;
+        }
+        offset += static_cast<uint32_t>(written);
+    }
+
+    ::close(fd);
+
+    tempPath = [[NSString alloc] initWithUTF8String:path];
+    if (open(tempPath.fileSystemRepresentation, ops)) {
+        ::free(path);
+        return true;
+    }
+
+    ::unlink(path);
+    ::free(path);
+
+    return false;
 }
 
 bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
-    if (!path) return false;
-
     // Open the media asset and keep the first video track.
     auto url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];
     auto asset = [[AVURLAsset alloc] initWithURL:url options:nil];
