@@ -1,6 +1,9 @@
 ## Project Lead
 - Hermet Park @hermet
 
+## Maintainer
+- Hermet Park @hermet
+
 ## Core Contributors
 - Pranay Kumar Samanta @pks2707
 - Junsu Choi @JSUYA
