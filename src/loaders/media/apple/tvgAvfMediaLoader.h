@@ -43,6 +43,7 @@ struct AvfMediaLoader : MediaLoader
     AVQueuePlayer* player = nil;
     AVPlayerLooper* looper = nil;
     id endObserver = nil;
+    NSString* tempPath = nil;
     dispatch_source_t timer = nullptr;
     bool started = false;  // true after play(), including pause; false after stop() or EOS
 
@@ -61,6 +62,7 @@ struct AvfMediaLoader : MediaLoader
     ~AvfMediaLoader();
 
     // Loader interface
+    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
     bool open(const char* path, const LoaderOps* ops) override;
     bool read() override;
     bool sync() override;
