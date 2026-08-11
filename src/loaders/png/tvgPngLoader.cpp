@@ -65,6 +65,7 @@ bool PngLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     if (!(data = (unsigned char*)Loader::open(path, size))) return false;
+    freeData = true;
 
     lodepng_state_init(&state);
 
@@ -72,7 +73,6 @@ bool PngLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     if (lodepng_inspect(&width, &height, &state, data, size) > 0) return false;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    freeData = true;
     return true;
 #else
     return false;
