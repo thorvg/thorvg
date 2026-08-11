@@ -296,17 +296,21 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 
 Picture* LottieImage::get()
 {
-    if (!picture) {
-        auto result = Result::Unknown;
-        picture = Picture::gen();
-        picture->ref();
+    if (picture) return picture;
 
-        if (asset.size > 0) result = picture->load(asset.data, asset.size, asset.mimeType);
-        else if (asset.external) result = picture->load(asset.path);
-        picture->size(asset.width, asset.height);
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+    if (!video) video = Video::gen();
+    picture = video->picture();
+#else
+    picture = Picture::gen();
+    picture->ref();
+#endif
+    auto result = Result::Unknown;
+    if (asset.size > 0) result = picture->load(asset.data, asset.size, asset.mimeType);
+    else if (asset.external) result = picture->load(asset.path);
+    picture->size(asset.width, asset.height);
+    valid = (result == Result::Success);
 
-        valid = (result == Result::Success);
-    }
     return picture;
 }
 
@@ -627,6 +631,14 @@ LottieLayer::~LottieLayer()
     tvg::free(name);
 }
 
+void LottieLayer::invalidate()
+{
+    if (type != LottieLayer::Type::Image || children.empty()) return;
+
+    // image layer might have a video, stop any possible working one.
+    auto obj = children.first();
+    if (obj->type == LottieObject::Type::Image) static_cast<LottieImage*>(obj)->stop();
+}
 
 LottieProperty* LottieLayer::property(uint16_t ix)
 {

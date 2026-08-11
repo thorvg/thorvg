@@ -960,8 +960,7 @@ void LottieBuilder::updateSolid(LottieLayer* layer)
     layer->scene->add(solidFill);
 }
 
-
-void LottieBuilder::updateImage(LottieGroup* layer)
+void LottieBuilder::updateImage(LottieLayer* layer, float frameNo)
 {
     if (layer->children.empty()) return;
 
@@ -981,8 +980,8 @@ void LottieBuilder::updateImage(LottieGroup* layer)
         image->valid = true;
     }
 
-    //LottieImage can be shared among other layers
     layer->scene->add(picture->refCnt() == 1 ? picture : picture->duplicate());
+    image->play((frameNo - layer->inFrame) / (layer->outFrame - layer->inFrame));
 }
 
 
@@ -1548,7 +1547,10 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
     layer->scene = nullptr;
 
     //visibility
-    if (frameNo < layer->inFrame || frameNo >= layer->outFrame) return;
+    if (frameNo < layer->inFrame || frameNo >= layer->outFrame) {
+        layer->invalidate();
+        return;
+    }
 
     updateTransform(layer, frameNo);
 
@@ -1579,7 +1581,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
             break;
         }
         case LottieLayer::Image: {
-            updateImage(layer);
+            updateImage(layer, frameNo);
             break;
         }
         case LottieLayer::Text: {
