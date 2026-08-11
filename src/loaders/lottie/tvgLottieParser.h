@@ -76,8 +76,8 @@ private:
 
     LottieObject* parseObject(const char* type);
     LottieObject* parseAsset();
-    bool parseAssetSource(AssetSrc& src, const char* data, const char* subPath, bool embedded, const char* type, bool& external);
-    void parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height);
+    bool parseAssetSource(AssetSrc& src, const char* data, const char* subPath, const char* type, bool embedded, bool& external);
+    void parseImage(LottieImage* image, const char* data, const char* subPath, float width, float height, bool embedded);
     void parseAudio(LottieAudio* audio, const char* data, const char* subPath, bool embedded);
     void parseVolume(LottieLayer* layer);
     LottieLayer* parseLayer(LottieRootLayer* precomp);
