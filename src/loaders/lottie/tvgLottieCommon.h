@@ -101,6 +101,7 @@ struct AssetSrc
     };
     char* mimeType = nullptr;
     uint32_t size = 0;
+    bool external = false;
 
     ~AssetSrc()
     {
@@ -111,8 +112,8 @@ struct AssetSrc
     {
         tvg::free(data);
         tvg::free(mimeType);
-        data = nullptr;
-        mimeType = nullptr;
+        data = mimeType = nullptr;
+        size = 0;
     }
 };
 

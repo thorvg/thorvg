@@ -1031,11 +1031,9 @@ void LottieParser::parseAudio(LottieAudio* audio, const char* data, const char* 
 
 void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
 {
-    auto external = false;
-    if (!parseAssetSource(image->bitmap, data, subPath, embedded, "data:image/", external)) return;
-    image->bitmap.width = width;
-    image->bitmap.height = height;
-    image->prepare(external);
+    if (!parseAssetSource(image->asset, data, subPath, embedded, "data:image/", image->asset.external)) return;
+    image->asset.width = width;
+    image->asset.height = height;
 }
 
 LottieObject* LottieParser::parseAsset()
@@ -1075,7 +1073,7 @@ LottieObject* LottieParser::parseAsset()
         if (!strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
             auto asset = new LottieImage;
             parseImage(asset, data, subPath, embedded, width, height);
-            if (sid) registerSlot(asset, sid, asset->bitmap);
+            if (sid) registerSlot(asset, sid, asset->asset);
             obj = asset;
         } else if (!strncmp(data, "data:audio/", 11) || !embedded) {
             auto asset = new LottieAudio;
@@ -1732,7 +1730,7 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
                 else skip();
             }
             if (!obj) return nullptr;
-            prop = new LottieBitmap(static_cast<LottieImage*>(obj)->bitmap);
+            prop = new LottieAsset(static_cast<LottieImage*>(obj)->asset);
             delete(obj);
             break;
         }
