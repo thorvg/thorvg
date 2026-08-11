@@ -996,7 +996,7 @@ void LottieParser::parseVolume(LottieLayer* layer)
     }
 }
 
-bool LottieParser::parseAssetSource(AssetSrc& src, const char* data, const char* subPath, bool embedded, const char* type, bool& external)
+bool LottieParser::parseAssetSource(AssetSrc& src, const char* data, const char* subPath, const char* type, bool embedded, bool& external)
 {
     auto dlen = strlen(data);
     if (dlen == 0) return false;
@@ -1025,13 +1025,12 @@ bool LottieParser::parseAssetSource(AssetSrc& src, const char* data, const char*
 
 void LottieParser::parseAudio(LottieAudio* audio, const char* data, const char* subPath, bool embedded)
 {
-    auto external = false;
-    parseAssetSource(audio->src, data, subPath, embedded, "data:audio/", external);
+    parseAssetSource(audio->src, data, subPath, "data:audio/", embedded, audio->src.external);
 }
 
-void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, bool embedded, float width, float height)
+void LottieParser::parseImage(LottieImage* image, const char* data, const char* subPath, float width, float height, bool embedded)
 {
-    if (!parseAssetSource(image->asset, data, subPath, embedded, "data:image/", image->asset.external)) return;
+    if (!parseAssetSource(image->asset, data, subPath, "data:image/", embedded, image->asset.external)) return;
     image->asset.width = width;
     image->asset.height = height;
 }
@@ -1071,14 +1070,12 @@ LottieObject* LottieParser::parseAsset()
     }
     if (data) {
         if (!strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
-            auto asset = new LottieImage;
-            parseImage(asset, data, subPath, embedded, width, height);
-            if (sid) registerSlot(asset, sid, asset->asset);
-            obj = asset;
+            obj = new LottieImage;
+            parseImage(static_cast<LottieImage*>(obj), data, subPath, width, height, embedded);
+            if (sid) registerSlot(static_cast<LottieImage*>(obj), sid, static_cast<LottieImage*>(obj)->asset);
         } else if (!strncmp(data, "data:audio/", 11) || !embedded) {
-            auto asset = new LottieAudio;
-            parseAudio(asset, data, subPath, embedded);
-            obj = asset;
+            obj = new LottieAudio;
+            parseAudio(static_cast<LottieAudio*>(obj), data, subPath, embedded);
         } else TVGLOG("LOTTIE", "Unexpected data type");
     }
     if (obj) obj->id = id;
