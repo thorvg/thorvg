@@ -294,17 +294,20 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 /* LottieImage                                                          */
 /************************************************************************/
 
-void LottieImage::prepare(bool external)
+Picture* LottieImage::get()
 {
-    //Prepare the Picture image
-    auto result = Result::Unknown;
-    auto picture = Picture::gen();
-    if (bitmap.size > 0) result = picture->load(bitmap.data, bitmap.size, bitmap.mimeType);
-    else if (external) result = picture->load(bitmap.path);
-    if (result == Result::Success) resolved = true;
-    picture->size(bitmap.width, bitmap.height);
-    bitmap.picture = picture;
-    picture->ref();
+    if (!picture) {
+        auto result = Result::Unknown;
+        picture = Picture::gen();
+        picture->ref();
+
+        if (asset.size > 0) result = picture->load(asset.data, asset.size, asset.mimeType);
+        else if (asset.external) result = picture->load(asset.path);
+        picture->size(asset.width, asset.height);
+
+        valid = (result == Result::Success);
+    }
+    return picture;
 }
 
 /************************************************************************/
