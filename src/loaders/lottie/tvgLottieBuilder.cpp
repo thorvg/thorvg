@@ -971,14 +971,14 @@ void LottieBuilder::updateImage(LottieGroup* layer)
         return;
     }
 
-    auto picture = image->bitmap.picture;
+    auto picture = image->get();
     if (!picture) return;
 
     //resolve an image asset if need
-    if (resolver && !image->resolved) {
-        resolver->func(picture, image->bitmap.path, resolver->data);
-        picture->size(image->bitmap.width, image->bitmap.height);
-        image->resolved = true;
+    if (resolver && !image->valid) {
+        resolver->func(picture, image->asset.path, resolver->data);
+        picture->size(image->asset.width, image->asset.height);
+        image->valid = true;
     }
 
     //LottieImage can be shared among other layers

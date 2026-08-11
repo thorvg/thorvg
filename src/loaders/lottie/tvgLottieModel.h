@@ -829,19 +829,33 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
 
 struct LottieImage : LottieObject
 {
+    LottieAsset asset;
+    Picture* picture = nullptr;
+    bool valid = false;
+
     LottieImage() : LottieObject(LottieObject::Image) {}
 
-    LottieBitmap bitmap;
-    bool resolved = false;
+    ~LottieImage()
+    {
+        if (picture) picture->unref();
+    }
 
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
+        if (picture) {
+            picture->unref();
+            picture = nullptr;
+        }
+
         LottieProperty* backup = nullptr;
-        OVERRIDE(bitmap);
+        OVERRIDE(asset);
+
+        valid = false;
+
         return backup;
     }
 
-    void prepare(bool external);
+    Picture* get();
 };
 
 struct LottieAudio : LottieObject
