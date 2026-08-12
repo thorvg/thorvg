@@ -38,6 +38,7 @@ struct LoaderMgr
     static Loader* loader(const char* name, const char* data, uint32_t size, const char* mimeType, const LoaderOps* ops, bool copy);
     static Loader* font(const char* name);
     static Loader* anyfont();
+    static void aliasing(Loader* loader, const char* name);
     static bool retrieve(const char* filename);
     static bool retrieve(Loader* loader);
 };
