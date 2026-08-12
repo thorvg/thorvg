@@ -243,7 +243,9 @@ void GlComposeTask::run()
 #endif
     GL_CHECK(glDepthMask(1));
 
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GLbitfield clearMask = GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT;
+    if (!mFbo->external || mClearBuffer) clearMask |= GL_COLOR_BUFFER_BIT;
+    GL_CHECK(glClear(clearMask));
     GL_CHECK(glDepthMask(0));
 
     GL_CHECK(glViewport(0, 0, mRenderWidth, mRenderHeight));
@@ -254,13 +256,16 @@ void GlComposeTask::run()
     }
 
 #if defined(THORVG_GL_TARGET_GLES)
-    // only OpenGLES has tiled base framebuffer and discard function
-    GLenum attachments[2] = {GL_STENCIL_ATTACHMENT, GL_DEPTH_ATTACHMENT };
+    // OpenGL ES uses different attachment enums for default and user framebuffers.
+    GLenum attachments[2] = {
+        static_cast<GLenum>(mFbo->external ? GL_STENCIL : GL_STENCIL_ATTACHMENT),
+        static_cast<GLenum>(mFbo->external ? GL_DEPTH : GL_DEPTH_ATTACHMENT),
+    };
     GL_CHECK(glInvalidateFramebuffer(GL_FRAMEBUFFER, 2, attachments));
 #endif
     // reset scissor box
     GL_CHECK(glScissor(0, 0, mFbo->width, mFbo->height));
-    onResolve();
+    if (!mFbo->external) onResolve();
 }
 
 

@@ -23,6 +23,12 @@
  #ifndef _TVG_GL_H_
  #define _TVG_GL_H_
 
+// Only non-Apple desktop GL needs the attachment query. GLES can inspect the
+// default framebuffer with glGetIntegerv, while Apple keeps the offscreen path.
+#if defined(THORVG_GL_TARGET_GL) && !defined(__APPLE__) && !defined(__MACH__)
+    #define THORVG_GL_DESKTOP_ATTACHMENT_QUERY 1
+#endif
+
 #ifdef __EMSCRIPTEN__
     #include <GLES3/gl3.h>
     #include <emscripten/html5_webgl.h>
@@ -142,6 +148,10 @@
         #define GL_DEPTH_WRITEMASK                0x0B72
         #define GL_DEPTH_CLEAR_VALUE              0x0B73
         #define GL_DEPTH_FUNC                     0x0B74
+#if defined(THORVG_GL_TARGET_GLES)
+        #define GL_DEPTH_BITS                     0x0D56
+        #define GL_STENCIL_BITS                   0x0D57
+#endif
         #define GL_STENCIL_TEST                   0x0B90
         #define GL_STENCIL_CLEAR_VALUE            0x0B91
         #define GL_STENCIL_FUNC                   0x0B92
@@ -1080,7 +1090,9 @@
         //typedef GLenum (*PFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
         //typedef void (*PFNGLFRAMEBUFFERTEXTURE1DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
         //typedef void (*PFNGLFRAMEBUFFERTEXTURE3DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-        //typedef void (*PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)(GLenum target, GLenum attachment, GLenum pname, GLint *params);
+#if defined(THORVG_GL_DESKTOP_ATTACHMENT_QUERY)
+        typedef void (*PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)(GLenum target, GLenum attachment, GLenum pname, GLint *params);
+#endif
         //typedef void (*PFNGLGENERATEMIPMAPPROC)(GLenum target);
         //typedef void (*PFNGLFRAMEBUFFERTEXTURELAYERPROC)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
         //typedef void *(*PFNGLMAPBUFFERRANGEPROC)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
@@ -1478,7 +1490,9 @@
     //extern PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;
     //extern PFNGLFRAMEBUFFERTEXTURE1DPROC                glFramebufferTexture1D;
     //extern PFNGLFRAMEBUFFERTEXTURE3DPROC                glFramebufferTexture3D;
-    //extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
+#if defined(THORVG_GL_DESKTOP_ATTACHMENT_QUERY)
+    extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
+#endif
     //extern PFNGLGENERATEMIPMAPPROC                      glGenerateMipmap;
     //extern PFNGLFRAMEBUFFERTEXTURELAYERPROC             glFramebufferTextureLayer;
     //extern PFNGLMAPBUFFERRANGEPROC                      glMapBufferRange;
