@@ -395,11 +395,12 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 <br />
 <br />
 ## In Practice
-### ArcBrush
-[ArcBrush](https://arcbrush.com/) is a free, node-based image editor that leverages ThorVG for high-performance SVG rasterization.
+
+### Camtasia
+[Camtasia](https://www.techsmith.com/camtasia/) adopted ThorVG for Lottie rendering, enabling customizable animations and dynamic color adjustments.
 
 <p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_arcbrush.jpg">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_camtasia.png">
 </p>
 
 ### Canva iOS
@@ -416,11 +417,11 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_dotlottie.png">
 </p>
 
-### Flux Audio
-[Flux Audio](https://www.flux.audio/) leverages ThorVG for fast, scalable vector rendering, powering modern user interfaces across its audio platforms.
+### Espressif
+[Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official ESP-IDF component for ESP32 and ESP32-P4 vector graphics.
 
 <p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_flux.jpg">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_espressif.png">
 </p>
 
 ### Godot
@@ -444,25 +445,18 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
 </p>
 
-### MorphOS
-[MorphOS](https://www.morphos-team.net/), an Amiga-inspired operating system integrating ThorVG for modern vector graphics rendering.
-
-<p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_morphos.jpg">
-</p>
-
-### OpenVela
-[OpenVela](https://www.openvela.com/), an open-source AIoT operating system integrating ThorVG for lightweight vector graphics rendering.
-
-<p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_openvela.png">
-</p>
-
 ### Paragraphic
 [Paragraphic](https://paragraphic.design/), a cross-platform parametric graphic design application using ThorVG for realtime vector graphics rendering.
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_paragraphic.png">
+</p>
+
+### SEGGER
+[SEGGER](https://www.segger.com/) uses ThorVG as a GPU driver for high-performance vector rendering in embedded GUIs.
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
 </p>
 
 ### Tizen
@@ -473,12 +467,16 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 </p>
 
 ### More Projects
+- [ArcBrush](https://arcbrush.com/) is a free, node-based image editor that leverages ThorVG for high-performance SVG rasterization.
 - [Crank Software](https://www.cranksoftware.com/) integrates ThorVG into Storyboard Engine for SVG rendering in embedded and industrial HMIs.
-- [Espressif Systems](https://www.espressif.com/en) provides ThorVG as an official ESP-IDF component for ESP32 and ESP32-P4 vector graphics.
+- [Figo](https://www.figoui.xyz/en#) leverages ThorVG to render vector-based UIs directly from design files across multiple platforms.
 - [Flowmux](https://flowmux.org/) uses ThorVG to power its inline terminal image viewer, rendering SVG, Lottie, and other bitmap graphics.
+- [Flux Audio](https://www.flux.audio/) leverages ThorVG to power modern user interfaces and visuals across its audio platforms.
 - [GodSVG](https://godsvg.com/) is an open-source, cross-platform SVG editor that uses ThorVG for realtime vector graphics rendering.
 - [LibreScoot](https://librescoot.org/en/) uses ThorVG for GPU-free Lottie boot animations on its embedded mobility platform.
 - [MetaModule](https://4mscompany.com/metamodule) uses ThorVG as a lightweight vector rasterization backend for its modular synthesizer UI.
+- [MorphOS](https://www.morphos-team.net/), an Amiga-inspired operating system integrating ThorVG for modern vector graphics rendering.
+- [OpenVela](https://www.openvela.com/), an open-source AIoT operating system integrating ThorVG for lightweight vector graphics rendering.
 - [SEGGER](https://www.segger.com/) uses ThorVG as a GPU driver for high-performance vector rendering in embedded GUIs.
 - [TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for efficient, high-quality GUI rendering.
 - [Vagabond](https://store.steampowered.com/app/1673090/Vagabond/) uses ThorVG for vector graphics rendering in its procedurally generated 2D sandbox RPG.
@@ -651,7 +649,8 @@ ThorVG stands as a purely open-source initiative. We are grateful to the individ
 <br />
 ## Partners
 Partners engage in strategic collaboration with ThorVG, working together to shape the future of scalable, high-performance vector graphics. We acknowledge organizations that have supported ThorVG’s journey through development, integration, collaboration, and community involvement.
-
+</br>
+</br>
 <p align="center", href="https://www.lottiefiles.com">
   <a href="https://www.lottiefiles.com">
   <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_lottiefiles.jpg"  alt="LottieFiles">
