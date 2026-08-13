@@ -24,13 +24,14 @@
 #define _TVG_GL_RENDER_RENDER_TARGET_H_
 
 #include "tvgGlCommon.h"
+#include "tvgGlStateCache.h"
 
 struct GlRenderTarget
 {
     GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(uint32_t width, uint32_t height, GLint resolveId);
+    void init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId);
     void reset();
     bool invalid() const { return fbo == 0; }
 
@@ -39,6 +40,7 @@ struct GlRenderTarget
     GLuint resolvedFbo = 0, fbo = 0, colorTex = 0;
 
 private:
+    GlStateCache* state = nullptr;
     GLuint colorBuffer = 0;
     GLuint depthStencilBuffer = 0;
 };
@@ -46,15 +48,16 @@ private:
 
 struct GlRenderTargetPool
 {
-    GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight);
+    GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, GlStateCache& state);
     ~GlRenderTargetPool();
 
     GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
 
 private:
+    GlStateCache& state;
     uint32_t maxWidth = 0;
     uint32_t maxHeight = 0;
     Array<GlRenderTarget*> pool;
 };
 
-#endif //_TVG_GL_RENDER_RENDER_TARGET_H_
+#endif  //_TVG_GL_RENDER_RENDER_TARGET_H_

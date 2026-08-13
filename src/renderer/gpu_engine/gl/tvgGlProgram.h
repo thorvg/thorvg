@@ -25,30 +25,50 @@
 
 #include "tvgGlShader.h"
 
+enum class GlShaderUniform : uint8_t
+{
+    Depth,
+    ViewMatrix,
+    SourceTexture,
+    BlurTexture,
+    DestinationTexture,
+    MaskTexture,
+    Texture,
+    Count,
+};
+
+enum class GlShaderUniformBlock : uint8_t
+{
+    Gaussian,
+    Viewport,
+    DropShadow,
+    Params,
+    BlendRegion,
+    TransformInfo,
+    GradientInfo,
+    ColorInfo,
+    Count,
+};
+
 struct GlProgram
 {
     GlProgram(const char* vertSrc, const char* fragSrc);
     ~GlProgram();
 
-    void load();
-    int32_t getAttributeLocation(const char* name);
-    int32_t getUniformLocation(const char* name);
-    int32_t getUniformBlockIndex(const char* name);
+    int32_t getUniformLocation(GlShaderUniform uniform);
+    int32_t getUniformBlockIndex(GlShaderUniformBlock block);
     uint32_t getProgramId();
-    void setUniform1Value(int32_t location, int count, const int* values);
-    void setUniform2Value(int32_t location, int count, const int* values);
-    void setUniform3Value(int32_t location, int count, const int* values);
-    void setUniform4Value(int32_t location, int count, const int* values);
-    void setUniform1Value(int32_t location, int count, const float* values);
-    void setUniform2Value(int32_t location, int count, const float* values);
-    void setUniform3Value(int32_t location, int count, const float* values);
-    void setUniform4Value(int32_t location, int count, const float* values);
+    bool setUniformBlockBinding(GlShaderUniformBlock block, uint32_t bindingPoint);
+    void setSampler(GlShaderUniform uniform, int32_t textureUnit);
 
 private:
     static void unload();
 
     uint32_t mProgramObj;
-    static uint32_t mCurrentProgram;
+    int32_t mUniformLocations[static_cast<uint32_t>(GlShaderUniform::Count)];
+    int32_t mUniformBlockIndices[static_cast<uint32_t>(GlShaderUniformBlock::Count)];
+    uint32_t mUniformBlockBindings[static_cast<uint32_t>(GlShaderUniformBlock::Count)];
+    int32_t mSamplerBindings[static_cast<uint32_t>(GlShaderUniform::Count)];
 };
 
 #endif /* _TVG_GL_PROGRAM_H_ */

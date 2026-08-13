@@ -30,6 +30,7 @@
 #include "tvgGlTextureMgr.h"
 #include "tvgGlRenderPass.h"
 #include "tvgGlEffect.h"
+#include "tvgGlStateCache.h"
 #include "tvgGlSolidBatch.h"
 #include "tvgGlStencilCoverBatch.h"
 
@@ -187,7 +188,7 @@ struct GlRenderer : RenderMethod
 
 private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
-    friend class GlSolidBatch;
+    friend struct GlSolidBatch;
 
     GlRenderer(); 
     ~GlRenderer();
@@ -220,6 +221,7 @@ private:
 
     RenderSurface surface;
     GLint mTargetFboId = 0;
+    GlStateCache mStateCache;
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
     GlEffect mEffect;

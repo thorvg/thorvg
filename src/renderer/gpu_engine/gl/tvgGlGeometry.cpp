@@ -272,13 +272,14 @@ void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
     auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
+    auto vertexBuffer = gpuBuffer->getBufferId();
 
     if (flag & RenderUpdateFlag::Image) {
         // image has two attribute: [pos, uv]
-        task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset});
-        task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float)});
+        task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
+        task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, vertexBuffer});
     } else {
-        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset});
+        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
     }
     task->setDrawRange(indexOffset, buffer->index.count);
 }
