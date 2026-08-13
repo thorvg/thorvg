@@ -232,10 +232,8 @@ void GlComposeTask::run()
     GL_CHECK(glClearDepth(0.0));
 #endif
     GL_CHECK(glDepthMask(1));
-
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     GL_CHECK(glDepthMask(0));
-
     GL_CHECK(glViewport(0, 0, renderWidth, renderHeight));
     GL_CHECK(glScissor(0, 0, renderWidth, renderHeight));
 
@@ -310,7 +308,6 @@ void GlDrawBlitTask::run()
     GlComposeTask::run();
 
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, targetFbo));
-
     GL_CHECK(glViewport(0, 0, parentWidth, parentHeight));
     GL_CHECK(glScissor(0, 0, parentWidth, parentHeight));
     GlRenderTask::run();
@@ -330,11 +327,11 @@ void GlSceneBlendTask::run()
 {
     GlComposeTask::run();
 
-    const auto& vp = viewport;
     const auto width = srcFbo->width;
     const auto height = srcFbo->height;
     if (width <= 0 || height <= 0) return;
 
+    const auto& vp = viewport;
 
 #if defined(THORVG_GL_TARGET_GL)
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, targetFbo));
@@ -423,6 +420,7 @@ void GlDirectBlendTask::run()
     auto width = copyRegion.w();
     auto height = copyRegion.h();
     if (width <= 0 || height <= 0) return;
+
     auto x = copyRegion.sx();
     auto y = copyRegion.sy();
     const auto fboW = dstFbo->width;
@@ -471,13 +469,14 @@ void GlComplexBlendTask::run()
 {
     composeTask->run();
 
-    const auto& vp = viewport;
     const auto width = dstFbo->width;
     const auto height = dstFbo->height;
     if (width <= 0 || height <= 0) return;
 
     GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo));
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo));
+
+    const auto& vp = viewport;
 
 #if defined(THORVG_GL_TARGET_GL)
     const auto& dstVp = dstFbo->viewport;
@@ -529,18 +528,10 @@ void GlComplexBlendTask::normalizeDrawDepth(int32_t maxDepth)
 
 void GlGaussianBlurTask::run()
 {
-    const auto vp = viewport;
     const auto width = dstFbo->width;
     const auto height = dstFbo->height;
-
-    // get targets handles
-    GLuint dstCopyTexId0 = dstCopyFbo0->colorTex;
-    GLuint dstCopyTexId1 = dstCopyFbo1->colorTex;
-    // get programs properties
-    GlProgram* programHorz = horzTask->program;
-    GlProgram* programVert = vertTask->program;
-    GLint horzSrcTextureLoc = programHorz->getUniformLocation("uSrcTexture");
-    GLint vertSrcTextureLoc = programVert->getUniformLocation("uSrcTexture");
+    GLint horzSrcTextureLoc = horzTask->program->getUniformLocation("uSrcTexture");
+    GLint vertSrcTextureLoc = vertTask->program->getUniformLocation("uSrcTexture");
 
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(0, 0, width, height));
@@ -549,32 +540,30 @@ void GlGaussianBlurTask::run()
     GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo0->resolvedFbo));
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, dstFbo->fbo));
-
     GL_CHECK(glDisable(GL_BLEND));
     GL_CHECK(glDepthFunc(GL_ALWAYS));
+
     if (effect->direction == 0) {
         GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo));
         GL_CHECK(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo1->resolvedFbo));
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
         // horizontal blur
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo1->resolvedFbo));
-        horzTask->setViewport(vp);
-        horzTask->addBindResource({0, dstCopyTexId0, horzSrcTextureLoc});
+        horzTask->setViewport(viewport);
+        horzTask->addBindResource({0, dstCopyFbo0->colorTex, horzSrcTextureLoc});
         horzTask->run();
         // vertical blur
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, dstFbo->fbo));
-        vertTask->setViewport(vp);
-        vertTask->addBindResource({0, dstCopyTexId1, vertSrcTextureLoc});
+        vertTask->setViewport(viewport);
+        vertTask->addBindResource({0, dstCopyFbo1->colorTex, vertSrcTextureLoc});
         vertTask->run();
-    } // horizontal
-    else if (effect->direction == 1) {
-        horzTask->setViewport(vp);
-        horzTask->addBindResource({0, dstCopyTexId0, horzSrcTextureLoc});
+    } else if (effect->direction == 1) {     // horizontal
+        horzTask->setViewport(viewport);
+        horzTask->addBindResource({0, dstCopyFbo0->colorTex, horzSrcTextureLoc});
         horzTask->run();
-    } // vertical
-    else if (effect->direction == 2) {
-        vertTask->setViewport(vp);
-        vertTask->addBindResource({0, dstCopyTexId0, vertSrcTextureLoc});
+    } else if (effect->direction == 2) {     // vertical
+        vertTask->setViewport(viewport);
+        vertTask->addBindResource({0, dstCopyFbo0->colorTex, vertSrcTextureLoc});
         vertTask->run();
     }
     GL_CHECK(glDepthFunc(GL_GREATER));
@@ -587,23 +576,10 @@ void GlGaussianBlurTask::run()
 
 void GlEffectDropShadowTask::run()
 {
-    const auto& vp = viewport;
     const auto width = dstFbo->width;
     const auto height = dstFbo->height;
-
-    // get targets handles
-    GLuint dstCopyTexId0 = dstCopyFbo0->colorTex;
-    GLuint dstCopyTexId1 = dstCopyFbo1->colorTex;
-    // get programs properties
-    GlProgram* programHorz = horzTask->program;
-    GlProgram* programVert = vertTask->program;
-    GLint horzSrcTextureLoc = programHorz->getUniformLocation("uSrcTexture");
-    GLint vertSrcTextureLoc = programVert->getUniformLocation("uSrcTexture");
-
-    GLint srcTextureLoc = program->getUniformLocation("uSrcTexture");
-    GLint blrTextureLoc = program->getUniformLocation("uBlrTexture");
-    addBindResource({0, dstCopyTexId0, srcTextureLoc});
-    addBindResource({1, dstCopyTexId1, blrTextureLoc});
+    addBindResource({0, dstCopyFbo0->colorTex, program->getUniformLocation("uSrcTexture")});
+    addBindResource({1, dstCopyFbo1->colorTex, program->getUniformLocation("uBlrTexture")});
 
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(0, 0, width, height));
@@ -622,13 +598,13 @@ void GlEffectDropShadowTask::run()
     if (!tvg::zero(effect->sigma)) {
         // horizontal blur
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo0->resolvedFbo));
-        horzTask->setViewport(vp);
-        horzTask->addBindResource({0, dstCopyTexId1, horzSrcTextureLoc});
+        horzTask->setViewport(viewport);
+        horzTask->addBindResource({0, dstCopyFbo1->colorTex, horzTask->program->getUniformLocation("uSrcTexture")});
         horzTask->run();
         // vertical blur
         GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo1->resolvedFbo));
-        vertTask->setViewport(vp);
-        vertTask->addBindResource({0, dstCopyTexId0, vertSrcTextureLoc});
+        vertTask->setViewport(viewport);
+        vertTask->addBindResource({0, dstCopyFbo0->colorTex, vertTask->program->getUniformLocation("uSrcTexture")});
         vertTask->run();
         // copy original image to intermediate buffer
         GL_CHECK(glBindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo));
@@ -651,9 +627,7 @@ void GlEffectColorTransformTask::run()
     const auto width = dstFbo->width;
     const auto height = dstFbo->height;
     // get targets handles and pass to shader
-    GLuint dstCopyTexId = dstCopyFbo->colorTex;
-    GLint srcTextureLoc = program->getUniformLocation("uSrcTexture");
-    addBindResource({0, dstCopyTexId, srcTextureLoc});
+    addBindResource({0, dstCopyFbo->colorTex, program->getUniformLocation("uSrcTexture")});
 
     GL_CHECK(glViewport(0, 0, width, height));
     GL_CHECK(glScissor(0, 0, width, height));
