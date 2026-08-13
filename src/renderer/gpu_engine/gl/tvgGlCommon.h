@@ -29,11 +29,19 @@
 #include "tvgMath.h"
 #include "tvgGpuCommon.h"
 
+struct GlStageBuffer;
+struct GlRenderTask;
+
 constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
 constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
+
+// Texture allocation and parameter setup must choose a unit explicitly instead
+// of inheriting the last draw-time sampler unit. This unit is not reserved:
+// sampler 0 reuses it and the state cache restores its draw binding as needed.
+constexpr GLenum TVG_GL_TEXTURE_SETUP_UNIT = GL_TEXTURE0;
 
 // All GPU matrices use column major order.
 static inline void getMatrix3(const Matrix& mat3, float* matOut)
@@ -42,7 +50,6 @@ static inline void getMatrix3(const Matrix& mat3, float* matOut)
     matOut[1] = mat3.e21; matOut[4] = mat3.e22; matOut[7] = mat3.e23;
     matOut[2] = mat3.e31; matOut[5] = mat3.e32; matOut[8] = mat3.e33;
 }
-
 
 // All GPU matrices use column major order. std140 mat3 packs each column into a vec4 stride.
 static inline void getMatrix3Std140(const Matrix& mat3, float* matOut)
@@ -53,17 +60,12 @@ static inline void getMatrix3Std140(const Matrix& mat3, float* matOut)
     matOut[3] = 0.0f;     matOut[7] = 0.0f;     matOut[11] = 0.0f;
 }
 
-
 enum class GlStencilMode {
     None,
     FillNonZero,
     FillEvenOdd,
     Stroke,
 };
-
-
-class GlStageBuffer;
-class GlRenderTask;
 
 struct GlGeometryBuffer {
     Array<float> vertex;

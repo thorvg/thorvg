@@ -23,8 +23,10 @@
 #ifndef _TVG_GL_RENDER_TASK_H_
 #define _TVG_GL_RENDER_TASK_H_
 
+#include "tvgGlCommon.h"
 #include "tvgGlProgram.h"
 #include "tvgGlRenderTarget.h"
+#include "tvgGlStateCache.h"
 
 struct GlVertexLayout
 {
@@ -34,12 +36,11 @@ struct GlVertexLayout
     size_t   offset;
     GLenum type = GL_FLOAT;
     GLboolean normalized = GL_FALSE;
-    // Optional VBO for this attribute. 0 means use the GL_ARRAY_BUFFER binding
-    // captured at the start of GlRenderTask::run().
+    // VBO supplying this attribute. ThorVG layouts must always provide it.
     GLuint arrayBufferId = 0;
 };
 
-enum class GlBindingType
+enum struct GlBindingType
 {
     kUniformBuffer,
     kTexture,
@@ -48,23 +49,25 @@ enum class GlBindingType
 struct GlBindingResource
 {
     GlBindingType type;
+    GlShaderUniform uniform = GlShaderUniform::Count;
+    GlShaderUniformBlock uniformBlock = GlShaderUniformBlock::Count;
     /**
      * Binding point index.
-     * Can be a uniform location for a texture
      * Can be a uniform buffer binding index for a uniform block
      */
     uint32_t        bindPoint = 0;
-    GLint           location = 0;
     // GL object id used by this binding: texture id for kTexture, UBO id for kUniformBuffer.
     GLuint resourceId = 0;
     uint32_t        bufferOffset = 0;
     uint32_t        bufferRange = 0;
 
     GlBindingResource() = default;
-    GlBindingResource(uint32_t index, GLint location, GLuint uniformBufferId, uint32_t offset, uint32_t range) :
-        type(GlBindingType::kUniformBuffer), bindPoint(index), location(location), resourceId(uniformBufferId), bufferOffset(offset), bufferRange(range) {}
-    GlBindingResource(uint32_t bindPoint, GLuint textureId, GLint location) :
-        type(GlBindingType::kTexture), bindPoint(bindPoint), location(location), resourceId(textureId) {}
+
+    GlBindingResource(uint32_t index, GlShaderUniformBlock block, GLuint uniformBufferId, uint32_t offset, uint32_t range) :
+        type(GlBindingType::kUniformBuffer), uniformBlock(block), bindPoint(index), resourceId(uniformBufferId), bufferOffset(offset), bufferRange(range) {}
+
+    GlBindingResource(uint32_t bindPoint, GLuint textureId, GlShaderUniform uniform) :
+        type(GlBindingType::kTexture), uniform(uniform), bindPoint(bindPoint), resourceId(textureId) {}
 };
 
 struct GlRenderTask
@@ -73,7 +76,7 @@ struct GlRenderTask
         program(program) {}
 
     virtual ~GlRenderTask() = default;
-    virtual void run();
+    virtual void run(GlStateCache& state);
 
     void addVertexLayout(const GlVertexLayout& layout);
     void setVertexColor(float r, float g, float b, float a);
@@ -90,7 +93,7 @@ struct GlRenderTask
 
     GlProgram* program;
     float drawDepth = 0.f;
-    RenderRegion viewport;
+    RenderRegion viewport = {};
     uint32_t indexCnt = 0;
     uint32_t indexOffset = 0;
     Array<GlVertexLayout> vertexLayout;
@@ -109,7 +112,7 @@ struct GlStencilCoverTask : GlRenderTask
     GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode);
     ~GlStencilCoverTask();
 
-    void run() override;
+    void run(GlStateCache& state) override;
     void normalizeDrawDepth(int32_t maxDepth) override;
 
     Array<GlRenderTask*> stencilTasks;
@@ -122,8 +125,8 @@ struct GlComposeTask : GlRenderTask
     GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
     ~GlComposeTask();
 
-    void run() override;
-    void onResolve();
+    void run(GlStateCache& state) override;
+    void onResolve(GlStateCache& state);
     void setRenderSize(uint32_t width, uint32_t height)
     {
         renderWidth = width;
@@ -142,9 +145,10 @@ struct GlComposeTask : GlRenderTask
 
 struct GlBlitTask : GlComposeTask
 {
-    GlBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
+    GlBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks) :
+        GlComposeTask(program, target, fbo, std::move(tasks)), colorTex(fbo->colorTex) {}
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GLuint colorTex;
     RenderRegion targetViewport = {};
@@ -152,8 +156,10 @@ struct GlBlitTask : GlComposeTask
 
 struct GlDrawBlitTask : GlComposeTask
 {
-    GlDrawBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
-    ~GlDrawBlitTask();
+
+    GlDrawBlitTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks) :
+        GlComposeTask(program, target, fbo, std::move(tasks)) {}
+    ~GlDrawBlitTask() { delete (prevTask); }
 
     void setParentSize(uint32_t width, uint32_t height)
     {
@@ -161,7 +167,7 @@ struct GlDrawBlitTask : GlComposeTask
         parentHeight = height;
     }
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTask* prevTask = nullptr;
     uint32_t parentWidth = 0;
@@ -170,7 +176,8 @@ struct GlDrawBlitTask : GlComposeTask
 
 struct GlSceneBlendTask : GlComposeTask
 {
-    GlSceneBlendTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);
+    GlSceneBlendTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks) :
+        GlComposeTask(program, target, fbo, std::move(tasks)) {}
 
     void setParentSize(uint32_t width, uint32_t height)
     {
@@ -178,7 +185,7 @@ struct GlSceneBlendTask : GlComposeTask
         parentHeight = height;
     }
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTarget* srcFbo = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
@@ -188,10 +195,15 @@ struct GlSceneBlendTask : GlComposeTask
 
 struct GlClipTask : GlRenderTask
 {
-    GlClipTask(GlRenderTask* clip, GlRenderTask* mask);
-    ~GlClipTask();
+    GlClipTask(GlRenderTask* clip, GlRenderTask* mask) :
+        GlRenderTask(nullptr), clipTask(clip), maskTask(mask) {}
+    ~GlClipTask()
+    {
+        delete (clipTask);
+        delete (maskTask);
+    }
 
-    void run() override;
+    void run(GlStateCache& state) override;
     void normalizeDrawDepth(int32_t maxDepth) override;
 
     GlRenderTask* clipTask;
@@ -200,9 +212,10 @@ struct GlClipTask : GlRenderTask
 
 struct GlDirectBlendTask : GlRenderTask
 {
-    GlDirectBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, const RenderRegion& copyRegion);
+    GlDirectBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, const RenderRegion& copyRegion) :
+        GlRenderTask(program), dstFbo(dstFbo), dstCopyFbo(dstCopyFbo), copyRegion(copyRegion) {}
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTarget* dstFbo;
     GlRenderTarget* dstCopyFbo;
@@ -211,10 +224,15 @@ struct GlDirectBlendTask : GlRenderTask
 
 struct GlComplexBlendTask : GlRenderTask
 {
-    GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlRenderTask* stencilTask, GlComposeTask* composeTask);
-    ~GlComplexBlendTask();
+    GlComplexBlendTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo, GlRenderTask* stencilTask, GlComposeTask* composeTask) :
+        GlRenderTask(program), dstFbo(dstFbo), dstCopyFbo(dstCopyFbo), stencilTask(stencilTask), composeTask(composeTask) {}
+    ~GlComplexBlendTask()
+    {
+        delete (stencilTask);
+        delete (composeTask);
+    }
 
-    void run() override;
+    void run(GlStateCache& state) override;
     void normalizeDrawDepth(int32_t maxDepth) override;
 
     GlRenderTarget* dstFbo;
@@ -234,7 +252,7 @@ struct GlGaussianBlurTask : GlRenderTask
         delete (vertTask);
     };
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTask* horzTask;
     GlRenderTask* vertTask;
@@ -254,7 +272,7 @@ struct GlEffectDropShadowTask : GlRenderTask
         delete (vertTask);
     };
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTask* horzTask;
     GlRenderTask* vertTask;
@@ -269,7 +287,7 @@ struct GlEffectColorTransformTask : GlRenderTask
     GlEffectColorTransformTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo) :
         GlRenderTask(program), dstFbo(dstFbo), dstCopyFbo(dstCopyFbo){};
 
-    void run() override;
+    void run(GlStateCache& state) override;
 
     GlRenderTarget* dstFbo;
     GlRenderTarget* dstCopyFbo;

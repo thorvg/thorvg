@@ -31,18 +31,18 @@ TextureMgr::SurfaceEntry* TextureMgr::find(const RenderSurface* surface)
     return nullptr;
 }
 
-void TextureMgr::upload(GLuint texId, const RenderSurface* surface, FilterMethod filter)
+void TextureMgr::upload(GlStateCache& state, GLuint texId, const RenderSurface* surface, FilterMethod filter)
 {
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, texId));
+    state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, texId);
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->data));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filter == FilterMethod::Bilinear) ? GL_LINEAR : GL_NEAREST));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+    state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, 0);
 }
 
-GLuint TextureMgr::retain(const RenderSurface* surface, FilterMethod filter)
+GLuint TextureMgr::retain(GlStateCache& state, const RenderSurface* surface, FilterMethod filter)
 {
     auto* surfaceEntry = find(surface);
     if (!surfaceEntry) {
@@ -59,7 +59,7 @@ GLuint TextureMgr::retain(const RenderSurface* surface, FilterMethod filter)
 
     GLuint texId = 0;
     GL_CHECK(glGenTextures(1, &texId));
-    upload(texId, surface, filter);
+    upload(state, texId, surface, filter);
 
     entry.texId = texId;
     entry.refCnt = 1;
