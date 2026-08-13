@@ -243,7 +243,7 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
 #endif
 
     auto program = getBlendProgram(mBlendMethod, source);
-    return new GlDirectBlendTask(program, currentPass()->getFbo(), dstCopyFbo, viewRegion);
+    return new GlDirectBlendTask(program, currentPass()->fbo, dstCopyFbo, viewRegion);
 }
 
 void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding)
@@ -257,12 +257,12 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
 #endif
     task->addBindResource(GlBindingResource{
         binding,
-        task->getProgram()->getUniformBlockIndex("BlendRegion"),
+        task->program->getUniformBlockIndex("BlendRegion"),
         mGpuBuffer.getBufferId(),
         mGpuBuffer.push(region, 4 * sizeof(float), true),
         4 * sizeof(float),
     });
-    task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
+    task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, task->program->getUniformLocation("uDstTexture")});
 }
 
 void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
@@ -409,7 +409,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     task->addBindResource(GlBindingResource{
         0,
-        task->getProgram()->getUniformBlockIndex("TransformInfo"),
+        task->program->getUniformBlockIndex("TransformInfo"),
         mGpuBuffer.getBufferId(),
         transformOffset,
         sizeof(transformInfo),
@@ -426,7 +426,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
 
     // gradient block
     GlBindingResource gradientBinding{};
-    auto loc = task->getProgram()->getUniformBlockIndex("GradientInfo");
+    auto loc = task->program->getUniformBlockIndex("GradientInfo");
 
     if (fill->type() == Type::LinearGradient) {
         auto linearFill = static_cast<const LinearGradient*>(fill);
@@ -605,7 +605,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     stencilTask->setViewMatrix(currentPass()->getViewMatrix());
     
     auto program = getBlendProgram(mBlendMethod, BlendSource::Image);
-    auto task = new GlComplexBlendTask(program, currentPass()->getFbo(), dstCopyFbo, stencilTask, composeTask);
+    auto task = new GlComplexBlendTask(program, currentPass()->fbo, dstCopyFbo, stencilTask, composeTask);
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
 
@@ -613,7 +613,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
     task->addBindResource(GlBindingResource{
         0,
-        task->getProgram()->getUniformBlockIndex("BlendRegion"),
+        task->program->getUniformBlockIndex("BlendRegion"),
         mGpuBuffer.getBufferId(),
         mGpuBuffer.push(region, 4 * sizeof(float), true),
         4 * sizeof(float),
@@ -621,8 +621,8 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 #endif
 
     // src and dst texture
-    task->addBindResource(GlBindingResource{1, blendPass->getFbo()->colorTex, task->getProgram()->getUniformLocation("uSrcTexture")});
-    task->addBindResource(GlBindingResource{2, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
+    task->addBindResource(GlBindingResource{1, blendPass->fbo->colorTex, task->program->getUniformLocation("uSrcTexture")});
+    task->addBindResource(GlBindingResource{2, dstCopyFbo->colorTex, task->program->getUniformLocation("uDstTexture")});
 
     currentPass()->addRenderTask(task);
 
@@ -730,7 +730,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 void GlRenderer::prepareBlitTask(GlBlitTask* task)
 {
     prepareCmpTask(task, {{0, 0}, {int32_t(surface.w), int32_t(surface.h)}}, surface.w, surface.h);
-    task->addBindResource(GlBindingResource{0, task->getColorTexture(), task->getProgram()->getUniformLocation("uSrcTexture")});
+    task->addBindResource(GlBindingResource{0, task->colorTex, task->program->getUniformLocation("uSrcTexture")});
 }
 
 
@@ -832,18 +832,18 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             prev_task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prev_task->setViewport(glCmp->bbox);
 
-            auto compose_task = selfPass->endRenderPass<GlDrawBlitTask>(program, currentPass()->getFboId());
-            compose_task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
-            compose_task->setPrevTask(prev_task);
+            auto composeTask = selfPass->endRenderPass<GlDrawBlitTask>(program, currentPass()->getFboId());
+            composeTask->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
+            composeTask->prevTask = prev_task;
 
-            prepareCmpTask(compose_task, glCmp->bbox, selfPass->getFboWidth(), selfPass->getFboHeight());
+            prepareCmpTask(composeTask, glCmp->bbox, selfPass->getFboWidth(), selfPass->getFboHeight());
 
-            compose_task->addBindResource(GlBindingResource{0, selfPass->getTextureId(), program->getUniformLocation("uSrcTexture")});
-            compose_task->addBindResource(GlBindingResource{1, maskPass->getTextureId(), program->getUniformLocation("uMaskTexture")});
+            composeTask->addBindResource(GlBindingResource{0, selfPass->getTextureId(), program->getUniformLocation("uSrcTexture")});
+            composeTask->addBindResource(GlBindingResource{1, maskPass->getTextureId(), program->getUniformLocation("uMaskTexture")});
 
-            compose_task->setDrawDepth(currentPass()->nextDrawDepth());
-            compose_task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
-            currentPass()->addRenderTask(compose_task);
+            composeTask->setDrawDepth(currentPass()->nextDrawDepth());
+            composeTask->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
+            currentPass()->addRenderTask(composeTask);
         }
         delete(selfPass);
         delete(maskPass);
@@ -862,8 +862,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
             auto program = getBlendProgram(glCmp->blendMethod, BlendSource::Scene);
             auto task = renderPass->endRenderPass<GlSceneBlendTask>(program, currentPass()->getFboId());
-            task->setSrcTarget(currentPass()->getFbo());
-            task->setDstCopy(dstCopyFbo);
+            task->srcFbo = currentPass()->fbo;
+            task->dstCopyFbo = dstCopyFbo;
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -871,17 +871,17 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
             task->addBindResource(GlBindingResource{
                 1,
-                task->getProgram()->getUniformBlockIndex("BlendRegion"),
+                task->program->getUniformBlockIndex("BlendRegion"),
                 mGpuBuffer.getBufferId(),
                 mGpuBuffer.push(region, 4 * sizeof(float), true),
                 4 * sizeof(float),
             });
 #endif
             // info
-            task->addBindResource(GlBindingResource{0, task->getProgram()->getUniformBlockIndex("ColorInfo"), mGpuBuffer.getBufferId(), mGpuBuffer.push(info, sizeof(info), true), sizeof(info)});
+            task->addBindResource(GlBindingResource{0, task->program->getUniformBlockIndex("ColorInfo"), mGpuBuffer.getBufferId(), mGpuBuffer.push(info, sizeof(info), true), sizeof(info)});
             // textures
-            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->getProgram()->getUniformLocation("uSrcTexture")});
-            task->addBindResource(GlBindingResource{1, dstCopyFbo->colorTex, task->getProgram()->getUniformLocation("uDstTexture")});
+            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->program->getUniformLocation("uSrcTexture")});
+            task->addBindResource(GlBindingResource{1, dstCopyFbo->colorTex, task->program->getUniformLocation("uDstTexture")});
             task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
             currentPass()->addRenderTask(std::move(task));
         }
@@ -900,14 +900,14 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 
             task->addBindResource(GlBindingResource{
                 1,
-                task->getProgram()->getUniformBlockIndex("ColorInfo"),
+                task->program->getUniformBlockIndex("ColorInfo"),
                 mGpuBuffer.getBufferId(),
                 mGpuBuffer.push(info, 4 * sizeof(uint32_t), true),
                 4 * sizeof(uint32_t),
             });
 
             // texture id
-            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->getProgram()->getUniformLocation("uTexture")});
+            task->addBindResource(GlBindingResource{0, renderPass->getTextureId(), task->program->getUniformLocation("uTexture")});
             task->setParentSize(currentPass()->getViewport().w(), currentPass()->getViewport().h());
             currentPass()->addRenderTask(std::move(task));
         }
@@ -981,8 +981,8 @@ bool GlRenderer::sync()
 
     prepareBlitTask(task);
 
-    task->mClearBuffer = mClearBuffer;
-    task->setTargetViewport({{0, 0}, {int32_t(surface.w), int32_t(surface.h)}});
+    task->clearBuffer = mClearBuffer;
+    task->targetViewport = {{0, 0}, {int32_t(surface.w), int32_t(surface.h)}};
 
     if (mGpuBuffer.flushToGPU()) {
         mGpuBuffer.bind();
@@ -1181,14 +1181,14 @@ bool GlRenderer::renderImage(void* data)
 
     task->addBindResource(GlBindingResource{
         1,
-        task->getProgram()->getUniformBlockIndex("ColorInfo"),
+        task->program->getUniformBlockIndex("ColorInfo"),
         mGpuBuffer.getBufferId(),
         mGpuBuffer.push(info, 4 * sizeof(uint32_t), true),
         4 * sizeof(uint32_t),
     });
 
     // texture id
-    task->addBindResource(GlBindingResource{0, sdata->texId, task->getProgram()->getUniformLocation("uTexture")});
+    task->addBindResource(GlBindingResource{0, sdata->texId, task->program->getUniformLocation("uTexture")});
 
     auto taskBounds = bbox;
     taskBounds.intersect(vp);

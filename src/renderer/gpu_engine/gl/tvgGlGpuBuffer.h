@@ -25,9 +25,8 @@
 
 #include "tvgGlCommon.h"
 
-class GlGpuBuffer
+struct GlGpuBuffer
 {
-public:
     enum class Target
     {
         ARRAY_BUFFER = GL_ARRAY_BUFFER,
@@ -41,14 +40,12 @@ public:
     void bind(Target target);
     void unbind(Target target);
     uint32_t getBufferId() { return mGlBufferId; }
-
 private:
     uint32_t    mGlBufferId = 0;
-
 };
 
-class GlStageBuffer {
-public:
+struct GlStageBuffer
+{
     GlStageBuffer();
     ~GlStageBuffer();
 

@@ -26,12 +26,17 @@
 #include "tvgRender.h"
 #include "tvgGlProgram.h"
 
-
-class GlEffect
+struct GlEffect
 {
+    GlEffect(GlStageBuffer* buffer);
+    ~GlEffect();
+
+    void update(RenderEffect* effect, const Matrix& transform);
+    bool region(RenderEffect* effect);
+    bool render(RenderEffect* effect, GlRenderPass* pass, Array<GlRenderTargetPool*>& blendPool);
+
 private:
     GlStageBuffer* gpuBuffer; //shared resource with GlRenderer
-
     GlProgram* pBlurV{};
     GlProgram* pBlurH{};
     GlProgram* pDropShadow{};
@@ -51,14 +56,6 @@ private:
     GlRenderTask* render(RenderEffectGaussianBlur* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
     GlRenderTask* render(RenderEffectDropShadow* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
     GlRenderTask* render(RenderEffect* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset);
-
-public:
-    GlEffect(GlStageBuffer* buffer);
-    ~GlEffect();
-
-    void update(RenderEffect* effect, const Matrix& transform);
-    bool region(RenderEffect* effect);
-    bool render(RenderEffect* effect, GlRenderPass* pass, Array<GlRenderTargetPool*>& blendPool);
 };
 
 #endif /* _TVG_GL_EFFECT_H_ */

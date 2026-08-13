@@ -28,7 +28,7 @@
 namespace tvg
 {
 
-class Stroker
+struct Stroker
 {
     struct State
     {
@@ -37,18 +37,13 @@ class Stroker
         Point prevPt;
         Point prevPtDir;
     };
-public:
+
     Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join, float miterLimit = 4.0f, float qualityScale = 1.0f);
     void run(const RenderPath& path);
     RenderRegion bounds() const;
 
 private:
-
-    float radius() const
-    {
-        return mWidth * 0.5f;
-    }
-
+    float radius() const { return mWidth * 0.5f; }
     void cap();
     void lineTo(const Point& curr);
     void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end);
@@ -73,18 +68,18 @@ private:
     Point mRightBottom = {0.0f, 0.0f};
 };
 
-class BWTessellator
+struct BWTessellator
 {
-public:
     BWTessellator(GlGeometryBuffer* buffer);
+
     void tessellate(const RenderPath& path);
     RenderRegion bounds() const;
-    bool convex = true;
-
-private:
     uint32_t pushVertex(float x, float y);
     void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
 
+    bool convex = true;
+
+private:
     GlGeometryBuffer* mBuffer;
     BBox bbox = {};
 };
