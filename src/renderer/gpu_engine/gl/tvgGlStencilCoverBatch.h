@@ -24,17 +24,15 @@
 #define _TVG_GL_STENCIL_COVER_BATCH_H_
 
 #include "tvgGlCommon.h"
+#include "tvgGlGpuBuffer.h"
+#include "tvgGlProgram.h"
+#include "tvgGlRenderTask.h"
+#include "tvgGlRenderPass.h"
 
-class GlRenderPass;
-class GlRenderTask;
-class GlStencilCoverTask;
-class GlProgram;
-class GlStageBuffer;
-
-class GlStencilCoverBatch
+struct GlStencilCoverBatch
 {
-public:
     void clear();
+    // TODO: too many parameters. bad smell...
     GlRenderTask* prepare(GlProgram* stencilProgram, GlRenderPass* pass, GlRenderTask* coverTask,
                           const GlGeometry& geometry, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag,
                           GlStencilMode stencilMode, bool clipped, int32_t depth, const Matrix& viewMatrix,

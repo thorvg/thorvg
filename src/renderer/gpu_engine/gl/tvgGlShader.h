@@ -25,9 +25,8 @@
 
 #include "tvgGlCommon.h"
 
-class GlShader
+struct GlShader
 {
-public:
     GlShader(const char* vertSrc, const char* fragSrc);
     ~GlShader();
 

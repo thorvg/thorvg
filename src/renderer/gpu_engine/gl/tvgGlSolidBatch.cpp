@@ -33,7 +33,7 @@ void GlSolidBatch::draw(GlRenderer& renderer, GlShape& sdata, const RenderColor&
 
     if (!appendable(renderer, pass, viewBounds)) {
         if (task) {
-            auto viewport = task->getViewport();
+            auto viewport = task->viewport;
             viewport.intersect(this->viewBounds);
             task->setViewport(viewport);
         }
@@ -44,7 +44,7 @@ void GlSolidBatch::draw(GlRenderer& renderer, GlShape& sdata, const RenderColor&
     auto batchColor = GlSolidBatch::solidColor(sdata, color, RenderUpdateFlag::Color);
     if (!promoted) {
         if (promote(renderer, pass, batchColor, depth, viewRegion, buffer, vertexCount, indexCount)) return;
-        auto viewport = task->getViewport();
+        auto viewport = task->viewport;
         viewport.intersect(this->viewBounds);
         task->setViewport(viewport);
         emitSingle(renderer, pass, sdata, color, depth, viewRegion, viewBounds, vertexCount, indexCount);
@@ -59,7 +59,7 @@ bool GlSolidBatch::appendable(const GlRenderer& renderer, const GlRenderPass* pa
     // A new current pass is a hard batch boundary; fail before touching the old pass/task pair.
     if (this->pass != pass) return false;
     if (pass->lastTask() != task) return false;
-    if (task->getProgram() != renderer.mPrograms[GlRenderer::RT_Color]) return false;
+    if (task->program != renderer.mPrograms[GlRenderer::RT_Color]) return false;
     if (!(this->viewBounds == viewBounds)) return false;
     return true;
 }
@@ -105,7 +105,7 @@ void GlSolidBatch::emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape&
     flag = RenderUpdateFlag::Color;
     this->depth = depth;
     this->vertexCount = vertexCount;
-    indexOffset = drawTask->getIndexOffset();
+    indexOffset = drawTask->indexOffset;
     this->indexCount = indexCount;
     promoted = false;
 }
@@ -121,7 +121,7 @@ bool GlSolidBatch::promote(GlRenderer& renderer, GlRenderPass* pass, const Rende
     auto totalIndexCount = firstIndexCount + indexCount;
 
     // Promotion starts from a plain solid task: position-only attribute.
-    const auto& layouts = task->getVertexLayout();
+    const auto& layouts = task->vertexLayout;
     if (layouts.count != 1) return false;
     const auto& posLayout = layouts[0];
     if (posLayout.size != 2 || posLayout.stride != 2 * sizeof(float)) return false;
@@ -153,7 +153,7 @@ bool GlSolidBatch::promote(GlRenderer& renderer, GlRenderPass* pass, const Rende
     task->addVertexLayout(GlVertexLayout{1, 4, sizeof(tvg::RGBA), colorOffset, GL_UNSIGNED_BYTE, GL_TRUE, renderer.mGpuBuffer.getAuxBufferId()});
     task->setDrawRange(indexOffset, totalIndexCount);
 
-    auto merged = task->getViewport();
+    auto merged = task->viewport;
     merged.add(viewRegion);
     task->setViewport(merged);
 
@@ -184,7 +184,7 @@ void GlSolidBatch::append(GlRenderer& renderer, const RenderColor& solidColor, c
     task->setDrawDepth(depth);
     this->depth = depth;
 
-    auto merged = task->getViewport();
+    auto merged = task->viewport;
     merged.add(viewRegion);
     task->setViewport(merged);
 }

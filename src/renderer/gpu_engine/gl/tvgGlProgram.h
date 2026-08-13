@@ -25,14 +25,12 @@
 
 #include "tvgGlShader.h"
 
-class GlProgram
+struct GlProgram
 {
-public:
     GlProgram(const char* vertSrc, const char* fragSrc);
     ~GlProgram();
 
     void load();
-    static void unload();
     int32_t getAttributeLocation(const char* name);
     int32_t getUniformLocation(const char* name);
     int32_t getUniformBlockIndex(const char* name);
@@ -47,6 +45,8 @@ public:
     void setUniform4Value(int32_t location, int count, const float* values);
 
 private:
+    static void unload();
+
     uint32_t mProgramObj;
     static uint32_t mCurrentProgram;
 };
