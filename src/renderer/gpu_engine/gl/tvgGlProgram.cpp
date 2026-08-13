@@ -22,18 +22,44 @@
 
 #include "tvgGlProgram.h"
 
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
+static constexpr int32_t UNKNOWN_LOCATION = -2;
+static constexpr uint32_t UNKNOWN_BINDING = UINT32_MAX;
 
-uint32_t GlProgram::mCurrentProgram = 0;
+static const char* const UNIFORM_NAMES[] = {
+    "uDepth",
+    "uViewMatrix",
+    "uSrcTexture",
+    "uBlrTexture",
+    "uDstTexture",
+    "uMaskTexture",
+    "uTexture",
+};
 
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
+static const char* const UNIFORM_BLOCK_NAMES[] = {
+    "Gaussian",
+    "Viewport",
+    "DropShadow",
+    "Params",
+    "BlendRegion",
+    "TransformInfo",
+    "GradientInfo",
+    "ColorInfo",
+};
+
+static_assert(sizeof(UNIFORM_NAMES) / sizeof(UNIFORM_NAMES[0]) == static_cast<uint32_t>(GlShaderUniform::Count), "Missing uniform name");
+static_assert(sizeof(UNIFORM_BLOCK_NAMES) / sizeof(UNIFORM_BLOCK_NAMES[0]) == static_cast<uint32_t>(GlShaderUniformBlock::Count), "Missing uniform block name");
 
 GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
 {
+    for (auto& location : mUniformLocations)
+        location = UNKNOWN_LOCATION;
+    for (auto& index : mUniformBlockIndices)
+        index = UNKNOWN_LOCATION;
+    for (auto& binding : mUniformBlockBindings)
+        binding = UNKNOWN_BINDING;
+    for (auto& binding : mSamplerBindings)
+        binding = -1;
+
     auto shader = GlShader(vertSrc, fragSrc);
 
     // Create the program object
@@ -71,42 +97,27 @@ GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
 
 GlProgram::~GlProgram()
 {
-    if (mCurrentProgram == mProgramObj) unload();
     glDeleteProgram(mProgramObj);
 }
 
-
-void GlProgram::load()
+int32_t GlProgram::getUniformLocation(GlShaderUniform uniform)
 {
-    if (mCurrentProgram == mProgramObj) return;
-    mCurrentProgram = mProgramObj;
-    GL_CHECK(glUseProgram(mProgramObj));
+    auto index = static_cast<uint32_t>(uniform);
+    auto& location = mUniformLocations[index];
+    if (location != UNKNOWN_LOCATION) return location;
 
-}
-
-
-void GlProgram::unload()
-{
-    mCurrentProgram = 0;
-}
-
-
-int32_t GlProgram::getAttributeLocation(const char* name)
-{
-    GL_CHECK(int32_t location = glGetAttribLocation(mCurrentProgram, name));
+    GL_CHECK(location = glGetUniformLocation(mProgramObj, UNIFORM_NAMES[index]));
     return location;
 }
 
-
-int32_t GlProgram::getUniformLocation(const char* name)
+int32_t GlProgram::getUniformBlockIndex(GlShaderUniformBlock block)
 {
-    GL_CHECK(int32_t location = glGetUniformLocation(mProgramObj, name));
-    return location;
-}
+    auto type = static_cast<uint32_t>(block);
+    auto& index = mUniformBlockIndices[type];
+    if (index != UNKNOWN_LOCATION) return index;
 
-int32_t GlProgram::getUniformBlockIndex(const char* name)
-{
-    GL_CHECK(int32_t index = glGetUniformBlockIndex(mProgramObj, name));
+    GL_CHECK(uint32_t blockIndex = glGetUniformBlockIndex(mProgramObj, UNIFORM_BLOCK_NAMES[type]));
+    index = blockIndex == GL_INVALID_INDEX ? -1 : static_cast<int32_t>(blockIndex);
     return index;
 }
 
@@ -115,49 +126,27 @@ uint32_t GlProgram::getProgramId()
     return mProgramObj;
 }
 
-void GlProgram::setUniform1Value(int32_t location, int count, const int* values)
+bool GlProgram::setUniformBlockBinding(GlShaderUniformBlock block, uint32_t bindingPoint)
 {
-    GL_CHECK(glUniform1iv(location, count, values));
+    auto blockIndex = getUniformBlockIndex(block);
+    if (blockIndex < 0) return false;
+
+    auto& binding = mUniformBlockBindings[static_cast<uint32_t>(block)];
+    if (binding != UNKNOWN_BINDING) return binding == bindingPoint;
+
+    GL_CHECK(glUniformBlockBinding(mProgramObj, static_cast<uint32_t>(blockIndex), bindingPoint));
+    binding = bindingPoint;
+    return true;
 }
 
-
-void GlProgram::setUniform2Value(int32_t location, int count, const int* values)
+void GlProgram::setSampler(GlShaderUniform uniform, int32_t textureUnit)
 {
-    GL_CHECK(glUniform2iv(location, count, values));
-}
+    auto location = getUniformLocation(uniform);
+    if (location < 0) return;
 
+    auto& binding = mSamplerBindings[static_cast<uint32_t>(uniform)];
+    if (binding == textureUnit) return;
 
-void GlProgram::setUniform3Value(int32_t location, int count, const int* values)
-{
-    GL_CHECK(glUniform3iv(location, count, values));
-}
-
-
-void GlProgram::setUniform4Value(int32_t location, int count, const int* values)
-{
-    GL_CHECK(glUniform4iv(location, count, values));
-}
-
-
-void GlProgram::setUniform1Value(int32_t location, int count, const float* values)
-{
-    GL_CHECK(glUniform1fv(location, count, values));
-}
-
-
-void GlProgram::setUniform2Value(int32_t location, int count, const float* values)
-{
-    GL_CHECK(glUniform2fv(location, count, values));
-}
-
-
-void GlProgram::setUniform3Value(int32_t location, int count, const float* values)
-{
-    GL_CHECK(glUniform3fv(location, count, values));
-}
-
-
-void GlProgram::setUniform4Value(int32_t location, int count, const float* values)
-{
-    GL_CHECK(glUniform4fv(location, count, values));
+    GL_CHECK(glUniform1iv(location, 1, &textureUnit));
+    binding = textureUnit;
 }

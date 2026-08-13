@@ -24,10 +24,10 @@
 #define _TVG_GL_SOLID_BATCH_H_
 
 #include "tvgGlCommon.h"
+#include "tvgGlRenderPass.h"
+#include "tvgGlRenderTask.h"
 
 struct GlRenderer;
-class GlRenderPass;
-class GlRenderTask;
 
 struct GlSolidBatch
 {
