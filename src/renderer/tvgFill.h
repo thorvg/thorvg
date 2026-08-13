@@ -32,6 +32,9 @@
 #define RADIAL(A) static_cast<RadialGradientImpl*>(A)
 #define CONST_RADIAL(A) static_cast<const RadialGradientImpl*>(A)
 
+#define CONIC(A) static_cast<ConicGradientImpl*>(A)
+#define CONST_CONIC(A) static_cast<const ConicGradientImpl*>(A)
+
 struct Fill::Impl
 {
     ColorStop* colorStops = nullptr;
@@ -189,6 +192,46 @@ struct LinearGradientImpl :  LinearGradient
         if (x2) *x2 = p2.x;
         if (y1) *y1 = p1.y;
         if (y2) *y2 = p2.y;
+
+        return Result::Success;
+    }
+};
+
+
+struct ConicGradientImpl : ConicGradient
+{
+    Fill::Impl impl;
+    Point center{};
+    float angle = 0.0f;
+
+    ConicGradientImpl()
+    {
+        Fill::pImpl = &impl;
+    }
+
+    Fill* duplicate() const
+    {
+        auto ret = ConicGradient::gen();
+        CONIC(ret)->impl.copy(this->impl);
+        CONIC(ret)->center = center;
+        CONIC(ret)->angle = angle;
+
+        return ret;
+    }
+
+    Result conic(float cx, float cy, float angle) noexcept
+    {
+        this->center = {cx, cy};
+        this->angle = angle;
+
+        return Result::Success;
+    }
+
+    Result conic(float* cx, float* cy, float* angle) const noexcept
+    {
+        if (cx) *cx = center.x;
+        if (cy) *cy = center.y;
+        if (angle) *angle = this->angle;
 
         return Result::Success;
     }
