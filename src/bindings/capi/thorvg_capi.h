@@ -246,7 +246,8 @@ typedef enum
     TVG_TYPE_PICTURE,          ///< A picture type paint.
     TVG_TYPE_TEXT,             ///< A text type paint.
     TVG_TYPE_LINEAR_GRAD = 10, ///< A linear gradient type.
-    TVG_TYPE_RADIAL_GRAD       ///< A radial gradient type.
+    TVG_TYPE_RADIAL_GRAD,      ///< A radial gradient type.
+    TVG_TYPE_CONIC_GRAD        ///< A conic gradient type.
 } Tvg_Type;
 
 /**
@@ -1799,6 +1800,15 @@ TVG_API Tvg_Gradient tvg_linear_gradient_new(void);
 TVG_API Tvg_Gradient tvg_radial_gradient_new(void);
 
 /**
+ * @brief Creates a new conic gradient object.
+ *
+ * @return A new conic gradient object.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Gradient tvg_conic_gradient_new(void);
+
+/**
  * @brief Sets the linear gradient bounds.
  *
  * The bounds of the linear gradient are defined as a surface constrained by two parallel lines crossing
@@ -1876,6 +1886,40 @@ TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient grad, float cx, float cy
  * @see tvg_radial_gradient_set()
  */
 TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr);
+
+/**
+ * @brief Sets the conic gradient attributes.
+ *
+ * The gradient sweeps a full turn clockwise around the center (@p cx, @p cy), beginning at @p angle.
+ * Color stop offsets from 0% to 100% map clockwise over one full turn from @p angle.
+ *
+ * @param[in] grad The Tvg_Gradient object of which attributes are to be set.
+ * @param[in] cx The horizontal coordinate of the center of the gradient.
+ * @param[in] cy The vertical coordinate of the center of the gradient.
+ * @param[in] angle The initial angle in degrees, measured clockwise from the 3 o'clock direction (positive x-axis).
+ *
+ * @note FillSpread options are ignored because the gradient always sweeps a full turn.
+ * @note Experimental API
+ *
+ * @see tvg_conic_gradient_get()
+ *
+ */
+TVG_API Tvg_Result tvg_conic_gradient_set(Tvg_Gradient grad, float cx, float cy, float angle);
+
+/**
+ * @brief Gets the conic gradient attributes.
+ *
+ * @param[in] grad The Tvg_Gradient object of which to get the gradient attributes.
+ * @param[out] cx The horizontal coordinate of the center of the gradient.
+ * @param[out] cy The vertical coordinate of the center of the gradient.
+ * @param[out] angle The initial angle in degrees.
+ *
+ * @note Experimental API
+ * 
+ * @see tvg_conic_gradient_set()
+ *
+ */
+TVG_API Tvg_Result tvg_conic_gradient_get(const Tvg_Gradient grad, float* cx, float* cy, float* angle);
 
 /**
  * @brief Sets the parameters of the colors of the gradient and their position.
