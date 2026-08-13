@@ -187,11 +187,13 @@ struct TextImpl : Text
             if (fill->type() == Type::LinearGradient) {
                 LINEAR(fill)->p1 *= scale;
                 LINEAR(fill)->p2 *= scale;
-            } else {
+            } else if (fill->type() == Type::RadialGradient) {
                 RADIAL(fill)->center *= scale;
                 RADIAL(fill)->r *= scale;
                 RADIAL(fill)->focal *= scale;
                 RADIAL(fill)->fr *= scale;
+            } else if (fill->type() == Type::ConicGradient) {
+                CONIC(fill)->center *= scale;
             }
         }
 
