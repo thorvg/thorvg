@@ -29,13 +29,11 @@ struct GlRenderer;
 class GlRenderPass;
 class GlRenderTask;
 
-class GlSolidBatch
+struct GlSolidBatch
 {
-public:
     void clear() { *this = {}; }
     void draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
 
-private:
     bool appendable(const GlRenderer& renderer, const GlRenderPass* pass, const RenderRegion& viewBounds) const;
     void emitSingle(GlRenderer& renderer, GlRenderPass* pass, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount, uint32_t indexCount);
     bool promote(GlRenderer& renderer, GlRenderPass* pass, const RenderColor& solidColor, int32_t depth, const RenderRegion& viewRegion, const GlGeometryBuffer* buffer, uint32_t vertexCount, uint32_t indexCount);

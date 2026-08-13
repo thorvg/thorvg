@@ -32,7 +32,8 @@
 /* Gaussian Blur                                                        */
 /************************************************************************/
 
-struct GlGaussianBlur {
+struct GlGaussianBlur
+{
     float sigma{};
     float scale{};
     float extend{};
@@ -276,8 +277,7 @@ GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Arr
     auto dstCopyFbo = blendPool[0]->getRenderTarget(vp);
 
     // add uniform data
-    auto params = (GlEffectParams*)(effect->rd);
-    auto paramsOffset = gpuBuffer->push(params, sizeof(GlEffectParams), true);
+    auto paramsOffset = gpuBuffer->push((GlEffectParams*)(effect->rd), sizeof(GlEffectParams), true);
 
     // create and setup task
     auto task = new GlEffectColorTransformTask(program, dstFbo, dstCopyFbo);
@@ -330,11 +330,11 @@ bool GlEffect::render(RenderEffect* effect, GlRenderPass* pass, Array<GlRenderTa
     GlRenderTask* output = nullptr;
 
     if (effect->type == SceneEffect::GaussianBlur) {
-        output = render(static_cast<RenderEffectGaussianBlur*>(effect), pass->getFbo(), blendPool, vp, voffset, ioffset);
+        output = render(static_cast<RenderEffectGaussianBlur*>(effect), pass->fbo, blendPool, vp, voffset, ioffset);
     } else if (effect->type == SceneEffect::DropShadow) {
-        output = render(static_cast<RenderEffectDropShadow*>(effect), pass->getFbo(), blendPool, vp, voffset, ioffset);
+        output = render(static_cast<RenderEffectDropShadow*>(effect), pass->fbo, blendPool, vp, voffset, ioffset);
     } else {
-        output = render(effect, pass->getFbo(), blendPool, vp, voffset, ioffset);
+        output = render(effect, pass->fbo, blendPool, vp, voffset, ioffset);
     }
 
     if (!output) return false;

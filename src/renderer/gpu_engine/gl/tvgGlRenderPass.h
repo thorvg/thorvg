@@ -26,60 +26,46 @@
 #include "tvgGlCommon.h"
 #include "tvgGlRenderTask.h"
 #include "tvgGlRenderTarget.h"
+#include "tvgGlProgram.h"
 
-class GlProgram;
-
-class GlRenderPass
+struct GlRenderPass
 {
-public:
     GlRenderPass(GlRenderTarget* fbo);
     GlRenderPass(GlRenderPass&& other);
-
     ~GlRenderPass();
 
-    bool isEmpty() const { return mFbo == nullptr; }
-
     void addRenderTask(GlRenderTask* task);
+
+    GlRenderTask* takeLastTask() { return mTasks.empty() ? nullptr : mTasks.pick(); }
+    bool isEmpty() const { return fbo == nullptr; }
     GlRenderTask* lastTask() const { return mTasks.empty() ? nullptr : mTasks.last(); }
-    GlRenderTask* takeLastTask()
-    {
-        if (mTasks.empty()) return nullptr;
-        return mTasks.pick();
-    }
-
-    GLuint getFboId() { return mFbo->fbo; }
-
-    GLuint getTextureId() { return mFbo->colorTex; }
-
-    const RenderRegion& getViewport() const { return mFbo->viewport; }
-
-    uint32_t getFboWidth() const { return mFbo->width; }
-
-    uint32_t getFboHeight() const { return mFbo->height; }
-
+    GLuint getFboId() { return fbo->fbo; }
+    GLuint getTextureId() { return fbo->colorTex; }
+    const RenderRegion& getViewport() const { return fbo->viewport; }
+    uint32_t getFboWidth() const { return fbo->width; }
+    uint32_t getFboHeight() const { return fbo->height; }
     const Matrix& getViewMatrix() const { return mViewMatrix; }
+    int nextDrawDepth() { return ++mDrawDepth; }
+    void setDrawDepth(int32_t depth) { mDrawDepth = depth; }
 
-    template <class T>
-    T* endRenderPass(GlProgram* program, GLuint targetFbo) {
+    template<class T>
+    T* endRenderPass(GlProgram* program, GLuint targetFbo)
+    {
         int32_t maxDepth = mDrawDepth + 1;
 
         for (uint32_t i = 0; i < mTasks.count; i++) {
             mTasks[i]->normalizeDrawDepth(maxDepth);
         }
 
-        auto task = new T(program, targetFbo, mFbo, std::move(mTasks));
-        task->setRenderSize(mFbo->viewport.w(),  mFbo->viewport.h());
+        auto task = new T(program, targetFbo, fbo, std::move(mTasks));
+        task->setRenderSize(fbo->viewport.w(), fbo->viewport.h());
 
         return task;
     }
 
-    int nextDrawDepth() { return ++mDrawDepth; }
+    GlRenderTarget* fbo;
 
-    void setDrawDepth(int32_t depth) { mDrawDepth = depth; }
-
-    GlRenderTarget* getFbo() { return mFbo; }
 private:
-    GlRenderTarget* mFbo;
     Array<GlRenderTask*> mTasks = {};
     int32_t mDrawDepth = 0;
     Matrix mViewMatrix = {};

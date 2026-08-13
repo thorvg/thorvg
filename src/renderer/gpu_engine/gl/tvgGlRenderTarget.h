@@ -32,7 +32,6 @@ struct GlRenderTarget
 
     void init(uint32_t width, uint32_t height, GLint resolveId);
     void reset();
-
     bool invalid() const { return fbo == 0; }
 
     RenderRegion viewport{};
@@ -49,7 +48,9 @@ struct GlRenderTargetPool
 {
     GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight);
     ~GlRenderTargetPool();
+
     GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
+
 private:
     uint32_t maxWidth = 0;
     uint32_t maxHeight = 0;

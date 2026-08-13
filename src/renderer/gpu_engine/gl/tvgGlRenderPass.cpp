@@ -21,9 +21,7 @@
  * SOFTWARE.
  */
 
-#include "tvgGlCommon.h"
 #include "tvgGlRenderPass.h"
-#include "tvgGlRenderTask.h"
 
 static Matrix _viewMatrix(const RenderRegion& vp)
 {
@@ -38,12 +36,14 @@ static Matrix _viewMatrix(const RenderRegion& vp)
     return mvp * postMatrix;
 }
 
-GlRenderPass::GlRenderPass(GlRenderTarget* fbo): mFbo(fbo), mTasks(), mDrawDepth(0), mViewMatrix(tvg::identity())
+GlRenderPass::GlRenderPass(GlRenderTarget* fbo) :
+    fbo(fbo), mTasks(), mDrawDepth(0), mViewMatrix(tvg::identity())
 {
-    if (mFbo) mViewMatrix = _viewMatrix(mFbo->viewport);
+    if (fbo) mViewMatrix = _viewMatrix(fbo->viewport);
 }
 
-GlRenderPass::GlRenderPass(GlRenderPass&& other): mFbo(other.mFbo), mTasks(), mDrawDepth(0), mViewMatrix(other.mViewMatrix)
+GlRenderPass::GlRenderPass(GlRenderPass&& other) :
+    fbo(other.fbo), mTasks(), mDrawDepth(0), mViewMatrix(other.mViewMatrix)
 {
     mTasks.push(other.mTasks);
 
