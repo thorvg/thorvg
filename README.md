@@ -477,7 +477,6 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 - [MetaModule](https://4mscompany.com/metamodule) uses ThorVG as a lightweight vector rasterization backend for its modular synthesizer UI.
 - [MorphOS](https://www.morphos-team.net/), an Amiga-inspired operating system integrating ThorVG for modern vector graphics rendering.
 - [OpenVela](https://www.openvela.com/), an open-source AIoT operating system integrating ThorVG for lightweight vector graphics rendering.
-- [SEGGER](https://www.segger.com/) uses ThorVG as a GPU driver for high-performance vector rendering in embedded GUIs.
 - [TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for efficient, high-quality GUI rendering.
 - [Vagabond](https://store.steampowered.com/app/1673090/Vagabond/) uses ThorVG for vector graphics rendering in its procedurally generated 2D sandbox RPG.
 
