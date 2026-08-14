@@ -1112,7 +1112,8 @@ void LottieParser::parseFontData(LottieFont* font, const char* data)
         font->size = b64Decode(data, strlen(data), &font->b64src);
     //external font resource
     } else {
-        font->path = duplicate(data);
+        font->b64src = duplicate(data);
+        font->path = true;
     }
 }
 
