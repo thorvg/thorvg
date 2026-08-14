@@ -342,7 +342,7 @@ AvfMediaLoader::~AvfMediaLoader()
     _unrefQueue();
 }
 
-bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps* ops, TVG_UNUSED bool copy)
+bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
     // AVURLAsset cannot open a memory buffer directly, so expose it through a temporary file URL.
     auto pathTemplate = [NSTemporaryDirectory() stringByAppendingPathComponent:@"thorvg-media-XXXXXX.mp4"];
@@ -379,7 +379,7 @@ bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps* ops,
     return false;
 }
 
-bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
+bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
 {
     // Open the media asset and keep the first video track.
     auto url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];

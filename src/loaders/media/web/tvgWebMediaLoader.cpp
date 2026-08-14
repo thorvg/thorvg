@@ -46,7 +46,7 @@ WebMediaLoader::~WebMediaLoader()
     tvg::free(surface.buf32);
 }
 
-bool WebMediaLoader::open(const char* data, uint32_t size, const LoaderOps* ops, bool copy)
+bool WebMediaLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
 {
     auto generator = val::module_property("createMediaPlayer");
     if (generator.isUndefined()) return false;

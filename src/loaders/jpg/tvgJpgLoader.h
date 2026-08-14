@@ -29,11 +29,11 @@
 
 struct JpgLoader : BitmapLoader, Task
 {
-    JpgLoader();
+    JpgLoader() : BitmapLoader(FileType::Jpg) {}
     ~JpgLoader();
 
-    bool open(const char* path, const LoaderOps* ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
+    bool open(const char* path, const LoaderOps& ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool read() override;
     bool close() override;
 
@@ -42,7 +42,6 @@ struct JpgLoader : BitmapLoader, Task
 private:
     jpeg_decoder* decoder = nullptr;
     char* data = nullptr;
-    bool freeData = false;
 
     void clear();
     void run(unsigned tid) override;

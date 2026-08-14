@@ -29,10 +29,10 @@
 void JpgLoader::clear()
 {
     jpgdDelete(decoder);
-    if (freeData) tvg::free(data);
+    if (owner != Ownership::Borrow) tvg::free(data);
     decoder = nullptr;
     data = nullptr;
-    freeData = false;
+    owner = Ownership::Borrow;
 }
 
 
@@ -47,12 +47,6 @@ void JpgLoader::run(unsigned tid)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-JpgLoader::JpgLoader() : BitmapLoader(FileType::Jpg)
-{
-
-}
-
-
 JpgLoader::~JpgLoader()
 {
     done();
@@ -60,7 +54,7 @@ JpgLoader::~JpgLoader()
     tvg::free(surface.buf8);
 }
 
-bool JpgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
+bool JpgLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     int width, height;
@@ -68,6 +62,7 @@ bool JpgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
+    owner = Ownership::Transfer;
 
     return true;
 #else
@@ -75,17 +70,16 @@ bool JpgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 #endif
 }
 
-bool JpgLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
+bool JpgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
-    if (copy) {
+    if (ops.owner == Ownership::Copy) {
         this->data = tvg::malloc<char>(size);
         if (!this->data) return false;
         memcpy((char *)this->data, data, size);
-        freeData = true;
     } else {
         this->data = (char *) data;
-        freeData = false;
     }
+    owner = ops.owner;
 
     int width, height;
     decoder = jpgdHeader(this->data, size, &width, &height);

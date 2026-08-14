@@ -62,8 +62,8 @@ struct AvfMediaLoader : MediaLoader
     ~AvfMediaLoader();
 
     // Loader interface
-    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
-    bool open(const char* path, const LoaderOps* ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
+    bool open(const char* path, const LoaderOps& ops) override;
     bool read() override;
     bool sync() override;
 

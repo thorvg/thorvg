@@ -137,28 +137,28 @@ struct PictureImpl : Picture
     {
         if (vector || bitmap) return Result::InsufficientCondition;
 
-        PictureOps ops = {resolver, nullptr, accessible};
+        PictureOps ops = {Ownership::Transfer, resolver, nullptr, accessible};
         auto invalid = false;  // invalid path
-        auto loader = LoaderMgr::loader(filename, &ops, invalid);
+        auto loader = LoaderMgr::loader(filename, ops, invalid);
         if (loader) return load(loader);
         if (invalid) return Result::InvalidArguments;
         return Result::NonSupport;
     }
 
-    Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, bool copy)
+    Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, const Ownership owner)
     {
         if (!data || size <= 0) return Result::InvalidArguments;
         if (vector || bitmap) return Result::InsufficientCondition;
 
-        PictureOps ops = {resolver, rpath, accessible};
-        return load(LoaderMgr::loader(data, size, mimeType, &ops, copy));
+        PictureOps ops = {owner, resolver, rpath, accessible};
+        return load(LoaderMgr::loader(data, size, mimeType, ops));
     }
 
-    Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
+    Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner)
     {
         if (!data || w <= 0 || h <= 0 || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
         if (vector) return Result::InsufficientCondition;
-        return load(LoaderMgr::loader(data, w, h, cs, copy));
+        return load(LoaderMgr::loader(data, w, h, cs, owner));
     }
 
     Result set(std::function<bool(Paint* paint, const char* src, void* data)> resolver, void* data)
