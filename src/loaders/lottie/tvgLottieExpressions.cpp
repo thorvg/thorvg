@@ -885,7 +885,7 @@ static jerry_value_t _layerChild(const jerry_call_info_t* info, const jerry_valu
 static jerry_value_t _layer(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
-    auto comp = static_cast<LottieLayer*>(data->obj);
+    auto comp = static_cast<LottieRootLayer*>(data->obj);
 
     //either index or name
     auto layer = jerry_value_is_number(args[0]) ? comp->layerByIdx((uint16_t)jerry_value_as_int32(args[0])) : comp->layerById(_idByName(args[0]));
