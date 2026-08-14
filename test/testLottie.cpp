@@ -423,4 +423,35 @@ TEST_CASE("Lottie Audio Layer", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Embedded Fonts Share", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        ifstream file(TEST_DIR"/embedded_font.lot", ios::binary);
+        REQUIRE(file.is_open());
+        string json((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+        file.close();
+
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[200*200] = {};
+        canvas->target(buffer, 200, 200, 200, ColorSpace::ARGB8888);
+
+        auto first = unique_ptr<Animation>(Animation::gen());
+        REQUIRE(first->picture()->load(json.c_str(), json.size(), "lottie", nullptr, true) == Result::Success);
+
+        auto second = Animation::gen();
+        REQUIRE(second->picture()->load(json.c_str(), json.size(), "lottie", nullptr, true) == Result::Success);
+
+        //the first composition owns the font data the shared loader points at
+        first.reset();
+
+        REQUIRE(canvas->add(second->picture()) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        delete(second);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
