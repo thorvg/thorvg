@@ -25,6 +25,7 @@
 
 #include "tvgCommon.h"
 #include "tvgStr.h"
+#include "tvgText.h"
 #include "tvgCompressor.h"
 #include "tvgInlist.h"
 #include "tvgRender.h"
@@ -398,20 +399,21 @@ struct LottieFont
 
     ~LottieFont()
     {
-        if (b64src) Text::unload(name);
+        if (path) {
+            Text::unload(name);
+            tvg::free(b64src);
+        } else {
+            Text::load(name, nullptr, size, mime, false);
+        }
+
         ARRAY_FOREACH(p, chars) delete(*p);
         tvg::free(style);
         tvg::free(family);
         tvg::free(name);
-        tvg::free(b64src);
         tvg::free(mime);
     }
 
-    union {
-        char* b64src = nullptr;
-        char* path;
-    };
-
+    char* b64src = nullptr;
     Array<LottieGlyph*> chars;
     char* name = nullptr;
     char* family = nullptr;
@@ -420,10 +422,12 @@ struct LottieFont
     uint32_t size = 0;
     float ascent = 0.0f;
     Origin origin = Local;
+    bool path = false;  // true if the b64src is path
 
     void prepare()
     {
-        if (b64src) Text::load(name, b64src, size, mime, false);
+        if (path) Text::load(b64src);
+        else TextImpl::load(name, b64src, size, mime, Ownership::Transfer);
     }
 };
 
