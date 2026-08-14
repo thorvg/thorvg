@@ -43,7 +43,6 @@ struct SfntLoader : public FontLoader
     SfntReader* reader = nullptr;
     char* text = nullptr;
     bool nomap = false;
-    bool freeData = false;
 
     SfntLoader();
     ~SfntLoader();
@@ -51,8 +50,8 @@ struct SfntLoader : public FontLoader
     using FontLoader::open;
     using FontLoader::read;
 
-    bool open(const char* path, const LoaderOps* ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
+    bool open(const char* path, const LoaderOps& ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
     void transform(Paint* paint, FontMetrics& fm, float italicShear) override;
     bool get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out) override;
     void copy(const FontMetrics& in, FontMetrics& out) override;

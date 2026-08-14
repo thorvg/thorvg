@@ -39,9 +39,18 @@ struct AssetResolver
     void* data;
 };
 
+// Specifying how ownership of supplied data is handled.
+enum struct Ownership : uint8_t
+{
+    Borrow,   ///< The data remains owned by the caller and must stay valid while in use. (do not free it)
+    Copy,     ///< The data is copied, and the caller retains ownership of the original. (must free it)
+    Transfer  ///< Ownership of the data is transferred to the loaders. (must free it)
+};
+
 struct LoaderOps
 {
     Type caller;  // which requests this?
+    Ownership owner;
 };
 
 struct PictureOps : LoaderOps
@@ -50,8 +59,8 @@ struct PictureOps : LoaderOps
     const char* rpath;  // decide the relative path file if the file is loaded from memory
     bool accessible;    // allow the accessor
 
-    PictureOps(AssetResolver* resolver, const char* rpath, bool accessible) :
-        LoaderOps{Type::Picture}, resolver(resolver), rpath(rpath), accessible(accessible) {}
+    PictureOps(Ownership owner, AssetResolver* resolver, const char* rpath, bool accessible) :
+        LoaderOps{Type::Picture, owner}, resolver(resolver), rpath(rpath), accessible(accessible) {}
 };
 
 struct Loader
@@ -64,6 +73,7 @@ struct Loader
 
     FileType type;               // current loader file type
     atomic<uint16_t> sharing{};  // reference count
+    Ownership owner = Ownership::Borrow;
     bool readied = false;        // read done already
     bool cached = false;         // cached for sharing
 
@@ -100,8 +110,8 @@ struct Loader
         return true;
     }
 
-    virtual bool open(const char* path, const LoaderOps* ops) { return false; }
-    virtual bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) { return false; }
+    virtual bool open(const char* path, const LoaderOps& ops) { return false; }
+    virtual bool open(const char* data, uint32_t size, const LoaderOps& ops) { return false; }
     virtual bool resize(Paint* paint, float w, float h) { return false; }
     virtual bool sync() { return false; };  // finish immediately if any async update jobs, return true if something has been updated.
 

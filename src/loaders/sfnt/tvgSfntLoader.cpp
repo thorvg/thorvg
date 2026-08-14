@@ -242,10 +242,10 @@ uint32_t SfntLoader::feedLine(FontMetrics& fm, float box, float x, uint32_t begi
 void SfntLoader::clear()
 {
     if (nomap) {
-        if (freeData) tvg::free(reader->data);
+        if (owner != Ownership::Borrow) tvg::free(reader->data);
         reader->data = nullptr;
         reader->size = 0;
-        freeData = false;
+        owner = Ownership::Borrow;
         nomap = false;
     } else {
 #ifdef THORVG_FILE_IO_SUPPORT
@@ -524,7 +524,7 @@ SfntLoader::~SfntLoader()
     clear();
 }
 
-bool SfntLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
+bool SfntLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     uint32_t size;
@@ -539,17 +539,17 @@ bool SfntLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
     return false;
 }
 
-bool SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
+bool SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
 {
     reader = gen((uint8_t*)data, size);
     if (!reader) return false;
     nomap = true;
 
-    if (copy) {
+    if (ops.owner == Ownership::Copy) {
         reader->data = tvg::malloc<uint8_t>(size);
         memcpy((char*)reader->data, data, reader->size);
-        freeData = true;
     }
+    owner = ops.owner;
 
     return reader->header();
 }

@@ -2232,7 +2232,7 @@ struct TVG_API Text : Paint
     Result metrics(const char* ch, GlyphMetrics& metrics, const char** next = nullptr) const noexcept;
 
     /**
-     * @brief Loads a scalable font data (ttf) from a file.
+     * @brief Loads a scalable font data (ttf/otf) from a file.
      *
      * ThorVG efficiently caches the loaded data using the specified @p path as a key.
      * This means that loading the same file again will not result in duplicate operations;
@@ -2250,7 +2250,7 @@ struct TVG_API Text : Paint
     static Result load(const char* filename) noexcept;
 
     /**
-     * @brief Loads a scalable font data (ttf) from a memory block of a given size.
+     * @brief Loads a scalable font data (ttf/otf) from a memory block of a given size.
      *
      * ThorVG efficiently caches the loaded font data using the specified @p name as a key.
      * This means that loading the same fonts again will not result in duplicate operations.

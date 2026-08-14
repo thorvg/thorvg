@@ -3851,7 +3851,7 @@ void SvgLoader::clear(bool all)
 
     if (!all) return;
 
-    if (copy) tvg::free((char*)content);
+    if (owner != Ownership::Borrow) tvg::free((char*)content);
 
     if (root) {
         root->unref();
@@ -3860,7 +3860,7 @@ void SvgLoader::clear(bool all)
 
     size = 0;
     content = nullptr;
-    copy = false;
+    owner = Ownership::Borrow;
 }
 
 
@@ -3954,11 +3954,6 @@ void SvgParserContext::clear(bool all)
     }
 }
 
-SvgLoader::SvgLoader() : ImageLoader(FileType::Svg)
-{
-}
-
-
 SvgLoader::~SvgLoader()
 {
     done();
@@ -4035,32 +4030,31 @@ bool SvgLoader::header()
     return true;
 }
 
-bool SvgLoader::open(const char* data, uint32_t size, const LoaderOps* ops, bool copy)
+bool SvgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
-    if (ops->caller != tvg::Type::Picture) return false;
+    if (ops.caller != tvg::Type::Picture) return false;
 
-    if (copy) {
+    if (ops.owner == Ownership::Copy) {
         content = tvg::malloc<char>(size + 1);
         memcpy((char*)content, data, size);
         content[size] = '\0';
     } else content = (char*)data;
 
     this->size = size;
-    this->copy = copy;
-
-    ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
+    owner = ops.owner;
+    ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
 
     return header();
 }
 
-bool SvgLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
+bool SvgLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (ops->caller != tvg::Type::Picture) return false;
+    if (ops.caller != tvg::Type::Picture) return false;
 
     if ((content = Loader::open(path, size, true))) {
-        ctx.accessible = static_cast<const PictureOps*>(ops)->accessible;
-        copy = true;
+        ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
+        owner = Ownership::Transfer;
         return header();
     }
 #endif

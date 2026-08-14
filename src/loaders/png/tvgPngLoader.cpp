@@ -56,16 +56,16 @@ PngLoader::PngLoader() : BitmapLoader(FileType::Png)
 PngLoader::~PngLoader()
 {
     done();
-    if (freeData) tvg::free(data);
+    if (owner != Ownership::Borrow) tvg::free(data);
     tvg::free(surface.buf8);
     lodepng_state_cleanup(&state);
 }
 
-bool PngLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
+bool PngLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     if (!(data = (unsigned char*)Loader::open(path, size))) return false;
-    freeData = true;
+    owner = Ownership::Transfer;
 
     lodepng_state_init(&state);
 
@@ -79,21 +79,18 @@ bool PngLoader::open(const char* path, TVG_UNUSED const LoaderOps* ops)
 #endif
 }
 
-bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps* ops, bool copy)
+bool PngLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
     unsigned int width, height;
     if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
 
-    if (copy) {
+    if (ops.owner == Ownership::Copy) {
         this->data = tvg::malloc<unsigned char>(size);
-        if (!this->data) return false;
         memcpy((unsigned char *)this->data, data, size);
-        freeData = true;
     } else {
         this->data = (unsigned char *) data;
-        freeData = false;
     }
-
+    owner = ops.owner;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
     this->size = size;
