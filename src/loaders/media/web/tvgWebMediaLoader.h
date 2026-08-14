@@ -33,10 +33,10 @@ struct WebMediaLoader : MediaLoader
 {
     WebMediaPlayer js = WebMediaPlayer(emscripten::val::undefined());
 
-    ~WebMediaLoader() override;
+    ~WebMediaLoader();
 
     // Loader interface
-    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
+    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
     RenderSurface* bitmap() override;
     bool sync() override;
 

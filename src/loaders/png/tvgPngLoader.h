@@ -31,8 +31,8 @@ struct PngLoader : BitmapLoader, Task
     PngLoader();
     ~PngLoader();
 
-    bool open(const char* path, const LoaderOps* ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
+    bool open(const char* path, const LoaderOps& ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool read() override;
 
     RenderSurface* bitmap() override;
@@ -41,7 +41,6 @@ private:
     LodePNGState state;
     unsigned char* data = nullptr;
     uint32_t size = 0;
-    bool freeData = false;
 
     void run(unsigned tid) override;
 };

@@ -221,7 +221,7 @@ bool LoaderMgr::retrieve(Loader* loader)
     return true;
 }
 
-tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps* ops, bool& invalid)
+tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps& ops, bool& invalid)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     if (auto loader = _findFromCache(filename)) return loader;
@@ -259,19 +259,19 @@ bool LoaderMgr::retrieve(const char* filename)
     return retrieve(_findFromCache(filename));
 }
 
-tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const LoaderOps* ops, bool copy)
+tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const LoaderOps& ops)
 {
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
-    if (!copy) {
+    if (ops.owner == Ownership::Borrow) {
         if (auto loader = _findFromCache(data, size, mimeType)) return loader;
     }
 
     // Try with the given MimeType
     if (mimeType) {
         if (auto loader = _findByType(mimeType)) {
-            if (loader->open(data, size, ops, copy)) {
-                if (!copy && loader->cache(HASH_KEY(data))) {
+            if (loader->open(data, size, ops)) {
+                if (ops.owner == Ownership::Borrow && loader->cache(HASH_KEY(data))) {
                     ScopedLock lock(_key);
                     _activeLoaders.back(loader);
                 }
@@ -286,8 +286,8 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (!loader) continue;
-        if (loader->open(data, size, ops, copy)) {
-            if (!copy && loader->cache(HASH_KEY(data))) {
+        if (loader->open(data, size, ops)) {
+            if (ops.owner == Ownership::Borrow && loader->cache(HASH_KEY(data))) {
                 ScopedLock lock(_key);
                 _activeLoaders.back(loader);
             }
@@ -298,19 +298,19 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     return nullptr;
 }
 
-tvg::Loader* LoaderMgr::loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy)
+tvg::Loader* LoaderMgr::loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner)
 {
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
-    if (!copy) {
+    if (owner == Ownership::Borrow) {
         // TODO: should we check premultiplied??
         if (auto loader = _findFromCache((const char*)(data), w * h, "raw")) return loader;
     }
 
     // function is dedicated for raw images only
     auto loader = new RawLoader;
-    if (loader->open(data, w, h, cs, copy)) {
-        if (!copy && loader->cache(HASH_KEY((const char*)data))) {
+    if (loader->open(data, w, h, cs, owner)) {
+        if (owner == Ownership::Borrow && loader->cache(HASH_KEY((const char*)data))) {
             ScopedLock lock(_key);
             _activeLoaders.back(loader);
         }
@@ -320,16 +320,21 @@ tvg::Loader* LoaderMgr::loader(const uint32_t* data, uint32_t w, uint32_t h, Col
     return nullptr;
 }
 
-// loads fonts from memory - loader is cached (regardless of copy value) in order to access it while setting font
-tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, const LoaderOps* ops, bool copy)
+// Loads fonts from memory. The loader is always cached so it remains available while setting the font.
+tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, const LoaderOps& ops)
 {
 #ifdef THORVG_SFNT_LOADER_SUPPORT
-    // TODO: add check for mimetype ?
-    if (auto loader = font(name)) return loader;
+    if (auto loader = font(name)) {
+        // user owned memory can be freed anytime.
+        if (loader->owner != Ownership::Borrow) {
+            if (ops.owner == Ownership::Transfer) tvg::free((char*)data);
+            return loader;
+        }
+    }
 
     // function is dedicated for SFNT-based font loading
     auto loader = new SfntLoader;
-    if (loader->open(data, size, ops, copy)) {
+    if (loader->open(data, size, ops)) {
         loader->name = duplicate(name);
         loader->cached = true;  // force it.
         ScopedLock lock(_key);

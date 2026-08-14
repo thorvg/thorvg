@@ -25,11 +25,11 @@
 
 struct WebpLoader : BitmapLoader, Task
 {
-    WebpLoader();
+    WebpLoader() : BitmapLoader(FileType::Webp) {}
     ~WebpLoader();
 
-    bool open(const char* path, const LoaderOps* ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps* ops, bool copy) override;
+    bool open(const char* path, const LoaderOps& ops) override;
+    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool read() override;
     bool close() override;
 
@@ -38,10 +38,9 @@ struct WebpLoader : BitmapLoader, Task
 private:
     uint8_t* data = nullptr;
     uint32_t size = 0;
-    bool freeData = false;
 
     void clear();
     void run(unsigned tid) override;
 };
 
-#endif //_TVG_WEBP_LOADER_H_
+#endif  //_TVG_WEBP_LOADER_H_
