@@ -3,7 +3,6 @@
 # Requires clang-format == 18
 
 ---
-Language: Cpp
 Standard: c++14
 
 # Base style
