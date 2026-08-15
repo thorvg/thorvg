@@ -1193,6 +1193,21 @@ static void _handleLetterSpacingAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* 
     node->style->letterSpacing = parsed * (percentage ? 0.01f : _unitScale(value, 1.0f));
 }
 
+static void _handleWordSpacingAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    node->style->flags |= SvgStyleFlags::WordSpacing;
+    node->style->wordSpacingRelative = false;
+    if (STR_AS(value, "normal")) {
+        node->style->wordSpacing = 0.0f;
+        return;
+    }
+    char* end = nullptr;
+    auto parsed = toFloat(value, &end);
+    auto percentage = _isPercentage(end);
+    node->style->wordSpacingRelative = percentage || _isFontRelativeUnit(value);
+    node->style->wordSpacing = parsed * (percentage ? 0.01f : _unitScale(value, 1.0f));
+}
+
 static void _handleCssClassAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
@@ -1243,7 +1258,8 @@ static constexpr struct
     STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline),
     STYLE_DEF(dominant-baseline, DominantBaseline, SvgStyleFlags::DominantBaseline),
     STYLE_DEF(font-weight, FontWeight, SvgStyleFlags::FontWeight),
-    STYLE_DEF(letter-spacing, LetterSpacing, SvgStyleFlags::LetterSpacing)
+    STYLE_DEF(letter-spacing, LetterSpacing, SvgStyleFlags::LetterSpacing),
+    STYLE_DEF(word-spacing, WordSpacing, SvgStyleFlags::WordSpacing)
 };
 // clang-format on
 
@@ -3083,6 +3099,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
     if (!(child->flags & SvgStyleFlags::TextAnchor)) child->textAnchor = parent->textAnchor;
     if (!(child->flags & SvgStyleFlags::DominantBaseline)) child->dominantBaseline = parent->dominantBaseline;
     if (!(child->flags & SvgStyleFlags::LetterSpacing)) child->letterSpacing = parent->letterSpacing;
+    if (!(child->flags & SvgStyleFlags::WordSpacing)) child->wordSpacing = parent->wordSpacing;
 }
 
 
@@ -3106,6 +3123,10 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::LetterSpacing) {
         to->letterSpacing = from->letterSpacing;
         to->letterSpacingRelative = from->letterSpacingRelative;
+    }
+    if (from->flags & SvgStyleFlags::WordSpacing) {
+        to->wordSpacing = from->wordSpacing;
+        to->wordSpacingRelative = from->wordSpacingRelative;
     }
 
     //Fill
@@ -3797,6 +3818,10 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
     if (node->style->letterSpacingRelative) {
         node->style->letterSpacing *= _findEmBaseFontSize(node);
         node->style->letterSpacingRelative = false;
+    }
+    if (node->style->wordSpacingRelative) {
+        node->style->wordSpacing *= _findEmBaseFontSize(node);
+        node->style->wordSpacingRelative = false;
     }
     ARRAY_FOREACH(p, node->child) {
         _updateStyle(*p, node->style);

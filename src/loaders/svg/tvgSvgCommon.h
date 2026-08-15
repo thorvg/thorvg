@@ -176,7 +176,8 @@ enum struct SvgStyleFlags
     AlignmentBaseline = 0x400000,
     DominantBaseline = 0x800000,
     FontWeight = 0x1000000,
-    LetterSpacing = 0x2000000
+    LetterSpacing = 0x2000000,
+    WordSpacing = 0x4000000
 };
 
 constexpr bool operator&(SvgStyleFlags a, SvgStyleFlags b)
@@ -578,12 +579,14 @@ struct SvgStyleProperty
     SvgBaseline dominantBaseline;
     SvgFontWeight fontWeight;
     float letterSpacing;
+    float wordSpacing;
     SvgStyleFlags flags;
     SvgStyleFlags flagsImportance; //indicates the importance of the flag - if set, higher priority is applied (https://drafts.csswg.org/css-cascade-4/#importance)
     bool curColorSet;
     bool paintOrder; //true if default (fill, stroke), false otherwise
     bool display;
     bool letterSpacingRelative;
+    bool wordSpacingRelative;
     BlendMethod blendMode;
 };
 
