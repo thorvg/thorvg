@@ -1167,6 +1167,32 @@ static void _handleDominantBaselineAttr(TVG_UNUSED SvgParserContext* ctx, SvgNod
     node->style->dominantBaseline = baseline;
 }
 
+//toFloat() consumes the "em" suffix, so detect font-relative units from the value's tail instead of its end pointer
+static bool _isFontRelativeUnit(const char* value)
+{
+    auto p = value + strlen(value);
+    while (p > value && isspace((unsigned char)p[-1])) --p;
+    auto end = p;
+    while (p > value && isalpha((unsigned char)p[-1])) --p;
+    if (end - p != 2) return false;  //so that "rem" is not mistaken for "em"
+    return !strncmp(p, "em", 2) || !strncmp(p, "ex", 2);
+}
+
+static void _handleLetterSpacingAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    node->style->flags |= SvgStyleFlags::LetterSpacing;
+    node->style->letterSpacingRelative = false;
+    if (STR_AS(value, "normal")) {
+        node->style->letterSpacing = 0.0f;
+        return;
+    }
+    char* end = nullptr;
+    auto parsed = toFloat(value, &end);
+    auto percentage = _isPercentage(end);
+    node->style->letterSpacingRelative = percentage || _isFontRelativeUnit(value);
+    node->style->letterSpacing = parsed * (percentage ? 0.01f : _unitScale(value, 1.0f));
+}
+
 static void _handleCssClassAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
 {
     auto cssClass = &node->style->cssClass;
@@ -1216,7 +1242,8 @@ static constexpr struct
     STYLE_DEF(text-anchor, TextAnchor, SvgStyleFlags::TextAnchor),
     STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline),
     STYLE_DEF(dominant-baseline, DominantBaseline, SvgStyleFlags::DominantBaseline),
-    STYLE_DEF(font-weight, FontWeight, SvgStyleFlags::FontWeight)
+    STYLE_DEF(font-weight, FontWeight, SvgStyleFlags::FontWeight),
+    STYLE_DEF(letter-spacing, LetterSpacing, SvgStyleFlags::LetterSpacing)
 };
 // clang-format on
 
@@ -3055,6 +3082,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
     if (!(child->stroke.flags & SvgStrokeFlags::Miterlimit)) child->stroke.miterlimit = parent->stroke.miterlimit;
     if (!(child->flags & SvgStyleFlags::TextAnchor)) child->textAnchor = parent->textAnchor;
     if (!(child->flags & SvgStyleFlags::DominantBaseline)) child->dominantBaseline = parent->dominantBaseline;
+    if (!(child->flags & SvgStyleFlags::LetterSpacing)) child->letterSpacing = parent->letterSpacing;
 }
 
 
@@ -3075,6 +3103,10 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::AlignmentBaseline) to->alignmentBaseline = from->alignmentBaseline;
     if (from->flags & SvgStyleFlags::DominantBaseline) to->dominantBaseline = from->dominantBaseline;
     if (from->flags & SvgStyleFlags::FontWeight) to->fontWeight = from->fontWeight;
+    if (from->flags & SvgStyleFlags::LetterSpacing) {
+        to->letterSpacing = from->letterSpacing;
+        to->letterSpacingRelative = from->letterSpacingRelative;
+    }
 
     //Fill
     to->fill.flags = (to->fill.flags | from->fill.flags);
@@ -3762,6 +3794,10 @@ static bool _svgLoaderParser(void* data, XMLType type, const char* content, unsi
 static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
 {
     _styleInherit(node->style, parentStyle);
+    if (node->style->letterSpacingRelative) {
+        node->style->letterSpacing *= _findEmBaseFontSize(node);
+        node->style->letterSpacingRelative = false;
+    }
     ARRAY_FOREACH(p, node->child) {
         _updateStyle(*p, node->style);
     }

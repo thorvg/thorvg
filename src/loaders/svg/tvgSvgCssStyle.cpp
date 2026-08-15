@@ -165,6 +165,12 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         to->flags |= SvgStyleFlags::FontWeight;
         if (from->flagsImportance & SvgStyleFlags::FontWeight) to->flagsImportance |= SvgStyleFlags::FontWeight;
     }
+    if (((from->flags & SvgStyleFlags::LetterSpacing) && (overwrite || !(to->flags & SvgStyleFlags::LetterSpacing))) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::LetterSpacing)) {
+        to->letterSpacing = from->letterSpacing;
+        to->letterSpacingRelative = from->letterSpacingRelative;
+        to->flags |= SvgStyleFlags::LetterSpacing;
+        if (from->flagsImportance & SvgStyleFlags::LetterSpacing) to->flagsImportance |= SvgStyleFlags::LetterSpacing;
+    }
 }
 
 
