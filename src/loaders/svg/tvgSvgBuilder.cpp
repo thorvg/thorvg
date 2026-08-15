@@ -1073,17 +1073,43 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     return text;
 }
 
-static void _updatePos(Text* text, const SvgTextNode& textNode, float anchor, Point& textPos)
+static float _applyLetterSpacing(Text* text, float letterSpacing)
+{
+    if (letterSpacing == 0.0f) return 1.0f;
+
+    auto utf8 = text->text();
+    auto advance = 0.0f;
+    uint32_t gaps = 0;
+    GlyphMetrics gm;
+    while (utf8 && *utf8) {
+        if (text->metrics(utf8, gm, &utf8) != Result::Success) return 1.0f;
+        if (utf8 && *utf8) {
+            advance += gm.advance;
+            ++gaps;
+        }
+    }
+    if (advance <= 0.0f) return 1.0f;
+
+    // Text::spacing() scales advances, so match the total offset using the measured glyph gaps.
+    auto scale = 1.0f + letterSpacing * gaps / advance;
+    if (scale < 0.0f) scale = 0.0f;
+    text->spacing(scale, 1.0f);
+    return scale;
+}
+
+static void _updatePos(Text* text, const SvgTextNode& textNode, float anchor, float spacingScale, Point& textPos)
 {
     auto advance = 0.0f;
     if (auto utf8 = text->text()) {
         GlyphMetrics gm;
-        while (utf8) {
-            if (text->metrics(utf8, gm, &utf8) == Result::Success) advance += gm.advance;
-            else break;
+        while (utf8 && *utf8) {
+            if (text->metrics(utf8, gm, &utf8) != Result::Success) break;
+            advance += gm.advance;
         }
     }
-    textPos.x = textNode.x + textNode.dx + (1.0f - anchor) * advance;
+    // Text::spacing() scales every glyph advance, so scale the measured
+    // advance the same way to stay in sync with the rendered output.
+    textPos.x = textNode.x + textNode.dx + (1.0f - anchor) * advance * spacingScale;
     textPos.y = textNode.y + textNode.dy;
 }
 
@@ -1131,7 +1157,9 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
             auto text = _buildText(&textNode, xmlSpace, nullptr, _effectiveBaseline(child->style));
             if (text) {
                 text->align(child->style->textAnchor, 0.0f);
-                _updatePos(text, textNode, child->style->textAnchor, textPos);
+                _applyTextFill(child->style, text, textNode, vBox, ctx.parser->global);
+                auto spacingScale = _applyLetterSpacing(text, child->style->letterSpacing);
+                _updatePos(text, textNode, child->style->textAnchor, spacingScale, textPos);
                 _applyTextFill(child->style, text, textNode, vBox, ctx.parser->global);
                 auto paint = _applyFilter(ctx, text, child, vBox, svgPath);
                 paint = _applyComposition(ctx, paint, child, vBox, svgPath);
@@ -1157,6 +1185,7 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
         auto text = _buildText(textNode, xmlSpace, node->transform, _effectiveBaseline(node->style));
         if (!text) return nullptr;
         text->align(node->style->textAnchor, 0.0f);
+        _applyLetterSpacing(text, node->style->letterSpacing);
         _applyTextFill(node->style, text, *textNode, vBox, ctx.parser->global);
         auto p = _applyFilter(ctx, text, node, vBox, svgPath);
         p = _applyComposition(ctx, p, node, vBox, svgPath);
@@ -1170,7 +1199,8 @@ static Paint* _textBuildHelper(SvgParserContext& ctx, const SvgNode* node, const
 
     if (auto text = _buildText(textNode, xmlSpace, nullptr, _effectiveBaseline(node->style))) {
         text->align(node->style->textAnchor, 0.0f);
-        _updatePos(text, *textNode, node->style->textAnchor, textPos);
+        auto spacingScale = _applyLetterSpacing(text, node->style->letterSpacing);
+        _updatePos(text, *textNode, node->style->textAnchor, spacingScale, textPos);
         _applyTextFill(node->style, text, *textNode, vBox, ctx.parser->global);
         scene->add(text);
     }
