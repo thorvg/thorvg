@@ -1157,14 +1157,8 @@ static void _handleAlignmentBaselineAttr(TVG_UNUSED SvgParserContext* ctx, SvgNo
 
 static void _handleDominantBaselineAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
-    auto baseline = _toBaseline(value);
-    // unrecognized keywords keep the inherited value, as in the css cascade
-    if (baseline == SvgBaseline::Auto && !STR_AS(value, "auto")) return;
-    // svg 1.1 keyword set only (https://www.w3.org/TR/SVG11/text.html#DominantBaselineProperty):
-    // browsers drop the css-level text-top/text-bottom (https://www.w3.org/TR/css-inline-3/#dominant-baseline-property), keeping the inherited value
-    if (STR_AS(value, "text-top") || STR_AS(value, "text-bottom")) return;
     node->style->flags |= SvgStyleFlags::DominantBaseline;
-    node->style->dominantBaseline = baseline;
+    node->style->dominantBaseline = _toBaseline(value);
 }
 
 //toFloat() consumes the "em" suffix, so detect font-relative units from the value's tail instead of its end pointer
@@ -1299,7 +1293,20 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
                 value = duplicate(value, size);
                 importance = true;
             }
-            if (styleTags[i].flag == SvgStyleFlags::FontWeight && _toFontWeight(value) == SvgFontWeight::Invalid) {
+            auto valid = true;
+            if (styleTags[i].flag == SvgStyleFlags::FontWeight) {
+                valid = _toFontWeight(value) != SvgFontWeight::Invalid;
+            } else if (styleTags[i].flag == SvgStyleFlags::DominantBaseline) {
+                // svg 1.1 keyword set only (https://www.w3.org/TR/SVG11/text.html#DominantBaselineProperty):
+                // browsers drop the css-level text-top/text-bottom (https://www.w3.org/TR/css-inline-3/#dominant-baseline-property)
+                if (STR_AS(value, "text-top") || STR_AS(value, "text-bottom")) valid = false;
+                else valid = _toBaseline(value) != SvgBaseline::Auto || STR_AS(value, "auto");
+            } else if (styleTags[i].flag == SvgStyleFlags::LetterSpacing || styleTags[i].flag == SvgStyleFlags::WordSpacing) {
+                char* end = nullptr;
+                toFloat(value, &end);
+                valid = end != value || STR_AS(value, "normal");
+            }
+            if (!valid) {
                 if (importance) tvg::free(const_cast<char*>(value));
                 return true;
             }
