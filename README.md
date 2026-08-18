@@ -160,7 +160,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [SVG](#svg)
   - [Lottie](#lottie)
   - [In Practice](#in-practice)
-  - [Interactive App](#interactive-app)
+  - [ThorVG Demo](#thorvg-demo)
   - [Examples](#examples)
     - [C++ Examples](#c-examples)
     - [Playground](#playground)
@@ -445,13 +445,6 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
 </p>
 
-### Paragraphic
-[Paragraphic](https://paragraphic.design/), a cross-platform parametric graphic design application using ThorVG for realtime vector graphics rendering.
-
-<p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_paragraphic.png">
-</p>
-
 ### SEGGER
 [SEGGER](https://www.segger.com/) uses ThorVG as a GPU driver for high-performance vector rendering in embedded GUIs.
 
@@ -469,6 +462,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 ### More Projects
 - [ArcBrush](https://arcbrush.com/) is a free, node-based image editor that leverages ThorVG for high-performance SVG rasterization.
 - [Crank Software](https://www.cranksoftware.com/) integrates ThorVG into Storyboard Engine for SVG rendering in embedded and industrial HMIs.
+- [Evergine](https://evergine.com/) integrates ThorVG through its own ThorVG.Net, bringing vector graphics to its cross-platform graphics engine.
 - [Figo](https://www.figoui.xyz/en#) leverages ThorVG to render vector-based UIs directly from design files across multiple platforms.
 - [Flowmux](https://flowmux.org/) uses ThorVG to power its inline terminal image viewer, rendering SVG, Lottie, and other bitmap graphics.
 - [Flux Audio](https://www.flux.audio/) leverages ThorVG to power modern user interfaces and visuals across its audio platforms.
@@ -476,8 +470,9 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
 - [LibreScoot](https://librescoot.org/en/) uses ThorVG for GPU-free Lottie boot animations on its embedded mobility platform.
 - [MetaModule](https://4mscompany.com/metamodule) uses ThorVG as a lightweight vector rasterization backend for its modular synthesizer UI.
 - [MorphOS](https://www.morphos-team.net/), an Amiga-inspired operating system integrating ThorVG for modern vector graphics rendering.
-- [OpenVela](https://www.openvela.com/), an open-source AIoT operating system integrating ThorVG for lightweight vector graphics rendering.
-- [TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for efficient, high-quality GUI rendering.
+- [OpenVela](https://www.openvela.com/), an open-source AIoT operating system integrating ThorVG for vector graphics rendering.
+- [Paragraphic](https://paragraphic.design/), a cross-platform parametric graphic design application using ThorVG for realtime vector graphics rendering.
+- [TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for GUI rendering.
 - [Vagabond](https://store.steampowered.com/app/1673090/Vagabond/) uses ThorVG for vector graphics rendering in its procedurally generated 2D sandbox RPG.
 
 Would you like us to showcase your project with ThorVG? Feel free to [open an issue](https://github.com/thorvg/thorvg/issues) or submit a pull request!
@@ -485,7 +480,7 @@ Would you like us to showcase your project with ThorVG? Feel free to [open an is
 [Back to contents](#contents)
 <br />
 <br />
-## Interactive App
+## ThorVG Demo
 Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS! [Give it a try!](https://thorvg-janitor.vercel.app/)
 
 <p align="center">
@@ -647,21 +642,23 @@ ThorVG stands as a purely open-source initiative. We are grateful to the individ
 <br />
 <br />
 ## Partners
-Partners engage in strategic collaboration with ThorVG, working together to shape the future of scalable, high-performance vector graphics. We acknowledge organizations that have supported ThorVG’s journey through development, integration, collaboration, and community involvement.
-</br>
-</br>
+Corporate partners collaborate with ThorVG through development, integration, and strategic initiatives that help advance the project. 
+<br />
+<br />
 <p align="center", href="https://www.lottiefiles.com">
   <a href="https://www.lottiefiles.com">
   <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_lottiefiles.jpg"  alt="LottieFiles">
   </a>
 </p>
-
+<br />
+We also recognize past partners whose contributions have played an important role in ThorVG’s growth.
+<br />
+<br />
 <p align="center", href="https://wwww.samsung.com">
   <a href="https://www.samsung.com">
   <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_samsung.jpg"  alt="Samsung">
   </a>
 </p>
-
 <br />
 
 If you’re interested in partnering with ThorVG, we’d love to hear from you. Please reach out at thorvg@thorvg.org
@@ -673,6 +670,7 @@ If you’re interested in partnering with ThorVG, we’d love to hear from you. 
 We sincerely thank all of our sponsors, past and present, whose financial support has helped shape the evolution of ThorVG. Your generosity is more than a contribution—it is an investment in a high-performance, accessible graphics engine built for real-world production.
 <br/>
 <br/>
+
 <p align="center", href="https://www.lottiefiles.com">
   <a href="https://www.lottiefiles.com">
   <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_lottiefiles.jpg"  alt="LottieFiles">
