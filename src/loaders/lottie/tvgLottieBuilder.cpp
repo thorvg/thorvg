@@ -1653,8 +1653,9 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
 {
     if (!parent->children.empty()) {
         // TODO: Consider to migrate this attachment to the frame update time.
-        auto text = static_cast<LottieText*>(parent->children.first());
-        if (text->type == LottieObject::Text) {
+        auto child = parent->children.first();
+        if (child->type == LottieObject::Text) {
+            auto text = static_cast<LottieText*>(child);
             auto& doc = text->doc(0);
             if (doc.name) {
                 auto len = strlen(doc.name);
@@ -1670,7 +1671,8 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
             return;
         }
     }
-    parent->children.clear();  // make the invalid text layer empty to prevent an access during rendering.
+    // Make the invalid text layer empty to prevent an access during rendering.
+    parent->clear();
 }
 
 static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)

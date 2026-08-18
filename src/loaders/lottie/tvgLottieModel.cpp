@@ -351,17 +351,23 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
 {
     if (!color.input) return 0;
 
-    uint32_t alphaCnt = (color.input->count - (count * 4)) / 2;
+    auto clast = count * 4;
+    if (color.input->count < clast) {
+        TVGERR("LOTTIE", "Malformed asset!");
+        return 0;
+    }
+
+    // Ignore an incomplete trailing alpha stop.
+    auto inputLast = color.input->count - ((color.input->count - clast) % 2);
+    auto alphaCnt = (inputLast - clast) / 2;
     Array<Fill::ColorStop> output(count + alphaCnt);
     uint32_t cidx = 0;               //color count
-    uint32_t clast = count * 4;
-    if (clast > color.input->count) clast = color.input->count;
     uint32_t aidx = clast;           //alpha count
     Fill::ColorStop cs;
 
     //merge color stops.
-    for (uint32_t i = 0; i < color.input->count; ++i) {
-        if (cidx == clast || aidx == color.input->count) break;
+    for (uint32_t i = 0; i < inputLast; ++i) {
+        if (cidx == clast || aidx == inputLast) break;
         if ((*color.input)[cidx] == (*color.input)[aidx]) {
             cs.offset = (*color.input)[cidx];
             cs.r = remap255((*color.input)[cidx + 1]);
@@ -414,7 +420,7 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
     }
 
     //alpha remains
-    while (aidx < color.input->count) {
+    while (aidx < inputLast) {
         cs.offset = (*color.input)[aidx];
         cs.a = remap255((*color.input)[aidx + 1]);
         if (cs.a < 255) opaque = false;
@@ -496,6 +502,11 @@ LottieGroup::LottieGroup(LottieObject::Type type) : LottieObject(type)
     allowMerge = true;
 }
 
+void LottieGroup::clear()
+{
+    ARRAY_FOREACH(p, children) delete (*p);
+    children.reset();
+}
 
 LottieProperty* LottieGroup::property(uint16_t ix)
 {
@@ -656,8 +667,7 @@ void LottieLayer::prepare(RGB32* color)
        so force it to be a Null Layer and release all resource. */
     if (hidden) {
         type = LottieLayer::Null;
-        ARRAY_FOREACH(p, children) delete(*p);
-        children.reset();
+        clear();
         return;
     }
 
