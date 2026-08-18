@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <climits>
 #include <turbojpeg.h>
 #include "tvgJpgLoader.h"
 
@@ -105,6 +106,8 @@ bool JpgLoader::read()
         format = TJPF_RGBX;
         cs = ColorSpace::ABGR8888;
     }
+
+    if (static_cast<int>(w) > INT_MAX / static_cast<int>(h) / tjPixelSize[format]) return false;
 
     auto image = (unsigned char *)tjAlloc(static_cast<int>(w) * static_cast<int>(h) * tjPixelSize[format]);
 
