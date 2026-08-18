@@ -973,9 +973,10 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
 
     virtual ~LottieGroup()
     {
-        ARRAY_FOREACH(p, children) delete(*p);
+        clear();
     }
 
+    void clear();
     void prepare();
     bool mergeable() override { return allowMerge; }
     LottieProperty* property(uint16_t ix) override;
