@@ -34,6 +34,32 @@
 #include "tvgGlSolidBatch.h"
 #include "tvgGlStencilCoverBatch.h"
 
+// Experimental test-only selector and instrumentation. This is private GL
+// renderer API; the product default remains Msaa4.
+enum class GlAaMode : uint8_t
+{
+    NoAa,
+    Msaa4,
+    FlatDirect,
+    CurveDirect,
+    FlatMask,
+    CurveMask,
+    Hybrid,
+};
+
+struct GlAaStats
+{
+    GlAaMode mode = GlAaMode::Msaa4;
+    uint32_t rootSamples = 0;
+    uint64_t noAa = 0;
+    uint64_t msaa4 = 0;
+    uint64_t flatDirect = 0;
+    uint64_t curveDirect = 0;
+    uint64_t flatMask = 0;
+    uint64_t curveMask = 0;
+    uint64_t fallback = 0;
+};
+
 struct GlRenderer : RenderMethod
 {
     enum RenderTypes
@@ -54,6 +80,8 @@ struct GlRenderer : RenderMethod
         RT_MaskDarken,
         RT_Stencil,
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+        RT_FlatDirectBoundary,
+        RT_CurveDirectBoundary,
         RT_FlatMaskInterior,
         RT_FlatMaskEdgeInsidePositive,
         RT_FlatMaskEdgeInsideNegative,
@@ -177,6 +205,11 @@ struct GlRenderer : RenderMethod
     bool intersectsShape(RenderData data, const RenderRegion& region) override;
     bool intersectsImage(RenderData data, const RenderRegion& region) override;
     Result target(void* display, void* surface, void* context, int32_t id, uint32_t w, uint32_t h, ColorSpace cs);
+    TVG_API bool aaMode(GlAaMode mode);
+    TVG_API GlAaMode aaMode() const;
+    TVG_API uint32_t aaSamples() const;
+    TVG_API const GlAaStats& aaStats() const;
+    TVG_API void resetAaStats();
 
     //composition
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;
@@ -207,9 +240,15 @@ private:
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
-    void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
-    void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+    void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag,
+                       int32_t depth, bool routeAa = true);
+    void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag,
+                       int32_t depth, bool routeAa = true);
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    bool drawFlatDirect(GlShape& sdata, const RenderColor& color, int32_t depth,
+                        const RenderRegion& viewBounds, const RenderRegion& passViewport);
+    bool drawCurveDirect(GlShape& sdata, const RenderColor& color, int32_t depth,
+                         const RenderRegion& viewBounds, const RenderRegion& passViewport);
     bool drawFlatMask(GlShape& sdata, const RenderColor& color, int32_t depth,
                       const RenderRegion& viewBounds, const RenderRegion& passViewport);
     bool drawCurveMask(GlShape& sdata, const RenderColor& color, int32_t depth,
@@ -252,8 +291,6 @@ private:
     GlStencilCoverBatch mStencilCoverBatch;
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
     GlFlatMaskTarget mFlatMaskTarget;
-    bool mFlatMask = false;
-    bool mCurveMask = false;
 #endif
 
     //Disposed resources. They should be released on synced call.
@@ -263,6 +300,8 @@ private:
     } mDisposed;
 
     BlendMethod mBlendMethod = BlendMethod::Normal;
+    GlAaMode mAaMode = GlAaMode::Msaa4;
+    GlAaStats mAaStats;
     bool mClearBuffer = false;
 };
 

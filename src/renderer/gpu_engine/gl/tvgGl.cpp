@@ -200,9 +200,7 @@ PFNGLVIEWPORTPROC               glViewport;
 //PFNGLTEXPARAMETERFVPROC         glTexParameterfv;
 //PFNGLTEXPARAMETERIVPROC         glTexParameteriv;
 //PFNGLTEXIMAGE1DPROC             glTexImage1D;
-#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
 PFNGLSTENCILMASKPROC             glStencilMask;
-#endif
 //PFNGLFINISHPROC                 glFinish;
 //PFNGLFLUSHPROC                  glFlush;
 //PFNGLLOGICOPPROC                glLogicOp = nullptr
@@ -533,9 +531,7 @@ bool glInit()
 #else
     GL_FUNCTION_FETCH(glClearDepth, PFNGLCLEARDEPTHPROC);
 #endif
-#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
     GL_FUNCTION_FETCH(glStencilMask, PFNGLSTENCILMASKPROC);
-#endif
     GL_FUNCTION_FETCH(glColorMask, PFNGLCOLORMASKPROC);
     GL_FUNCTION_FETCH(glDepthMask, PFNGLDEPTHMASKPROC);
     GL_FUNCTION_FETCH(glDisable, PFNGLDISABLEPROC);

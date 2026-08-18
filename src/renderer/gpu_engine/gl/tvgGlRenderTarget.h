@@ -31,12 +31,13 @@ struct GlRenderTarget
     GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId);
+    void init(GlStateCache& state, uint32_t width, uint32_t height, uint32_t sampleCount, GLint resolveId);
     void reset();
     bool invalid() const { return fbo == 0; }
+    GLuint textureFbo() const { return samples > 1 ? resolvedFbo : fbo; }
 
     RenderRegion viewport{};
-    uint32_t width = 0, height = 0;
+    uint32_t width = 0, height = 0, samples = 0;
     GLuint resolvedFbo = 0, fbo = 0, colorTex = 0;
 
 private:
@@ -68,7 +69,8 @@ private:
 
 struct GlRenderTargetPool
 {
-    GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, GlStateCache& state);
+    GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, uint32_t samples,
+                       GlStateCache& state);
     ~GlRenderTargetPool();
 
     GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
@@ -77,6 +79,7 @@ private:
     GlStateCache& state;
     uint32_t maxWidth = 0;
     uint32_t maxHeight = 0;
+    uint32_t samples = 1;
     Array<GlRenderTarget*> pool;
 };
 

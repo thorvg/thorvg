@@ -30,10 +30,11 @@ GlRenderTarget::~GlRenderTarget()
     reset();
 }
 
-void GlRenderTarget::init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId)
+void GlRenderTarget::init(GlStateCache& state, uint32_t width, uint32_t height, uint32_t sampleCount, GLint resolveId)
 {
     if (width == 0 || height == 0) return;
 
+    sampleCount = sampleCount > 1 ? sampleCount : 1;
     this->state = &state;
     this->width = width;
     this->height = height;
@@ -43,22 +44,6 @@ void GlRenderTarget::init(GlStateCache& state, uint32_t width, uint32_t height, 
 
     state.bindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, width, height));
-
-    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
-
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
-
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height));
-
-    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
-
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
-
-    // resolve target
     GL_CHECK(glGenTextures(1, &colorTex));
 
     state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, colorTex);
@@ -71,9 +56,32 @@ void GlRenderTarget::init(GlStateCache& state, uint32_t width, uint32_t height, 
 
     state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, 0);
 
-    GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
-    state.bindFramebuffer(GL_FRAMEBUFFER, resolvedFbo);
-    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
+    if (sampleCount > 1) {
+        GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
+        GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
+        GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, sampleCount, GL_RGBA8, width, height));
+        GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer));
+    } else {
+        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
+    }
+
+    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
+    auto depthStencilSamples = sampleCount > 1 ? static_cast<GLsizei>(sampleCount) : 0;
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, depthStencilSamples, GL_DEPTH24_STENCIL8, width, height));
+
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
+
+    GLint actualSamples = 0;
+    GL_CHECK(glGetIntegerv(GL_SAMPLES, &actualSamples));
+    samples = actualSamples > 1 ? static_cast<uint32_t>(actualSamples) : 1;
+
+    if (samples > 1) {
+        GL_CHECK(glGenFramebuffers(1, &resolvedFbo));
+        state.bindFramebuffer(GL_FRAMEBUFFER, resolvedFbo);
+        GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
+    }
 
     state.bindFramebuffer(GL_FRAMEBUFFER, resolveId);
 }
@@ -90,6 +98,7 @@ void GlRenderTarget::reset()
     GL_CHECK(glDeleteTextures(1, &colorTex));
 
     fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
+    width = height = samples = 0;
 }
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
@@ -147,8 +156,9 @@ void GlFlatMaskTarget::reset()
 }
 #endif
 
-GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, GlStateCache& state) :
-    state(state), maxWidth(maxWidth), maxHeight(maxHeight), pool() {}
+GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight,
+                                       uint32_t samples, GlStateCache& state) :
+    state(state), maxWidth(maxWidth), maxHeight(maxHeight), samples(samples), pool() {}
 
 GlRenderTargetPool::~GlRenderTargetPool()
 {
@@ -189,7 +199,7 @@ GlRenderTarget* GlRenderTargetPool::getRenderTarget(const RenderRegion& vp, GLui
     }
 
     auto rt = new GlRenderTarget();
-    rt->init(state, width, height, resolveId);
+    rt->init(state, width, height, samples, resolveId);
     rt->viewport = vp;
     pool.push(rt);
     return rt;

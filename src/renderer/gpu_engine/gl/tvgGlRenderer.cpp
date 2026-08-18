@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <vector>
 
 #include "tvgFill.h"
 #include "tvgGlCommon.h"
@@ -194,6 +195,8 @@ void GlRenderer::initShaders()
     mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    mPrograms.push(new GlProgram(FLAT_DIRECT_BOUNDARY_VERT_SHADER, FLAT_DIRECT_BOUNDARY_FRAG_SHADER));
+    mPrograms.push(new GlProgram(CURVE_DIRECT_BOUNDARY_VERT_SHADER, CURVE_DIRECT_BOUNDARY_FRAG_SHADER));
     mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, FLAT_MASK_INTERIOR_FRAG_SHADER));
     mPrograms.push(new GlProgram(FLAT_MASK_EDGE_VERT_SHADER, FLAT_MASK_EDGE_INSIDE_POSITIVE_FRAG_SHADER));
     mPrograms.push(new GlProgram(FLAT_MASK_EDGE_VERT_SHADER, FLAT_MASK_EDGE_INSIDE_NEGATIVE_FRAG_SHADER));
@@ -248,12 +251,112 @@ static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, 
 }
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+static uint32_t pathContourCount(const RenderPath& path)
+{
+    uint32_t count = 0;
+    ARRAY_FOREACH(cmd, path.cmds)
+    {
+        if (*cmd == PathCommand::MoveTo) ++count;
+    }
+    return count;
+}
+
+static bool directPathClosed(const RenderPath& path)
+{
+    bool contourOpen = false;
+    bool contourHasSegment = false;
+    bool hasContour = false;
+
+    ARRAY_FOREACH(cmd, path.cmds)
+    {
+        switch (*cmd) {
+            case PathCommand::MoveTo:
+                if (contourOpen) return false;
+                contourOpen = true;
+                contourHasSegment = false;
+                hasContour = true;
+                break;
+            case PathCommand::LineTo:
+            case PathCommand::CubicTo:
+                if (!contourOpen) return false;
+                contourHasSegment = true;
+                break;
+            case PathCommand::Close:
+                if (!contourOpen || !contourHasSegment) return false;
+                contourOpen = false;
+                break;
+        }
+    }
+    return hasContour && !contourOpen;
+}
+
 struct GlFlatMaskVertex
 {
     float x, y;
     float startX, startY;
     float endX, endY;
 };
+
+struct GlFlatDirectVertex
+{
+    float x, y;
+    float startX, startY;
+    float endX, endY;
+    float insideSign;
+};
+
+using GlDirectContour = std::vector<Point>;
+
+static float directContourTwiceArea(const GlDirectContour& contour)
+{
+    float twiceArea = 0.0f;
+    for (size_t i = 0; i < contour.size(); ++i) {
+        const auto& a = contour[i];
+        const auto& b = contour[(i + 1) % contour.size()];
+        twiceArea += a.x * b.y - b.x * a.y;
+    }
+    return twiceArea;
+}
+
+static bool directContourContains(const GlDirectContour& contour, const Point& point)
+{
+    bool inside = false;
+    for (size_t i = 0, previous = contour.size() - 1; i < contour.size(); previous = i++) {
+        const auto& a = contour[previous];
+        const auto& b = contour[i];
+        if ((a.y > point.y) == (b.y > point.y)) continue;
+        auto intersectionX = (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x;
+        if (point.x < intersectionX) inside = !inside;
+    }
+    return inside;
+}
+
+static float directContourInsideSign(const std::vector<GlDirectContour>& contours,
+                                     size_t contourIndex, FillRule fillRule)
+{
+    const auto& contour = contours[contourIndex];
+    auto contourWinding = directContourTwiceArea(contour) >= 0.0f ? 1 : -1;
+    uint32_t nestingDepth = 0;
+    int32_t surroundingWinding = 0;
+    for (size_t i = 0; i < contours.size(); ++i) {
+        if (i == contourIndex || !directContourContains(contours[i], contour.front())) continue;
+        ++nestingDepth;
+        surroundingWinding += directContourTwiceArea(contours[i]) >= 0.0f ? 1 : -1;
+    }
+
+    bool outsideFilled;
+    bool insideFilled;
+    if (fillRule == FillRule::EvenOdd) {
+        outsideFilled = (nestingDepth & 1u) != 0;
+        insideFilled = !outsideFilled;
+    } else {
+        outsideFilled = surroundingWinding != 0;
+        insideFilled = surroundingWinding + contourWinding != 0;
+    }
+    if (insideFilled == outsideFilled) return 0.0f;
+    auto orientationSign = static_cast<float>(contourWinding);
+    return insideFilled ? orientationSign : -orientationSign;
+}
 
 static void addFlatMaskQuad(GlRenderTask* task, GlStageBuffer* gpuBuffer, const RenderRegion& bounds)
 {
@@ -331,6 +434,104 @@ static bool addFlatMaskBoundary(GlRenderTask* insidePositiveTask, GlRenderTask* 
     return true;
 }
 
+static bool addFlatDirectBoundary(GlRenderTask* task, GlStageBuffer* gpuBuffer,
+                                  const GlGeometry& geometry,
+                                  const RenderRegion& passViewport)
+{
+    Array<GlFlatDirectVertex> vertices;
+    vertices.reserve(geometry.fillBoundary.edges.count * 6);
+
+    std::vector<GlDirectContour> contours;
+    contours.reserve(geometry.fillBoundary.contourEnds.count);
+    uint32_t contourStart = 0;
+    ARRAY_FOREACH(contourEnd, geometry.fillBoundary.contourEnds)
+    {
+        if (*contourEnd <= contourStart || *contourEnd > geometry.fillBoundary.edges.count) return false;
+        GlDirectContour contour;
+        contour.reserve(*contourEnd - contourStart);
+        for (uint32_t i = contourStart; i < *contourEnd; ++i) {
+            const auto& edge = geometry.fillBoundary.edges[i];
+            auto from = edge.from * 2;
+            contour.push_back({geometry.fill.vertex[from] - passViewport.min.x,
+                               passViewport.sh() - (geometry.fill.vertex[from + 1] - passViewport.min.y)});
+        }
+        contours.push_back(std::move(contour));
+        contourStart = *contourEnd;
+    }
+    if (contourStart != geometry.fillBoundary.edges.count) return false;
+
+    contourStart = 0;
+    size_t contourIndex = 0;
+    ARRAY_FOREACH(contourEnd, geometry.fillBoundary.contourEnds)
+    {
+        auto insideSign = directContourInsideSign(contours, contourIndex++,
+                                                  geometry.fillRule);
+        if (insideSign == 0.0f) {
+            contourStart = *contourEnd;
+            continue;
+        }
+        for (uint32_t i = contourStart; i < *contourEnd; ++i) {
+            const auto& edge = geometry.fillBoundary.edges[i];
+            auto from = edge.from * 2;
+            auto to = edge.to * 2;
+            Point a = {geometry.fill.vertex[from], geometry.fill.vertex[from + 1]};
+            Point b = {geometry.fill.vertex[to], geometry.fill.vertex[to + 1]};
+            auto delta = b - a;
+            auto lengthSquared = dot(delta, delta);
+            if (lengthSquared == 0.0f) continue;
+
+            auto tangent = delta / sqrtf(lengthSquared);
+            auto normal = Point{-tangent.y, tangent.x};
+            auto start = a - tangent * GL_FLAT_MASK_AA_RADIUS;
+            auto end = b + tangent * GL_FLAT_MASK_AA_RADIUS;
+            auto startLocal = Point{a.x - passViewport.min.x,
+                                    passViewport.sh() - (a.y - passViewport.min.y)};
+            auto endLocal = Point{b.x - passViewport.min.x,
+                                  passViewport.sh() - (b.y - passViewport.min.y)};
+
+            GlFlatDirectVertex v0 = {start.x + normal.x * GL_FLAT_MASK_AA_RADIUS,
+                                     start.y + normal.y * GL_FLAT_MASK_AA_RADIUS,
+                                     startLocal.x, startLocal.y, endLocal.x, endLocal.y,
+                                     insideSign};
+            GlFlatDirectVertex v1 = {start.x - normal.x * GL_FLAT_MASK_AA_RADIUS,
+                                     start.y - normal.y * GL_FLAT_MASK_AA_RADIUS,
+                                     startLocal.x, startLocal.y, endLocal.x, endLocal.y,
+                                     insideSign};
+            GlFlatDirectVertex v2 = {end.x + normal.x * GL_FLAT_MASK_AA_RADIUS,
+                                     end.y + normal.y * GL_FLAT_MASK_AA_RADIUS,
+                                     startLocal.x, startLocal.y, endLocal.x, endLocal.y,
+                                     insideSign};
+            GlFlatDirectVertex v3 = {end.x - normal.x * GL_FLAT_MASK_AA_RADIUS,
+                                     end.y - normal.y * GL_FLAT_MASK_AA_RADIUS,
+                                     startLocal.x, startLocal.y, endLocal.x, endLocal.y,
+                                     insideSign};
+            vertices.push(v0);
+            vertices.push(v1);
+            vertices.push(v2);
+            vertices.push(v1);
+            vertices.push(v3);
+            vertices.push(v2);
+        }
+        contourStart = *contourEnd;
+    }
+    if (contourStart != geometry.fillBoundary.edges.count || vertices.empty()) return false;
+
+    auto vertexOffset = gpuBuffer->push(vertices.data, vertices.count * sizeof(GlFlatDirectVertex));
+    uint32_t* indices = nullptr;
+    auto indexOffset = gpuBuffer->reserveIndex(vertices.count * sizeof(uint32_t),
+                                               reinterpret_cast<void**>(&indices));
+    for (uint32_t i = 0; i < vertices.count; ++i)
+        indices[i] = i;
+
+    auto buffer = gpuBuffer->getBufferId();
+    task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlFlatDirectVertex), vertexOffset, GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{1, 2, sizeof(GlFlatDirectVertex), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{2, 2, sizeof(GlFlatDirectVertex), vertexOffset + 4 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{3, 1, sizeof(GlFlatDirectVertex), vertexOffset + 6 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->setDrawRange(indexOffset, vertices.count);
+    return true;
+}
+
 enum class GlCurveMaskPatchKind : uint8_t
 {
     Line,
@@ -351,8 +552,25 @@ struct GlCurveMaskVertex
     float kind;
 };
 
+struct GlCurveDirectVertex
+{
+    float x, y;
+    float p0x, p0y;
+    float p1x, p1y;
+    float p2x, p2y;
+    float p3x, p3y;
+    float c0, c1, c2, c3;
+    float c4, c5, c6, c7;
+    float c8, c9;
+    float centerX, centerY, inverseScale;
+    float kind;
+    float insideSign;
+};
+
 static_assert(sizeof(GlCurveMaskVertex) == 24 * sizeof(float),
               "GlCurveMaskVertex must stay tightly packed");
+static_assert(sizeof(GlCurveDirectVertex) == 25 * sizeof(float),
+              "GlCurveDirectVertex must stay tightly packed");
 
 struct GlCubicImplicit
 {
@@ -549,6 +767,315 @@ static Point curveMaskWindowPoint(const Point& point, const RenderRegion& passVi
             passViewport.sh() - (point.y - passViewport.min.y)};
 }
 
+static std::vector<GlDirectContour> curveDirectContours(
+    const RenderPath& path, const RenderRegion& passViewport)
+{
+    std::vector<GlDirectContour> contours;
+    contours.reserve(pathContourCount(path));
+    auto pts = path.pts.data;
+    Point previous = {};
+    GlDirectContour* contour = nullptr;
+
+    ARRAY_FOREACH(cmd, path.cmds)
+    {
+        switch (*cmd) {
+            case PathCommand::MoveTo:
+                previous = *pts++;
+                contours.emplace_back();
+                contour = &contours.back();
+                contour->push_back(curveMaskWindowPoint(previous, passViewport));
+                break;
+            case PathCommand::LineTo:
+                previous = *pts++;
+                contour->push_back(curveMaskWindowPoint(previous, passViewport));
+                break;
+            case PathCommand::CubicTo: {
+                Bezier curve{previous, pts[0], pts[1], pts[2]};
+                auto count = std::max(curve.segments(), 2u);
+                auto step = 1.0f / count;
+                for (uint32_t i = 1; i <= count; ++i) {
+                    contour->push_back(curveMaskWindowPoint(curve.at(step * i),
+                                                            passViewport));
+                }
+                previous = pts[2];
+                pts += 3;
+                break;
+            }
+            case PathCommand::Close:
+                contour = nullptr;
+                break;
+        }
+    }
+    return contours;
+}
+
+struct GlDirectSegment
+{
+    Point start;
+    Point end;
+};
+
+using GlDirectPrimitive = std::vector<GlDirectSegment>;
+using GlDirectPrimitiveContour = std::vector<GlDirectPrimitive>;
+
+static std::vector<GlDirectPrimitiveContour> directPathPrimitives(
+    const RenderPath& path)
+{
+    std::vector<GlDirectPrimitiveContour> contours;
+    contours.reserve(pathContourCount(path));
+    auto pts = path.pts.data;
+    Point previous = {};
+    Point contourFirst = {};
+    GlDirectPrimitiveContour* contour = nullptr;
+
+    auto appendLine = [&](const Point& start, const Point& end) {
+        auto delta = end - start;
+        if (!contour || dot(delta, delta) <= FLOAT_EPSILON * FLOAT_EPSILON) return;
+        contour->push_back({GlDirectSegment{start, end}});
+    };
+
+    ARRAY_FOREACH(cmd, path.cmds)
+    {
+        switch (*cmd) {
+            case PathCommand::MoveTo:
+                contourFirst = previous = *pts++;
+                contours.emplace_back();
+                contour = &contours.back();
+                break;
+            case PathCommand::LineTo: {
+                auto end = *pts++;
+                appendLine(previous, end);
+                previous = end;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                Bezier curve{previous, pts[0], pts[1], pts[2]};
+                auto count = std::max(curve.segments(), 2u);
+                auto step = 1.0f / count;
+                GlDirectPrimitive primitive;
+                primitive.reserve(count);
+                auto start = previous;
+                for (uint32_t i = 1; i <= count; ++i) {
+                    auto end = curve.at(step * i);
+                    primitive.push_back({start, end});
+                    start = end;
+                }
+                contour->push_back(std::move(primitive));
+                previous = pts[2];
+                pts += 3;
+                break;
+            }
+            case PathCommand::Close:
+                appendLine(previous, contourFirst);
+                contour = nullptr;
+                break;
+        }
+    }
+    return contours;
+}
+
+static float directCross(const Point& a, const Point& b, const Point& c)
+{
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+static bool directPointOnSegment(const Point& a, const Point& b, const Point& point)
+{
+    if (std::abs(directCross(a, b, point)) > FLOAT_EPSILON) return false;
+    return point.x >= std::min(a.x, b.x) - FLOAT_EPSILON &&
+           point.x <= std::max(a.x, b.x) + FLOAT_EPSILON &&
+           point.y >= std::min(a.y, b.y) - FLOAT_EPSILON &&
+           point.y <= std::max(a.y, b.y) + FLOAT_EPSILON;
+}
+
+static bool directSegmentsIntersect(const Point& a, const Point& b,
+                                    const Point& c, const Point& d)
+{
+    auto abC = directCross(a, b, c);
+    auto abD = directCross(a, b, d);
+    auto cdA = directCross(c, d, a);
+    auto cdB = directCross(c, d, b);
+    if (((abC > FLOAT_EPSILON && abD < -FLOAT_EPSILON) ||
+         (abC < -FLOAT_EPSILON && abD > FLOAT_EPSILON)) &&
+        ((cdA > FLOAT_EPSILON && cdB < -FLOAT_EPSILON) ||
+         (cdA < -FLOAT_EPSILON && cdB > FLOAT_EPSILON))) {
+        return true;
+    }
+    return directPointOnSegment(a, b, c) || directPointOnSegment(a, b, d) ||
+           directPointOnSegment(c, d, a) || directPointOnSegment(c, d, b);
+}
+
+static float directPointSegmentDistanceSquared(const Point& point,
+                                               const Point& a, const Point& b)
+{
+    auto segment = b - a;
+    auto lengthSquared = dot(segment, segment);
+    if (lengthSquared <= FLOAT_EPSILON * FLOAT_EPSILON) {
+        auto delta = point - a;
+        return dot(delta, delta);
+    }
+    auto projection = clamp(dot(point - a, segment) / lengthSquared,
+                            0.0f, 1.0f);
+    auto delta = point - (a + segment * projection);
+    return dot(delta, delta);
+}
+
+static bool directSegmentsWithinAaBand(const Point& a, const Point& b,
+                                       const Point& c, const Point& d)
+{
+    if (directSegmentsIntersect(a, b, c, d)) return true;
+    auto minimum = std::min(
+        std::min(directPointSegmentDistanceSquared(a, c, d),
+                 directPointSegmentDistanceSquared(b, c, d)),
+        std::min(directPointSegmentDistanceSquared(c, a, b),
+                 directPointSegmentDistanceSquared(d, a, b)));
+    auto diameter = GL_FLAT_MASK_AA_RADIUS * 2.0f;
+    return minimum < diameter * diameter;
+}
+
+static bool directPointsEqual(const Point& a, const Point& b)
+{
+    auto delta = b - a;
+    return dot(delta, delta) <= FLOAT_EPSILON * FLOAT_EPSILON;
+}
+
+static bool directSegmentsRetraceAtSharedEndpoint(const GlDirectSegment& first,
+                                                  const GlDirectSegment& second)
+{
+    Point shared;
+    Point firstOther;
+    Point secondOther;
+    if (directPointsEqual(first.end, second.start)) {
+        shared = first.end;
+        firstOther = first.start;
+        secondOther = second.end;
+    } else if (directPointsEqual(first.start, second.end)) {
+        shared = first.start;
+        firstOther = first.end;
+        secondOther = second.start;
+    } else if (directPointsEqual(first.start, second.start)) {
+        shared = first.start;
+        firstOther = first.end;
+        secondOther = second.end;
+    } else if (directPointsEqual(first.end, second.end)) {
+        shared = first.end;
+        firstOther = first.start;
+        secondOther = second.start;
+    } else {
+        return false;
+    }
+
+    auto firstRay = firstOther - shared;
+    auto secondRay = secondOther - shared;
+    auto firstLengthSquared = dot(firstRay, firstRay);
+    auto secondLengthSquared = dot(secondRay, secondRay);
+    if (firstLengthSquared <= FLOAT_EPSILON * FLOAT_EPSILON ||
+        secondLengthSquared <= FLOAT_EPSILON * FLOAT_EPSILON) {
+        return true;
+    }
+    auto scale = std::sqrt(firstLengthSquared * secondLengthSquared);
+    return std::abs(cross(firstRay, secondRay)) <= FLOAT_EPSILON * scale &&
+           dot(firstRay, secondRay) > FLOAT_EPSILON * scale;
+}
+
+static bool directPathOverlapSensitive(const RenderPath& path)
+{
+    auto contours = directPathPrimitives(path);
+    for (size_t contourIndex = 0; contourIndex < contours.size(); ++contourIndex) {
+        const auto& contour = contours[contourIndex];
+        for (size_t i = 0; i < contour.size(); ++i) {
+            const auto& primitive = contour[i];
+            for (size_t firstIndex = 0; firstIndex < primitive.size(); ++firstIndex) {
+                for (size_t secondIndex = firstIndex + 1;
+                     secondIndex < primitive.size(); ++secondIndex) {
+                    const auto& first = primitive[firstIndex];
+                    const auto& second = primitive[secondIndex];
+                    auto linearGap = secondIndex - firstIndex - 1;
+                    auto localGap = linearGap;
+                    auto cyclic = contour.size() == 1 &&
+                                  directPointsEqual(primitive.front().start,
+                                                    primitive.back().end);
+                    if (cyclic) {
+                        auto cyclicGap = firstIndex + primitive.size() -
+                                         secondIndex - 1;
+                        localGap = std::min(localGap, cyclicGap);
+                    }
+                    if (localGap == 0) {
+                        if (directSegmentsRetraceAtSharedEndpoint(first, second)) {
+                            return true;
+                        }
+                    } else if (localGap == 1) {
+                        if (directSegmentsIntersect(first.start, first.end,
+                                                    second.start, second.end)) {
+                            return true;
+                        }
+                    } else if (directSegmentsWithinAaBand(first.start, first.end,
+                                                          second.start, second.end)) {
+                        return true;
+                    }
+                }
+            }
+
+            for (size_t j = i + 1; j < contour.size(); ++j) {
+                const auto& firstPrimitive = contour[i];
+                const auto& secondPrimitive = contour[j];
+                auto consecutive = j == i + 1;
+                auto cyclic = i == 0 && j + 1 == contour.size();
+                for (size_t firstIndex = 0; firstIndex < firstPrimitive.size();
+                     ++firstIndex) {
+                    for (size_t secondIndex = 0;
+                         secondIndex < secondPrimitive.size(); ++secondIndex) {
+                        const auto& first = firstPrimitive[firstIndex];
+                        const auto& second = secondPrimitive[secondIndex];
+                        auto localGap = firstPrimitive.size() +
+                                        secondPrimitive.size();
+                        if (consecutive) {
+                            localGap = firstPrimitive.size() - firstIndex - 1 +
+                                       secondIndex;
+                        }
+                        if (cyclic) {
+                            auto cyclicGap = secondPrimitive.size() -
+                                             secondIndex - 1 + firstIndex;
+                            localGap = std::min(localGap, cyclicGap);
+                        }
+                        if (localGap == 0) {
+                            if (directSegmentsRetraceAtSharedEndpoint(first, second)) {
+                                return true;
+                            }
+                        } else if (localGap == 1) {
+                            if (directSegmentsIntersect(first.start, first.end,
+                                                        second.start, second.end)) {
+                                return true;
+                            }
+                        } else if (directSegmentsWithinAaBand(first.start, first.end,
+                                                              second.start, second.end)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (size_t otherIndex = contourIndex + 1;
+             otherIndex < contours.size(); ++otherIndex) {
+            const auto& other = contours[otherIndex];
+            for (const auto& firstPrimitive : contour) {
+                for (const auto& secondPrimitive : other) {
+                    for (const auto& first : firstPrimitive) {
+                        for (const auto& second : secondPrimitive) {
+                            if (directSegmentsWithinAaBand(first.start, first.end,
+                                                           second.start, second.end)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 static bool appendCurveMaskPatch(Array<GlCurveMaskVertex>& vertices,
                                  GlCurveMaskPatchKind kind,
                                  const Point& p0, const Point& p1,
@@ -567,7 +1094,7 @@ static bool appendCurveMaskPatch(Array<GlCurveMaskVertex>& vertices,
         auto result = curveMaskImplicitizeCubic(w0, w1, w2, w3, implicit);
         if (result == GlImplicitResult::Empty) return true;
         if (result == GlImplicitResult::Failure) {
-            TVGERR("GL_ENGINE", "Curve-mask POC failed to implicitize a cubic boundary patch");
+            TVGERR("GL_ENGINE", "Curve AA failed to implicitize a cubic boundary patch");
             return false;
         }
     }
@@ -707,6 +1234,110 @@ static bool addCurveMaskBoundary(GlRenderTask* task, GlStageBuffer* gpuBuffer,
     task->setDrawRange(indexOffset, vertices.count);
     return true;
 }
+
+static bool addCurveDirectBoundary(GlRenderTask* task, GlStageBuffer* gpuBuffer,
+                                   const RenderPath& path,
+                                   const RenderRegion& passViewport,
+                                   FillRule fillRule)
+{
+    Array<GlCurveDirectVertex> vertices;
+    vertices.reserve(path.cmds.count * 6);
+    Array<GlCurveMaskVertex> contourVertices;
+    auto contours = curveDirectContours(path, passViewport);
+    size_t contourIndex = 0;
+    auto pts = path.pts.data;
+    Point previous = {};
+    Point contourFirst = {};
+    float insideSign = 0.0f;
+    bool contourOpen = false;
+    bool success = true;
+
+    auto appendLine = [&](const Point& from, const Point& to) {
+        if (insideSign == 0.0f) return;
+        if (!appendCurveMaskPatch(contourVertices, GlCurveMaskPatchKind::Line,
+                                  from, from, to, to, passViewport)) success = false;
+    };
+    auto appendCubic = [&](const Point& from, const Point& c1,
+                           const Point& c2, const Point& to) {
+        if (insideSign == 0.0f) return;
+        if (!appendCurveMaskPatch(contourVertices, GlCurveMaskPatchKind::Cubic,
+                                  from, c1, c2, to, passViewport)) success = false;
+    };
+    auto finishContour = [&]() {
+        if (!contourOpen) return;
+        appendLine(previous, contourFirst);
+        ARRAY_FOREACH(vertex, contourVertices)
+        {
+            vertices.push(GlCurveDirectVertex{
+                vertex->x, vertex->y,
+                vertex->p0x, vertex->p0y, vertex->p1x, vertex->p1y,
+                vertex->p2x, vertex->p2y, vertex->p3x, vertex->p3y,
+                vertex->c0, vertex->c1, vertex->c2, vertex->c3,
+                vertex->c4, vertex->c5, vertex->c6, vertex->c7,
+                vertex->c8, vertex->c9,
+                vertex->centerX, vertex->centerY, vertex->inverseScale,
+                vertex->kind, insideSign});
+        }
+        contourVertices.clear();
+        contourOpen = false;
+    };
+
+    ARRAY_FOREACH(cmd, path.cmds)
+    {
+        switch (*cmd) {
+            case PathCommand::MoveTo:
+                finishContour();
+                contourFirst = previous = *pts++;
+                insideSign = directContourInsideSign(contours, contourIndex++,
+                                                     fillRule);
+                contourOpen = true;
+                break;
+            case PathCommand::LineTo: {
+                auto end = *pts++;
+                if (!contourOpen) return false;
+                appendLine(previous, end);
+                previous = end;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                auto end = pts[2];
+                if (!contourOpen) return false;
+                appendCubic(previous, pts[0], pts[1], end);
+                previous = end;
+                pts += 3;
+                break;
+            }
+            case PathCommand::Close:
+                finishContour();
+                break;
+        }
+    }
+    finishContour();
+    if (!success || contourIndex != contours.size() || vertices.empty()) return false;
+
+    auto vertexOffset = gpuBuffer->push(vertices.data,
+                                        vertices.count * sizeof(GlCurveDirectVertex));
+    uint32_t* indices = nullptr;
+    auto indexOffset = gpuBuffer->reserveIndex(vertices.count * sizeof(uint32_t),
+                                               reinterpret_cast<void**>(&indices));
+    for (uint32_t i = 0; i < vertices.count; ++i)
+        indices[i] = i;
+
+    auto buffer = gpuBuffer->getBufferId();
+    task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlCurveDirectVertex), vertexOffset, GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{1, 2, sizeof(GlCurveDirectVertex), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{2, 2, sizeof(GlCurveDirectVertex), vertexOffset + 4 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{3, 2, sizeof(GlCurveDirectVertex), vertexOffset + 6 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{4, 2, sizeof(GlCurveDirectVertex), vertexOffset + 8 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{5, 4, sizeof(GlCurveDirectVertex), vertexOffset + 10 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{6, 4, sizeof(GlCurveDirectVertex), vertexOffset + 14 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{7, 2, sizeof(GlCurveDirectVertex), vertexOffset + 18 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{8, 3, sizeof(GlCurveDirectVertex), vertexOffset + 20 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{9, 1, sizeof(GlCurveDirectVertex), vertexOffset + 23 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{10, 1, sizeof(GlCurveDirectVertex), vertexOffset + 24 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->setDrawRange(indexOffset, vertices.count);
+    return true;
+}
 #endif
 
 GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
@@ -715,7 +1346,7 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
 
     if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
 
-    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
 #if defined(THORVG_GL_TARGET_GL)
     dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
 #else  // TODO: create partial buffer when MSAA is disabled
@@ -746,11 +1377,128 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
 }
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+bool GlRenderer::drawFlatDirect(GlShape& sdata, const RenderColor& color,
+                                int32_t depth, const RenderRegion& viewBounds,
+                                const RenderRegion& passViewport)
+{
+    auto& geometry = sdata.geometry;
+    if (geometry.optPathSkipFill || geometry.optPathThin || geometry.fillBoundary.edges.empty() || !geometry.fillBoundary.supported || !directPathClosed(geometry.curveMaskPath) || !sdata.clips.empty()) return false;
+
+    auto shapeBounds = geometry.fillBounds;
+    auto expansion = static_cast<int32_t>(ceilf(GL_FLAT_MASK_AA_RADIUS));
+    shapeBounds.min.x -= expansion;
+    shapeBounds.min.y -= expansion;
+    shapeBounds.max.x += expansion;
+    shapeBounds.max.y += expansion;
+    shapeBounds.intersect(viewBounds);
+    shapeBounds.intersect(passViewport);
+    if (shapeBounds.invalid()) return false;
+
+    auto shapeRegion = viewportRegion(passViewport, shapeBounds);
+    auto viewMatrix = currentPass()->getViewMatrix();
+    auto stencilMode = geometry.fillRule == FillRule::EvenOdd ? GlStencilMode::FillEvenOdd : GlStencilMode::FillNonZero;
+    auto alpha = MULTIPLY(color.a, sdata.opacity);
+
+    mSolidBatch.clear();
+    mStencilCoverBatch.clear();
+
+    auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil]);
+    stencilTask->setViewMatrix(viewMatrix);
+    stencilTask->setDrawDepth(depth);
+    stencilTask->setViewport(shapeRegion);
+    geometry.draw(stencilTask, &mGpuBuffer, RenderUpdateFlag::Path);
+
+    auto boundaryTask = new GlRenderTask(mPrograms[RT_FlatDirectBoundary]);
+    boundaryTask->setViewMatrix(viewMatrix);
+    boundaryTask->setDrawDepth(depth);
+    boundaryTask->setViewport(shapeRegion);
+    boundaryTask->setVertexColor(color.r / 255.0f, color.g / 255.0f,
+                                 color.b / 255.0f, alpha / 255.0f);
+    if (!addFlatDirectBoundary(boundaryTask, &mGpuBuffer, geometry,
+                               passViewport)) {
+        delete stencilTask;
+        delete boundaryTask;
+        return false;
+    }
+
+    auto coverTask = new GlRenderTask(mPrograms[RT_Color]);
+    coverTask->setViewMatrix(viewMatrix);
+    coverTask->setDrawDepth(depth);
+    coverTask->setViewport(shapeRegion);
+    coverTask->setVertexColor(color.r / 255.0f, color.g / 255.0f,
+                              color.b / 255.0f, alpha / 255.0f);
+    addFlatMaskQuad(coverTask, &mGpuBuffer, shapeBounds);
+
+    currentPass()->addRenderTask(new GlDirectAaTask(
+        currentPass()->fbo, stencilTask, boundaryTask, coverTask, stencilMode,
+        shapeRegion, passViewport.w(), passViewport.h()));
+    return true;
+}
+
+bool GlRenderer::drawCurveDirect(GlShape& sdata, const RenderColor& color,
+                                 int32_t depth, const RenderRegion& viewBounds,
+                                 const RenderRegion& passViewport)
+{
+    auto& geometry = sdata.geometry;
+    if (geometry.optPathSkipFill || geometry.optPathThin || geometry.curveMaskPath.empty() || !directPathClosed(geometry.curveMaskPath) || !sdata.clips.empty()) return false;
+
+    auto shapeBounds = geometry.fillBounds;
+    auto expansion = static_cast<int32_t>(ceilf(GL_FLAT_MASK_AA_RADIUS));
+    shapeBounds.min.x -= expansion;
+    shapeBounds.min.y -= expansion;
+    shapeBounds.max.x += expansion;
+    shapeBounds.max.y += expansion;
+    shapeBounds.intersect(viewBounds);
+    shapeBounds.intersect(passViewport);
+    if (shapeBounds.invalid()) return false;
+
+    auto shapeRegion = viewportRegion(passViewport, shapeBounds);
+    auto viewMatrix = currentPass()->getViewMatrix();
+    auto stencilMode = geometry.fillRule == FillRule::EvenOdd ? GlStencilMode::FillEvenOdd : GlStencilMode::FillNonZero;
+    auto alpha = MULTIPLY(color.a, sdata.opacity);
+
+    mSolidBatch.clear();
+    mStencilCoverBatch.clear();
+
+    auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil]);
+    stencilTask->setViewMatrix(viewMatrix);
+    stencilTask->setDrawDepth(depth);
+    stencilTask->setViewport(shapeRegion);
+    geometry.draw(stencilTask, &mGpuBuffer, RenderUpdateFlag::Path);
+
+    auto boundaryTask = new GlRenderTask(mPrograms[RT_CurveDirectBoundary]);
+    boundaryTask->setViewMatrix(viewMatrix);
+    boundaryTask->setDrawDepth(depth);
+    boundaryTask->setViewport(shapeRegion);
+    boundaryTask->setVertexColor(color.r / 255.0f, color.g / 255.0f,
+                                 color.b / 255.0f, alpha / 255.0f);
+    if (!addCurveDirectBoundary(boundaryTask, &mGpuBuffer,
+                                geometry.curveMaskPath, passViewport,
+                                geometry.fillRule)) {
+        delete stencilTask;
+        delete boundaryTask;
+        return false;
+    }
+
+    auto coverTask = new GlRenderTask(mPrograms[RT_Color]);
+    coverTask->setViewMatrix(viewMatrix);
+    coverTask->setDrawDepth(depth);
+    coverTask->setViewport(shapeRegion);
+    coverTask->setVertexColor(color.r / 255.0f, color.g / 255.0f,
+                              color.b / 255.0f, alpha / 255.0f);
+    addFlatMaskQuad(coverTask, &mGpuBuffer, shapeBounds);
+
+    currentPass()->addRenderTask(new GlDirectAaTask(
+        currentPass()->fbo, stencilTask, boundaryTask, coverTask, stencilMode,
+        shapeRegion, passViewport.w(), passViewport.h()));
+    return true;
+}
+
 bool GlRenderer::drawFlatMask(GlShape& sdata, const RenderColor& color, int32_t depth,
                               const RenderRegion& viewBounds, const RenderRegion& passViewport)
 {
     auto& geometry = sdata.geometry;
-    if (!mFlatMask || mFlatMaskTarget.invalid() || geometry.optPathSkipFill) return false;
+    if (geometry.optPathSkipFill || !sdata.clips.empty()) return false;
     if (geometry.optPathThin) {
         TVGLOG("GL_ENGINE", "Flat-mask POC excludes thin fills; using the current GL fill path");
         return false;
@@ -774,6 +1522,11 @@ bool GlRenderer::drawFlatMask(GlShape& sdata, const RenderColor& color, int32_t 
     auto maskRegion = viewportRegion(passViewport, maskBounds);
     auto viewMatrix = currentPass()->getViewMatrix();
     auto stencilMode = (geometry.fillRule == FillRule::EvenOdd) ? GlStencilMode::FillEvenOdd : GlStencilMode::FillNonZero;
+
+    // Flat-mask writes standalone streams. Close open batches before reserving
+    // them so a failed boundary build can safely fall back to the legacy path.
+    mSolidBatch.clear();
+    mStencilCoverBatch.clear();
 
     auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil]);
     stencilTask->setViewMatrix(viewMatrix);
@@ -818,8 +1571,6 @@ bool GlRenderer::drawFlatMask(GlShape& sdata, const RenderColor& color, int32_t 
     compositeTask->addBindResource(GlBindingResource{0, mFlatMaskTarget.colorTex, GlShaderUniform::MaskTexture});
     addFlatMaskQuad(compositeTask, &mGpuBuffer, maskBounds);
 
-    mSolidBatch.clear();
-    mStencilCoverBatch.clear();
     currentPass()->addRenderTask(new GlFlatMaskTask(&mFlatMaskTarget, currentPass()->fbo,
         stencilTask, interiorTask, insidePositiveTask, insideNegativeTask, outsideTask,
         compositeTask, stencilMode, maskRegion,
@@ -832,8 +1583,7 @@ bool GlRenderer::drawCurveMask(GlShape& sdata, const RenderColor& color, int32_t
                                const RenderRegion& passViewport)
 {
     auto& geometry = sdata.geometry;
-    if (!mCurveMask || mFlatMaskTarget.invalid() || geometry.optPathSkipFill ||
-        geometry.curveMaskPath.empty()) return false;
+    if (geometry.optPathSkipFill || geometry.curveMaskPath.empty()) return false;
     if (geometry.optPathThin) {
         TVGLOG("GL_ENGINE", "Curve-mask POC excludes thin fills; using the current GL fill path");
         return false;
@@ -905,7 +1655,18 @@ bool GlRenderer::drawCurveMask(GlShape& sdata, const RenderColor& color, int32_t
 }
 #endif
 
-void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+static GlAaMode solidAaRoute(GlAaMode mode, uint8_t effectiveAlpha,
+                             bool overlapSensitive)
+{
+    if (mode != GlAaMode::Hybrid) return mode;
+    return effectiveAlpha < 255 || overlapSensitive ? GlAaMode::CurveMask : GlAaMode::CurveDirect;
+}
+#endif
+
+void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c,
+                               RenderUpdateFlag flag, int32_t depth,
+                               bool routeAa)
 {
     if (!sdata.geometry.drawable(flag)) return;
 
@@ -925,12 +1686,47 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     auto viewRegion = viewportRegion(vp, bbox);
     auto stencilMode = sdata.geometry.getStencilMode(flag);
 
+    if (routeAa) {
+        if (mAaMode == GlAaMode::NoAa) {
+            ++mAaStats.noAa;
+        } else if (mAaMode == GlAaMode::Msaa4) {
+            ++mAaStats.msaa4;
+        } else {
+            auto rendered = false;
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
-    if (mBlendMethod == BlendMethod::Normal && flag == RenderUpdateFlag::Color &&
-        drawCurveMask(sdata, c, depth, viewBounds, vp)) return;
-    if (mBlendMethod == BlendMethod::Normal && flag == RenderUpdateFlag::Color &&
-        drawFlatMask(sdata, c, depth, viewBounds, vp)) return;
+            if (flag == RenderUpdateFlag::Color && mBlendMethod == BlendMethod::Normal && sdata.clips.empty()) {
+                auto effectiveAlpha = MULTIPLY(c.a, sdata.opacity);
+                auto overlapSensitive = mAaMode == GlAaMode::Hybrid &&
+                                        directPathClosed(sdata.geometry.curveMaskPath) &&
+                                        directPathOverlapSensitive(sdata.geometry.curveMaskPath);
+                auto route = solidAaRoute(mAaMode, effectiveAlpha,
+                                          overlapSensitive);
+                switch (route) {
+                    case GlAaMode::FlatDirect:
+                        rendered = drawFlatDirect(sdata, c, depth, viewBounds, vp);
+                        if (rendered) ++mAaStats.flatDirect;
+                        break;
+                    case GlAaMode::CurveDirect:
+                        rendered = drawCurveDirect(sdata, c, depth, viewBounds, vp);
+                        if (rendered) ++mAaStats.curveDirect;
+                        break;
+                    case GlAaMode::FlatMask:
+                        rendered = drawFlatMask(sdata, c, depth, viewBounds, vp);
+                        if (rendered) ++mAaStats.flatMask;
+                        break;
+                    case GlAaMode::CurveMask:
+                        rendered = drawCurveMask(sdata, c, depth, viewBounds, vp);
+                        if (rendered) ++mAaStats.curveMask;
+                        break;
+                    default:
+                        break;
+                }
+            }
 #endif
+            if (rendered) return;
+            ++mAaStats.fallback;
+        }
+    }
 
     if (!blendShape && stencilMode == GlStencilMode::None && sdata.clips.empty()) {
         mSolidBatch.draw(*this, sdata, c, depth, viewRegion, viewportRegion(vp, viewBounds));
@@ -972,7 +1768,9 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
     else pass->addRenderTask(task);
 }
 
-void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
+void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill,
+                               RenderUpdateFlag flag, int32_t depth,
+                               bool routeAa)
 {
     if (!sdata.geometry.drawable(flag)) return;
 
@@ -993,6 +1791,12 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
     auto stopCnt = min(colorStopCnt, static_cast<uint32_t>(MAX_GRADIENT_STOPS));
     if (stopCnt < 1) return;
 
+    if (routeAa) {
+        if (mAaMode == GlAaMode::NoAa) ++mAaStats.noAa;
+        else if (mAaMode == GlAaMode::Msaa4) ++mAaStats.msaa4;
+        else ++mAaStats.fallback;
+    }
+
     GlRenderTarget* dstCopyFbo = nullptr;
     auto radial = fill->type() == Type::RadialGradient;
     auto viewRegion = viewportRegion(vp, bbox);
@@ -1012,7 +1816,7 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFla
             auto& stop = stops[colorStopCnt - 1];
             RenderColor color = {stop.r, stop.g, stop.b, stop.a};
             auto solidFlag = (flag & RenderUpdateFlag::GradientStroke) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Color;
-            drawPrimitive(sdata, color, solidFlag, depth);
+            drawPrimitive(sdata, color, solidFlag, depth, false);
             return;
         }
 
@@ -1219,7 +2023,7 @@ bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bound
 
     if (mBlendMethod == BlendMethod::Normal) return false;
 
-    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+    if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
 
     auto blendFbo = mBlendPool[0]->getRenderTarget(bounds);
 
@@ -1236,7 +2040,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     auto composeTask = blendPass->endRenderPass<GlComposeTask>(nullptr, currentPass()->getFboId());
 
     const auto& vp = blendPass->getViewport();
-    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
 #if defined(THORVG_GL_TARGET_GL)
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
 #else // TODO: create partial buffer when MSAA is disabled        
@@ -1496,8 +2300,8 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
     } else if (glCmp->blendMethod != BlendMethod::Normal) {
         auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
-            if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-            if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+            if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
+            if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
 #if defined(THORVG_GL_TARGET_GL)
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(renderPass->getViewport());
 #else // TODO: create partial buffer when MSAA is disabled
@@ -1606,15 +2410,18 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
     mStateCache.invalidate();
 
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
-    mRootTarget.init(mStateCache, this->surface.w, this->surface.h, mTargetFboId);
+    auto samples = mAaMode == GlAaMode::Msaa4 ? 4u : 1u;
+    mRootTarget.init(mStateCache, this->surface.w, this->surface.h, samples, mTargetFboId);
+    mAaStats.mode = mAaMode;
+    mAaStats.rootSamples = mRootTarget.samples;
     mStateCache.invalidate();
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
-    if ((mFlatMask || mCurveMask) &&
-        !mFlatMaskTarget.init(mStateCache, this->surface.w, this->surface.h)) {
-        TVGERR("GL_ENGINE", "Coverage-mask POC target initialization failed; using the current GL fill path");
-        mFlatMask = false;
-        mCurveMask = false;
+    auto needsMaskTarget = mAaMode == GlAaMode::FlatMask || mAaMode == GlAaMode::CurveMask || mAaMode == GlAaMode::Hybrid;
+    if (needsMaskTarget && !mFlatMaskTarget.init(mStateCache, this->surface.w, this->surface.h)) {
+        TVGERR("GL_ENGINE", "Coverage-mask target initialization failed");
+        mStateCache.invalidate();
+        return Result::InsufficientCondition;
     }
     mStateCache.invalidate();
 #endif
@@ -1622,6 +2429,35 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
     return ret ? Result::Success : Result::InsufficientCondition;
 }
 
+bool GlRenderer::aaMode(GlAaMode mode)
+{
+    if (mContext) return false;
+    mAaMode = mode;
+    mAaStats.mode = mode;
+    return true;
+}
+
+GlAaMode GlRenderer::aaMode() const
+{
+    return mAaMode;
+}
+
+uint32_t GlRenderer::aaSamples() const
+{
+    return mRootTarget.samples;
+}
+
+const GlAaStats& GlRenderer::aaStats() const
+{
+    return mAaStats;
+}
+
+void GlRenderer::resetAaStats()
+{
+    mAaStats = {};
+    mAaStats.mode = mAaMode;
+    mAaStats.rootSamples = mRootTarget.samples;
+}
 
 bool GlRenderer::sync()
 {
@@ -1748,7 +2584,7 @@ bool GlRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
     glCmp->blendMethod = mBlendMethod;
 
     uint32_t index = mRenderPassStack.count - 1;
-    if (index >= mComposePool.count) mComposePool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+    if (index >= mComposePool.count) mComposePool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
 
     if (glCmp->bbox.valid()) mRenderPassStack.push(new GlRenderPass(mComposePool[index]->getRenderTarget(glCmp->bbox)));
     else mRenderPassStack.push(new GlRenderPass(nullptr));
@@ -1774,8 +2610,8 @@ bool GlRenderer::endComposite(RenderCompositor* cmp)
 void GlRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
     // we must be sure, that we have intermediate FBOs
-    if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
+    if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
+    if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mRootTarget.samples, mStateCache));
 
     mEffect.update(effect, transform);
 }
@@ -2021,7 +2857,9 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         sdata->validFill = false;
         float opacityMultiplier = 1.0f;
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
-        if (sdata->geometry.tesselateShape(*(sdata->rshape), &opacityMultiplier, mFlatMask)) {
+        auto captureBoundary = mAaMode == GlAaMode::FlatDirect || mAaMode == GlAaMode::FlatMask;
+        if (sdata->geometry.tesselateShape(*(sdata->rshape), &opacityMultiplier,
+                                           captureBoundary)) {
 #else
         if (sdata->geometry.tesselateShape(*(sdata->rshape), &opacityMultiplier)) {
 #endif
@@ -2136,11 +2974,5 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption
     ++_rendererCnt;
     _rendererMtx.unlock();
 
-    auto renderer = new GlRenderer;
-#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
-    // Reserved POC-only EngineOption bits; the public enum intentionally remains unchanged.
-    renderer->mFlatMask = (static_cast<uint8_t>(op) & 0x80u) != 0;
-    renderer->mCurveMask = (static_cast<uint8_t>(op) & 0x40u) != 0;
-#endif
-    return renderer;
+    return new GlRenderer;
 }

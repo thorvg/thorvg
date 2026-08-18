@@ -121,6 +121,29 @@ struct GlStencilCoverTask : GlRenderTask
 };
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+class GlDirectAaTask : public GlRenderTask
+{
+public:
+    GlDirectAaTask(GlRenderTarget* dstTarget, GlRenderTask* stencilTask,
+                   GlRenderTask* boundaryTask, GlRenderTask* coverTask,
+                   GlStencilMode mode, const RenderRegion& shapeRegion,
+                   uint32_t passWidth, uint32_t passHeight);
+    ~GlDirectAaTask() override;
+
+    void run(GlStateCache& state) override;
+    void normalizeDrawDepth(int32_t maxDepth) override;
+
+private:
+    GlRenderTarget* mDstTarget;
+    GlRenderTask* mStencilTask;
+    GlRenderTask* mBoundaryTask;
+    GlRenderTask* mCoverTask;
+    GlStencilMode mStencilMode;
+    RenderRegion mShapeRegion;
+    uint32_t mPassWidth;
+    uint32_t mPassHeight;
+};
+
 class GlFlatMaskTask : public GlRenderTask
 {
 public:

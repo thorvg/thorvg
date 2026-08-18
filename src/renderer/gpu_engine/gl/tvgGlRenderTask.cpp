@@ -55,6 +55,11 @@ void GlRenderTask::run(GlStateCache& state)
         GL_CHECK(glUniformMatrix3fv(vLoc, 1, GL_FALSE, viewMat3));
     }
 
+    if (useVertexColor) {
+        int32_t cLoc = program->getUniformLocation(GlShaderUniform::Color);
+        if (cLoc >= 0) GL_CHECK(glUniform4fv(cLoc, 1, vertexColor));
+    }
+
     // setup scissor rect
     state.scissor(viewport.sx(), viewport.sy(), viewport.sw(), viewport.sh());
 
@@ -194,6 +199,93 @@ void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
 }
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+/************************************************************************/
+/* GlDirectAaTask Class Implementation                                  */
+/************************************************************************/
+
+GlDirectAaTask::GlDirectAaTask(GlRenderTarget* dstTarget,
+                               GlRenderTask* stencilTask,
+                               GlRenderTask* boundaryTask,
+                               GlRenderTask* coverTask,
+                               GlStencilMode mode,
+                               const RenderRegion& shapeRegion,
+                               uint32_t passWidth, uint32_t passHeight) : GlRenderTask(nullptr), mDstTarget(dstTarget), mStencilTask(stencilTask),
+                                                                          mBoundaryTask(boundaryTask), mCoverTask(coverTask),
+                                                                          mStencilMode(mode), mShapeRegion(shapeRegion),
+                                                                          mPassWidth(passWidth), mPassHeight(passHeight)
+{
+}
+
+GlDirectAaTask::~GlDirectAaTask()
+{
+    delete mStencilTask;
+    delete mBoundaryTask;
+    delete mCoverTask;
+}
+
+void GlDirectAaTask::run(GlStateCache& state)
+{
+    auto stencilMask = (mStencilMode == GlStencilMode::FillEvenOdd) ? 0x01 : 0xFF;
+
+    state.bindFramebuffer(GL_FRAMEBUFFER, mDstTarget->fbo);
+    state.viewport(0, 0, mPassWidth, mPassHeight);
+    state.scissor(mShapeRegion.sx(), mShapeRegion.sy(),
+                  mShapeRegion.sw(), mShapeRegion.sh());
+    state.stencilMask(0xFF);
+    state.depthMask(GL_TRUE);
+    state.clearStencil(0);
+    state.clearDepth(0.0);
+    GL_CHECK(glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+    // Classify the complete fill before analytical boundary patches paint.
+    state.disable(GL_DEPTH_TEST);
+    state.disable(GL_BLEND);
+    state.enable(GL_STENCIL_TEST);
+    state.stencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF);
+    state.stencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP);
+    state.stencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF);
+    state.stencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP);
+    state.colorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    mStencilTask->run(state);
+
+    // A boundary fragment writes fractional color and binary depth occupancy.
+    // The following solid cover is therefore kept out of the analytical band.
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    state.disable(GL_STENCIL_TEST);
+    state.enable(GL_DEPTH_TEST);
+    state.depthFunc(GL_ALWAYS);
+    state.depthMask(GL_TRUE);
+    state.enable(GL_BLEND);
+    state.blendEquation(GL_FUNC_ADD);
+    state.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    mBoundaryTask->run(state);
+
+    state.enable(GL_STENCIL_TEST);
+    state.stencilFunc(GL_NOTEQUAL, 0x0, stencilMask);
+    state.stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    state.depthFunc(GL_GREATER);
+    state.depthMask(GL_FALSE);
+    mCoverTask->run(state);
+
+    state.disable(GL_STENCIL_TEST);
+    // Direct AA uses depth only as temporary per-shape occupancy. Do not leak
+    // that binary band (or the winding classification) into a later fallback.
+    state.stencilMask(0xFF);
+    state.depthMask(GL_TRUE);
+    state.clearStencil(0);
+    state.clearDepth(0.0);
+    GL_CHECK(glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    state.depthMask(GL_FALSE);
+    state.depthFunc(GL_GREATER);
+}
+
+void GlDirectAaTask::normalizeDrawDepth(int32_t maxDepth)
+{
+    mStencilTask->normalizeDrawDepth(maxDepth);
+    mBoundaryTask->normalizeDrawDepth(maxDepth);
+    mCoverTask->normalizeDrawDepth(maxDepth);
+}
+
 /************************************************************************/
 /* GlFlatMaskTask Class Implementation                                  */
 /************************************************************************/
@@ -434,6 +526,8 @@ void GlComposeTask::run(GlStateCache& state)
 
 void GlComposeTask::onResolve(GlStateCache& state)
 {
+    if (fbo->samples == 1) return;
+
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, getSelfFbo());
     state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, getResolveFboId());
     GL_CHECK(glBlitFramebuffer(0, 0, renderWidth, renderHeight, 0, 0, renderWidth, renderHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST));
@@ -498,12 +592,12 @@ void GlSceneBlendTask::run(GlStateCache& state)
 
 #if defined(THORVG_GL_TARGET_GL)
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, targetFbo);
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->textureFbo());
     state.viewport(0, 0, dstCopyFbo->width, dstCopyFbo->height);
     state.scissor(0, 0, dstCopyFbo->width, dstCopyFbo->height);
     GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
 #else // TODO: create partial buffer when MSAA is disabled
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->textureFbo());
     if (vp.min.x != 0 || vp.min.y != 0 || dstCopyFbo->width != static_cast<uint32_t>(vp.w()) || dstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(state, dstCopyFbo->width, dstCopyFbo->height);
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, srcFbo->fbo);
     state.viewport(0, 0, width, height);
@@ -576,7 +670,7 @@ void GlDirectBlendTask::run(GlStateCache& state)
     if (fboW <= 0 || fboH <= 0) return;
 
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->textureFbo());
 
 #if defined(THORVG_GL_TARGET_GL)
     state.viewport(0, 0, width, height);
@@ -611,7 +705,7 @@ void GlComplexBlendTask::run(GlStateCache& state)
     if (width <= 0 || height <= 0) return;
 
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->textureFbo());
 
     const auto& vp = viewport;
 
@@ -672,7 +766,7 @@ void GlGaussianBlurTask::run(GlStateCache& state)
     state.scissor(0, 0, width, height);
     // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo0->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo0->textureFbo());
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     state.bindFramebuffer(GL_FRAMEBUFFER, dstFbo->fbo);
 
@@ -680,10 +774,10 @@ void GlGaussianBlurTask::run(GlStateCache& state)
     state.depthFunc(GL_ALWAYS);
     if (effect->direction == 0) {
         state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-        state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo1->resolvedFbo);
+        state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo1->textureFbo());
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
         // horizontal blur
-        state.bindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo1->resolvedFbo);
+        state.bindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo1->textureFbo());
         horzTask->setViewport(viewport);
         horzTask->addBindResource({0, dstCopyFbo0->colorTex, GlShaderUniform::SourceTexture});
         horzTask->run(state);
@@ -724,10 +818,10 @@ void GlEffectDropShadowTask::run(GlStateCache& state)
 
     // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo0->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo0->textureFbo());
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo1->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo1->textureFbo());
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 
     state.disable(GL_BLEND);
@@ -735,18 +829,18 @@ void GlEffectDropShadowTask::run(GlStateCache& state)
     // when sigma is 0, no blur is applied, and the original image is used directly as the shadow.
     if (!tvg::zero(effect->sigma)) {
         // horizontal blur
-        state.bindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo0->resolvedFbo);
+        state.bindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo0->textureFbo());
         horzTask->setViewport(viewport);
         horzTask->addBindResource({0, dstCopyFbo1->colorTex, GlShaderUniform::SourceTexture});
         horzTask->run(state);
         // vertical blur
-        state.bindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo1->resolvedFbo);
+        state.bindFramebuffer(GL_FRAMEBUFFER, dstCopyFbo1->textureFbo());
         vertTask->setViewport(viewport);
         vertTask->addBindResource({0, dstCopyFbo0->colorTex, GlShaderUniform::SourceTexture});
         vertTask->run(state);
         // copy original image to intermediate buffer
         state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-        state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo0->resolvedFbo);
+        state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo0->textureFbo());
         GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     }
     // run drop shadow effect
@@ -771,7 +865,7 @@ void GlEffectColorTransformTask::run(GlStateCache& state)
     state.scissor(0, 0, width, height);
     // we need to make a full copy of dst to intermediate buffers to be sure that they don’t contain prev data.
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, dstFbo->fbo);
-    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->textureFbo());
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     state.bindFramebuffer(GL_FRAMEBUFFER, dstFbo->fbo);
 

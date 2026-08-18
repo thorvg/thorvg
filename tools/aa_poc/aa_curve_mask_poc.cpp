@@ -31,6 +31,7 @@
 #include "aa_poc_comparison_scene.h"
 #include "aa_poc_curve_mask_scene.h"
 #include "aa_poc_gl.h"
+#include "aa_product_renderer.h"
 
 using namespace tvg;
 
@@ -39,7 +40,6 @@ namespace
 
 constexpr uint32_t NATIVE_WIDTH = aa_poc::CURVE_MASK_WIDTH;
 constexpr uint32_t NATIVE_HEIGHT = aa_poc::CURVE_MASK_HEIGHT;
-constexpr uint8_t CURVE_MASK_ENGINE_OPTION = 0x40;
 
 bool renderCurveMask(aa_poc::GlContext& context, const std::string& outputDir,
                      float offsetX, float offsetY, bool comparison)
@@ -49,10 +49,13 @@ bool renderCurveMask(aa_poc::GlContext& context, const std::string& outputDir,
     aa_poc::RenderTarget renderTarget;
     if (!renderTarget.init(width, height, 1, "aa_curve_mask_poc")) return false;
 
-    auto canvas = std::unique_ptr<GlCanvas>(
-        GlCanvas::gen(static_cast<EngineOption>(CURVE_MASK_ENGINE_OPTION)));
+    auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen(EngineOption::Default));
     if (!canvas) {
         std::fprintf(stderr, "aa_curve_mask_poc: GlCanvas::gen() failed\n");
+        return false;
+    }
+    if (!aa_poc::setProductAaMode(*canvas, aa_poc::ProductAaMode::CurveMask)) {
+        std::fprintf(stderr, "aa_curve_mask_poc: AA mode must be selected before target creation\n");
         return false;
     }
 

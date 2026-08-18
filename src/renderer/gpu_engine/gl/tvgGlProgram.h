@@ -29,6 +29,7 @@ enum class GlShaderUniform : uint8_t
 {
     Depth,
     ViewMatrix,
+    Color,
     SourceTexture,
     BlurTexture,
     DestinationTexture,

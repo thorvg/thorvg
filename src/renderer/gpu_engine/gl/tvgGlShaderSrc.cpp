@@ -561,6 +561,216 @@ const char* STENCIL_FRAG_SHADER = TVG_COMPOSE_SHADER(
 );
 
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+const char* FLAT_DIRECT_BOUNDARY_VERT_SHADER = R"(
+uniform mat3 uViewMatrix;
+layout(location = 0) in vec2 aLocation;
+layout(location = 1) in vec2 aStart;
+layout(location = 2) in vec2 aEnd;
+layout(location = 3) in float aInsideSign;
+flat out vec2 vStart;
+flat out vec2 vEnd;
+flat out float vInsideSign;
+
+void main()
+{
+    vec3 pos = uViewMatrix * vec3(aLocation, 1.0);
+    gl_Position = vec4(pos.xy, 1.0, 1.0);
+    vStart = aStart;
+    vEnd = aEnd;
+    vInsideSign = aInsideSign;
+}
+)";
+
+const char* FLAT_DIRECT_BOUNDARY_FRAG_SHADER = R"(
+flat in vec2 vStart;
+flat in vec2 vEnd;
+flat in float vInsideSign;
+uniform vec4 uColor;
+out vec4 FragColor;
+
+void main()
+{
+    vec2 edge = vEnd - vStart;
+    float edgeLength2 = dot(edge, edge);
+    float t = clamp(dot(gl_FragCoord.xy - vStart, edge) / edgeLength2, 0.0, 1.0);
+    float distancePx = length(gl_FragCoord.xy - (vStart + t * edge));
+    float crossValue = (edge.x * (gl_FragCoord.y - vStart.y) -
+                        edge.y * (gl_FragCoord.x - vStart.x)) * vInsideSign;
+    float side = crossValue < 0.0 ? -1.0 : 1.0;
+    float coverage = clamp(0.5 + side * distancePx, 0.0, 1.0);
+    if (coverage <= 0.0) discard;
+    vec4 premul = vec4(uColor.rgb * uColor.a, uColor.a);
+    FragColor = premul * coverage;
+}
+)";
+
+const char* CURVE_DIRECT_BOUNDARY_VERT_SHADER = R"(
+uniform mat3 uViewMatrix;
+layout(location = 0) in vec2 aLocation;
+layout(location = 1) in vec2 aP0;
+layout(location = 2) in vec2 aP1;
+layout(location = 3) in vec2 aP2;
+layout(location = 4) in vec2 aP3;
+layout(location = 5) in vec4 aImplicit0;
+layout(location = 6) in vec4 aImplicit1;
+layout(location = 7) in vec2 aImplicit2;
+layout(location = 8) in vec3 aNormalization;
+layout(location = 9) in float aKind;
+layout(location = 10) in float aInsideSign;
+flat out vec2 vP0;
+flat out vec2 vP1;
+flat out vec2 vP2;
+flat out vec2 vP3;
+flat out vec4 vImplicit0;
+flat out vec4 vImplicit1;
+flat out vec2 vImplicit2;
+flat out vec3 vNormalization;
+flat out float vKind;
+flat out float vInsideSign;
+
+void main()
+{
+    vec3 pos = uViewMatrix * vec3(aLocation, 1.0);
+    gl_Position = vec4(pos.xy, 1.0, 1.0);
+    vP0 = aP0;
+    vP1 = aP1;
+    vP2 = aP2;
+    vP3 = aP3;
+    vImplicit0 = aImplicit0;
+    vImplicit1 = aImplicit1;
+    vImplicit2 = aImplicit2;
+    vNormalization = aNormalization;
+    vKind = aKind;
+    vInsideSign = aInsideSign;
+}
+)";
+
+const char* CURVE_DIRECT_BOUNDARY_FRAG_SHADER = R"(
+flat in vec2 vP0;
+flat in vec2 vP1;
+flat in vec2 vP2;
+flat in vec2 vP3;
+flat in vec4 vImplicit0;
+flat in vec4 vImplicit1;
+flat in vec2 vImplicit2;
+flat in vec3 vNormalization;
+flat in float vKind;
+flat in float vInsideSign;
+uniform vec4 uColor;
+out vec4 FragColor;
+
+vec2 cubicPoint(float t)
+{
+    float s = 1.0 - t;
+    return s * s * s * vP0 + 3.0 * s * s * t * vP1 +
+           3.0 * s * t * t * vP2 + t * t * t * vP3;
+}
+
+vec2 cubicDerivative(float t)
+{
+    float s = 1.0 - t;
+    return 3.0 * (s * s * (vP1 - vP0) +
+                  2.0 * s * t * (vP2 - vP1) +
+                  t * t * (vP3 - vP2));
+}
+
+vec2 cubicSecondDerivative(float t)
+{
+    return 6.0 * ((1.0 - t) * (vP2 - 2.0 * vP1 + vP0) +
+                  t * (vP3 - 2.0 * vP2 + vP1));
+}
+
+float cubicImplicit(vec2 pixel)
+{
+    vec2 p = (pixel - vNormalization.xy) * vNormalization.z;
+    float x = p.x;
+    float y = p.y;
+    return dot(vImplicit0, vec4(x * x * x, x * x * y, x * y * y, y * y * y)) +
+           dot(vImplicit1, vec4(x * x, x * y, y * y, x)) +
+           dot(vImplicit2, vec2(y, 1.0));
+}
+
+vec2 cubicImplicitGradient(vec2 pixel)
+{
+    vec2 p = (pixel - vNormalization.xy) * vNormalization.z;
+    float x = p.x;
+    float y = p.y;
+    float dx = 3.0 * vImplicit0.x * x * x + 2.0 * vImplicit0.y * x * y +
+               vImplicit0.z * y * y + 2.0 * vImplicit1.x * x +
+               vImplicit1.y * y + vImplicit1.w;
+    float dy = vImplicit0.y * x * x + 2.0 * vImplicit0.z * x * y +
+               3.0 * vImplicit0.w * y * y + vImplicit1.y * x +
+               2.0 * vImplicit1.z * y + vImplicit2.x;
+    return vec2(dx, dy) * vNormalization.z;
+}
+
+float cubicClosestParameter(vec2 pixel)
+{
+    float bestT = 0.0;
+    float bestDistance2 = dot(pixel - vP0, pixel - vP0);
+    for (int seed = 0; seed <= 8; ++seed) {
+        float t = float(seed) * 0.125;
+        for (int iteration = 0; iteration < 5; ++iteration) {
+            vec2 delta = cubicPoint(t) - pixel;
+            vec2 first = cubicDerivative(t);
+            float denominator = dot(first, first) + dot(delta, cubicSecondDerivative(t));
+            if (abs(denominator) > 1e-6) {
+                t = clamp(t - dot(delta, first) / denominator, 0.0, 1.0);
+            }
+        }
+        vec2 delta = cubicPoint(t) - pixel;
+        float distance2 = dot(delta, delta);
+        if (distance2 < bestDistance2) {
+            bestT = t;
+            bestDistance2 = distance2;
+        }
+    }
+    vec2 endDelta = pixel - vP3;
+    if (dot(endDelta, endDelta) < bestDistance2) bestT = 1.0;
+    return bestT;
+}
+
+void main()
+{
+    vec2 pixel = gl_FragCoord.xy;
+    vec2 closest;
+    vec2 tangent;
+
+    if (vKind < 0.5) {
+        tangent = vP3 - vP0;
+        float length2 = dot(tangent, tangent);
+        float t = clamp(dot(pixel - vP0, tangent) / length2, 0.0, 1.0);
+        closest = mix(vP0, vP3, t);
+    } else {
+        float t = cubicClosestParameter(pixel);
+        closest = cubicPoint(t);
+        tangent = cubicDerivative(t);
+        if (dot(tangent, tangent) < 1e-8) tangent = vP3 - vP0;
+    }
+
+    vec2 delta = pixel - closest;
+    float distancePx = length(delta);
+    if (distancePx > 0.5) discard;
+    float signedDistance;
+    if (vKind < 0.5) {
+        float inside = (tangent.x * delta.y - tangent.y * delta.x) * vInsideSign;
+        signedDistance = inside >= 0.0 ? -distancePx : distancePx;
+    } else {
+        float implicitValue = cubicImplicit(pixel);
+        vec2 implicitGradient = cubicImplicitGradient(pixel);
+        float gradientLength = length(implicitGradient);
+        float gradientPointsInside = (tangent.x * implicitGradient.y -
+                                      tangent.y * implicitGradient.x) * vInsideSign;
+        signedDistance = implicitValue / max(gradientLength, 1e-6);
+        if (gradientPointsInside >= 0.0) signedDistance = -signedDistance;
+    }
+    float coverage = clamp(0.5 - signedDistance, 0.0, 1.0);
+    if (coverage <= 0.0) discard;
+    vec4 premul = vec4(uColor.rgb * uColor.a, uColor.a);
+    FragColor = premul * coverage;
+}
+)";
+
 const char* FLAT_MASK_INTERIOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                             \n
                                                                     \n

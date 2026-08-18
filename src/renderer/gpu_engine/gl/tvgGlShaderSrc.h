@@ -52,6 +52,10 @@ extern const char* MASK_LIGHTEN_FRAG_SHADER;
 extern const char* STENCIL_VERT_SHADER;
 extern const char* STENCIL_FRAG_SHADER;
 #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+extern const char* FLAT_DIRECT_BOUNDARY_VERT_SHADER;
+extern const char* FLAT_DIRECT_BOUNDARY_FRAG_SHADER;
+extern const char* CURVE_DIRECT_BOUNDARY_VERT_SHADER;
+extern const char* CURVE_DIRECT_BOUNDARY_FRAG_SHADER;
 extern const char* FLAT_MASK_INTERIOR_FRAG_SHADER;
 extern const char* FLAT_MASK_EDGE_VERT_SHADER;
 extern const char* FLAT_MASK_EDGE_INSIDE_POSITIVE_FRAG_SHADER;

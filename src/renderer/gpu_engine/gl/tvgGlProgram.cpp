@@ -28,6 +28,7 @@ static constexpr uint32_t UNKNOWN_BINDING = UINT32_MAX;
 static const char* const UNIFORM_NAMES[] = {
     "uDepth",
     "uViewMatrix",
+    "uColor",
     "uSrcTexture",
     "uBlrTexture",
     "uDstTexture",

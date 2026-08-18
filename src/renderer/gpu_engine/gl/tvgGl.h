@@ -280,9 +280,7 @@
         //typedef void (*PFNGLTEXPARAMETERFVPROC)(GLenum target, GLenum pname, const GLfloat *params);
         //typedef void (*PFNGLTEXPARAMETERIVPROC)(GLenum target, GLenum pname, const GLint *params);
         //typedef void (*PFNGLTEXIMAGE1DPROC)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels);
-        #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
         typedef void (*PFNGLSTENCILMASKPROC) (GLuint mask);
-        #endif
         //typedef void (*PFNGLFINISHPROC)(void);
         //typedef void (*PFNGLFLUSHPROC)(void);
         //typedef void (*PFNGLLOGICOPPROC)(GLenum opcode);
@@ -1217,9 +1215,7 @@
     //extern PFNGLTEXPARAMETERFVPROC         glTexParameterfv;
     //extern PFNGLTEXPARAMETERIVPROC         glTexParameteriv;
     //extern PFNGLTEXIMAGE1DPROC             glTexImage1D;
-    #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
     extern PFNGLSTENCILMASKPROC             glStencilMask;
-    #endif
     //extern PFNGLFINISHPROC                 glFinish;
     //extern PFNGLFLUSHPROC                  glFlush;
     //extern PFNGLLOGICOPPROC                glLogicOp;

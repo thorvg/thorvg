@@ -22,6 +22,7 @@
 
 #include "aa_poc_gl.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <vector>
 
@@ -301,10 +302,32 @@ bool writeFramebufferPng(const std::string& filename, GLuint framebuffer,
                 destination[channel] = static_cast<unsigned char>(
                     (sum[channel] + sampleCount / 2) / sampleCount);
             }
+            // GL render targets contain premultiplied RGBA, while PNG alpha is
+            // unassociated.  Unpremultiply only after box filtering so the
+            // SSAA resolve remains linear in premultiplied space.
+            auto alpha = destination[3];
+            if (alpha == 0) {
+                destination[0] = destination[1] = destination[2] = 0;
+            } else if (alpha < 255) {
+                for (uint32_t channel = 0; channel < 3; ++channel) {
+                    auto straight = (static_cast<uint32_t>(destination[channel]) * 255u +
+                                     alpha / 2u) /
+                                    alpha;
+                    destination[channel] = static_cast<unsigned char>(std::min(straight, 255u));
+                }
+            }
         }
     }
 
-    auto error = lodepng::encode(filename, output, outputWidth, outputHeight);
+    lodepng::State state;
+    state.encoder.auto_convert = 0;
+    state.info_raw.colortype = LCT_RGBA;
+    state.info_raw.bitdepth = 8;
+    state.info_png.color.colortype = LCT_RGBA;
+    state.info_png.color.bitdepth = 8;
+    std::vector<unsigned char> encoded;
+    auto error = lodepng::encode(encoded, output, outputWidth, outputHeight, state);
+    if (!error) error = lodepng::save_file(encoded, filename);
     if (!error) return true;
     std::fprintf(stderr, "%s: PNG encode failed for %s: %s\n", diagnosticName,
                  filename.c_str(), lodepng_error_text(error));
