@@ -56,12 +56,14 @@ struct GlStateCache
     void disable(GLenum capability);
 
     void blendFunc(GLenum source, GLenum destination);
+    void blendEquation(GLenum mode);
     void depthFunc(GLenum function);
     void depthMask(GLboolean enabled);
     void colorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 
     void stencilFunc(GLenum function, GLint reference, GLuint mask);
     void stencilFuncSeparate(GLenum face, GLenum function, GLint reference, GLuint mask);
+    void stencilMask(GLuint mask);
     void stencilOp(GLenum stencilFail, GLenum depthFail, GLenum depthPass);
     void stencilOpSeparate(GLenum face, GLenum stencilFail, GLenum depthFail, GLenum depthPass);
 
@@ -250,12 +252,14 @@ struct GlStateCache
 
     Array<CapabilityState> capabilities;
     CachedValue<BlendFuncState> blendFunction;
+    CachedValue<GLenum> blendEquationMode;
     CachedValue<GLenum> depthFunction;
     CachedValue<GLboolean> depthWriteEnabled;
     CachedValue<ColorMaskState> colorWriteMask;
 
     CachedValue<StencilFuncState> frontStencilFunction;
     CachedValue<StencilFuncState> backStencilFunction;
+    CachedValue<GLuint> stencilWriteMask;
     CachedValue<StencilOpState> frontStencilOperation;
     CachedValue<StencilOpState> backStencilOperation;
 

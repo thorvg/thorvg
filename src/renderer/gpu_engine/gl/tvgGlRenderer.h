@@ -53,6 +53,16 @@ struct GlRenderer : RenderMethod
         RT_MaskLighten,
         RT_MaskDarken,
         RT_Stencil,
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+        RT_FlatMaskInterior,
+        RT_FlatMaskEdgeInsidePositive,
+        RT_FlatMaskEdgeInsideNegative,
+        RT_FlatMaskEdgeOutside,
+        RT_FlatMaskComposite,
+        RT_CurveMaskInterior,
+        RT_CurveMaskBoundary,
+        RT_CurveMaskComposite,
+#endif
         RT_Blit,
         // blends (image)
         RT_Blend_Image_Normal,
@@ -199,6 +209,12 @@ private:
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    bool drawFlatMask(GlShape& sdata, const RenderColor& color, int32_t depth,
+                      const RenderRegion& viewBounds, const RenderRegion& passViewport);
+    bool drawCurveMask(GlShape& sdata, const RenderColor& color, int32_t depth,
+                       const RenderRegion& viewBounds, const RenderRegion& passViewport);
+#endif
     void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
 
     GlRenderPass* currentPass();
@@ -234,6 +250,11 @@ private:
     TextureMgr mTextures;
     GlSolidBatch mSolidBatch;
     GlStencilCoverBatch mStencilCoverBatch;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    GlFlatMaskTarget mFlatMaskTarget;
+    bool mFlatMask = false;
+    bool mCurveMask = false;
+#endif
 
     //Disposed resources. They should be released on synced call.
     struct {

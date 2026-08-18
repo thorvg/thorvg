@@ -20,6 +20,10 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+
 #include "tvgFill.h"
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
@@ -83,6 +87,9 @@ void GlRenderer::flush()
 {
     clearDisposes();
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    mFlatMaskTarget.reset();
+#endif
     mRootTarget.reset();
 
     ARRAY_FOREACH(p, mComposePool) delete(*p);
@@ -186,6 +193,17 @@ void GlRenderer::initShaders()
     // stencil Renderer
     mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, STENCIL_FRAG_SHADER));
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, FLAT_MASK_INTERIOR_FRAG_SHADER));
+    mPrograms.push(new GlProgram(FLAT_MASK_EDGE_VERT_SHADER, FLAT_MASK_EDGE_INSIDE_POSITIVE_FRAG_SHADER));
+    mPrograms.push(new GlProgram(FLAT_MASK_EDGE_VERT_SHADER, FLAT_MASK_EDGE_INSIDE_NEGATIVE_FRAG_SHADER));
+    mPrograms.push(new GlProgram(FLAT_MASK_EDGE_VERT_SHADER, FLAT_MASK_EDGE_OUTSIDE_FRAG_SHADER));
+    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, FLAT_MASK_COMPOSITE_FRAG_SHADER));
+    mPrograms.push(new GlProgram(STENCIL_VERT_SHADER, CURVE_MASK_INTERIOR_FRAG_SHADER));
+    mPrograms.push(new GlProgram(CURVE_MASK_BOUNDARY_VERT_SHADER, CURVE_MASK_BOUNDARY_FRAG_SHADER));
+    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, CURVE_MASK_COMPOSITE_FRAG_SHADER));
+#endif
+
     // blit Renderer
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
 
@@ -229,6 +247,468 @@ static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, 
     return viewMatrix;
 }
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+struct GlFlatMaskVertex
+{
+    float x, y;
+    float startX, startY;
+    float endX, endY;
+};
+
+static void addFlatMaskQuad(GlRenderTask* task, GlStageBuffer* gpuBuffer, const RenderRegion& bounds)
+{
+    float vertices[] = {
+        float(bounds.min.x), float(bounds.min.y),
+        float(bounds.min.x), float(bounds.max.y),
+        float(bounds.max.x), float(bounds.min.y),
+        float(bounds.max.x), float(bounds.max.y),
+    };
+    auto vertexOffset = gpuBuffer->push(vertices, sizeof(vertices));
+    auto indexOffset = gpuBuffer->pushIndex((void*)RECT_INDEX, sizeof(RECT_INDEX));
+    task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
+    task->setDrawRange(indexOffset, RECT_INDEX_COUNT);
+}
+
+static bool addFlatMaskBoundary(GlRenderTask* insidePositiveTask, GlRenderTask* insideNegativeTask,
+                                GlRenderTask* outsideTask,
+                                GlStageBuffer* gpuBuffer, const GlGeometry& geometry,
+                                const RenderRegion& passViewport)
+{
+    Array<GlFlatMaskVertex> vertices;
+    vertices.reserve(geometry.fillBoundary.edges.count * 6);
+
+    ARRAY_FOREACH(edge, geometry.fillBoundary.edges) {
+        auto from = edge->from * 2;
+        auto to = edge->to * 2;
+        Point a = {geometry.fill.vertex[from], geometry.fill.vertex[from + 1]};
+        Point b = {geometry.fill.vertex[to], geometry.fill.vertex[to + 1]};
+        auto delta = b - a;
+        auto lengthSquared = dot(delta, delta);
+        if (lengthSquared == 0.0f) continue;
+
+        auto invLength = 1.0f / sqrtf(lengthSquared);
+        auto tangent = delta * invLength;
+        auto normal = Point{-tangent.y, tangent.x};
+        auto start = a - tangent * GL_FLAT_MASK_AA_RADIUS;
+        auto end = b + tangent * GL_FLAT_MASK_AA_RADIUS;
+        auto startLocal = Point{a.x - passViewport.min.x,
+                                passViewport.sh() - (a.y - passViewport.min.y)};
+        auto endLocal = Point{b.x - passViewport.min.x,
+                              passViewport.sh() - (b.y - passViewport.min.y)};
+
+        GlFlatMaskVertex v0 = {start.x + normal.x * GL_FLAT_MASK_AA_RADIUS, start.y + normal.y * GL_FLAT_MASK_AA_RADIUS,
+                               startLocal.x, startLocal.y, endLocal.x, endLocal.y};
+        GlFlatMaskVertex v1 = {start.x - normal.x * GL_FLAT_MASK_AA_RADIUS, start.y - normal.y * GL_FLAT_MASK_AA_RADIUS,
+                               startLocal.x, startLocal.y, endLocal.x, endLocal.y};
+        GlFlatMaskVertex v2 = {end.x + normal.x * GL_FLAT_MASK_AA_RADIUS, end.y + normal.y * GL_FLAT_MASK_AA_RADIUS,
+                               startLocal.x, startLocal.y, endLocal.x, endLocal.y};
+        GlFlatMaskVertex v3 = {end.x - normal.x * GL_FLAT_MASK_AA_RADIUS, end.y - normal.y * GL_FLAT_MASK_AA_RADIUS,
+                               startLocal.x, startLocal.y, endLocal.x, endLocal.y};
+        vertices.push(v0);
+        vertices.push(v1);
+        vertices.push(v2);
+        vertices.push(v1);
+        vertices.push(v3);
+        vertices.push(v2);
+    }
+    if (vertices.empty()) return false;
+
+    auto vertexOffset = gpuBuffer->push(vertices.data, vertices.count * sizeof(GlFlatMaskVertex));
+    uint32_t* indices = nullptr;
+    auto indexOffset = gpuBuffer->reserveIndex(vertices.count * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
+    for (uint32_t i = 0; i < vertices.count; ++i) indices[i] = i;
+
+    auto addLayouts = [&](GlRenderTask* task) {
+        auto buffer = gpuBuffer->getBufferId();
+        task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlFlatMaskVertex), vertexOffset, GL_FLOAT, GL_FALSE, buffer});
+        task->addVertexLayout(GlVertexLayout{1, 2, sizeof(GlFlatMaskVertex), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+        task->addVertexLayout(GlVertexLayout{2, 2, sizeof(GlFlatMaskVertex), vertexOffset + 4 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+        task->setDrawRange(indexOffset, vertices.count);
+    };
+    addLayouts(insidePositiveTask);
+    addLayouts(insideNegativeTask);
+    addLayouts(outsideTask);
+    return true;
+}
+
+enum class GlCurveMaskPatchKind : uint8_t
+{
+    Line,
+    Cubic,
+};
+
+struct GlCurveMaskVertex
+{
+    float x, y;
+    float p0x, p0y;
+    float p1x, p1y;
+    float p2x, p2y;
+    float p3x, p3y;
+    float c0, c1, c2, c3;
+    float c4, c5, c6, c7;
+    float c8, c9;
+    float centerX, centerY, inverseScale;
+    float kind;
+};
+
+static_assert(sizeof(GlCurveMaskVertex) == 24 * sizeof(float),
+              "GlCurveMaskVertex must stay tightly packed");
+
+struct GlCubicImplicit
+{
+    std::array<float, 10> coefficients = {};
+    Point center = {};
+    float inverseScale = 1.0f;
+};
+
+enum class GlImplicitResult : uint8_t
+{
+    Success,
+    Empty,
+    Failure,
+};
+
+static Point curveMaskCubicAt(const Point& p0, const Point& p1,
+                              const Point& p2, const Point& p3, double t)
+{
+    auto s = 1.0 - t;
+    auto b0 = static_cast<float>(s * s * s);
+    auto b1 = static_cast<float>(3.0 * s * s * t);
+    auto b2 = static_cast<float>(3.0 * s * t * t);
+    auto b3 = static_cast<float>(t * t * t);
+    return p0 * b0 + p1 * b1 + p2 * b2 + p3 * b3;
+}
+
+static std::array<double, 10> curveMaskMonomials(const Point& point)
+{
+    auto x = static_cast<double>(point.x);
+    auto y = static_cast<double>(point.y);
+    return {x * x * x, x * x * y, x * y * y, y * y * y,
+            x * x, x * y, y * y, x, y, 1.0};
+}
+
+static double curveMaskEvaluateImplicit(const std::array<double, 10>& coefficients,
+                                        const Point& point)
+{
+    auto monomials = curveMaskMonomials(point);
+    double value = 0.0;
+    for (size_t i = 0; i < coefficients.size(); ++i) {
+        value += coefficients[i] * monomials[i];
+    }
+    return value;
+}
+
+template<size_t Rows, size_t Columns>
+static bool curveMaskNullVector(std::array<std::array<double, Columns>, Rows> matrix,
+                                std::array<double, Columns>& coefficients)
+{
+    static_assert(Columns == Rows + 1, "Null-space solve expects one free column");
+    std::array<int, Rows> pivotColumns = {};
+    size_t rank = 0;
+    for (size_t column = 0; column < Columns && rank < Rows; ++column) {
+        auto pivot = rank;
+        for (size_t row = rank + 1; row < Rows; ++row) {
+            if (std::abs(matrix[row][column]) > std::abs(matrix[pivot][column])) pivot = row;
+        }
+        if (std::abs(matrix[pivot][column]) < 1e-12) continue;
+        if (pivot != rank) std::swap(matrix[pivot], matrix[rank]);
+
+        auto divisor = matrix[rank][column];
+        for (size_t i = column; i < Columns; ++i) matrix[rank][i] /= divisor;
+        for (size_t row = 0; row < Rows; ++row) {
+            if (row == rank) continue;
+            auto factor = matrix[row][column];
+            for (size_t i = column; i < Columns; ++i) {
+                matrix[row][i] -= factor * matrix[rank][i];
+            }
+        }
+        pivotColumns[rank] = static_cast<int>(column);
+        ++rank;
+    }
+    if (rank != Rows) return false;
+
+    std::array<bool, Columns> pivoted = {};
+    for (size_t row = 0; row < rank; ++row) pivoted[pivotColumns[row]] = true;
+    size_t freeColumn = 0;
+    while (freeColumn < Columns && pivoted[freeColumn]) ++freeColumn;
+    if (freeColumn == Columns) return false;
+
+    coefficients = {};
+    coefficients[freeColumn] = 1.0;
+    for (size_t row = 0; row < rank; ++row) {
+        coefficients[pivotColumns[row]] = -matrix[row][freeColumn];
+    }
+    double scale = 0.0;
+    for (auto coefficient : coefficients) scale = std::max(scale, std::abs(coefficient));
+    if (scale == 0.0) return false;
+    for (auto& coefficient : coefficients) coefficient /= scale;
+    return true;
+}
+
+static GlImplicitResult curveMaskImplicitizeCubic(const Point& p0, const Point& p1,
+                                                   const Point& p2, const Point& p3,
+                                                   GlCubicImplicit& implicit)
+{
+    auto minX = std::min(std::min(p0.x, p1.x), std::min(p2.x, p3.x));
+    auto minY = std::min(std::min(p0.y, p1.y), std::min(p2.y, p3.y));
+    auto maxX = std::max(std::max(p0.x, p1.x), std::max(p2.x, p3.x));
+    auto maxY = std::max(std::max(p0.y, p1.y), std::max(p2.y, p3.y));
+    implicit.center = {(minX + maxX) * 0.5f, (minY + maxY) * 0.5f};
+    auto scale = std::max(maxX - minX, maxY - minY);
+    if (scale == 0.0f) return GlImplicitResult::Empty;
+    implicit.inverseScale = 1.0f / scale;
+
+    auto normalize = [&](const Point& point) {
+        return (point - implicit.center) * implicit.inverseScale;
+    };
+    auto n0 = normalize(p0);
+    auto n1 = normalize(p1);
+    auto n2 = normalize(p2);
+    auto n3 = normalize(p3);
+
+    const Point controls[] = {n0, n1, n2, n3};
+    size_t lineStart = 0;
+    size_t lineEnd = 0;
+    float maximumDistance2 = 0.0f;
+    for (size_t i = 0; i < 4; ++i) {
+        for (size_t j = i + 1; j < 4; ++j) {
+            auto delta = controls[j] - controls[i];
+            auto distance2 = dot(delta, delta);
+            if (distance2 > maximumDistance2) {
+                maximumDistance2 = distance2;
+                lineStart = i;
+                lineEnd = j;
+            }
+        }
+    }
+    if (maximumDistance2 <= FLOAT_EPSILON * FLOAT_EPSILON) return GlImplicitResult::Empty;
+
+    auto line = controls[lineEnd] - controls[lineStart];
+    auto lineLength = std::sqrt(maximumDistance2);
+    bool collinear = true;
+    for (const auto& control : controls) {
+        if (std::abs(cross(line, control - controls[lineStart])) >
+            FLOAT_EPSILON * lineLength) {
+            collinear = false;
+            break;
+        }
+    }
+
+    std::array<double, 10> coefficients = {};
+    if (collinear) {
+        // Degree-reduced cubics use their normalized supporting line.
+        auto lineX = static_cast<double>(line.x);
+        auto lineY = static_cast<double>(line.y);
+        auto startX = static_cast<double>(controls[lineStart].x);
+        auto startY = static_cast<double>(controls[lineStart].y);
+        auto divisor = static_cast<double>(lineLength);
+        coefficients[7] = -lineY / divisor;
+        coefficients[8] = lineX / divisor;
+        coefficients[9] = (lineY * startX - lineX * startY) / divisor;
+    } else {
+        auto cubicPower = n3 - n2 * 3.0f + n1 * 3.0f - n0;
+        if (dot(cubicPower, cubicPower) <= FLOAT_EPSILON * FLOAT_EPSILON) {
+            // Quadratics reach RenderPath as degree-elevated cubics.
+            std::array<std::array<double, 6>, 5> matrix = {};
+            for (size_t row = 0; row < matrix.size(); ++row) {
+                auto t = static_cast<double>(row) / static_cast<double>(matrix.size() - 1);
+                auto monomials = curveMaskMonomials(curveMaskCubicAt(n0, n1, n2, n3, t));
+                std::copy(monomials.begin() + 4, monomials.end(), matrix[row].begin());
+            }
+            std::array<double, 6> quadratic = {};
+            if (!curveMaskNullVector(matrix, quadratic)) return GlImplicitResult::Failure;
+            std::copy(quadratic.begin(), quadratic.end(), coefficients.begin() + 4);
+        } else {
+            std::array<std::array<double, 10>, 9> matrix = {};
+            for (size_t row = 0; row < matrix.size(); ++row) {
+                auto t = static_cast<double>(row) / static_cast<double>(matrix.size() - 1);
+                matrix[row] = curveMaskMonomials(curveMaskCubicAt(n0, n1, n2, n3, t));
+            }
+            if (!curveMaskNullVector(matrix, coefficients)) return GlImplicitResult::Failure;
+        }
+    }
+
+    // Check between solve samples. Numerical failures remain visible as a POC
+    // error instead of silently replacing the original curve with flat edges.
+    for (uint32_t i = 0; i <= 32; ++i) {
+        auto t = static_cast<double>(i) / 32.0;
+        auto point = curveMaskCubicAt(n0, n1, n2, n3, t);
+        if (std::abs(curveMaskEvaluateImplicit(coefficients, point)) > 1e-5) {
+            return GlImplicitResult::Failure;
+        }
+    }
+    for (size_t i = 0; i < coefficients.size(); ++i) {
+        implicit.coefficients[i] = static_cast<float>(coefficients[i]);
+    }
+    return GlImplicitResult::Success;
+}
+
+static Point curveMaskWindowPoint(const Point& point, const RenderRegion& passViewport)
+{
+    return {point.x - passViewport.min.x,
+            passViewport.sh() - (point.y - passViewport.min.y)};
+}
+
+static bool appendCurveMaskPatch(Array<GlCurveMaskVertex>& vertices,
+                                 GlCurveMaskPatchKind kind,
+                                 const Point& p0, const Point& p1,
+                                 const Point& p2, const Point& p3,
+                                 const RenderRegion& passViewport)
+{
+    auto delta = p3 - p0;
+    if (dot(delta, delta) == 0.0f && kind == GlCurveMaskPatchKind::Line) return true;
+
+    auto w0 = curveMaskWindowPoint(p0, passViewport);
+    auto w1 = curveMaskWindowPoint(p1, passViewport);
+    auto w2 = curveMaskWindowPoint(p2, passViewport);
+    auto w3 = curveMaskWindowPoint(p3, passViewport);
+    GlCubicImplicit implicit;
+    if (kind == GlCurveMaskPatchKind::Cubic) {
+        auto result = curveMaskImplicitizeCubic(w0, w1, w2, w3, implicit);
+        if (result == GlImplicitResult::Empty) return true;
+        if (result == GlImplicitResult::Failure) {
+            TVGERR("GL_ENGINE", "Curve-mask POC failed to implicitize a cubic boundary patch");
+            return false;
+        }
+    }
+
+    auto patchKind = static_cast<float>(kind == GlCurveMaskPatchKind::Cubic);
+    auto vertex = [&](float x, float y) {
+        return GlCurveMaskVertex{
+            x, y, w0.x, w0.y, w1.x, w1.y, w2.x, w2.y, w3.x, w3.y,
+            implicit.coefficients[0], implicit.coefficients[1],
+            implicit.coefficients[2], implicit.coefficients[3],
+            implicit.coefficients[4], implicit.coefficients[5],
+            implicit.coefficients[6], implicit.coefficients[7],
+            implicit.coefficients[8], implicit.coefficients[9],
+            implicit.center.x, implicit.center.y, implicit.inverseScale, patchKind
+        };
+    };
+
+    GlCurveMaskVertex v0;
+    GlCurveMaskVertex v1;
+    GlCurveMaskVertex v2;
+    GlCurveMaskVertex v3;
+    if (kind == GlCurveMaskPatchKind::Line) {
+        auto length = std::sqrt(dot(delta, delta));
+        auto tangent = delta / length;
+        Point normal{-tangent.y, tangent.x};
+        auto start = p0 - tangent * GL_FLAT_MASK_AA_RADIUS;
+        auto end = p3 + tangent * GL_FLAT_MASK_AA_RADIUS;
+        v0 = vertex(start.x + normal.x * GL_FLAT_MASK_AA_RADIUS,
+                    start.y + normal.y * GL_FLAT_MASK_AA_RADIUS);
+        v1 = vertex(start.x - normal.x * GL_FLAT_MASK_AA_RADIUS,
+                    start.y - normal.y * GL_FLAT_MASK_AA_RADIUS);
+        v2 = vertex(end.x + normal.x * GL_FLAT_MASK_AA_RADIUS,
+                    end.y + normal.y * GL_FLAT_MASK_AA_RADIUS);
+        v3 = vertex(end.x - normal.x * GL_FLAT_MASK_AA_RADIUS,
+                    end.y - normal.y * GL_FLAT_MASK_AA_RADIUS);
+    } else {
+        // A Bezier lies in its control hull; the expanded control AABB is a
+        // deliberately broad conservative patch for this experiment.
+        auto minX = std::min(std::min(p0.x, p1.x), std::min(p2.x, p3.x)) - GL_FLAT_MASK_AA_RADIUS;
+        auto minY = std::min(std::min(p0.y, p1.y), std::min(p2.y, p3.y)) - GL_FLAT_MASK_AA_RADIUS;
+        auto maxX = std::max(std::max(p0.x, p1.x), std::max(p2.x, p3.x)) + GL_FLAT_MASK_AA_RADIUS;
+        auto maxY = std::max(std::max(p0.y, p1.y), std::max(p2.y, p3.y)) + GL_FLAT_MASK_AA_RADIUS;
+        v0 = vertex(minX, minY);
+        v1 = vertex(maxX, minY);
+        v2 = vertex(minX, maxY);
+        v3 = vertex(maxX, maxY);
+    }
+    vertices.push(v0);
+    vertices.push(v1);
+    vertices.push(v2);
+    vertices.push(v2);
+    vertices.push(v1);
+    vertices.push(v3);
+    return true;
+}
+
+static bool addCurveMaskBoundary(GlRenderTask* task, GlStageBuffer* gpuBuffer,
+                                 const RenderPath& path,
+                                 const RenderRegion& passViewport)
+{
+    Array<GlCurveMaskVertex> vertices;
+    vertices.reserve(path.cmds.count * 6);
+    auto pts = path.pts.data;
+    Point previous = {};
+    Point contourFirst = {};
+    bool contourOpen = false;
+    bool success = true;
+
+    auto appendLine = [&](const Point& from, const Point& to) {
+        if (!appendCurveMaskPatch(vertices, GlCurveMaskPatchKind::Line,
+                                  from, from, to, to, passViewport)) success = false;
+    };
+    auto finishContour = [&]() {
+        if (!contourOpen) return;
+        appendLine(previous, contourFirst);
+        contourOpen = false;
+    };
+
+    ARRAY_FOREACH(cmd, path.cmds) {
+        switch (*cmd) {
+            case PathCommand::MoveTo:
+                finishContour();
+                contourFirst = previous = *pts++;
+                contourOpen = true;
+                break;
+            case PathCommand::LineTo: {
+                auto end = *pts++;
+                if (!contourOpen) {
+                    TVGLOG("GL_ENGINE", "Curve-mask POC excludes drawing commands after Close");
+                    return false;
+                }
+                appendLine(previous, end);
+                previous = end;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                auto end = pts[2];
+                if (!contourOpen) {
+                    TVGLOG("GL_ENGINE", "Curve-mask POC excludes drawing commands after Close");
+                    return false;
+                }
+                if (!appendCurveMaskPatch(vertices, GlCurveMaskPatchKind::Cubic,
+                                          previous, pts[0], pts[1], end,
+                                          passViewport)) {
+                    success = false;
+                }
+                previous = end;
+                pts += 3;
+                break;
+            }
+            case PathCommand::Close:
+                finishContour();
+                break;
+        }
+    }
+    finishContour();
+    if (!success || vertices.empty()) return false;
+
+    auto vertexOffset = gpuBuffer->push(vertices.data,
+                                        vertices.count * sizeof(GlCurveMaskVertex));
+    uint32_t* indices = nullptr;
+    auto indexOffset = gpuBuffer->reserveIndex(vertices.count * sizeof(uint32_t),
+                                               reinterpret_cast<void**>(&indices));
+    for (uint32_t i = 0; i < vertices.count; ++i) indices[i] = i;
+
+    auto buffer = gpuBuffer->getBufferId();
+    task->addVertexLayout(GlVertexLayout{0, 2, sizeof(GlCurveMaskVertex), vertexOffset, GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{1, 2, sizeof(GlCurveMaskVertex), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{2, 2, sizeof(GlCurveMaskVertex), vertexOffset + 4 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{3, 2, sizeof(GlCurveMaskVertex), vertexOffset + 6 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{4, 2, sizeof(GlCurveMaskVertex), vertexOffset + 8 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{5, 4, sizeof(GlCurveMaskVertex), vertexOffset + 10 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{6, 4, sizeof(GlCurveMaskVertex), vertexOffset + 14 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{7, 2, sizeof(GlCurveMaskVertex), vertexOffset + 18 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{8, 3, sizeof(GlCurveMaskVertex), vertexOffset + 20 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->addVertexLayout(GlVertexLayout{9, 1, sizeof(GlCurveMaskVertex), vertexOffset + 23 * sizeof(float), GL_FLOAT, GL_FALSE, buffer});
+    task->setDrawRange(indexOffset, vertices.count);
+    return true;
+}
+#endif
+
 GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
 {
     dstCopyFbo = nullptr;
@@ -265,6 +745,166 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
     task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, GlShaderUniform::DestinationTexture});
 }
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+bool GlRenderer::drawFlatMask(GlShape& sdata, const RenderColor& color, int32_t depth,
+                              const RenderRegion& viewBounds, const RenderRegion& passViewport)
+{
+    auto& geometry = sdata.geometry;
+    if (!mFlatMask || mFlatMaskTarget.invalid() || geometry.optPathSkipFill) return false;
+    if (geometry.optPathThin) {
+        TVGLOG("GL_ENGINE", "Flat-mask POC excludes thin fills; using the current GL fill path");
+        return false;
+    }
+    if (!geometry.fillBoundary.supported) {
+        TVGLOG("GL_ENGINE", "Flat-mask POC excludes overlapping, touching, nearby, or noncanonical boundary segments; using the current GL fill path");
+        return false;
+    }
+    if (geometry.fillBoundary.edges.empty()) return false;
+
+    auto maskBounds = geometry.fillBounds;
+    auto expansion = static_cast<int32_t>(ceilf(GL_FLAT_MASK_AA_RADIUS));
+    maskBounds.min.x -= expansion;
+    maskBounds.min.y -= expansion;
+    maskBounds.max.x += expansion;
+    maskBounds.max.y += expansion;
+    maskBounds.intersect(viewBounds);
+    maskBounds.intersect(passViewport);
+    if (maskBounds.invalid()) return false;
+
+    auto maskRegion = viewportRegion(passViewport, maskBounds);
+    auto viewMatrix = currentPass()->getViewMatrix();
+    auto stencilMode = (geometry.fillRule == FillRule::EvenOdd) ? GlStencilMode::FillEvenOdd : GlStencilMode::FillNonZero;
+
+    auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil]);
+    stencilTask->setViewMatrix(viewMatrix);
+    stencilTask->setDrawDepth(depth);
+    stencilTask->setViewport(maskRegion);
+    geometry.draw(stencilTask, &mGpuBuffer, RenderUpdateFlag::Path);
+
+    auto interiorTask = new GlRenderTask(mPrograms[RT_FlatMaskInterior]);
+    interiorTask->setViewMatrix(viewMatrix);
+    interiorTask->setDrawDepth(depth);
+    interiorTask->setViewport(maskRegion);
+    addFlatMaskQuad(interiorTask, &mGpuBuffer, maskBounds);
+
+    auto insidePositiveTask = new GlRenderTask(mPrograms[RT_FlatMaskEdgeInsidePositive]);
+    auto insideNegativeTask = new GlRenderTask(mPrograms[RT_FlatMaskEdgeInsideNegative]);
+    auto outsideTask = new GlRenderTask(mPrograms[RT_FlatMaskEdgeOutside]);
+    insidePositiveTask->setViewMatrix(viewMatrix);
+    insidePositiveTask->setDrawDepth(depth);
+    insidePositiveTask->setViewport(maskRegion);
+    insideNegativeTask->setViewMatrix(viewMatrix);
+    insideNegativeTask->setDrawDepth(depth);
+    insideNegativeTask->setViewport(maskRegion);
+    outsideTask->setViewMatrix(viewMatrix);
+    outsideTask->setDrawDepth(depth);
+    outsideTask->setViewport(maskRegion);
+    if (!addFlatMaskBoundary(insidePositiveTask, insideNegativeTask, outsideTask,
+                             &mGpuBuffer, geometry, passViewport)) {
+        delete stencilTask;
+        delete interiorTask;
+        delete insidePositiveTask;
+        delete insideNegativeTask;
+        delete outsideTask;
+        return false;
+    }
+
+    auto compositeTask = new GlRenderTask(mPrograms[RT_FlatMaskComposite]);
+    compositeTask->setViewMatrix(viewMatrix);
+    compositeTask->setDrawDepth(depth);
+    compositeTask->setViewport(maskRegion);
+    auto alpha = MULTIPLY(color.a, sdata.opacity);
+    compositeTask->setVertexColor(color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, alpha / 255.0f);
+    compositeTask->addBindResource(GlBindingResource{0, mFlatMaskTarget.colorTex, GlShaderUniform::MaskTexture});
+    addFlatMaskQuad(compositeTask, &mGpuBuffer, maskBounds);
+
+    mSolidBatch.clear();
+    mStencilCoverBatch.clear();
+    currentPass()->addRenderTask(new GlFlatMaskTask(&mFlatMaskTarget, currentPass()->fbo,
+        stencilTask, interiorTask, insidePositiveTask, insideNegativeTask, outsideTask,
+        compositeTask, stencilMode, maskRegion,
+        passViewport.w(), passViewport.h()));
+    return true;
+}
+
+bool GlRenderer::drawCurveMask(GlShape& sdata, const RenderColor& color, int32_t depth,
+                               const RenderRegion& viewBounds,
+                               const RenderRegion& passViewport)
+{
+    auto& geometry = sdata.geometry;
+    if (!mCurveMask || mFlatMaskTarget.invalid() || geometry.optPathSkipFill ||
+        geometry.curveMaskPath.empty()) return false;
+    if (geometry.optPathThin) {
+        TVGLOG("GL_ENGINE", "Curve-mask POC excludes thin fills; using the current GL fill path");
+        return false;
+    }
+    if (!sdata.clips.empty()) {
+        TVGLOG("GL_ENGINE", "Curve-mask POC excludes clip paths; using the current GL fill path");
+        return false;
+    }
+
+    auto maskBounds = geometry.fillBounds;
+    auto expansion = static_cast<int32_t>(ceilf(GL_FLAT_MASK_AA_RADIUS));
+    maskBounds.min.x -= expansion;
+    maskBounds.min.y -= expansion;
+    maskBounds.max.x += expansion;
+    maskBounds.max.y += expansion;
+    maskBounds.intersect(viewBounds);
+    maskBounds.intersect(passViewport);
+    if (maskBounds.invalid()) return false;
+
+    auto maskRegion = viewportRegion(passViewport, maskBounds);
+    auto viewMatrix = currentPass()->getViewMatrix();
+    auto stencilMode = (geometry.fillRule == FillRule::EvenOdd) ?
+                       GlStencilMode::FillEvenOdd : GlStencilMode::FillNonZero;
+
+    // Curve-mask writes standalone streams. Invalidate any open batches before
+    // reserving them so a later POC fallback cannot bridge across these ranges.
+    mSolidBatch.clear();
+    mStencilCoverBatch.clear();
+
+    auto stencilTask = new GlRenderTask(mPrograms[RT_Stencil]);
+    stencilTask->setViewMatrix(viewMatrix);
+    stencilTask->setDrawDepth(depth);
+    stencilTask->setViewport(maskRegion);
+    geometry.draw(stencilTask, &mGpuBuffer, RenderUpdateFlag::Path);
+
+    auto interiorTask = new GlRenderTask(mPrograms[RT_CurveMaskInterior]);
+    interiorTask->setViewMatrix(viewMatrix);
+    interiorTask->setDrawDepth(depth);
+    interiorTask->setViewport(maskRegion);
+    addFlatMaskQuad(interiorTask, &mGpuBuffer, maskBounds);
+
+    auto boundaryTask = new GlRenderTask(mPrograms[RT_CurveMaskBoundary]);
+    boundaryTask->setViewMatrix(viewMatrix);
+    boundaryTask->setDrawDepth(depth);
+    boundaryTask->setViewport(maskRegion);
+    if (!addCurveMaskBoundary(boundaryTask, &mGpuBuffer, geometry.curveMaskPath,
+                              passViewport)) {
+        delete stencilTask;
+        delete interiorTask;
+        delete boundaryTask;
+        return false;
+    }
+
+    auto compositeTask = new GlRenderTask(mPrograms[RT_CurveMaskComposite]);
+    compositeTask->setViewMatrix(viewMatrix);
+    compositeTask->setDrawDepth(depth);
+    compositeTask->setViewport(maskRegion);
+    auto alpha = MULTIPLY(color.a, sdata.opacity);
+    compositeTask->setVertexColor(color.r / 255.0f, color.g / 255.0f,
+                                  color.b / 255.0f, alpha / 255.0f);
+    compositeTask->addBindResource(GlBindingResource{0, mFlatMaskTarget.colorTex, GlShaderUniform::MaskTexture});
+    addFlatMaskQuad(compositeTask, &mGpuBuffer, maskBounds);
+
+    currentPass()->addRenderTask(new GlCurveMaskTask(
+        &mFlatMaskTarget, currentPass()->fbo, stencilTask, interiorTask,
+        boundaryTask, compositeTask, stencilMode, maskRegion,
+        passViewport.w(), passViewport.h()));
+    return true;
+}
+#endif
+
 void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
 {
     if (!sdata.geometry.drawable(flag)) return;
@@ -284,6 +924,13 @@ void GlRenderer::drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdat
 
     auto viewRegion = viewportRegion(vp, bbox);
     auto stencilMode = sdata.geometry.getStencilMode(flag);
+
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    if (mBlendMethod == BlendMethod::Normal && flag == RenderUpdateFlag::Color &&
+        drawCurveMask(sdata, c, depth, viewBounds, vp)) return;
+    if (mBlendMethod == BlendMethod::Normal && flag == RenderUpdateFlag::Color &&
+        drawFlatMask(sdata, c, depth, viewBounds, vp)) return;
+#endif
 
     if (!blendShape && stencilMode == GlStencilMode::None && sdata.clips.empty()) {
         mSolidBatch.draw(*this, sdata, c, depth, viewRegion, viewportRegion(vp, viewBounds));
@@ -962,6 +1609,16 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
     mRootTarget.init(mStateCache, this->surface.w, this->surface.h, mTargetFboId);
     mStateCache.invalidate();
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    if ((mFlatMask || mCurveMask) &&
+        !mFlatMaskTarget.init(mStateCache, this->surface.w, this->surface.h)) {
+        TVGERR("GL_ENGINE", "Coverage-mask POC target initialization failed; using the current GL fill path");
+        mFlatMask = false;
+        mCurveMask = false;
+    }
+    mStateCache.invalidate();
+#endif
+
     return ret ? Result::Success : Result::InsufficientCondition;
 }
 
@@ -1363,7 +2020,11 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
         sdata->validFill = false;
         float opacityMultiplier = 1.0f;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+        if (sdata->geometry.tesselateShape(*(sdata->rshape), &opacityMultiplier, mFlatMask)) {
+#else
         if (sdata->geometry.tesselateShape(*(sdata->rshape), &opacityMultiplier)) {
+#endif
             sdata->opacity *= opacityMultiplier;
             sdata->validFill = true;
         }
@@ -1475,5 +2136,11 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption
     ++_rendererCnt;
     _rendererMtx.unlock();
 
-    return new GlRenderer;
+    auto renderer = new GlRenderer;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    // Reserved POC-only EngineOption bits; the public enum intentionally remains unchanged.
+    renderer->mFlatMask = (static_cast<uint8_t>(op) & 0x80u) != 0;
+    renderer->mCurveMask = (static_cast<uint8_t>(op) & 0x40u) != 0;
+#endif
+    return renderer;
 }

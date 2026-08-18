@@ -23,6 +23,8 @@
 #ifndef _TVG_GL_SHADERSRC_H_
 #define _TVG_GL_SHADERSRC_H_
 
+#include "config.h"
+
 extern const char* COLOR_VERT_SHADER;
 extern const char* COLOR_FRAG_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
@@ -49,6 +51,18 @@ extern const char* MASK_DARKEN_FRAG_SHADER;
 extern const char* MASK_LIGHTEN_FRAG_SHADER;
 extern const char* STENCIL_VERT_SHADER;
 extern const char* STENCIL_FRAG_SHADER;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+extern const char* FLAT_MASK_INTERIOR_FRAG_SHADER;
+extern const char* FLAT_MASK_EDGE_VERT_SHADER;
+extern const char* FLAT_MASK_EDGE_INSIDE_POSITIVE_FRAG_SHADER;
+extern const char* FLAT_MASK_EDGE_INSIDE_NEGATIVE_FRAG_SHADER;
+extern const char* FLAT_MASK_EDGE_OUTSIDE_FRAG_SHADER;
+extern const char* FLAT_MASK_COMPOSITE_FRAG_SHADER;
+extern const char* CURVE_MASK_INTERIOR_FRAG_SHADER;
+extern const char* CURVE_MASK_BOUNDARY_VERT_SHADER;
+extern const char* CURVE_MASK_BOUNDARY_FRAG_SHADER;
+extern const char* CURVE_MASK_COMPOSITE_FRAG_SHADER;
+#endif
 extern const char* BLIT_VERT_SHADER;
 extern const char* BLIT_FRAG_SHADER;
 

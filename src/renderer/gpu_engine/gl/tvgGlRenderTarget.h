@@ -45,6 +45,26 @@ private:
     GLuint depthStencilBuffer = 0;
 };
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+struct GlFlatMaskTarget
+{
+    GlFlatMaskTarget() = default;
+    ~GlFlatMaskTarget();
+
+    bool init(GlStateCache& state, uint32_t width, uint32_t height);
+    void reset();
+
+    bool invalid() const { return fbo == 0; }
+
+    uint32_t width = 0, height = 0;
+    GLuint fbo = 0, colorTex = 0;
+
+private:
+    GlStateCache* state = nullptr;
+    GLuint depthStencilBuffer = 0;
+};
+#endif
+
 
 struct GlRenderTargetPool
 {

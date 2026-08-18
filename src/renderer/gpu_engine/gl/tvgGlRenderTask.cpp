@@ -193,6 +193,197 @@ void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
     ARRAY_FOREACH(p, stencilTasks) (*p)->normalizeDrawDepth(maxDepth);
 }
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+/************************************************************************/
+/* GlFlatMaskTask Class Implementation                                  */
+/************************************************************************/
+
+GlFlatMaskTask::GlFlatMaskTask(GlFlatMaskTarget* maskTarget, GlRenderTarget* dstTarget,
+                               GlRenderTask* stencilTask, GlRenderTask* interiorTask,
+                               GlRenderTask* insidePositiveTask, GlRenderTask* insideNegativeTask,
+                               GlRenderTask* outsideTask,
+                               GlRenderTask* compositeTask, GlStencilMode mode,
+                               const RenderRegion& maskRegion, uint32_t passWidth,
+                               uint32_t passHeight)
+    : GlRenderTask(nullptr), mMaskTarget(maskTarget), mDstTarget(dstTarget),
+      mStencilTask(stencilTask), mInteriorTask(interiorTask), mInsidePositiveTask(insidePositiveTask),
+      mInsideNegativeTask(insideNegativeTask), mOutsideTask(outsideTask),
+      mCompositeTask(compositeTask), mStencilMode(mode),
+      mMaskRegion(maskRegion), mPassWidth(passWidth), mPassHeight(passHeight)
+{
+}
+
+GlFlatMaskTask::~GlFlatMaskTask()
+{
+    delete mStencilTask;
+    delete mInteriorTask;
+    delete mInsidePositiveTask;
+    delete mInsideNegativeTask;
+    delete mOutsideTask;
+    delete mCompositeTask;
+}
+
+void GlFlatMaskTask::run(GlStateCache& state)
+{
+    auto stencilMask = (mStencilMode == GlStencilMode::FillEvenOdd) ? 0x01 : 0xFF;
+
+    state.bindFramebuffer(GL_FRAMEBUFFER, mMaskTarget->fbo);
+    state.viewport(0, 0, mPassWidth, mPassHeight);
+    state.scissor(mMaskRegion.sx(), mMaskRegion.sy(), mMaskRegion.sw(), mMaskRegion.sh());
+    state.disable(GL_DEPTH_TEST);
+    state.disable(GL_BLEND);
+    state.enable(GL_STENCIL_TEST);
+    state.stencilMask(0xFF);
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    state.clearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    state.clearStencil(0);
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+
+    state.stencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF);
+    state.stencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP);
+    state.stencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF);
+    state.stencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP);
+    state.colorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    mStencilTask->run(state);
+
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    state.stencilFunc(GL_NOTEQUAL, 0x0, stencilMask);
+    state.stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    mInteriorTask->run(state);
+
+    // Inside starts at one and takes the nearest edge through MIN; outside
+    // starts at zero and takes the nearest edge through MAX.
+    state.enable(GL_BLEND);
+    state.blendEquation(GL_MIN);
+    if (mStencilMode == GlStencilMode::FillEvenOdd) {
+        state.stencilFunc(GL_NOTEQUAL, 0x0, 0x01);
+        mInsidePositiveTask->run(state);
+        mInsideNegativeTask->run(state);
+    } else {
+        // A directed edge is a NonZero fill boundary only where its left side
+        // has winding +1, or its right side has winding -1. Other nonzero
+        // transitions are internal to the filled region.
+        state.stencilFunc(GL_EQUAL, 0x01, 0xFF);
+        mInsidePositiveTask->run(state);
+        state.stencilFunc(GL_EQUAL, 0xFF, 0xFF);
+        mInsideNegativeTask->run(state);
+    }
+
+    state.stencilFunc(GL_EQUAL, 0x0, stencilMask);
+    state.blendEquation(GL_MAX);
+    mOutsideTask->run(state);
+
+    state.blendEquation(GL_FUNC_ADD);
+    state.disable(GL_STENCIL_TEST);
+    state.bindFramebuffer(GL_FRAMEBUFFER, mDstTarget->fbo);
+    state.viewport(0, 0, mPassWidth, mPassHeight);
+    state.scissor(mMaskRegion.sx(), mMaskRegion.sy(), mMaskRegion.sw(), mMaskRegion.sh());
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    state.depthMask(GL_FALSE);
+    state.enable(GL_DEPTH_TEST);
+    state.depthFunc(GL_GREATER);
+    state.enable(GL_BLEND);
+    state.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    // Shape color and effective opacity are applied only in this one draw.
+    mCompositeTask->run(state);
+}
+
+void GlFlatMaskTask::normalizeDrawDepth(int32_t maxDepth)
+{
+    mStencilTask->normalizeDrawDepth(maxDepth);
+    mInteriorTask->normalizeDrawDepth(maxDepth);
+    mInsidePositiveTask->normalizeDrawDepth(maxDepth);
+    mInsideNegativeTask->normalizeDrawDepth(maxDepth);
+    mOutsideTask->normalizeDrawDepth(maxDepth);
+    mCompositeTask->normalizeDrawDepth(maxDepth);
+}
+
+
+/************************************************************************/
+/* GlCurveMaskTask Class Implementation                                 */
+/************************************************************************/
+
+GlCurveMaskTask::GlCurveMaskTask(GlFlatMaskTarget* maskTarget, GlRenderTarget* dstTarget,
+                                 GlRenderTask* stencilTask, GlRenderTask* interiorTask,
+                                 GlRenderTask* boundaryTask, GlRenderTask* compositeTask,
+                                 GlStencilMode mode, const RenderRegion& maskRegion,
+                                 uint32_t passWidth, uint32_t passHeight)
+    : GlRenderTask(nullptr), mMaskTarget(maskTarget), mDstTarget(dstTarget),
+      mStencilTask(stencilTask), mInteriorTask(interiorTask),
+      mBoundaryTask(boundaryTask), mCompositeTask(compositeTask),
+      mStencilMode(mode), mMaskRegion(maskRegion),
+      mPassWidth(passWidth), mPassHeight(passHeight)
+{
+}
+
+GlCurveMaskTask::~GlCurveMaskTask()
+{
+    delete mStencilTask;
+    delete mInteriorTask;
+    delete mBoundaryTask;
+    delete mCompositeTask;
+}
+
+void GlCurveMaskTask::run(GlStateCache& state)
+{
+    auto stencilMask = (mStencilMode == GlStencilMode::FillEvenOdd) ? 0x01 : 0xFF;
+
+    state.bindFramebuffer(GL_FRAMEBUFFER, mMaskTarget->fbo);
+    state.viewport(0, 0, mPassWidth, mPassHeight);
+    state.scissor(mMaskRegion.sx(), mMaskRegion.sy(), mMaskRegion.sw(), mMaskRegion.sh());
+    state.disable(GL_DEPTH_TEST);
+    state.disable(GL_BLEND);
+    state.enable(GL_STENCIL_TEST);
+    state.stencilMask(0xFF);
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    state.clearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    state.clearStencil(0);
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+
+    // Reuse the renderer's regular tessellated fill to classify winding.
+    state.stencilFuncSeparate(GL_FRONT, GL_ALWAYS, 0x0, 0xFF);
+    state.stencilOpSeparate(GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP);
+    state.stencilFuncSeparate(GL_BACK, GL_ALWAYS, 0x0, 0xFF);
+    state.stencilOpSeparate(GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP);
+    state.colorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    mStencilTask->run(state);
+
+    // Red stores binary inside/outside classification.
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    state.stencilFunc(GL_NOTEQUAL, 0x0, stencilMask);
+    state.stencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    mInteriorTask->run(state);
+
+    // Green stores the strongest proximity, i.e. the nearest original path
+    // segment. Overlapping patches merge coverage data, never shape color.
+    state.disable(GL_STENCIL_TEST);
+    state.enable(GL_BLEND);
+    state.blendEquation(GL_MAX);
+    mBoundaryTask->run(state);
+
+    state.blendEquation(GL_FUNC_ADD);
+    state.bindFramebuffer(GL_FRAMEBUFFER, mDstTarget->fbo);
+    state.viewport(0, 0, mPassWidth, mPassHeight);
+    state.scissor(mMaskRegion.sx(), mMaskRegion.sy(), mMaskRegion.sw(), mMaskRegion.sh());
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    state.depthMask(GL_FALSE);
+    state.enable(GL_DEPTH_TEST);
+    state.depthFunc(GL_GREATER);
+    state.enable(GL_BLEND);
+    state.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    // Resolve classification + nearest boundary and apply color exactly once.
+    mCompositeTask->run(state);
+}
+
+void GlCurveMaskTask::normalizeDrawDepth(int32_t maxDepth)
+{
+    mStencilTask->normalizeDrawDepth(maxDepth);
+    mInteriorTask->normalizeDrawDepth(maxDepth);
+    mBoundaryTask->normalizeDrawDepth(maxDepth);
+    mCompositeTask->normalizeDrawDepth(maxDepth);
+}
+#endif
+
 
 /************************************************************************/
 /* GlComposeTask Class Implementation                                   */

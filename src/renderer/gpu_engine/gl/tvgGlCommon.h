@@ -78,6 +78,30 @@ struct GlGeometryBuffer {
     }
 };
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+static constexpr float GL_FLAT_MASK_AA_RADIUS = 0.5f;
+
+struct GlBoundaryEdge
+{
+    uint32_t from;
+    uint32_t to;
+};
+
+struct GlBoundaryContours
+{
+    Array<GlBoundaryEdge> edges;
+    Array<uint32_t> contourEnds;
+    bool supported = true;
+
+    void clear()
+    {
+        edges.clear();
+        contourEnds.clear();
+        supported = true;
+    }
+};
+#endif
+
 struct GlGeometry
 {
     const Matrix* inverseMatrix() const
@@ -91,7 +115,11 @@ struct GlGeometry
     void setMatrix(const Matrix& tr) { matrix = tr; inverseMatrixDirty = true;}
 
     void prepare(const RenderShape& rshape);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr, bool captureBoundary = false);
+#else
     bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr);
+#endif
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinFill(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
@@ -106,6 +134,10 @@ struct GlGeometry
     RenderRegion getBounds() const;
 
     GlGeometryBuffer fill, stroke;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    GlBoundaryContours fillBoundary;
+    RenderPath curveMaskPath;  // original trimmed segments in transformed space
+#endif
     Matrix matrix = {};
     RenderRegion viewport = {};
     RenderRegion fillBounds = {};

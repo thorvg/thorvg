@@ -92,6 +92,61 @@ void GlRenderTarget::reset()
     fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
 }
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+GlFlatMaskTarget::~GlFlatMaskTarget()
+{
+    reset();
+}
+
+bool GlFlatMaskTarget::init(GlStateCache& state, uint32_t width, uint32_t height)
+{
+    if (width == 0 || height == 0) return false;
+    reset();
+    this->state = &state;
+
+    GLint previousFbo = 0;
+    GL_CHECK(glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFbo));
+
+    this->width = width;
+    this->height = height;
+
+    GL_CHECK(glGenFramebuffers(1, &fbo));
+    state.bindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    GL_CHECK(glGenTextures(1, &colorTex));
+    state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, colorTex);
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0));
+
+    GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
+    GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height));
+    GL_CHECK(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilBuffer));
+
+    auto complete = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+    GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+    state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, 0);
+    state.bindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(previousFbo));
+    if (!complete) reset();
+    return complete;
+}
+
+void GlFlatMaskTarget::reset()
+{
+    if (state) state->invalidate();
+    if (fbo) GL_CHECK(glDeleteFramebuffers(1, &fbo));
+    if (depthStencilBuffer) GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
+    if (colorTex) GL_CHECK(glDeleteTextures(1, &colorTex));
+    width = height = 0;
+    fbo = colorTex = depthStencilBuffer = 0;
+    state = nullptr;
+}
+#endif
+
 GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, GlStateCache& state) :
     state(state), maxWidth(maxWidth), maxHeight(maxHeight), pool() {}
 

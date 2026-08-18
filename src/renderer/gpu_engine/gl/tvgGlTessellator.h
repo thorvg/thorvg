@@ -70,17 +70,26 @@ private:
 
 struct BWTessellator
 {
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    BWTessellator(GlGeometryBuffer* buffer, GlBoundaryContours* boundary = nullptr);
+#else
     BWTessellator(GlGeometryBuffer* buffer);
-
+#endif
     void tessellate(const RenderPath& path);
     RenderRegion bounds() const;
     uint32_t pushVertex(float x, float y);
     void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    void pushBoundaryEdge(uint32_t from, uint32_t to);
+#endif
 
     bool convex = true;
 
 private:
     GlGeometryBuffer* mBuffer;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    GlBoundaryContours* mBoundary;
+#endif
     BBox bbox = {};
 };
 

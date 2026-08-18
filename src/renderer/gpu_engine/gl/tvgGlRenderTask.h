@@ -120,6 +120,64 @@ struct GlStencilCoverTask : GlRenderTask
     GlStencilMode stencilMode;
 };
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+class GlFlatMaskTask : public GlRenderTask
+{
+public:
+    GlFlatMaskTask(GlFlatMaskTarget* maskTarget, GlRenderTarget* dstTarget,
+                   GlRenderTask* stencilTask, GlRenderTask* interiorTask,
+                   GlRenderTask* insidePositiveTask, GlRenderTask* insideNegativeTask,
+                   GlRenderTask* outsideTask,
+                   GlRenderTask* compositeTask, GlStencilMode mode,
+                   const RenderRegion& maskRegion, uint32_t passWidth,
+                   uint32_t passHeight);
+    ~GlFlatMaskTask() override;
+
+    void run(GlStateCache& state) override;
+    void normalizeDrawDepth(int32_t maxDepth) override;
+
+private:
+    GlFlatMaskTarget* mMaskTarget;
+    GlRenderTarget* mDstTarget;
+    GlRenderTask* mStencilTask;
+    GlRenderTask* mInteriorTask;
+    GlRenderTask* mInsidePositiveTask;
+    GlRenderTask* mInsideNegativeTask;
+    GlRenderTask* mOutsideTask;
+    GlRenderTask* mCompositeTask;
+    GlStencilMode mStencilMode;
+    RenderRegion mMaskRegion;
+    uint32_t mPassWidth;
+    uint32_t mPassHeight;
+};
+
+class GlCurveMaskTask : public GlRenderTask
+{
+public:
+    GlCurveMaskTask(GlFlatMaskTarget* maskTarget, GlRenderTarget* dstTarget,
+                    GlRenderTask* stencilTask, GlRenderTask* interiorTask,
+                    GlRenderTask* boundaryTask, GlRenderTask* compositeTask,
+                    GlStencilMode mode, const RenderRegion& maskRegion,
+                    uint32_t passWidth, uint32_t passHeight);
+    ~GlCurveMaskTask() override;
+
+    void run(GlStateCache& state) override;
+    void normalizeDrawDepth(int32_t maxDepth) override;
+
+private:
+    GlFlatMaskTarget* mMaskTarget;
+    GlRenderTarget* mDstTarget;
+    GlRenderTask* mStencilTask;
+    GlRenderTask* mInteriorTask;
+    GlRenderTask* mBoundaryTask;
+    GlRenderTask* mCompositeTask;
+    GlStencilMode mStencilMode;
+    RenderRegion mMaskRegion;
+    uint32_t mPassWidth;
+    uint32_t mPassHeight;
+};
+#endif
+
 struct GlComposeTask : GlRenderTask
 {
     GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* fbo, Array<GlRenderTask*>&& tasks);

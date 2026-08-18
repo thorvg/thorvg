@@ -121,12 +121,14 @@ void GlStateCache::invalidate()
     for (auto& capability : capabilities)
         capability.enabled.invalidate();
     blendFunction.invalidate();
+    blendEquationMode.invalidate();
     depthFunction.invalidate();
     depthWriteEnabled.invalidate();
     colorWriteMask.invalidate();
 
     frontStencilFunction.invalidate();
     backStencilFunction.invalidate();
+    stencilWriteMask.invalidate();
     frontStencilOperation.invalidate();
     backStencilOperation.invalidate();
 
@@ -285,6 +287,13 @@ void GlStateCache::blendFunc(GLenum source, GLenum destination)
     blendFunction.set(state);
 }
 
+void GlStateCache::blendEquation(GLenum mode)
+{
+    if (blendEquationMode.matches(mode)) return;
+    GL_CHECK(glBlendEquation(mode));
+    blendEquationMode.set(mode);
+}
+
 void GlStateCache::depthFunc(GLenum function)
 {
     if (depthFunction.matches(function)) return;
@@ -342,6 +351,13 @@ void GlStateCache::stencilFuncSeparate(GLenum face, GLenum function, GLint refer
     }
 
     GL_CHECK(glStencilFuncSeparate(face, function, reference, mask));
+}
+
+void GlStateCache::stencilMask(GLuint mask)
+{
+    if (stencilWriteMask.matches(mask)) return;
+    GL_CHECK(glStencilMask(mask));
+    stencilWriteMask.set(mask);
 }
 
 void GlStateCache::stencilOp(GLenum stencilFail, GLenum depthFail, GLenum depthPass)

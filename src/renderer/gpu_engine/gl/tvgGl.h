@@ -280,7 +280,9 @@
         //typedef void (*PFNGLTEXPARAMETERFVPROC)(GLenum target, GLenum pname, const GLfloat *params);
         //typedef void (*PFNGLTEXPARAMETERIVPROC)(GLenum target, GLenum pname, const GLint *params);
         //typedef void (*PFNGLTEXIMAGE1DPROC)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels);
-        //typedef void (*PFNGLSTENCILMASKPROC) (GLuint mask);
+        #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+        typedef void (*PFNGLSTENCILMASKPROC) (GLuint mask);
+        #endif
         //typedef void (*PFNGLFINISHPROC)(void);
         //typedef void (*PFNGLFLUSHPROC)(void);
         //typedef void (*PFNGLLOGICOPPROC)(GLenum opcode);
@@ -1074,10 +1076,14 @@
         //typedef void (*PFNGLCLEARBUFFERFIPROC)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
         //typedef const GLubyte *(*PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
         //typedef GLboolean (*PFNGLISRENDERBUFFERPROC)(GLuint renderbuffer);
-        //typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+        #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+        typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+        #endif
         //typedef void (*PFNGLGETRENDERBUFFERPARAMETERIVPROC)(GLenum target, GLenum pname, GLint *params);
         //typedef GLboolean (*PFNGLISFRAMEBUFFERPROC)(GLuint framebuffer);
-        //typedef GLenum (*PFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
+        #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+        typedef GLenum (*PFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
+        #endif
         //typedef void (*PFNGLFRAMEBUFFERTEXTURE1DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
         //typedef void (*PFNGLFRAMEBUFFERTEXTURE3DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
         //typedef void (*PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)(GLenum target, GLenum attachment, GLenum pname, GLint *params);
@@ -1211,7 +1217,9 @@
     //extern PFNGLTEXPARAMETERFVPROC         glTexParameterfv;
     //extern PFNGLTEXPARAMETERIVPROC         glTexParameteriv;
     //extern PFNGLTEXIMAGE1DPROC             glTexImage1D;
-    //extern PFNGLSTENCILMASKPROC            glStencilMask;
+    #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    extern PFNGLSTENCILMASKPROC             glStencilMask;
+    #endif
     //extern PFNGLFINISHPROC                 glFinish;
     //extern PFNGLFLUSHPROC                  glFlush;
     //extern PFNGLLOGICOPPROC                glLogicOp;
@@ -1472,10 +1480,14 @@
     //extern PFNGLCLEARBUFFERFIPROC                       glClearBufferfi;
     //extern PFNGLGETSTRINGIPROC                          glGetStringi;
     //extern PFNGLISRENDERBUFFERPROC                      glIsRenderbuffer;
-    //extern PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+    #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    extern PFNGLRENDERBUFFERSTORAGEPROC                  glRenderbufferStorage;
+    #endif
     //extern PFNGLGETRENDERBUFFERPARAMETERIVPROC          glGetRenderbufferParameteriv;
     //extern PFNGLISFRAMEBUFFERPROC                       glIsFramebuffer;
-    //extern PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;
+    #if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    extern PFNGLCHECKFRAMEBUFFERSTATUSPROC               glCheckFramebufferStatus;
+    #endif
     //extern PFNGLFRAMEBUFFERTEXTURE1DPROC                glFramebufferTexture1D;
     //extern PFNGLFRAMEBUFFERTEXTURE3DPROC                glFramebufferTexture3D;
     //extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;

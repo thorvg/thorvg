@@ -560,6 +560,272 @@ const char* STENCIL_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }                                                               \n
 );
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+const char* FLAT_MASK_INTERIOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        FragColor = vec4(1.0);                                      \n
+    }                                                               \n
+);
+
+const char* FLAT_MASK_EDGE_VERT_SHADER = TVG_COMPOSE_SHADER(
+    uniform float uDepth;                                           \n
+    uniform mat3 uViewMatrix;                                       \n
+    layout(location = 0) in vec2 aLocation;                         \n
+    layout(location = 1) in vec2 aStart;                            \n
+    layout(location = 2) in vec2 aEnd;                              \n
+    flat out vec2 vStart;                                           \n
+    flat out vec2 vEnd;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        vec3 pos = uViewMatrix * vec3(aLocation, 1.0);              \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);                    \n
+        vStart = aStart;                                            \n
+        vEnd = aEnd;                                                \n
+    }                                                               \n
+);
+
+const char* FLAT_MASK_EDGE_INSIDE_POSITIVE_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    flat in vec2 vStart;                                            \n
+    flat in vec2 vEnd;                                              \n
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        vec2 edge = vEnd - vStart;                                  \n
+        vec2 delta = gl_FragCoord.xy - vStart;                       \n
+        if (edge.x * delta.y - edge.y * delta.x < 0.0) discard;      \n
+        float t = clamp(dot(gl_FragCoord.xy - vStart, edge) /       \n
+                        dot(edge, edge), 0.0, 1.0);                 \n
+        float distancePx = length(gl_FragCoord.xy -                 \n
+                                  (vStart + t * edge));             \n
+        FragColor = vec4(clamp(0.5 + distancePx, 0.0, 1.0));        \n
+    }                                                               \n
+);
+
+const char* FLAT_MASK_EDGE_INSIDE_NEGATIVE_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    flat in vec2 vStart;                                            \n
+    flat in vec2 vEnd;                                              \n
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        vec2 edge = vEnd - vStart;                                  \n
+        vec2 delta = gl_FragCoord.xy - vStart;                       \n
+        if (edge.x * delta.y - edge.y * delta.x > 0.0) discard;      \n
+        float t = clamp(dot(gl_FragCoord.xy - vStart, edge) /       \n
+                        dot(edge, edge), 0.0, 1.0);                 \n
+        float distancePx = length(gl_FragCoord.xy -                 \n
+                                  (vStart + t * edge));             \n
+        FragColor = vec4(clamp(0.5 + distancePx, 0.0, 1.0));        \n
+    }                                                               \n
+);
+
+const char* FLAT_MASK_EDGE_OUTSIDE_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    flat in vec2 vStart;                                            \n
+    flat in vec2 vEnd;                                              \n
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        vec2 edge = vEnd - vStart;                                  \n
+        float t = clamp(dot(gl_FragCoord.xy - vStart, edge) /       \n
+                        dot(edge, edge), 0.0, 1.0);                 \n
+        float distancePx = length(gl_FragCoord.xy -                 \n
+                                  (vStart + t * edge));             \n
+        FragColor = vec4(clamp(0.5 - distancePx, 0.0, 1.0));        \n
+    }                                                               \n
+);
+
+const char* FLAT_MASK_COMPOSITE_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    uniform sampler2D uMaskTexture;                                 \n
+    in vec4 vColor;                                                 \n
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        float coverage = texelFetch(uMaskTexture,                   \n
+                                    ivec2(gl_FragCoord.xy), 0).r;   \n
+        vec4 premul = vec4(vColor.rgb * vColor.a, vColor.a);        \n
+        FragColor = premul * coverage;                              \n
+    }                                                               \n
+);
+
+// Curve-mask stores the binary stencil classification in red and the
+// nearest analytical boundary proximity in green. The final pass turns those
+// two values into signed inside/outside coverage before applying color once.
+const char* CURVE_MASK_INTERIOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        FragColor = vec4(1.0, 0.0, 0.0, 0.0);                      \n
+    }                                                               \n
+);
+
+const char* CURVE_MASK_BOUNDARY_VERT_SHADER = TVG_COMPOSE_SHADER(
+    uniform float uDepth;                                           \n
+    uniform mat3 uViewMatrix;                                       \n
+    layout(location = 0) in vec2 aLocation;                         \n
+    layout(location = 1) in vec2 aP0;                               \n
+    layout(location = 2) in vec2 aP1;                               \n
+    layout(location = 3) in vec2 aP2;                               \n
+    layout(location = 4) in vec2 aP3;                               \n
+    layout(location = 5) in vec4 aImplicit0;                        \n
+    layout(location = 6) in vec4 aImplicit1;                        \n
+    layout(location = 7) in vec2 aImplicit2;                        \n
+    layout(location = 8) in vec3 aNormalization;                    \n
+    layout(location = 9) in float aKind;                            \n
+    flat out vec2 vP0;                                              \n
+    flat out vec2 vP1;                                              \n
+    flat out vec2 vP2;                                              \n
+    flat out vec2 vP3;                                              \n
+    flat out vec4 vImplicit0;                                       \n
+    flat out vec4 vImplicit1;                                       \n
+    flat out vec2 vImplicit2;                                       \n
+    flat out vec3 vNormalization;                                   \n
+    flat out float vKind;                                           \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        vec3 pos = uViewMatrix * vec3(aLocation, 1.0);              \n
+        gl_Position = vec4(pos.xy, uDepth, 1.0);                    \n
+        vP0 = aP0;                                                  \n
+        vP1 = aP1;                                                  \n
+        vP2 = aP2;                                                  \n
+        vP3 = aP3;                                                  \n
+        vImplicit0 = aImplicit0;                                    \n
+        vImplicit1 = aImplicit1;                                    \n
+        vImplicit2 = aImplicit2;                                    \n
+        vNormalization = aNormalization;                            \n
+        vKind = aKind;                                              \n
+    }                                                               \n
+);
+
+const char* CURVE_MASK_BOUNDARY_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    flat in vec2 vP0;                                               \n
+    flat in vec2 vP1;                                               \n
+    flat in vec2 vP2;                                               \n
+    flat in vec2 vP3;                                               \n
+    flat in vec4 vImplicit0;                                        \n
+    flat in vec4 vImplicit1;                                        \n
+    flat in vec2 vImplicit2;                                        \n
+    flat in vec3 vNormalization;                                    \n
+    flat in float vKind;                                            \n
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    vec2 cubicPoint(float t)                                        \n
+    {                                                               \n
+        float s = 1.0 - t;                                          \n
+        return s * s * s * vP0 + 3.0 * s * s * t * vP1 +          \n
+               3.0 * s * t * t * vP2 + t * t * t * vP3;           \n
+    }                                                               \n
+                                                                    \n
+    vec2 cubicDerivative(float t)                                   \n
+    {                                                               \n
+        float s = 1.0 - t;                                          \n
+        return 3.0 * (s * s * (vP1 - vP0) +                        \n
+                      2.0 * s * t * (vP2 - vP1) +                  \n
+                      t * t * (vP3 - vP2));                         \n
+    }                                                               \n
+                                                                    \n
+    vec2 cubicSecondDerivative(float t)                             \n
+    {                                                               \n
+        return 6.0 * ((1.0 - t) * (vP2 - 2.0 * vP1 + vP0) +       \n
+                      t * (vP3 - 2.0 * vP2 + vP1));                 \n
+    }                                                               \n
+                                                                    \n
+    float cubicImplicit(vec2 pixel)                                 \n
+    {                                                               \n
+        vec2 p = (pixel - vNormalization.xy) * vNormalization.z;    \n
+        float x = p.x;                                              \n
+        float y = p.y;                                              \n
+        return dot(vImplicit0, vec4(x * x * x, x * x * y,          \n
+                                    x * y * y, y * y * y)) +        \n
+               dot(vImplicit1, vec4(x * x, x * y, y * y, x)) +    \n
+               dot(vImplicit2, vec2(y, 1.0));                       \n
+    }                                                               \n
+                                                                    \n
+    float cubicClosestParameter(vec2 pixel)                         \n
+    {                                                               \n
+        float bestT = 0.0;                                          \n
+        float bestDistance2 = dot(pixel - vP0, pixel - vP0);        \n
+        for (int seed = 0; seed <= 8; ++seed) {                     \n
+            float t = float(seed) * 0.125;                          \n
+            for (int iteration = 0; iteration < 5; ++iteration) {   \n
+                vec2 delta = cubicPoint(t) - pixel;                 \n
+                vec2 first = cubicDerivative(t);                    \n
+                float denominator = dot(first, first) +             \n
+                                    dot(delta, cubicSecondDerivative(t));\n
+                if (abs(denominator) > 1e-6) {                      \n
+                    t = clamp(t - dot(delta, first) / denominator,  \n
+                              0.0, 1.0);                            \n
+                }                                                   \n
+            }                                                       \n
+            vec2 delta = cubicPoint(t) - pixel;                     \n
+            float distance2 = dot(delta, delta);                    \n
+            if (distance2 < bestDistance2) {                        \n
+                bestT = t;                                         \n
+                bestDistance2 = distance2;                          \n
+            }                                                       \n
+        }                                                           \n
+        vec2 endDelta = pixel - vP3;                                \n
+        if (dot(endDelta, endDelta) < bestDistance2) bestT = 1.0;   \n
+        return bestT;                                               \n
+    }                                                               \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        vec2 pixel = gl_FragCoord.xy;                               \n
+        float signedDistance;                                       \n
+        float clipDistance;                                         \n
+        if (vKind < 0.5) {                                          \n
+            vec2 tangent = vP3 - vP0;                              \n
+            float length2 = dot(tangent, tangent);                  \n
+            float t = clamp(dot(pixel - vP0, tangent) / length2,    \n
+                            0.0, 1.0);                              \n
+            vec2 delta = pixel - mix(vP0, vP3, t);                  \n
+            clipDistance = length(delta);                           \n
+            float side = tangent.x * delta.y - tangent.y * delta.x;\n
+            signedDistance = side < 0.0 ? -clipDistance : clipDistance;\n
+        } else {                                                    \n
+            float t = cubicClosestParameter(pixel);                 \n
+            clipDistance = length(pixel - cubicPoint(t));           \n
+            float implicitValue = cubicImplicit(pixel);             \n
+            vec2 implicitDerivative = vec2(dFdx(implicitValue),     \n
+                                           dFdy(implicitValue));    \n
+            signedDistance = implicitValue /                        \n
+                             max(length(implicitDerivative), 1e-6); \n
+        }                                                           \n
+        if (clipDistance > 0.5) discard;                            \n
+        float proximity = clamp(1.0 - 2.0 * abs(signedDistance),    \n
+                                0.0, 1.0);                          \n
+        FragColor = vec4(0.0, proximity, 0.0, 0.0);                \n
+    }                                                               \n
+);
+
+const char* CURVE_MASK_COMPOSITE_FRAG_SHADER = TVG_COMPOSE_SHADER(
+    uniform sampler2D uMaskTexture;                                 \n
+    in vec4 vColor;                                                 \n
+    out vec4 FragColor;                                             \n
+                                                                    \n
+    void main()                                                     \n
+    {                                                               \n
+        vec2 mask = texelFetch(uMaskTexture,                        \n
+                               ivec2(gl_FragCoord.xy), 0).rg;       \n
+        float outsideCoverage = 0.5 * mask.g;                       \n
+        float insideCoverage = 1.0 - outsideCoverage;               \n
+        float coverage = mix(outsideCoverage, insideCoverage,       \n
+                             step(0.5, mask.r));                    \n
+        vec4 premul = vec4(vColor.rgb * vColor.a, vColor.a);        \n
+        FragColor = premul * coverage;                              \n
+    }                                                               \n
+);
+#endif
+
 const char* BLIT_VERT_SHADER = TVG_COMPOSE_SHADER(
     layout(location = 0) in vec2 aLocation;                         \n
     layout(location = 1) in vec2 aUV;                               \n

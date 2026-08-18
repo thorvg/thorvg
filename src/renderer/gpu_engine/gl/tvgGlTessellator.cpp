@@ -412,7 +412,11 @@ void Stroker::round(const Point& p, const Point& outDir)
 }
 
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+BWTessellator::BWTessellator(GlGeometryBuffer* buffer, GlBoundaryContours* boundary): mBuffer(buffer), mBoundary(boundary)
+#else
 BWTessellator::BWTessellator(GlGeometryBuffer* buffer): mBuffer(buffer)
+#endif
 {
 }
 
@@ -431,6 +435,10 @@ void BWTessellator::tessellate(const RenderPath& path)
     Point prevPt = {};
     GpuConvexProbe probe;
     bool contourClosed = false;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    uint32_t boundaryStart = 0;
+    bool contourHasTriangle = false;
+#endif
 
     mBuffer->vertex.reserve(ptsCnt * 2);
     mBuffer->index.reserve((ptsCnt - 2) * 3);
@@ -438,6 +446,13 @@ void BWTessellator::tessellate(const RenderPath& path)
     auto finishContour = [&]() {
         if (prevIndex == 0 || contourClosed) return;
         probe.addContourClose(firstPt - prevPt);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+        pushBoundaryEdge(prevIndex, firstIndex);
+        if (mBoundary) {
+            if (contourHasTriangle) mBoundary->contourEnds.push(mBoundary->edges.count);
+            else mBoundary->edges.count = boundaryStart;
+        }
+#endif
         contourClosed = true;
     };
 
@@ -450,23 +465,40 @@ void BWTessellator::tessellate(const RenderPath& path)
                 firstPt = prevPt = *pts;
                 prevIndex = 0;
                 contourClosed = false;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+                boundaryStart = mBoundary ? mBoundary->edges.count : 0;
+                contourHasTriangle = false;
+#endif
                 pts++;
             } break;
             case PathCommand::LineTo: {
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+                if (mBoundary && contourClosed) mBoundary->supported = false;
+#endif
                 auto edge = *pts - prevPt;
                 if (prevIndex == 0) {
                     prevIndex = pushVertex(pts->x, pts->y);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+                    pushBoundaryEdge(firstIndex, prevIndex);
+#endif
                     probe.addEdge(edge);
                     prevPt = *pts++;
                 } else {
                     probe.addEdge(edge);
                     auto currIndex = pushVertex(pts->x, pts->y);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+                    pushBoundaryEdge(prevIndex, currIndex);
+                    if (cross(prevPt - firstPt, *pts - firstPt) != 0.0f) contourHasTriangle = true;
+#endif
                     pushTriangle(firstIndex, prevIndex, currIndex);
                     prevIndex = currIndex;
                     prevPt = *pts++;
                 }
             } break;
             case PathCommand::CubicTo: {
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+                if (mBoundary && contourClosed) mBoundary->supported = false;
+#endif
                 Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
                 if (probe.convex && gpuEdgesCross(curve.start, curve.ctrl1, curve.ctrl2, curve.end)) probe.convex = false;
 
@@ -479,6 +511,10 @@ void BWTessellator::tessellate(const RenderPath& path)
                     auto pt = curve.at(step * s);
                     probe.addEdge(pt - curvePrevPt);
                     auto currIndex = pushVertex(pt.x, pt.y);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+                    pushBoundaryEdge(prevIndex == 0 ? firstIndex : prevIndex, currIndex);
+                    if (prevIndex != 0 && cross(curvePrevPt - firstPt, pt - firstPt) != 0.0f) contourHasTriangle = true;
+#endif
                     curvePrevPt = pt;
                     if (prevIndex == 0) { prevIndex = currIndex; continue; }
                     pushTriangle(firstIndex, prevIndex, currIndex);
@@ -521,5 +557,13 @@ void BWTessellator::pushTriangle(uint32_t a, uint32_t b, uint32_t c)
     mBuffer->index.push(b);
     mBuffer->index.push(c);
 }
+
+
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+void BWTessellator::pushBoundaryEdge(uint32_t from, uint32_t to)
+{
+    if (mBoundary) mBoundary->edges.push({from, to});
+}
+#endif
 
 }  // namespace tvg

@@ -200,7 +200,9 @@ PFNGLVIEWPORTPROC               glViewport;
 //PFNGLTEXPARAMETERFVPROC         glTexParameterfv;
 //PFNGLTEXPARAMETERIVPROC         glTexParameteriv;
 //PFNGLTEXIMAGE1DPROC             glTexImage1D;
-//PFNGLSTENCILMASKPROC            glStencilMask;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+PFNGLSTENCILMASKPROC             glStencilMask;
+#endif
 //PFNGLFINISHPROC                 glFinish;
 //PFNGLFLUSHPROC                  glFlush;
 //PFNGLLOGICOPPROC                glLogicOp = nullptr
@@ -461,10 +463,14 @@ PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
 //PFNGLCLEARBUFFERFIPROC                       glClearBufferfi;
 //PFNGLGETSTRINGIPROC                          glGetStringi;
 //PFNGLISRENDERBUFFERPROC                      glIsRenderbuffer;
-//PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+PFNGLRENDERBUFFERSTORAGEPROC                  glRenderbufferStorage;
+#endif
 //PFNGLGETRENDERBUFFERPARAMETERIVPROC          glGetRenderbufferParameteriv;
 //PFNGLISFRAMEBUFFERPROC                       glIsFramebuffer;
-//PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+PFNGLCHECKFRAMEBUFFERSTATUSPROC               glCheckFramebufferStatus;
+#endif
 //PFNGLFRAMEBUFFERTEXTURE1DPROC                glFramebufferTexture1D;
 //PFNGLFRAMEBUFFERTEXTURE3DPROC                glFramebufferTexture3D;
 //PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
@@ -527,7 +533,9 @@ bool glInit()
 #else
     GL_FUNCTION_FETCH(glClearDepth, PFNGLCLEARDEPTHPROC);
 #endif
-    // GL_FUNCTION_FETCH(glStencilMask, PFNGLSTENCILMASKPROC);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    GL_FUNCTION_FETCH(glStencilMask, PFNGLSTENCILMASKPROC);
+#endif
     GL_FUNCTION_FETCH(glColorMask, PFNGLCOLORMASKPROC);
     GL_FUNCTION_FETCH(glDepthMask, PFNGLDEPTHMASKPROC);
     GL_FUNCTION_FETCH(glDisable, PFNGLDISABLEPROC);
@@ -791,7 +799,9 @@ bool glInit()
     GL_FUNCTION_FETCH(glBindRenderbuffer, PFNGLBINDRENDERBUFFERPROC);
     GL_FUNCTION_FETCH(glDeleteRenderbuffers, PFNGLDELETERENDERBUFFERSPROC);
     GL_FUNCTION_FETCH(glGenRenderbuffers, PFNGLGENRENDERBUFFERSPROC);
-    // GL_FUNCTION_FETCH(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGEPROC);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    GL_FUNCTION_FETCH(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGEPROC);
+#endif
     // GL_FUNCTION_FETCH(glGetRenderbufferParameteriv, PFNGLGETRENDERBUFFERPARAMETERIVPROC);
     // GL_FUNCTION_FETCH(glIsFramebuffer, PFNGLISFRAMEBUFFERPROC);
 #if defined(THORVG_GL_TARGET_GLES)
@@ -800,7 +810,9 @@ bool glInit()
     GL_FUNCTION_FETCH(glBindFramebuffer, PFNGLBINDFRAMEBUFFERPROC);
     GL_FUNCTION_FETCH(glDeleteFramebuffers, PFNGLDELETEFRAMEBUFFERSPROC);
     GL_FUNCTION_FETCH(glGenFramebuffers, PFNGLGENFRAMEBUFFERSPROC);
-    // GL_FUNCTION_FETCH(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUSPROC);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    GL_FUNCTION_FETCH(glCheckFramebufferStatus, PFNGLCHECKFRAMEBUFFERSTATUSPROC);
+#endif
     // GL_FUNCTION_FETCH(glFramebufferTexture1D, PFNGLFRAMEBUFFERTEXTURE1DPROC);
     GL_FUNCTION_FETCH(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC);
     // GL_FUNCTION_FETCH(glFramebufferTexture3D, PFNGLFRAMEBUFFERTEXTURE3DPROC);

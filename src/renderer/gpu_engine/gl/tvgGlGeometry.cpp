@@ -25,6 +25,131 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+static Point boundaryPoint(const GlGeometryBuffer& fill, uint32_t index)
+{
+    return {fill.vertex[index * 2], fill.vertex[index * 2 + 1]};
+}
+
+static bool boundarySegmentsOverlap(const Point& a, const Point& b, const Point& c, const Point& d)
+{
+    auto ab = b - a;
+    auto cd = d - c;
+    auto abLengthSquared = dot(ab, ab);
+    if (abLengthSquared == 0.0f || dot(cd, cd) == 0.0f) return false;
+
+    // Reversed evaluation of the same cubic can move a sample by a few float
+    // ulps. Reuse ThorVG's float equality scale only for POC eligibility; the
+    // captured edge coordinates and tessellation remain untouched.
+    auto lineTolerance = FLOAT_EPSILON * sqrtf(abLengthSquared);
+    if (fabsf(cross(ab, c - a)) > lineTolerance ||
+        fabsf(cross(ab, d - a)) > lineTolerance) return false;
+
+    auto useX = fabsf(ab.x) >= fabsf(ab.y);
+    auto av = useX ? a.x : a.y;
+    auto bv = useX ? b.x : b.y;
+    auto cv = useX ? c.x : c.y;
+    auto dv = useX ? d.x : d.y;
+    auto abMin = av < bv ? av : bv;
+    auto abMax = av > bv ? av : bv;
+    auto cdMin = cv < dv ? cv : dv;
+    auto cdMax = cv > dv ? cv : dv;
+    return abMin < cdMax && cdMin < abMax;
+}
+
+static bool boundaryEdgeZero(const GlGeometryBuffer& fill, const GlBoundaryEdge& edge)
+{
+    auto delta = boundaryPoint(fill, edge.to) - boundaryPoint(fill, edge.from);
+    return dot(delta, delta) == 0.0f;
+}
+
+static bool boundaryEdgesAdjacent(const GlGeometryBuffer& fill, const GlBoundaryContours& boundary,
+                                  uint32_t first, uint32_t second)
+{
+    uint32_t contourStart = 0;
+    ARRAY_FOREACH(contourEnd, boundary.contourEnds) {
+        if (first >= contourStart && first < *contourEnd &&
+            second >= contourStart && second < *contourEnd) {
+            auto direct = true;
+            for (uint32_t i = first + 1; i < second; ++i) {
+                if (!boundaryEdgeZero(fill, boundary.edges[i])) {
+                    direct = false;
+                    break;
+                }
+            }
+            if (direct) return true;
+
+            for (uint32_t i = contourStart; i < first; ++i) {
+                if (!boundaryEdgeZero(fill, boundary.edges[i])) return false;
+            }
+            for (uint32_t i = second + 1; i < *contourEnd; ++i) {
+                if (!boundaryEdgeZero(fill, boundary.edges[i])) return false;
+            }
+            return true;
+        }
+        contourStart = *contourEnd;
+    }
+    return false;
+}
+
+static bool boundarySegmentsProperlyCross(const Point& a, const Point& b, const Point& c, const Point& d)
+{
+    auto ab = b - a;
+    auto cd = d - c;
+    auto ac = cross(ab, c - a);
+    auto ad = cross(ab, d - a);
+    auto ca = cross(cd, a - c);
+    auto cb = cross(cd, b - c);
+    return ((ac < 0.0f && ad > 0.0f) || (ac > 0.0f && ad < 0.0f)) &&
+           ((ca < 0.0f && cb > 0.0f) || (ca > 0.0f && cb < 0.0f));
+}
+
+static float boundaryPointSegmentDistanceSquared(const Point& p, const Point& a, const Point& b)
+{
+    auto edge = b - a;
+    auto edgeLengthSquared = dot(edge, edge);
+    if (edgeLengthSquared == 0.0f) return dot(p - a, p - a);
+    auto t = tvg::clamp(dot(p - a, edge) / edgeLengthSquared, 0.0f, 1.0f);
+    auto delta = p - (a + edge * t);
+    return dot(delta, delta);
+}
+
+static bool boundarySegmentsTooClose(const Point& a, const Point& b, const Point& c, const Point& d)
+{
+    if (dot(b - a, b - a) == 0.0f || dot(d - c, d - c) == 0.0f) return false;
+    if (boundarySegmentsProperlyCross(a, b, c, d)) return false;
+    auto diameter = 2.0f * GL_FLAT_MASK_AA_RADIUS;
+    auto limit = diameter * diameter;
+    return boundaryPointSegmentDistanceSquared(a, c, d) < limit ||
+           boundaryPointSegmentDistanceSquared(b, c, d) < limit ||
+           boundaryPointSegmentDistanceSquared(c, a, b) < limit ||
+           boundaryPointSegmentDistanceSquared(d, a, b) < limit;
+}
+
+static bool flatMaskBoundarySupported(const GlGeometryBuffer& fill, const GlBoundaryContours& boundary)
+{
+    for (uint32_t i = 0; i < boundary.edges.count; ++i) {
+        const auto& first = boundary.edges[i];
+        auto a = boundaryPoint(fill, first.from);
+        auto b = boundaryPoint(fill, first.to);
+        for (uint32_t j = i + 1; j < boundary.edges.count; ++j) {
+            const auto& second = boundary.edges[j];
+            auto c = boundaryPoint(fill, second.from);
+            auto d = boundaryPoint(fill, second.to);
+            if (boundarySegmentsOverlap(a, b, c, d)) {
+                TVGLOG("GL_ENGINE", "Flat-mask POC boundary edges %u and %u overlap", i, j);
+                return false;
+            }
+            if (!boundaryEdgesAdjacent(fill, boundary, i, j) && boundarySegmentsTooClose(a, b, c, d)) {
+                TVGLOG("GL_ENGINE", "Flat-mask POC boundary edges %u and %u are within the strip diameter", i, j);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+#endif
+
 bool GlIntersector::isPointInImage(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr)
 {
     for (uint32_t i = 0; i < mesh.index.count; i += 3) {
@@ -129,6 +254,9 @@ void GlGeometry::prepare(const RenderShape& rshape)
     optPathThin = false;
     optPathSkipFill = false;
     optStrokePath.clear();
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    curveMaskPath.clear();
+#endif
 
     auto strokeWidth = rshape.strokeWidth();
     auto localOut = (std::isfinite(strokeWidth) && !tvg::zero(strokeWidth)) ? &optStrokePath : nullptr;
@@ -144,6 +272,14 @@ void GlGeometry::prepare(const RenderShape& rshape)
         }
     }
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    // Preserve the original trimmed commands for curve-mask. The normal
+    // optimized path below remains authoritative for fill tessellation.
+    curveMaskPath.cmds = path->cmds;
+    curveMaskPath.pts.reserve(path->pts.count);
+    ARRAY_FOREACH(point, path->pts) curveMaskPath.pts.push(*point * matrix);
+#endif
+
     GpuOptimizeResult result{&optPath, localOut};
     gpuOptimize(*path, result, matrix);
     optPathThin = result.thin;
@@ -151,9 +287,16 @@ void GlGeometry::prepare(const RenderShape& rshape)
 }
 
 
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultiplier, bool captureBoundary)
+#else
 bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultiplier)
+#endif
 {
     fill.clear();
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    fillBoundary.clear();
+#endif
     fillBounds = {};
     fillWorld = true;
     convex = false;
@@ -175,8 +318,17 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     }
 
     // Handle normal shapes with more than 2 points
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    BWTessellator bwTess{&fill, (captureBoundary && !optPathThin && !optPathSkipFill) ? &fillBoundary : nullptr};
+#else
     BWTessellator bwTess{&fill};
+#endif
     bwTess.tessellate(optPath);
+#if defined(THORVG_GL_FLAT_MASK_SUPPORT)
+    if (captureBoundary && fillBoundary.supported) {
+        fillBoundary.supported = flatMaskBoundarySupported(fill, fillBoundary);
+    }
+#endif
     fillRule = rshape.rule;
     fillBounds = bwTess.bounds();
     convex = bwTess.convex;
