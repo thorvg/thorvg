@@ -102,6 +102,13 @@ struct Array
         count = rhs.count;
     }
 
+    void swap(Array& rhs)
+    {
+        auto d = data; data = rhs.data; rhs.data = d;
+        auto c = count; count = rhs.count; rhs.count = c;
+        auto r = reserved; reserved = rhs.reserved; rhs.reserved = r;
+    }
+
     void move(Array& to)
     {
         to.reset();
