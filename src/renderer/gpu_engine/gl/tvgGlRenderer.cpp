@@ -857,8 +857,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
 #else // TODO: create partial buffer when MSAA is disabled
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
 #endif
-            // image info
-            uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
+            uint32_t info[4] = {cmp->opacity, 0, 0, 0};
 
             auto program = getBlendProgram(glCmp->blendMethod, BlendSource::Scene);
             auto task = renderPass->endRenderPass<GlSceneBlendTask>(program, currentPass()->getFboId());
@@ -895,8 +894,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
             task->setDrawDepth(currentPass()->nextDrawDepth());
             task->setViewMatrix(tvg::identity());
 
-            // image info
-            uint32_t info[4] = {(uint32_t)ColorSpace::ABGR8888, 0, cmp->opacity, 0};
+            uint32_t info[4] = {cmp->opacity, 0, 0, 0};
 
             task->addBindResource(GlBindingResource{
                 1,
@@ -1041,6 +1039,7 @@ bool GlRenderer::preRender()
     if (mRootTarget.invalid()) return false;
 
     currentContext();
+    if (!mTextures.flushPreprocess(mTargetFboId)) return false;
     if (mPrograms.empty()) initShaders();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
 
@@ -1176,8 +1175,7 @@ bool GlRenderer::renderImage(void* data)
     if (complexBlend) vp = currentPass()->getViewport();
     task->setViewMatrix(currentPass()->getViewMatrix());
 
-    // image info
-    uint32_t info[4] = {(uint32_t)sdata->texColorSpace, sdata->texFlipY, sdata->opacity, 0};
+    uint32_t info[4] = {sdata->opacity, 0, 0, 0};
 
     task->addBindResource(GlBindingResource{
         1,
@@ -1294,11 +1292,9 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         sdata->texStamp = mTextures.stamp;
         sdata->geometry = GlGeometry();
     } else if (flags & RenderUpdateFlag::Image) {
-        TextureMgr::upload(sdata->texId, image, filter);
+        mTextures.upload(sdata->texId, image, filter);
     }
 
-    sdata->texColorSpace = image->cs;
-    sdata->texFlipY = 1;
     sdata->opacity = opacity;
     sdata->geometry.setMatrix(transform);
     sdata->geometry.viewport = vport;
