@@ -27,6 +27,7 @@
 #endif
 #include <fstream>
 #include <cstring>
+#include <cmath>
 #include "catch.hpp"
 
 using namespace tvg;
@@ -264,6 +265,64 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Merge Path", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+
+        auto buffer = (uint32_t*) malloc(sizeof(uint32_t) * 600 * 400);
+        REQUIRE(buffer);
+        REQUIRE(canvas->target(buffer, 600, 600, 400, ColorSpace::ARGB8888) == Result::Success);
+
+        const char* names[] = {"mergepath.lot", "mergepath2.lot"};
+
+        const float expected[2][6] = {
+            {8273.40f,
+             8273.40f,
+             5445.97f,
+             2408.01f,
+             5865.39f,
+             7500.00f},
+
+            {6264.00f,
+             5445.97f,
+             5445.97f,
+             7000.00f,
+             7853.98f,
+             5000.00f}
+        };
+
+        for (int f = 0; f < 2; ++f) {
+            auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+            REQUIRE(animation);
+
+            auto picture = animation->picture();
+            REQUIRE(picture->load(string(TEST_DIR"/").append(names[f]).c_str()) == Result::Success);
+            REQUIRE(canvas->remove() == Result::Success);
+            REQUIRE(canvas->add(picture) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+
+            for (int tile = 0; tile < 6; ++tile) {
+                auto ox = (tile % 3) * 200;
+                auto oy = (tile / 3) * 200;
+                auto covered = 0;
+                for (auto y = oy; y < oy + 200; ++y) {
+                    for (auto x = ox; x < ox + 200; ++x) {
+                        if ((buffer[y * 600 + x] >> 24) > 127) ++covered;
+                    }
+                }
+
+                REQUIRE(fabsf(covered - expected[f][tile]) / expected[f][tile] < 0.03f);
+            }
+        }
+
+        free(buffer);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
 TEST_CASE("Lottie Marker", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);
