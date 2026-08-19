@@ -274,6 +274,7 @@ struct LottieObject
         Repeater,
         RoundedCorner,
         OffsetPath,
+        MergePath,
         PuckerBloat,
         ZigZag,
         TextRange,
@@ -951,6 +952,22 @@ struct LottieOffsetPath : LottieObject
     StrokeJoin join = StrokeJoin::Miter;
 };
 
+
+struct LottieMergePath : LottieObject
+{
+    enum Mode : uint8_t { Merge = 0, Add, Subtract, Intersect, Exclude };
+
+    LottieMergePath() : LottieObject(LottieObject::MergePath) {}
+
+    bool mergeable() override
+    {
+        return true;
+    }
+
+    Mode mode = Merge;
+};
+
+
 struct LottiePuckerBloat : LottieObject
 {
     LottiePuckerBloat() : LottieObject(LottieObject::PuckerBloat) {}
@@ -1003,6 +1020,7 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
     bool trimpath : 1;      //this group has a trimpath.
     bool visible : 1;       //this group has visible contents.
     bool allowMerge : 1;    //if this group is consisted of simple (transformed) shapes.
+    bool mergepath : 1;     //this group has a mergepath
 };
 
 struct LottieRootLayer : LottieGroup
