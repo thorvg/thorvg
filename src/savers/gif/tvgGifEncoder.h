@@ -20,35 +20,31 @@
  * SOFTWARE.
  */
 
-
 #ifndef TVG_GIF_ENCODER_H
 #define TVG_GIF_ENCODER_H
 
 #include "tvgCommon.h"
+#include "tvgColor.h"
 
-typedef struct
+struct GifPalette
 {
-    uint8_t r[256];
-    uint8_t g[256];
-    uint8_t b[256];
+    tvg::RGB color[256];
 
     // k-d tree over RGB space, organized in heap fashion
     // i.e. left child of node i is node i*2, right child is node i*2+1
     // nodes 256-511 are implicitly the leaves, containing a color
     uint8_t treeSplitElt[256];
     uint8_t treeSplit[256];
-} GifPalette;
+};
 
-
-typedef struct
+struct GifWriter
 {
     FILE* f;
     uint8_t* oldImage;
     uint8_t* tmpImage;
     GifPalette pal;
     bool firstFrame;
-} GifWriter;
-
+};
 
 // Creates a gif file.
 // The input GIFWriter is assumed to be uninitialized.
@@ -61,10 +57,9 @@ bool gifBegin(GifWriter* writer, const char* filename, uint32_t width, uint32_t 
 // this may be handy to save bits in animations that don't change much.
 bool gifWriteFrame(GifWriter* writer, const uint8_t* image, uint32_t width, uint32_t height, uint32_t delay, bool transparent);
 
-
 // Writes the EOF code, closes the file handle, and frees temp memory used by a GIF.
 // Many if not most viewers will still display a GIF properly if the EOF code is missing,
 // but it's still a good idea to write it out.
 bool gifEnd(GifWriter* writer);
 
-#endif //TVG_GIF_ENCODER_H
+#endif  // TVG_GIF_ENCODER_H

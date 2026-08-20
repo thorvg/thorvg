@@ -102,9 +102,9 @@ static void _getClosestPaletteColor( GifPalette* pPal, int r, int g, int b, int*
         if(ind == TRANSPARENT_IDX) return;
 
         // check whether this color is better than the current winner
-        int r_err = r - ((int32_t)pPal->r[ind]);
-        int g_err = g - ((int32_t)pPal->g[ind]);
-        int b_err = b - ((int32_t)pPal->b[ind]);
+        int r_err = r - ((int32_t)pPal->color[ind].r);
+        int g_err = g - ((int32_t)pPal->color[ind].g);
+        int b_err = b - ((int32_t)pPal->color[ind].b);
         int diff = abs(r_err)+ abs(g_err) + abs(b_err);
 
         if(diff < *bestDiff) {
@@ -280,9 +280,7 @@ static void _buildSearchTree(GifPalette* pal, uint8_t* colors, int count, int fi
 {
     // Nothing left to split
     if (count == 1) {
-        pal->r[firstElt] = colors[0];
-        pal->g[firstElt] = colors[1];
-        pal->b[firstElt] = colors[2];
+        pal->color[firstElt] = {colors[0], colors[1], colors[2]};
 
         // If current depth is not 8
         if (treeRoot <= (1 << BIT_DEPTH) - 1) {
@@ -395,9 +393,9 @@ void _palettizePixel(const uint8_t* nextFrame, uint8_t* outFrame, GifPalette* pP
     _getClosestPaletteColor(pPal, nextFrame[0], nextFrame[1], nextFrame[2], &bestInd, &bestDiff, 1);
 
     // Write the resulting color to the output buffer
-    outFrame[0] = pPal->r[bestInd];
-    outFrame[1] = pPal->g[bestInd];
-    outFrame[2] = pPal->b[bestInd];
+    outFrame[0] = pPal->color[bestInd].r;
+    outFrame[1] = pPal->color[bestInd].g;
+    outFrame[2] = pPal->color[bestInd].b;
     outFrame[3] = (uint8_t)bestInd;
 }
 
@@ -490,13 +488,9 @@ static void _writePalette(const GifPalette* pPal, FILE* f)
     fputc(0, f);
 
     for (int ii = 1; ii < (1 << BIT_DEPTH); ++ii) {
-        uint32_t r = pPal->r[ii];
-        uint32_t g = pPal->g[ii];
-        uint32_t b = pPal->b[ii];
-
-        fputc((int)r, f);
-        fputc((int)g, f);
-        fputc((int)b, f);
+        fputc((int)pPal->color[ii].r, f);
+        fputc((int)pPal->color[ii].g, f);
+        fputc((int)pPal->color[ii].b, f);
     }
 }
 
