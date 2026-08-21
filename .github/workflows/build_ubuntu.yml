@@ -25,11 +25,11 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install meson ninja-build libturbojpeg0-dev libpng-dev libwebp-dev
+        sudo apt-get install meson ninja-build libturbojpeg0-dev libpng-dev libwebp-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
+        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders="all,media" -Dsavers=all -Dbindings=capi -Dtools=all
         sudo ninja -C build install
 
   compact_test:
