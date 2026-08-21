@@ -101,7 +101,7 @@ LottieLoader::~LottieLoader()
     tvg::free(dirName);
 }
 
-bool LottieLoader::header()
+Result LottieLoader::header()
 {
     //A single thread doesn't need to perform intensive tasks.
     if (TaskScheduler::threads() == 0) {
@@ -111,9 +111,9 @@ bool LottieLoader::header()
             h = static_cast<float>(comp->h);
             segmentEnd = frameCnt = comp->frameCnt();
             frameRate = comp->frameRate;
-            return true;
+            return Result::Success;
         }
-        return false;
+        return Result::InvalidArguments;
     }
 
     //Quickly validate the given Lottie file without parsing in order to get the animation info.
@@ -197,20 +197,20 @@ bool LottieLoader::header()
 
     if (frameRate < FLOAT_EPSILON) {
         TVGLOG("LOTTIE", "Not a Lottie file? Frame rate is 0!");
-        return false;
+        return Result::InvalidArguments;
     }
 
     segmentEnd = frameCnt = (endFrame - startFrame);
 
     TVGLOG("LOTTIE", "info: frame rate = %f, duration = %f size = %f x %f", frameRate, frameCnt / frameRate, w, h);
 
-    return true;
+    return Result::Success;
 }
 
-bool LottieLoader::open(const char* data, uint32_t size, const LoaderOps& _ops)
+Result LottieLoader::open(const char* data, uint32_t size, const LoaderOps& _ops)
 {
     auto ops = static_cast<const PictureOps*>(&_ops);
-    if (ops->caller != tvg::Type::Picture) return false;
+    if (ops->caller != tvg::Type::Picture) return Result::InvalidArguments;
 
     if (ops->owner == Ownership::Copy) {
         content = tvg::malloc<char>(size + 1);
@@ -226,10 +226,10 @@ bool LottieLoader::open(const char* data, uint32_t size, const LoaderOps& _ops)
     return header();
 }
 
-bool LottieLoader::open(const char* path, const LoaderOps& ops)
+Result LottieLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (ops.caller != tvg::Type::Picture) return false;
+    if (ops.caller != tvg::Type::Picture) return Result::InvalidArguments;
 
     if ((content = Loader::open(path, size, true))) {
         dirName = tvg::dirname(path);
@@ -237,8 +237,10 @@ bool LottieLoader::open(const char* path, const LoaderOps& ops)
         builder->resolver = static_cast<const PictureOps*>(&ops)->resolver;
         return header();
     }
+    return Result::InvalidArguments;
+#else
+    return Result::NonSupport;
 #endif
-    return false;
 }
 
 

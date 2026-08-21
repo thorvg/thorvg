@@ -54,27 +54,26 @@ JpgLoader::~JpgLoader()
     tvg::free(surface.buf8);
 }
 
-bool JpgLoader::open(const char* path, const LoaderOps& ops)
+Result JpgLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     int width, height;
-    if (!(decoder = jpgdHeader(path, &width, &height))) return false;
+    if (!(decoder = jpgdHeader(path, &width, &height))) return Result::InvalidArguments;
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
     owner = Ownership::Transfer;
 
-    return true;
+    return Result::Success;
 #else
-    return false;
+    return Result::NonSupport;
 #endif
 }
 
-bool JpgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
+Result JpgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
     if (ops.owner == Ownership::Copy) {
         this->data = tvg::malloc<char>(size);
-        if (!this->data) return false;
         memcpy((char *)this->data, data, size);
     } else {
         this->data = (char *) data;
@@ -83,12 +82,12 @@ bool JpgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 
     int width, height;
     decoder = jpgdHeader(this->data, size, &width, &height);
-    if (!decoder) return false;
+    if (!decoder) return Result::InvalidArguments;
 
     w = static_cast<float>(width);
     h = static_cast<float>(height);
 
-    return true;
+    return Result::Success;
 }
 
 bool JpgLoader::read()

@@ -36,7 +36,7 @@ struct WebMediaLoader : MediaLoader
     ~WebMediaLoader();
 
     // Loader interface
-    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
+    Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     RenderSurface* bitmap() override;
     bool sync() override;
 

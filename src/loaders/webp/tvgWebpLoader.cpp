@@ -62,24 +62,24 @@ WebpLoader::~WebpLoader()
     tvg::free(surface.buf8);
 }
 
-bool WebpLoader::open(const char* path, const LoaderOps& ops)
+Result WebpLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (uint8_t*)Loader::open(path, size))) return false;
+    if (!(data = (uint8_t*)Loader::open(path, size))) return Result::InvalidArguments;
     owner = Ownership::Transfer;
 
     WebPBitstreamFeatures features;
-    if (WebPGetFeatures(data, size, &features)) return false;
+    if (WebPGetFeatures(data, size, &features)) return Result::InvalidArguments;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
     surface.alphaIgnored = !features.has_alpha;
-    return true;
+    return Result::Success;
 #else
-    return false;
+    return Result::NonSupport;
 #endif
 }
 
-bool WebpLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
+Result WebpLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
     if (ops.owner == Ownership::Copy) {
         this->data = tvg::malloc<uint8_t>(size);
@@ -90,13 +90,13 @@ bool WebpLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     owner = ops.owner;
 
     WebPBitstreamFeatures features;
-    if (WebPGetFeatures(this->data, size, &features)) return false;
+    if (WebPGetFeatures(this->data, size, &features)) return Result::InvalidArguments;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
     surface.alphaIgnored = !features.has_alpha;
     this->size = size;
 
-    return true;
+    return Result::Success;
 }
 
 
