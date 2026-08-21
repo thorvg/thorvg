@@ -510,7 +510,7 @@ The [ThorVG Playground](https://www.thorvg.org/playground) is an interactive web
 ThorVG provides a resource verification tool for the ThorVG engine. The [ThorVG view](https://thorvg.github.io/thorvg.view/) enables instant rendering directly in the web browser using the ThorVG WebAssembly binary, allowing real-time editing of vector elements. It does not upload your resources to any external server and supports exporting to formats such as GIF, ensuring that designer copyrights remain protected.</br>
 
 <p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg/assets/3711518/edadcc5e-3bbf-489d-a9a1-9570079c7d55"/>
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_thorvgview.gif"/>
 </p>
 
 ### VS Code LiveView
