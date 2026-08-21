@@ -178,6 +178,7 @@ struct LottieBuilder
     const AssetResolver* resolver = nullptr;  //do not free this
     AudioResolver audioResolver;
     LottieTween tween;
+    float volume = 1.0f;
 
 private:
     void updateAudio(LottieComposition* comp, LottieLayer* layer, float frameNo);

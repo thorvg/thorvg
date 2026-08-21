@@ -3328,6 +3328,44 @@ typedef void (*Tvg_Audio_Resolver)(const Tvg_Audio_Info* info, void* data);
  */
 TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animation, Tvg_Audio_Resolver resolver, void* data);
 
+/**
+ * @brief Sets the master playback volume of the Lottie animation.
+ *
+ * The specified volume is applied to all media assets in the animation.
+ * Each media asset preserves its own volume, and the effective playback
+ * volume is calculated by multiplying the master volume by the media
+ * asset's volume.
+ *
+ * A value of 1.0 preserves the original volume.
+ * A value of 0.0 mutes all media.
+ * Values greater than 1.0 amplify the playback volume.
+ *
+ * The recommended range is [0.0, 2.0].
+ *
+ * @param[in] animation A Lottie animation object.
+ * @param[in] volume Master playback volume.
+ *
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the animation is not loaded.
+ *
+ * @note Experimental API.
+ *
+ * @see tvg_lottie_animation_get_volume()
+ */
+TVG_API Tvg_Result tvg_lottie_animation_set_volume(Tvg_Animation animation, float volume);
+
+/**
+ * @brief Retrieves the master playback volume of the Lottie animation.
+ *
+ * @param[in] animation A Lottie animation object.
+ *
+ * @return The current master playback volume.
+ *
+ * @note Experimental API.
+ *
+ * @see tvg_lottie_animation_set_volume()
+ */
+TVG_API float tvg_lottie_animation_get_volume(Tvg_Animation animation);
+
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
 /**
