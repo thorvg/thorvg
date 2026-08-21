@@ -37,8 +37,8 @@ struct SvgLoader : ImageLoader, Task
     SvgLoader() : ImageLoader(FileType::Svg) {}
     ~SvgLoader();
 
-    bool open(const char* path, const LoaderOps& ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
+    Result open(const char* path, const LoaderOps& ops) override;
+    Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     bool close() override;
@@ -54,7 +54,7 @@ private:
     AspectRatioMeetOrSlice meetOrSlice = AspectRatioMeetOrSlice::Meet;
     Box vbox{};
 
-    bool header();
+    Result header();
     void clear(bool all = true);
     void run(unsigned tid) override;
 };

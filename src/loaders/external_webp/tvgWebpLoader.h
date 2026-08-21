@@ -31,8 +31,8 @@ struct WebpLoader : BitmapLoader, Task
     WebpLoader() : BitmapLoader(FileType::Webp) {}
     ~WebpLoader();
 
-    bool open(const char* path, const LoaderOps& ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
+    Result open(const char* path, const LoaderOps& ops) override;
+    Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool read() override;
 
     RenderSurface* bitmap() override;
