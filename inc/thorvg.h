@@ -99,6 +99,7 @@ enum struct Result
     FailedAllocation,      ///< The value returned in case of unsuccessful memory allocation.
     MemoryCorruption,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
     NonSupport,            ///< The value returned in case of choosing unsupported engine features(options).
+    SystemError,           ///< The value returned when an underlying system operation fails. @note Experimental API
     Unknown = 255          ///< The value returned in all other cases.
 };
 

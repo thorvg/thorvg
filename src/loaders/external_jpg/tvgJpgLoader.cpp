@@ -53,30 +53,29 @@ JpgLoader::~JpgLoader()
     tjFree(surface.buf8);
 }
 
-bool JpgLoader::open(const char* path, const LoaderOps& ops)
+Result JpgLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (unsigned char*)Loader::open(path, size))) return false;
+    if (!(data = (unsigned char*)Loader::open(path, size))) return Result::InvalidArguments;
     owner = Ownership::Transfer;
 
     int width, height, subSample, colorSpace;
-    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
+    if (tjDecompressHeader3(jpegDecompressor, data, size, &width, &height, &subSample, &colorSpace) < 0) return Result::InvalidArguments;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    return true;
+    return Result::Success;
 #else
-    return false;
+    return Result::NonSupport;
 #endif
 }
 
-bool JpgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
+Result JpgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
     int width, height, subSample, colorSpace;
-    if (tjDecompressHeader3(jpegDecompressor, (unsigned char *) data, size, &width, &height, &subSample, &colorSpace) < 0) return false;
+    if (tjDecompressHeader3(jpegDecompressor, (unsigned char*)data, size, &width, &height, &subSample, &colorSpace) < 0) return Result::InvalidArguments;
 
     if (ops.owner == Ownership::Copy) {
         this->data = tvg::malloc<unsigned char>(size);
-        if (!this->data) return false;
         memcpy((unsigned char *)this->data, data, size);
     } else {
         this->data = (unsigned char *) data;
@@ -86,7 +85,7 @@ bool JpgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     h = static_cast<float>(height);
     this->size = size;
 
-    return true;
+    return Result::Success;
 }
 
 

@@ -46,14 +46,14 @@ WebMediaLoader::~WebMediaLoader()
     tvg::free(surface.buf32);
 }
 
-bool WebMediaLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
+Result WebMediaLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
 {
     auto generator = val::module_property("createMediaPlayer");
-    if (generator.isUndefined()) return false;
+    if (generator.isUndefined()) return Result::NonSupport;
 
     auto bytes = val::global("Uint8Array").new_(val(typed_memory_view(size, reinterpret_cast<const uint8_t*>(data))));
     js = WebMediaPlayer(generator(reinterpret_cast<uintptr_t>(this), bytes));
-    return !js.isNull();
+    return !js.isNull() ? Result::Success : Result::SystemError;
 }
 
 bool WebMediaLoader::sync()

@@ -50,8 +50,8 @@ struct SfntLoader : public FontLoader
     using FontLoader::open;
     using FontLoader::read;
 
-    bool open(const char* path, const LoaderOps& ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
+    Result open(const char* path, const LoaderOps& ops) override;
+    Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     void transform(Paint* paint, FontMetrics& fm, float italicShear) override;
     bool get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out) override;
     void copy(const FontMetrics& in, FontMetrics& out) override;
@@ -59,7 +59,7 @@ struct SfntLoader : public FontLoader
     void metrics(const FontMetrics& fm, TextMetrics& out) override;
     bool metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out, const char** next) override;
 
-    static SfntReader* gen(uint8_t* data, uint32_t size);
+    static Result gen(uint8_t* data, uint32_t size, SfntReader*& out);
 
 private:
     float height(uint32_t loc, float spacing)

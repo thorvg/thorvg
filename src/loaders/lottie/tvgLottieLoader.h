@@ -71,8 +71,8 @@ struct LottieLoader : AnimLoader, Task
     LottieLoader();
     ~LottieLoader();
 
-    bool open(const char* path, const LoaderOps& ops) override;
-    bool open(const char* data, uint32_t size, const LoaderOps& ops) override;
+    Result open(const char* path, const LoaderOps& ops) override;
+    Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool resize(Paint* paint, float w, float h) override;
     bool read() override;
     Paint* paint() override;
@@ -104,7 +104,7 @@ struct LottieLoader : AnimLoader, Task
 
 private:
     bool ready();
-    bool header();
+    Result header();
     void clear();
     float startFrame();
     void run(unsigned tid) override;

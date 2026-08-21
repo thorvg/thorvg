@@ -4091,7 +4091,7 @@ SvgLoader::~SvgLoader()
 }
 
 
-bool SvgLoader::header()
+Result SvgLoader::header()
 {
     //For valid check, only <svg> tag is parsed first.
     //If the <svg> tag is found, the loaded file is valid and stores viewbox information.
@@ -4104,7 +4104,7 @@ bool SvgLoader::header()
 
     if (!ctx.doc || ctx.doc->type != SvgNodeType::Doc) {
         TVGLOG("SVG", "No SVG File. There is no <svg/>");
-        return false;
+        return Result::InvalidArguments;
     }
 
     viewFlag = ctx.doc->node.doc.viewFlag;
@@ -4157,12 +4157,12 @@ bool SvgLoader::header()
 
         run(0);
     }
-    return true;
+    return Result::Success;
 }
 
-bool SvgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
+Result SvgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
-    if (ops.caller != tvg::Type::Picture) return false;
+    if (ops.caller != tvg::Type::Picture) return Result::InvalidArguments;
 
     if (ops.owner == Ownership::Copy) {
         content = tvg::malloc<char>(size + 1);
@@ -4177,18 +4177,20 @@ bool SvgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     return header();
 }
 
-bool SvgLoader::open(const char* path, const LoaderOps& ops)
+Result SvgLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (ops.caller != tvg::Type::Picture) return false;
+    if (ops.caller != tvg::Type::Picture) return Result::InvalidArguments;
 
     if ((content = Loader::open(path, size, true))) {
         ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
         owner = Ownership::Transfer;
         return header();
     }
+    return Result::InvalidArguments;
+#else
+    return Result::NonSupport;
 #endif
-    return false;
 }
 
 

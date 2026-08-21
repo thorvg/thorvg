@@ -481,24 +481,27 @@ void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf
     _align(fm.align, box, {cursor.x, fm.size.y}, line, out.pts.count, out);  //last line
 }
 
-SfntReader* SfntLoader::gen(uint8_t* data, uint32_t size)
+Result SfntLoader::gen(uint8_t* data, uint32_t size, SfntReader*& out)
 {
     if (size > 4) {
         auto type = uint32_t(data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3]);
         if (type == 0x00010000 || type == 0x74727565) {  // ttf (scalable font)
 #ifdef THORVG_TTF_LOADER_SUPPORT
-            return new TtfReader(data, size);
+            out = new TtfReader(data, size);
+            return Result::Success;
+#else
+            return Result::NonSupport;
 #endif
-            TVGLOG("SFNT", "TrueType (TTF) is not supported");
         } else if (type == 0x4F54544F) {  // otf (OTTO)
 #ifdef THORVG_OTF_LOADER_SUPPORT
-            return new OtfReader(data, size);
+            out = new OtfReader(data, size);
+            return Result::Success;
+#else
+            return Result::NonSupport;
 #endif
-            TVGLOG("SFNT", "OpenType (OTF) is not supported");
         }
     }
-    TVGERR("SFNT", "Invalid SFNT format!");
-    return nullptr;
+    return Result::InvalidArguments;
 }
 
 /************************************************************************/
@@ -524,25 +527,24 @@ SfntLoader::~SfntLoader()
     clear();
 }
 
-bool SfntLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
+Result SfntLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     uint32_t size;
     auto data = _map(this, path, size);
-    if (!data) return false;
-    reader = gen(data, size);
-    if (reader) {
-        name = tvg::filename(path);
-        return reader->header();
-    }
+    if (!data) return Result::InvalidArguments;
+    auto ret = gen(data, size, reader);
+    if (ret != Result::Success) return ret;
+    name = tvg::filename(path);
+    return reader->header() ? Result::Success : Result::InvalidArguments;
 #endif
-    return false;
+    return Result::NonSupport;
 }
 
-bool SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
+Result SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
 {
-    reader = gen((uint8_t*)data, size);
-    if (!reader) return false;
+    auto ret = gen((uint8_t*)data, size, reader);
+    if (ret != Result::Success) return ret;
     nomap = true;
 
     if (ops.owner == Ownership::Copy) {
@@ -551,7 +553,7 @@ bool SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOp
     }
     owner = ops.owner;
 
-    return reader->header();
+    return reader->header() ? Result::Success : Result::InvalidArguments;
 }
 
 bool SfntLoader::get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out)

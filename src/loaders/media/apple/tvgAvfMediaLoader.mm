@@ -272,10 +272,10 @@ static void _finishPlayback(AvfMediaLoader& loader)
     _readStillFrame(loader, loader.totalTime);
 }
 
-static bool _buildQueue(AvfMediaLoader& loader)
+static Result _buildQueue(AvfMediaLoader& loader)
 {
     auto item = [[AVPlayerItem alloc] initWithAsset:loader.asset];
-    if (!item) return false;
+    if (!item) return Result::FailedAllocation;
     if (loader.composition) item.videoComposition = loader.composition;
 
     // Keep playback looper-backed; the end observer stops playback when looping is off.
@@ -285,7 +285,7 @@ static bool _buildQueue(AvfMediaLoader& loader)
     }
 
     [item release];
-    return loader.looper != nil;
+    return loader.looper ? Result::Success : Result::SystemError;
 }
 
 static void _removeEndObserver(AvfMediaLoader& loader)
@@ -342,7 +342,7 @@ AvfMediaLoader::~AvfMediaLoader()
     _unrefQueue();
 }
 
-bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
+Result AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
     // AVURLAsset cannot open a memory buffer directly, so expose it through a temporary file URL.
     auto pathTemplate = [NSTemporaryDirectory() stringByAppendingPathComponent:@"thorvg-media-XXXXXX.mp4"];
@@ -350,7 +350,7 @@ bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     auto fd = ::mkstemps(path, 4);
     if (fd < 0) {
         ::free(path);
-        return false;
+        return Result::SystemError;
     }
 
     uint32_t offset = 0;
@@ -360,7 +360,7 @@ bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
             ::close(fd);
             ::unlink(path);
             ::free(path);
-            return false;
+            return Result::SystemError;
         }
         offset += static_cast<uint32_t>(written);
     }
@@ -368,26 +368,27 @@ bool AvfMediaLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     ::close(fd);
 
     tempPath = [[NSString alloc] initWithUTF8String:path];
-    if (open(tempPath.fileSystemRepresentation, ops)) {
+    auto ret = open(tempPath.fileSystemRepresentation, ops);
+    if (ret == Result::Success) {
         ::free(path);
-        return true;
+        return Result::Success;
     }
 
     ::unlink(path);
     ::free(path);
 
-    return false;
+    return ret;
 }
 
-bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
+Result AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
 {
+#ifdef THORVG_FILE_IO_SUPPORT
     // Open the media asset and keep the first video track.
     auto url = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path]];
     auto asset = [[AVURLAsset alloc] initWithURL:url options:nil];
     if (!asset || !asset.playable) {
-        TVGERR("AVF", "Failed to open media: %s", path);
         [asset release];
-        return false;
+        return Result::InvalidArguments;
     }
 
     // Use the async track loader to avoid the deprecated sync API.
@@ -403,17 +404,15 @@ bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
     dispatch_release(semaphore);
 
     if (!track) {
-        TVGERR("AVF", "No video track found: %s", path);
         [asset release];
-        return false;
+        return Result::InvalidArguments;
     }
 
     auto duration = _seconds(asset.duration);
     if (duration <= TIME_EPSILON) {
-        TVGERR("AVF", "Invalid media duration: %s", path);
         [track release];
         [asset release];
-        return false;
+        return Result::InvalidArguments;
     }
 
     this->asset = asset;
@@ -424,12 +423,12 @@ bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
     composition = _composition(asset, track, displaySize);
     w = static_cast<float>(fabs(displaySize.width));
     h = static_cast<float>(fabs(displaySize.height));
-    if (w == 0 || h == 0) return false;
+    if (w == 0 || h == 0) return Result::InvalidArguments;
 
     totalTime = duration;
 
     player = [[AVQueuePlayer alloc] init];
-    if (!player) return false;
+    if (!player) return Result::FailedAllocation;
 
     // Prepare playback; the timer starts only when play() is called.
     player.automaticallyWaitsToMinimizeStalling = NO;
@@ -438,6 +437,9 @@ bool AvfMediaLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
     _startEndObserver(*this);
 
     return _buildQueue(*this);
+#else
+    return Result::NonSupport;
+#endif
 }
 
 bool AvfMediaLoader::read()

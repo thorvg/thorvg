@@ -61,28 +61,28 @@ PngLoader::~PngLoader()
     lodepng_state_cleanup(&state);
 }
 
-bool PngLoader::open(const char* path, const LoaderOps& ops)
+Result PngLoader::open(const char* path, const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
-    if (!(data = (unsigned char*)Loader::open(path, size))) return false;
+    if (!(data = (unsigned char*)Loader::open(path, size))) return Result::InvalidArguments;
     owner = Ownership::Transfer;
 
     lodepng_state_init(&state);
 
     unsigned int width, height;
-    if (lodepng_inspect(&width, &height, &state, data, size) > 0) return false;
+    if (lodepng_inspect(&width, &height, &state, data, size) > 0) return Result::InvalidArguments;
     w = static_cast<float>(width);
     h = static_cast<float>(height);
-    return true;
+    return Result::Success;
 #else
-    return false;
+    return Result::NonSupport;
 #endif
 }
 
-bool PngLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
+Result PngLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
 {
     unsigned int width, height;
-    if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return false;
+    if (lodepng_inspect(&width, &height, &state, (unsigned char*)(data), size) > 0) return Result::InvalidArguments;
 
     if (ops.owner == Ownership::Copy) {
         this->data = tvg::malloc<unsigned char>(size);
@@ -95,7 +95,7 @@ bool PngLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     h = static_cast<float>(height);
     this->size = size;
 
-    return true;
+    return Result::Success;
 }
 
 

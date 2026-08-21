@@ -50,32 +50,32 @@ PngLoader::~PngLoader()
     tvg::free(surface.buf32);
 }
 
-bool PngLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
-{
-    image->opaque = nullptr;
-
-    if (!png_image_begin_read_from_file(image, path)) return false;
-
-    w = (float)image->width;
-    h = (float)image->height;
-
-    return true;
-}
-
-bool PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
+Result PngLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
     image->opaque = nullptr;
 
-    if (!png_image_begin_read_from_memory(image, data, size)) return false;
+    if (!png_image_begin_read_from_file(image, path)) return Result::InvalidArguments;
 
     w = (float)image->width;
     h = (float)image->height;
 
-    return true;
+    return Result::Success;
 #else
-    return false;
+    return Result::NonSupport;
 #endif
+}
+
+Result PngLoader::open(const char* data, uint32_t size, TVG_UNUSED const LoaderOps& ops)
+{
+    image->opaque = nullptr;
+
+    if (!png_image_begin_read_from_memory(image, data, size)) return Result::InvalidArguments;
+
+    w = (float)image->width;
+    h = (float)image->height;
+
+    return Result::Success;
 }
 
 

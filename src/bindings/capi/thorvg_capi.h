@@ -112,6 +112,7 @@ typedef enum
     TVG_RESULT_FAILED_ALLOCATION,      ///< The value returned in case of unsuccessful memory allocation.
     TVG_RESULT_MEMORY_CORRUPTION,      ///< The value returned in the event of bad memory handling - e.g. failing in pointer releasing or casting
     TVG_RESULT_NOT_SUPPORTED,          ///< The value returned in case of choosing unsupported engine features(options).
+    TVG_RESULT_SYSTEM_ERROR,           ///< The value returned when an underlying system operation fails. @note Experimental API
     TVG_RESULT_UNKNOWN = 255           ///< The value returned in all other cases.
 } Tvg_Result;
 

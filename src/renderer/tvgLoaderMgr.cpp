@@ -119,19 +119,23 @@ static tvg::Loader* _find(FileType type)
 }
 
 #ifdef THORVG_FILE_IO_SUPPORT
-static tvg::Loader* _findByPath(const char* filename, bool& invalid)
+static tvg::Loader* _findByPath(const char* filename, Result& ret)
 {
     auto ext = fileext(filename);
     if (ext) {
-        if (!strcmp(ext, "svg")) return _find(FileType::Svg);
-        if (!strcmp(ext, "lot") || !strcmp(ext, "json")) return _find(FileType::Lot);
-        if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc") || !strcmp(ext, "otf") || !strcmp(ext, "otc")) return _find(FileType::Sfnt);
-        if (!strcmp(ext, "png")) return _find(FileType::Png);
-        if (!strcmp(ext, "jpg")) return _find(FileType::Jpg);
-        if (!strcmp(ext, "webp")) return _find(FileType::Webp);
-        if (!strcmp(ext, "mp4")) return _find(FileType::Media);  // TODO: add common media formats        
+        auto type = FileType::Unknown;
+        if (!strcmp(ext, "svg")) type = FileType::Svg;
+        else if (!strcmp(ext, "lot") || !strcmp(ext, "json")) type = FileType::Lot;
+        else if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc") || !strcmp(ext, "otf") || !strcmp(ext, "otc")) type = FileType::Sfnt;
+        else if (!strcmp(ext, "png")) type = FileType::Png;
+        else if (!strcmp(ext, "jpg")) type = FileType::Jpg;
+        else if (!strcmp(ext, "webp")) type = FileType::Webp;
+        else if (!strcmp(ext, "mp4")) type = FileType::Media;  // TODO: add common media formats
+        if (type != FileType::Unknown) {
+            ret = Result::NonSupport;
+            return _find(type);
+        }
     }
-    invalid = true;  // invalid file path outside ThorVG's scope.
     return nullptr;
 }
 #endif
@@ -153,11 +157,6 @@ static FileType _convert(const char* mimeType)
     else TVGLOG("RENDERER", "Given mimetype is unknown = \"%s\".", mimeType);
 
     return type;
-}
-
-static tvg::Loader* _findByType(const char* mimeType)
-{
-    return _find(_convert(mimeType));
 }
 
 static tvg::Loader* _findFromCache(const char* filename)
@@ -221,26 +220,32 @@ bool LoaderMgr::retrieve(Loader* loader)
     return true;
 }
 
-tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps& ops, bool& invalid)
+tvg::Loader* LoaderMgr::loader(const char* filename, LoaderOps& ops, Result& ret)
 {
 #ifdef THORVG_FILE_IO_SUPPORT
+    if (!filename) return nullptr;
+
     if (auto loader = _findFromCache(filename)) return loader;
 
-    if (auto loader = _findByPath(filename, invalid)) {
-        if (loader->open(filename, ops)) {
+    ret = Result::InvalidArguments;
+
+    if (auto loader = _findByPath(filename, ret)) {
+        // respect the return value here, but ignore trials with unknown MIME types.
+        ret = loader->open(filename, ops);
+        if (ret == Result::Success) {
             if (loader->cache(filename)) {
                 ScopedLock lock(_key);
                 _activeLoaders.back(loader);
             }
             return loader;
         }
-        invalid = true;
         delete (loader);
     }
+
     // Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         if (auto loader = _find(static_cast<FileType>(i))) {
-            if (loader->open(filename, ops)) {
+            if (loader->open(filename, ops) == Result::Success) {
                 if (loader->cache(filename)) {
                     ScopedLock lock(_key);
                     _activeLoaders.back(loader);
@@ -250,6 +255,9 @@ tvg::Loader* LoaderMgr::loader(const char* filename, const LoaderOps& ops, bool&
             delete (loader);
         }
     }
+#else
+    TVGLOG("RENDERER", "FILE IO is disabled!");
+    ret = Result::NonSupport;
 #endif
     return nullptr;
 }
@@ -259,7 +267,7 @@ bool LoaderMgr::retrieve(const char* filename)
     return retrieve(_findFromCache(filename));
 }
 
-tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, const LoaderOps& ops)
+tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, LoaderOps& ops, Result& ret)
 {
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
@@ -269,8 +277,12 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
 
     // Try with the given MimeType
     if (mimeType) {
-        if (auto loader = _findByType(mimeType)) {
-            if (loader->open(data, size, ops)) {
+        auto type = _convert(mimeType);
+        if (type != FileType::Unknown) ret = Result::NonSupport;
+        if (auto loader = _find(type)) {
+            // respect the return value here, but ignore trials with unknown MIME types.
+            ret = loader->open(data, size, ops);
+            if (ret == Result::Success) {
                 if (ops.owner == Ownership::Borrow && loader->cache(HASH_KEY(data))) {
                     ScopedLock lock(_key);
                     _activeLoaders.back(loader);
@@ -282,11 +294,12 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
             }
         }
     }
+
     // Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         auto loader = _find(static_cast<FileType>(i));
         if (!loader) continue;
-        if (loader->open(data, size, ops)) {
+        if (loader->open(data, size, ops) == Result::Success) {
             if (ops.owner == Ownership::Borrow && loader->cache(HASH_KEY(data))) {
                 ScopedLock lock(_key);
                 _activeLoaders.back(loader);
@@ -334,7 +347,7 @@ tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size
 
     // function is dedicated for SFNT-based font loading
     auto loader = new SfntLoader;
-    if (loader->open(data, size, ops)) {
+    if (loader->open(data, size, ops) == Result::Success) {
         loader->name = duplicate(name);
         loader->cached = true;  // force it.
         ScopedLock lock(_key);

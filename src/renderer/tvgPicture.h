@@ -138,11 +138,9 @@ struct PictureImpl : Picture
         if (vector || bitmap) return Result::InsufficientCondition;
 
         PictureOps ops = {Ownership::Transfer, resolver, nullptr, accessible};
-        auto invalid = false;  // invalid path
-        auto loader = LoaderMgr::loader(filename, ops, invalid);
-        if (loader) return load(loader);
-        if (invalid) return Result::InvalidArguments;
-        return Result::NonSupport;
+        auto ret = Result::InvalidArguments;
+        auto loader = LoaderMgr::loader(filename, ops, ret);
+        return loader ? load(loader) : ret;
     }
 
     Result load(const char* data, uint32_t size, const char* mimeType, const char* rpath, const Ownership owner)
@@ -151,14 +149,17 @@ struct PictureImpl : Picture
         if (vector || bitmap) return Result::InsufficientCondition;
 
         PictureOps ops = {owner, resolver, rpath, accessible};
-        return load(LoaderMgr::loader(data, size, mimeType, ops));
+        auto ret = Result::InvalidArguments;
+        auto loader = LoaderMgr::loader(data, size, mimeType, ops, ret);
+        return loader ? load(loader) : ret;
     }
 
     Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner)
     {
         if (!data || w <= 0 || h <= 0 || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
         if (vector) return Result::InsufficientCondition;
-        return load(LoaderMgr::loader(data, w, h, cs, owner));
+        auto loader = LoaderMgr::loader(data, w, h, cs, owner);
+        return loader ? load(loader) : Result::NonSupport;
     }
 
     Result set(std::function<bool(Paint* paint, const char* src, void* data)> resolver, void* data)
@@ -298,8 +299,6 @@ struct PictureImpl : Picture
 
     Result load(Loader* loader)
     {
-        if (!loader) return Result::NonSupport;
-
         //Same resource has been loaded.
         if (this->loader == loader) {
             this->loader->sharing--;  //make it sure the reference counting.
