@@ -23,6 +23,8 @@
 #include "tvgCommon.h"
 #include "thorvg_lottie.h"
 #include "tvgLottieLoader.h"
+#include "tvgLottieModel.h"
+#include "tvgLottieBuilder.h"
 #include "tvgAnimation.h"
 
 
@@ -146,6 +148,21 @@ bool LottieAnimation::expressions() noexcept
     return false;
 #endif
 }
+
+Result LottieAnimation::volume(float value) noexcept
+{
+    FETCH_LOADER(Result::InsufficientCondition);
+    loader->volume(value);
+    return Result::Success;
+}
+
+
+float LottieAnimation::volume() const noexcept
+{
+    FETCH_LOADER(0.0f);
+    return loader->builder->volume;
+}
+
 
 LottieAnimation* LottieAnimation::gen() noexcept
 {

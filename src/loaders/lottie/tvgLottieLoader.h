@@ -101,6 +101,7 @@ struct LottieLoader : AnimLoader, Task
     bool tween(float progress);
     bool quality(uint8_t value);
     void resolver(std::function<void(const tvg::LottieAudioResolver&, void*)> func, void* data);
+    void volume(float value);
 
 private:
     bool ready();
