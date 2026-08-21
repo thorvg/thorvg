@@ -979,6 +979,7 @@ void LottieBuilder::updateImage(LottieLayer* layer, float frameNo)
     }
 
     layer->scene->add(picture->refCnt() == 1 ? picture : picture->duplicate());
+    image->volume(volume);
     image->play((frameNo - layer->inPoint) / (layer->outPoint - layer->inPoint));
 }
 
@@ -1724,17 +1725,17 @@ void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, flo
     auto pos = layer->remap(comp, frameNo, exps);
     if (pos < 0.0f) active = false;    
 
-    auto volume = active ? ctrl->volume(frameNo, tween, exps) : 100.0f;
+    auto value = active ? this->volume * ctrl->volume(frameNo, tween, exps) : 100.0f;
 
     // audio condition is changed
-    if ((active != ctrl->prevActive) || (active && !tvg::equal(volume, ctrl->prevVolume))) {
+    if ((active != ctrl->prevActive) || (active && !tvg::equal(value, ctrl->prevVolume))) {
         auto& src = static_cast<LottieAudio*>(layer->children.first())->src;
         auto offset = active ? pos / comp->frameRate : 0.0f;
-        LottieAudioResolver info = {src.data, src.mimeType, src.size, offset, volume, active, (src.size > 0)};
+        LottieAudioResolver info = {src.data, src.mimeType, src.size, offset, value, active, (src.size > 0)};
         audioResolver.func(info, audioResolver.data);
     }
 
-    ctrl->prevVolume = volume;
+    ctrl->prevVolume = value;
     ctrl->prevActive = active;
 }
 
