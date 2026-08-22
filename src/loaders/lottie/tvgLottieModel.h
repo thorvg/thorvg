@@ -528,6 +528,13 @@ struct LottieTrimpath : LottieObject
         return nullptr;
     }
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(start) || OVERRIDE(end) || OVERRIDE(offset);
+        return backup;
+    }
+
     void segment(float frameNo, float& start, float& end, LottieTween& tween, LottieExpressions* exps);
 
     LottieFloat start = 0.0f;
