@@ -822,9 +822,9 @@ LottieTrimpath* LottieParser::parseTrimpath()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(trim, key)) continue;
-        else if (KEY_AS("s")) parseProperty(trim->start);
-        else if (KEY_AS("e")) parseProperty(trim->end);
-        else if (KEY_AS("o")) parseProperty(trim->offset);
+        else if (KEY_AS("s")) parseProperty(trim->start, trim);
+        else if (KEY_AS("e")) parseProperty(trim->end, trim);
+        else if (KEY_AS("o")) parseProperty(trim->offset, trim);
         else if (KEY_AS("m")) trim->type = static_cast<LottieTrimpath::Type>(getInt());
         else skip();
     }
