@@ -794,7 +794,7 @@ struct LottieGradient : LottieObject
     {
         LottieProperty* backup = nullptr;
         if (OVERRIDE(colorStops)) prepare();
-        else OVERRIDE(opacity);
+        else OVERRIDE(opacity) || OVERRIDE(start) || OVERRIDE(end) || OVERRIDE(height) || OVERRIDE(angle);
         return backup;
     }
 
