@@ -804,7 +804,7 @@ LottieGradientStroke* LottieParser::parseGradientStroke()
         else if (KEY_AS("lc")) stroke->cap = (StrokeCap) (getInt() - 1);
         else if (KEY_AS("lj")) stroke->join = (StrokeJoin) (getInt() - 1);
         else if (KEY_AS("ml")) stroke->miterLimit = getFloat();
-        else if (KEY_AS("w")) parseProperty(stroke->width);
+        else if (KEY_AS("w")) parseProperty(stroke->width, stroke);
         else if (KEY_AS("d")) parseStrokeDash(stroke);
         else parseGradient(stroke, key);
     }
