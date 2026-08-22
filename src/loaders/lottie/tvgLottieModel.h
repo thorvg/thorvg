@@ -592,6 +592,13 @@ struct LottieRect : LottieShape
         return nullptr;
     }
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(position) || OVERRIDE(size) || OVERRIDE(radius);
+        return backup;
+    }
+
     LottieVector position = Point{0.0f, 0.0f};
     LottieScalar size = Point{0.0f, 0.0f};
     LottieFloat radius = 0.0f;       //rounded corner radius
