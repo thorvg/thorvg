@@ -768,6 +768,13 @@ struct LottieSolidStroke : LottieSolid, LottieStroke
         }
         return LottieSolid::property(ix);
     }
+
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        if (OVERRIDE(width)) return backup;
+        return LottieSolid::override(prop, release);
+    }
 };
 
 
@@ -853,6 +860,13 @@ struct LottieGradientStroke : LottieGradient, LottieStroke
                 if (dashattr->values[i].ix == ix) return &dashattr->values[i];
         }
         return LottieGradient::property(ix);
+    }
+
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        if (OVERRIDE(width)) return backup;
+        return LottieGradient::override(prop, release);
     }
 };
 

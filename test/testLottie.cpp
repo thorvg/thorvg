@@ -227,6 +227,22 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
         REQUIRE(animation->apply(id15) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
         REQUIRE(animation->del(id15) == Result::Success);
+
+        //Slot Test 10: Stroke Width
+        const char* strokeWidthSlot = R"({"stroke_width":{"p":{"a":0,"k":10}},"gradient_stroke_width":{"p":{"a":0,"k":30}}})";
+        auto id16 = animation->gen(strokeWidthSlot);
+        REQUIRE(id16 > 0);
+        REQUIRE(animation->apply(id16) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->apply(id16) == Result::Success);
+        REQUIRE(animation->del(id16) == Result::Success);
+
+        const char* strokeWidthAnimatedSlot = R"({"stroke_width":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[1],"t":0},{"s":[20],"t":100}]}}})";
+        auto id17 = animation->gen(strokeWidthAnimatedSlot);
+        REQUIRE(id17 > 0);
+        REQUIRE(animation->apply(id17) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->del(id17) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
