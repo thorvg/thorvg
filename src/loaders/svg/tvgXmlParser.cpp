@@ -434,35 +434,37 @@ bool xmlParseW3CAttribute(const char* buf, unsigned bufLength, xmlAttributeCb fu
     auto val = vmem;
 
     do {
-        auto sep = (char*)strchr(buf, ':');
-        auto next = (char*)strchr(buf, ';');
+        auto sep = (const char*)memchr(buf, ':', end - buf);
+        auto next = (const char*)memchr(buf, ';', end - buf);
+        if (!sep) sep = end;
+        if (!next) next = end;
+        auto src = buf;
+        while (sep - src >= 3 && memcmp(src, "src", 3)) ++src;
+        if (sep - src < 3) src = sep;
 
-        if (auto src = strstr(buf, "src")) {//src tag from css font-face contains extra semicolon
-            if (next && src < sep) {
-                if (next + 1 < end) next = (char*)strchr(next + 1, ';');
-                else break;
-            }
+        if (sep < end && next < end && src < sep) {  // src tag from css font-face contains extra semicolon
+            if (next + 1 < end) {
+                next = (const char*)memchr(next + 1, ';', end - next - 1);
+                if (!next) next = end;
+            } else break;
         }
-
-        if (sep >= end) next = sep = nullptr;
-        if (next >= end) next = nullptr;
 
         key[0] = '\0';
         val[0] = '\0';
 
-        if (sep != nullptr && next == nullptr) {
+        if (sep < end && next >= end) {
             memcpy(key, buf, sep - buf);
             key[sep - buf] = '\0';
 
             memcpy(val, sep + 1, end - sep - 1);
             val[end - sep - 1] = '\0';
-        } else if (sep != nullptr && sep < next) {
+        } else if (sep < end && sep < next) {
             memcpy(key, buf, sep - buf);
             key[sep - buf] = '\0';
 
             memcpy(val, sep + 1, next - sep - 1);
             val[next - sep - 1] = '\0';
-        } else if (next) {
+        } else if (next < end) {
             memcpy(key, buf, next - buf);
             key[next - buf] = '\0';
         }
@@ -478,7 +480,7 @@ bool xmlParseW3CAttribute(const char* buf, unsigned bufLength, xmlAttributeCb fu
                 }
             }
         }
-        if (!next) break;
+        if (next >= end) break;
         buf = next + 1;
     } while (true);
 
