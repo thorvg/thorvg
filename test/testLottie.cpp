@@ -195,6 +195,22 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
         REQUIRE(animation->apply(id11) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
         REQUIRE(animation->del(id11) == Result::Success);
+
+        //Slot Test 8: Ellipse
+        const char* ellipseSlot = R"({"ellipse_position":{"p":{"a":0,"k":[400,400]}},"ellipse_size":{"p":{"a":0,"k":[120,120]}}})";
+        auto id12 = animation->gen(ellipseSlot);
+        REQUIRE(id12 > 0);
+        REQUIRE(animation->apply(id12) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->apply(id12) == Result::Success);
+        REQUIRE(animation->del(id12) == Result::Success);
+
+        const char* ellipseAnimatedSlot = R"({"ellipse_size":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[32,32],"t":0},{"s":[200,200],"t":100}]}}})";
+        auto id13 = animation->gen(ellipseAnimatedSlot);
+        REQUIRE(id13 > 0);
+        REQUIRE(animation->apply(id13) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->del(id13) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

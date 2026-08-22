@@ -567,8 +567,8 @@ LottieEllipse* LottieParser::parseEllipse()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(ellipse, key)) continue;
-        else if (KEY_AS("p")) parseProperty(ellipse->position);
-        else if (KEY_AS("s")) parseProperty(ellipse->size);
+        else if (KEY_AS("p")) parseProperty(ellipse->position, ellipse);
+        else if (KEY_AS("s")) parseProperty(ellipse->size, ellipse);
         else if (parseDirection(ellipse, key)) continue;
         else skip();
     }
