@@ -211,6 +211,22 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
         REQUIRE(animation->apply(id13) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
         REQUIRE(animation->del(id13) == Result::Success);
+
+        //Slot Test 9: Trim Path
+        const char* trimpathSlot = R"({"trim_start":{"p":{"a":0,"k":25}},"trim_end":{"p":{"a":0,"k":100}},"trim_offset":{"p":{"a":0,"k":90}}})";
+        auto id14 = animation->gen(trimpathSlot);
+        REQUIRE(id14 > 0);
+        REQUIRE(animation->apply(id14) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->apply(id14) == Result::Success);
+        REQUIRE(animation->del(id14) == Result::Success);
+
+        const char* trimpathAnimatedSlot = R"({"trim_end":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[100],"t":100}]}}})";
+        auto id15 = animation->gen(trimpathAnimatedSlot);
+        REQUIRE(id15 > 0);
+        REQUIRE(animation->apply(id15) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->del(id15) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
