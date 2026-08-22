@@ -434,35 +434,40 @@ bool xmlParseW3CAttribute(const char* buf, unsigned bufLength, xmlAttributeCb fu
     auto val = vmem;
 
     do {
-        auto sep = (char*)strchr(buf, ':');
-        auto next = (char*)strchr(buf, ';');
+        // missing separators fall back to the end pointer: relational comparison against nullptr is undefined behavior
+        auto sep = strchr(buf, ':');
+        auto next = strchr(buf, ';');
+        auto src = strstr(buf, "src");
+        if (!sep) sep = end;
+        if (!next) next = end;
+        if (!src) src = end;
 
-        if (auto src = strstr(buf, "src")) {//src tag from css font-face contains extra semicolon
-            if (next && src < sep) {
-                if (next + 1 < end) next = (char*)strchr(next + 1, ';');
-                else break;
-            }
+        if (sep < end && next < end && src < sep) {  // src tag from css font-face contains extra semicolon
+            if (next + 1 < end) {
+                next = strchr(next + 1, ';');
+                if (!next) next = end;
+            } else break;
         }
 
-        if (sep >= end) next = sep = nullptr;
-        if (next >= end) next = nullptr;
+        if (sep > end) next = sep = end;
+        if (next > end) next = end;
 
         key[0] = '\0';
         val[0] = '\0';
 
-        if (sep != nullptr && next == nullptr) {
+        if (sep < end && next >= end) {
             memcpy(key, buf, sep - buf);
             key[sep - buf] = '\0';
 
             memcpy(val, sep + 1, end - sep - 1);
             val[end - sep - 1] = '\0';
-        } else if (sep != nullptr && sep < next) {
+        } else if (sep < end && sep < next) {
             memcpy(key, buf, sep - buf);
             key[sep - buf] = '\0';
 
             memcpy(val, sep + 1, next - sep - 1);
             val[next - sep - 1] = '\0';
-        } else if (next) {
+        } else if (next < end) {
             memcpy(key, buf, next - buf);
             key[next - buf] = '\0';
         }
@@ -478,7 +483,7 @@ bool xmlParseW3CAttribute(const char* buf, unsigned bufLength, xmlAttributeCb fu
                 }
             }
         }
-        if (!next) break;
+        if (next >= end) break;
         buf = next + 1;
     } while (true);
 

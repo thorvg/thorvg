@@ -59,6 +59,7 @@ const char* svgUtilSkipWhiteSpace(const char* itr, const char* itrEnd)
 
 const char* svgUtilUnskipWhiteSpace(const char* itr, const char* itrStart)
 {
+    if (itr == itrStart) return itr;
     for (itr--; itr > itrStart; itr--) {
         if (!isspace((unsigned char)*itr)) break;
     }
