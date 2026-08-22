@@ -1070,6 +1070,10 @@ layout(std140) uniform Gaussian {
     float scale;
     float extend;
     float quality;
+    float invTwoSigmaSquared;
+    float dummy0;
+    float dummy1;
+    float dummy2;
 } uGaussian;
 
 layout(std140) uniform Viewport {
@@ -1079,16 +1083,14 @@ layout(std140) uniform Viewport {
 in vec2 vUV;
 out vec4 FragColor;
 
-float gaussian(float x, float sigma) {
-    float exponent = -x * x / (2.0 * sigma * sigma);
-    return exp(exponent) / (sqrt(2.0 * 3.141592) * sigma);
+float gaussian(float x) {
+    return exp(x * x * uGaussian.invTwoSigmaSquared);
 }
 
 void main()
 {
     vec2 texelSize = 1.0 / vec2(textureSize(uSrcTexture, 0));
     vec4 colorSum = vec4(0.0);
-    float sigma = uGaussian.sigma * uGaussian.scale;
     float weightSum = 0.0;
     int radius = int(uGaussian.extend);
     int quality = int(uGaussian.quality);
@@ -1103,7 +1105,7 @@ void main()
     vec2 coord = vUV + texelStep * float(first);
     vec2 sampleStep = texelStep * float(quality);
     for (int y = first; y <= last; y += quality) {
-        float weight = gaussian(float(y), sigma);
+        float weight = gaussian(float(y));
         colorSum += texture(uSrcTexture, coord) * weight;
         weightSum += weight;
         coord += sampleStep;
@@ -1119,6 +1121,10 @@ layout(std140) uniform Gaussian {
     float scale;
     float extend;
     float quality;
+    float invTwoSigmaSquared;
+    float dummy0;
+    float dummy1;
+    float dummy2;
 } uGaussian;
 
 layout(std140) uniform Viewport {
@@ -1128,16 +1134,14 @@ layout(std140) uniform Viewport {
 in vec2 vUV;
 out vec4 FragColor;
 
-float gaussian(float x, float sigma) {
-    float exponent = -x * x / (2.0 * sigma * sigma);
-    return exp(exponent) / (sqrt(2.0 * 3.141592) * sigma);
+float gaussian(float x) {
+    return exp(x * x * uGaussian.invTwoSigmaSquared);
 }
 
 void main()
 {
     vec2 texelSize = 1.0 / vec2(textureSize(uSrcTexture, 0));
     vec4 colorSum = vec4(0.0);
-    float sigma = uGaussian.sigma * uGaussian.scale;
     float weightSum = 0.0;
     int radius = int(uGaussian.extend);
     int quality = int(uGaussian.quality);
@@ -1152,7 +1156,7 @@ void main()
     vec2 coord = vUV + texelStep * float(first);
     vec2 sampleStep = texelStep * float(quality);
     for (int x = first; x <= last; x += quality) {
-        float weight = gaussian(float(x), sigma);
+        float weight = gaussian(float(x));
         colorSum += texture(uSrcTexture, coord) * weight;
         weightSum += weight;
         coord += sampleStep;
@@ -1168,9 +1172,14 @@ layout(std140) uniform DropShadow {
     float sigma;
     float scale;
     float extend;
+    float quality;
+    float invTwoSigmaSquared;
     float dummy0;
+    float dummy1;
+    float dummy2;
     vec4 color;
     vec2 offset;
+    vec2 dummy3;
 } uDropShadow;
 
 in vec2 vUV;

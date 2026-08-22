@@ -38,6 +38,10 @@ struct GlGaussianBlur
     float scale{};
     float extend{};
     float quality{};
+    float invTwoSigmaSquared{};
+    float dummy0{};
+    float dummy1{};
+    float dummy2{};
 };
 
 static float _blurQuality(uint8_t quality, float extend)
@@ -69,8 +73,10 @@ void GlEffect::update(RenderEffectGaussianBlur* effect, const Matrix& transform)
     if (!blur) blur = tvg::malloc<GlGaussianBlur>(sizeof(GlGaussianBlur));
     blur->sigma = effect->sigma;
     blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    blur->extend = 2 * blur->sigma * blur->scale;
+    const auto sigma = blur->sigma * blur->scale;
+    blur->extend = 2 * sigma;
     blur->quality = _blurQuality(effect->quality, blur->extend);
+    blur->invTwoSigmaSquared = tvg::zero(sigma) ? 0.0f : -0.5f / (sigma * sigma);
     effect->rd = blur;
     effect->valid = (blur->extend > 0);
 }
@@ -143,6 +149,8 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
 
     dropShadow->sigma = effect->sigma;
     dropShadow->scale = scale;
+    const auto sigma = dropShadow->sigma * dropShadow->scale;
+    dropShadow->invTwoSigmaSquared = tvg::zero(sigma) ? 0.0f : -0.5f / (sigma * sigma);
     dropShadow->color[3] = effect->color[3] / 255.0f;
     //Drop shadow effect applies blending in the shader (GL_BLEND disabled), so the color should be premultiplied:
     dropShadow->color[0] = effect->color[0] / 255.0f * dropShadow->color[3];
@@ -150,7 +158,7 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
     dropShadow->color[2] = effect->color[2] / 255.0f * dropShadow->color[3];
     dropShadow->offset[0] = offset.x;
     dropShadow->offset[1] = offset.y;
-    dropShadow->extend = 2 * std::max(effect->sigma * scale + std::abs(offset.x), effect->sigma * scale + std::abs(offset.y));
+    dropShadow->extend = 2 * std::max(sigma + std::abs(offset.x), sigma + std::abs(offset.y));
     dropShadow->quality = _blurQuality(effect->quality, dropShadow->extend);
     effect->rd = dropShadow;
     effect->valid = (dropShadow->extend >= 0);
