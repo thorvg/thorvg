@@ -21,6 +21,7 @@
  */
 
 #include "tvgWgTextureMgr.h"
+#include "tvgWgShaderSrc.h"
 
 static tvg::Inlist<WgTextureEntry>& _entries(WgTextureMgr::SurfaceEntry& surfaceEntry, FilterMethod filter)
 {
@@ -53,12 +54,21 @@ WgTextureMgr::SurfaceEntry* WgTextureMgr::find(const RenderSurface* surface)
 WGPUTextureFormat WgTextureMgr::textureFormat(const RenderSurface* surface)
 {
     if (surface->cs == ColorSpace::ABGR8888 || surface->cs == ColorSpace::ABGR8888S) return WGPUTextureFormat_RGBA8Unorm;
-    if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) return WGPUTextureFormat_BGRA8Unorm;
+    if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) {
+        return surface->premultiplied ? WGPUTextureFormat_BGRA8Unorm : WGPUTextureFormat_RGBA8Unorm;
+    }
     return WGPUTextureFormat_R8Unorm;  // must be
 }
 
 void WgTextureMgr::upload(WgContext& context, WgTextureEntry& entry, const RenderSurface* surface, FilterMethod filter)
 {
+    uint8_t preprocess = entry.preprocess & Queued;
+    if (surface->channelSize == sizeof(uint32_t)) {
+        if (!surface->premultiplied) preprocess |= Premultiply;
+        if (!surface->premultiplied && (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S)) preprocess |= Bgr;
+    }
+    entry.preprocess = static_cast<WgTexPrep>(preprocess);
+
     auto bytesPerRow = surface->stride * CHANNEL_SIZE(surface->cs);
     auto dataSize = static_cast<uint64_t>(bytesPerRow) * surface->h;
     if (!context.allocateTexture(entry.texture, surface->w, surface->h, textureFormat(surface), surface->data, bytesPerRow, dataSize)) return;
@@ -69,6 +79,76 @@ void WgTextureMgr::upload(WgContext& context, WgTextureEntry& entry, const Rende
     context.layouts.releaseBindGroup(entry.bindGroup);
     auto sampler = (filter == FilterMethod::Bilinear) ? context.samplerLinearClamp : context.samplerNearestClamp;
     entry.bindGroup = context.layouts.createBindGroupTexSampled(sampler, entry.textureView);
+}
+
+bool WgTextureMgr::flushPreprocess(WgContext& context)
+{
+    if (prepRequests.empty()) return true;
+
+    if (!prepShader) {
+        WGPUShaderSourceWGSL source{
+            .chain = {.sType = WGPUSType_ShaderSourceWGSL},
+            .code = {.data = cShaderSrc_Texture_Preprocess, .length = WGPU_STRLEN}};
+        const WGPUShaderModuleDescriptor descriptor{.nextInChain = &source.chain};
+        prepShader = wgpuDeviceCreateShaderModule(context.device, &descriptor);
+
+        WGPUBindGroupLayout bindGroupLayouts[]{context.layouts.layoutTexSampled, context.layouts.layoutTexStrorage1WO};
+        const WGPUPipelineLayoutDescriptor layoutDescriptor{.bindGroupLayoutCount = 2, .bindGroupLayouts = bindGroupLayouts};
+        prepLayout = wgpuDeviceCreatePipelineLayout(context.device, &layoutDescriptor);
+    }
+
+    WGPUCommandEncoder encoder{};
+    ARRAY_FOREACH(p, prepRequests)
+    {
+        auto* entry = *p;
+        auto preprocess = entry->preprocess & (Premultiply | Bgr);
+        auto width = wgpuTextureGetWidth(entry->texture);
+        auto height = wgpuTextureGetHeight(entry->texture);
+        if (!prepStaging || width > prepStagingWidth || height > prepStagingHeight) {
+            if (encoder) {
+                context.submitCommandEncoder(encoder);
+                context.releaseCommandEncoder(encoder);
+            }
+            context.layouts.releaseBindGroup(prepStagingBindGroup);
+            context.releaseTextureView(prepStagingView);
+            context.releaseTexture(prepStaging);
+            prepStaging = context.createTexStorage(width, height, WGPUTextureFormat_RGBA8Unorm);
+            prepStagingView = context.createTextureView(prepStaging);
+            prepStagingBindGroup = context.layouts.createBindGroupStrorage1WO(prepStagingView);
+            prepStagingWidth = width;
+            prepStagingHeight = height;
+        }
+
+        auto& pipeline = (preprocess & Bgr) ? prepPremultBgr : prepPremult;
+        if (!pipeline) {
+            auto entryPoint = (preprocess & Bgr) ? "cs_main_premult_bgr" : "cs_main_premult";
+            const WGPUComputePipelineDescriptor descriptor{
+                .layout = prepLayout,
+                .compute = {.module = prepShader, .entryPoint = {.data = entryPoint, .length = WGPU_STRLEN}}};
+            pipeline = wgpuDeviceCreateComputePipeline(context.device, &descriptor);
+        }
+        if (!encoder) encoder = context.createCommandEncoder();
+        const WGPUComputePassDescriptor descriptor{};
+        auto pass = wgpuCommandEncoderBeginComputePass(encoder, &descriptor);
+        wgpuComputePassEncoderSetPipeline(pass, pipeline);
+        wgpuComputePassEncoderSetBindGroup(pass, 0, entry->bindGroup, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 1, prepStagingBindGroup, 0, nullptr);
+        wgpuComputePassEncoderDispatchWorkgroups(pass, (width + 15) / 16, (height + 15) / 16, 1);
+        wgpuComputePassEncoderEnd(pass);
+        wgpuComputePassEncoderRelease(pass);
+
+        const WGPUTexelCopyTextureInfo source{.texture = prepStaging};
+        const WGPUTexelCopyTextureInfo destination{.texture = entry->texture};
+        const WGPUExtent3D size{.width = width, .height = height, .depthOrArrayLayers = 1};
+        wgpuCommandEncoderCopyTextureToTexture(encoder, &source, &destination, &size);
+        entry->preprocess = PrepNone;
+    }
+    prepRequests.clear();
+    if (encoder) {
+        context.submitCommandEncoder(encoder);
+        context.releaseCommandEncoder(encoder);
+    }
+    return true;
 }
 
 void WgTextureMgr::releaseEntry(WgContext& context, WgTextureEntry& entry)
@@ -100,6 +180,19 @@ const WgTextureEntry* WgTextureMgr::retain(WgContext& context, const RenderSurfa
     }
     if (!entry->texture || refreshTexture) upload(context, *entry, surface, filter);
 
+    if ((entry->preprocess & Queued) && !(entry->preprocess & (Premultiply | Bgr))) {
+        for (uint32_t i = 0; i < prepRequests.count; ++i) {
+            if (prepRequests[i] != entry) continue;
+            prepRequests[i] = prepRequests.last();
+            prepRequests.pop();
+            break;
+        }
+        entry->preprocess = PrepNone;
+    } else if (entry->texture && (entry->preprocess & (Premultiply | Bgr)) && !(entry->preprocess & Queued)) {
+        entry->preprocess = static_cast<WgTexPrep>(entry->preprocess | Queued);
+        prepRequests.push(entry);
+    }
+
     ++entry->refCnt;
     return entry;
 }
@@ -116,6 +209,16 @@ void WgTextureMgr::release(WgContext& context, const RenderSurface* surface, Fil
     if (entry->refCnt > 0) --entry->refCnt;
     if (entry->refCnt > 0) return;
 
+    if (entry->preprocess & Queued) {
+        for (uint32_t i = 0; i < prepRequests.count; ++i) {
+            if (prepRequests[i] != entry) continue;
+            prepRequests[i] = prepRequests.last();
+            prepRequests.pop();
+            break;
+        }
+        entry->preprocess = PrepNone;
+    }
+
     releaseEntry(context, *entry);
     entries.remove(entry);
     delete (entry);
@@ -127,6 +230,19 @@ void WgTextureMgr::release(WgContext& context, const RenderSurface* surface, Fil
 
 void WgTextureMgr::clear(WgContext& context)
 {
+    prepRequests.clear();
+    context.layouts.releaseBindGroup(prepStagingBindGroup);
+    context.releaseTextureView(prepStagingView);
+    context.releaseTexture(prepStaging);
+    prepStagingWidth = prepStagingHeight = 0;
+    if (prepPremult) wgpuComputePipelineRelease(prepPremult);
+    if (prepPremultBgr) wgpuComputePipelineRelease(prepPremultBgr);
+    prepPremult = prepPremultBgr = nullptr;
+    if (prepLayout) wgpuPipelineLayoutRelease(prepLayout);
+    prepLayout = nullptr;
+    if (prepShader) wgpuShaderModuleRelease(prepShader);
+    prepShader = nullptr;
+
     while (auto* surfaceEntry = surfaces.front()) {
         while (auto* entry = surfaceEntry->bilinear.front()) {
             releaseEntry(context, *entry);
