@@ -184,6 +184,7 @@ void LottieSlot::reset()
     if (!overridden) return;
 
     ARRAY_FOREACH(pair, pairs) {
+        if (!pair->prop) continue;  //the target didn't support this slot property
         pair->obj->override(pair->prop, true);
         delete(pair->prop);
         pair->prop = nullptr;
