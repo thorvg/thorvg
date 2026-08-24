@@ -328,7 +328,6 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, SwMpool* mpool, uns
 
 static bool _axisAlignedRect(const SwOutline* outline)
 {
-    // TODO: We can return false if the coordinates have a fractional part, for smoother rectangle movement
     if (outline->out.count != 5) return false;
     if (outline->types[2] == SW_CURVE_TYPE_CUBIC) return false;
 
@@ -343,6 +342,15 @@ static bool _axisAlignedRect(const SwOutline* outline)
     if ((*pt2 == a && *pt4 == b) || (*pt2 == b && *pt4 == a)) return true;
 
     return false;
+}
+
+// Check whether all outline points are aligned to pixel boundaries
+static bool _pixelAligned(const SwOutline* outline)
+{
+    uint32_t bits = 0;
+    ARRAY_FOREACH(pt, outline->out)
+        bits |= pt->x | pt->y;
+    return !(bits & ((1u << SW_FRAC_BITS) - 1));
 }
 
 static SwOutline* _genOutline(const RenderShape* rshape, SwMpool* mpool, unsigned tid, bool trimmed = false)
@@ -428,7 +436,7 @@ bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transf
     utilExport(outline, transform, bbox);
 
     shape.outline = outline;
-    shape.fastTrack = !composite && _axisAlignedRect(outline);
+    shape.fastTrack = !composite && _axisAlignedRect(outline) && _pixelAligned(outline);
 
     if (!utilBBox(bbox, clipBox, renderBox, shape.fastTrack)) return false;
     shape.bbox = renderBox;
