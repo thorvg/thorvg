@@ -645,6 +645,13 @@ struct LottieEllipse : LottieShape
         return nullptr;
     }
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(position) || OVERRIDE(size);
+        return backup;
+    }
+
     LottieVector position = Point{0.0f, 0.0f};
     LottieScalar size = Point{0.0f, 0.0f};
 };
