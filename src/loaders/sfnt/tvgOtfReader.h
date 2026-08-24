@@ -33,7 +33,7 @@ struct OtfReader : SfntReader
         SfntReader(data, size)
     {}
 
-    bool header() override;
+    Result header() override;
     bool positioning(uint32_t lglyph, uint32_t rglyph, Point& out) override;
     bool convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path) override;
 
@@ -53,7 +53,7 @@ private:
     uint32_t skip(uint32_t idx);
     int32_t offset(uint32_t base, uint8_t size);
 
-    bool CFF();
+    Result CFF();
     bool name(uint32_t idx);
     bool DICT(Array<int32_t>& args, uint8_t b, uint32_t& ptr);
     uint32_t localSubrs(Array<int32_t>& args, uint32_t offset, uint32_t size);

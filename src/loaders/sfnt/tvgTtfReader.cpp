@@ -276,22 +276,23 @@ bool TtfReader::convert(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool TtfReader::header()
+Result TtfReader::header()
 {
-    if (!SfntReader::header()) return false;
+    if (SfntReader::header() == Result::Success) {
+        kern = table("kern");
+        if (kern) {
+            if (!validate(kern, 4)) return Result::InvalidArguments;
+            if (u16(kern) != 0) return Result::InvalidArguments;
+        }
 
-    kern = table("kern");
-    if (kern) {
-        if (!validate(kern, 4)) return false;
-        if (u16(kern) != 0) return false;
+        loca = table("loca");
+        glyf = table("glyf");
+
+        if (!loca || !glyf) return Result::InvalidArguments;
+
+        return Result::Success;
     }
-
-    loca = table("loca");
-    glyf = table("glyf");
-
-    if (!loca || !glyf) return false;
-
-    return true;
+    return Result::InvalidArguments;
 }
 
 bool TtfReader::positioning(uint32_t lglyph, uint32_t rglyph, Point& out)

@@ -242,6 +242,8 @@ tvg::Loader* LoaderMgr::loader(const char* filename, LoaderOps& ops, Result& ret
         delete (loader);
     }
 
+    if (ret == Result::NonSupport) return nullptr;
+
     // Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {
         if (auto loader = _find(static_cast<FileType>(i))) {
@@ -294,6 +296,8 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
             }
         }
     }
+
+    if (ret == Result::NonSupport) return nullptr;
 
     // Unknown MimeType. Try with the candidates in the order
     for (int i = 0; i < static_cast<int>(FileType::Unknown); i++) {

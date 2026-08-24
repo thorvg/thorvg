@@ -218,15 +218,16 @@ uint32_t OtfReader::fdSubrs(uint32_t glyph)
 //     ├── offSize (u8)
 //     ├── offset array [(count + 1) * offSize]
 //     └── data (CharString bytecode per glyph)
-bool OtfReader::CFF()
+Result OtfReader::CFF()
 {
-    cff = table("CFF ");  // PostScript outlines
-    auto cff2 = false;
-    if (!cff) {
-        cff = table("CFF2");  // variable font
-        cff2 = true;
+    cff = table("CFF ");
+    if (!cff || !validate(cff, 4)) {
+        if (table("CFF2")) {
+            TVGLOG("OTF", "CFF2 is not supported");
+            return Result::NonSupport;
+        }
+        return Result::InvalidArguments;
     }
-    if (!cff || !validate(cff, 4)) return false;
 
     auto p = cff + u8(cff + 2);  // skip the header size
 
@@ -235,7 +236,7 @@ bool OtfReader::CFF()
 
     // parse Top DICT INDEX
     auto count = u16(p);
-    if (count == 0) return false;
+    if (count == 0) return Result::InvalidArguments;
 
     Array<int32_t> args(32);  // arguments stack for CFF decoding
 
@@ -270,15 +271,15 @@ bool OtfReader::CFF()
         ++ptr;
         args.clear();
     }
-    if (toCharStrings == 0) return false;
+    if (toCharStrings == 0) return Result::InvalidArguments;
     toCharStrings += cff;
 
     p = skip(p);             // jump to the end of INDEX
-    if (!cff2) p = skip(p);  // only cff1 has the String INDEX
+    p = skip(p);             // jump to the end of String INDEX
 
     gsubrs = p;
 
-    return true;
+    return Result::Success;
 }
 
 bool OtfReader::subRoutine(float operand, uint32_t subrs, uint32_t& p, uint32_t& end, SubRoutine* subRoutines, int& srp)
@@ -571,10 +572,10 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool OtfReader::header()
+Result OtfReader::header()
 {
-    if (!SfntReader::header()) return false;
-    return CFF();
+    if (SfntReader::header() == Result::Success) return CFF();
+    return Result::InvalidArguments;
 }
 
 bool OtfReader::positioning(uint32_t lglyph, uint32_t rglyph, Point& out)

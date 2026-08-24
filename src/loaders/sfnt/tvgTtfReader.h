@@ -30,7 +30,7 @@ struct TtfReader : SfntReader
     TtfReader(uint8_t* data, uint32_t size) :
         SfntReader(data, size) {}
 
-    bool header() override;
+    Result header() override;
     bool positioning(uint32_t lglyph, uint32_t rglyph, Point& out) override;
     bool convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path) override;
 
