@@ -186,6 +186,9 @@ struct SwFill
         float a21, a22, a23;
         float cx, cy;
         float offset;
+        Point normal;
+        float invFwidth;
+        float distanceDx, seamProjectionDx;
     };
 
     union {

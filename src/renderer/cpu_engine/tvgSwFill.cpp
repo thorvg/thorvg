@@ -299,6 +299,20 @@ bool _prepareConic(SwFill* fill, const ConicGradient* conic, const Matrix& pTran
     fill->conic.a22 = itransform.e22;
     fill->conic.a23 = itransform.e23;
 
+    //prepare conic anti-aliasing variables
+    auto radian = angle * (MATH_PI / 180.0f);
+    auto seam = Point{cosf(radian), sinf(radian)};
+    fill->conic.normal = {-seam.y, seam.x};
+    auto xStep = Point{fill->conic.a11, fill->conic.a21};
+    auto yStep = Point{fill->conic.a12, fill->conic.a22};
+    auto dFdx = dot(fill->conic.normal, xStep);
+    auto dFdy = dot(fill->conic.normal, yStep);
+    auto fwidth = fabsf(dFdx) + fabsf(dFdy);
+
+    fill->conic.invFwidth = (tvg::zero(dFdx) || tvg::zero(dFdy)) ? 0.0f : 1.0f / fwidth;
+    fill->conic.distanceDx = dFdx * fill->conic.invFwidth;
+    fill->conic.seamProjectionDx = dot(seam, xStep);
+
     return true;
 }
 
@@ -339,6 +353,64 @@ static inline uint32_t _pixel(const SwFill* fill, float pos)
 {
     auto i = static_cast<int32_t>(pos * (SW_COLOR_TABLE - 1) + 0.5f);
     return fill->ctable[_clamp(fill, i)];
+}
+
+
+struct ConicAARange
+{
+    uint32_t begin = 0;
+    uint32_t end = 0;
+    float distance = 0.0f;
+};
+
+
+static void _conicAARange(const SwFill* fill, float rx, float ry, uint32_t len, ConicAARange& range)
+{
+    auto conic = &fill->conic;
+    if (conic->invFwidth <= 0.0f || len == 0) return;
+
+    auto offset = Point{rx, ry};
+
+    //normal distance limits AA to the band around the infinite boundary line
+    auto distance = dot(conic->normal, offset) * conic->invFwidth;
+    auto distanceDx = conic->distanceDx;
+    int32_t begin = 0;
+    auto end = static_cast<int32_t>(len);
+    if (tvg::zero(distanceDx)) {
+        if (distance <= -0.5f || distance >= 0.5f) return;
+    } else {
+        auto first = (-0.5f - distance) / distanceDx;  //distance + first * distanceDx = -0.5
+        auto last = (0.5f - distance) / distanceDx;    //distance + last * distanceDx = 0.5
+        if (first > last) std::swap(first, last);
+        begin = std::max(begin, static_cast<int32_t>(floorf(first)) + 1);
+        end = std::min(end, static_cast<int32_t>(ceilf(last)));
+    }
+
+    //exclude the half of the AA band opposite the conic seam
+    auto seam = Point{conic->normal.y, -conic->normal.x};
+    auto seamProjection = dot(offset, seam);
+    auto seamProjectionDx = conic->seamProjectionDx;
+    if (tvg::zero(seamProjectionDx)) {
+        if (seamProjection < 0.0f) return;
+    } else if (seamProjectionDx > 0.0f) {
+        begin = std::max(begin, static_cast<int32_t>(ceilf(-seamProjection / seamProjectionDx)));
+    } else {
+        end = std::min(end, static_cast<int32_t>(floorf(-seamProjection / seamProjectionDx)) + 1);
+    }
+
+    if (begin >= end) return;
+
+    range.begin = static_cast<uint32_t>(begin);
+    range.end = static_cast<uint32_t>(end);
+    range.distance = distance + begin * distanceDx;
+}
+
+
+static inline uint32_t _conicPixel(const SwFill* fill, float rx, float ry, uint32_t i, const ConicAARange& range)
+{
+    if (i < range.begin || i >= range.end) return _pixel(fill, _conicT(fill, rx, ry));
+    auto distance = range.distance + (i - range.begin) * fill->conic.distanceDx;
+    return INTERPOLATE(fill->ctable[0], fill->ctable[SW_COLOR_TABLE - 1], static_cast<uint8_t>(255.0f * (distance + 0.5f)));  // distance is kept within (-0.5f, 0.5f) by _conicAARange()
 }
 
 
@@ -531,16 +603,18 @@ void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
     auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+    ConicAARange range;
+    _conicAARange(fill, rx, ry, len, range);
 
     if (opacity == 255) {
         for (uint32_t i = 0; i < len; ++i, ++dst, cmp += csize) {
-            *dst = opBlendNormal(_pixel(fill, _conicT(fill, rx, ry)), *dst, alpha(cmp));
+            *dst = opBlendNormal(_conicPixel(fill, rx, ry, i, range), *dst, alpha(cmp));
             rx += conic->a11;
             ry += conic->a21;
         }
     } else {
         for (uint32_t i = 0; i < len; ++i, ++dst, cmp += csize) {
-            *dst = opBlendNormal(_pixel(fill, _conicT(fill, rx, ry)), *dst, MULTIPLY(opacity, alpha(cmp)));
+            *dst = opBlendNormal(_conicPixel(fill, rx, ry, i, range), *dst, MULTIPLY(opacity, alpha(cmp)));
             rx += conic->a11;
             ry += conic->a21;
         }
@@ -553,9 +627,11 @@ void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
     auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+    ConicAARange range;
+    _conicAARange(fill, rx, ry, len, range);
 
     for (uint32_t i = 0; i < len; ++i, ++dst) {
-        *dst = op(_pixel(fill, _conicT(fill, rx, ry)), *dst, a);
+        *dst = op(_conicPixel(fill, rx, ry, i, range), *dst, a);
         rx += conic->a11;
         ry += conic->a21;
     }
@@ -567,9 +643,11 @@ void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
     auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+    ConicAARange range;
+    _conicAARange(fill, rx, ry, len, range);
 
     for (uint32_t i = 0; i < len; ++i, ++dst) {
-        auto src = MULTIPLY(a, A(_pixel(fill, _conicT(fill, rx, ry))));
+        auto src = MULTIPLY(a, A(_conicPixel(fill, rx, ry, i, range)));
         *dst = maskOp(src, *dst, ~src);
         rx += conic->a11;
         ry += conic->a21;
@@ -582,9 +660,11 @@ void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
     auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+    ConicAARange range;
+    _conicAARange(fill, rx, ry, len, range);
 
     for (uint32_t i = 0; i < len; ++i, ++dst, ++cmp) {
-        auto src = MULTIPLY(A(_pixel(fill, _conicT(fill, rx, ry))), a);
+        auto src = MULTIPLY(A(_conicPixel(fill, rx, ry, i, range)), a);
         auto tmp = maskOp(src, *cmp, 0);
         *dst = tmp + MULTIPLY(*dst, ~tmp);
         rx += conic->a11;
@@ -598,17 +678,19 @@ void fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
     auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+    ConicAARange range;
+    _conicAARange(fill, rx, ry, len, range);
 
     if (a == 255) {
         for (uint32_t i = 0; i < len; ++i, ++dst) {
-            auto tmp = op(_pixel(fill, _conicT(fill, rx, ry)), *dst, 255);
+            auto tmp = op(_conicPixel(fill, rx, ry, i, range), *dst, 255);
             *dst = op2(surface, tmp, *dst);
             rx += conic->a11;
             ry += conic->a21;
         }
     } else {
         for (uint32_t i = 0; i < len; ++i, ++dst) {
-            auto tmp = op(_pixel(fill, _conicT(fill, rx, ry)), *dst, 255);
+            auto tmp = op(_conicPixel(fill, rx, ry, i, range), *dst, 255);
             auto tmp2 = op2(surface, tmp, *dst);
             *dst = INTERPOLATE(tmp2, *dst, a);
             rx += conic->a11;
