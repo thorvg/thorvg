@@ -61,6 +61,14 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
 }
 
 
+static inline float _conicT(const SwFill* fill, float rx, float ry)
+{
+    //angle around the center in turns: 3 o'clock start, clockwise in the y-down coordinate system
+    auto t = atan2f(ry, rx) * (0.5f / MATH_PI) + fill->conic.offset;
+    return t - floorf(t);   //wrap to [0..1)
+}
+
+
 static uint32_t _estimateAAMargin(const Fill* fdata)
 {
     constexpr float marginScalingFactor = 800.0f;
@@ -143,8 +151,9 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     uint32_t i = 0;
 
     //If repeat is true, anti-aliasing must be applied between the last and the first colors.
-    auto repeat = fill->spread == FillSpread::Repeat;
-    uint32_t iAABegin = repeat ? _estimateAAMargin(fdata) : 0;
+    //Conic gradients are excluded because color table AA produces poor quality.
+    auto aa = fill->spread == FillSpread::Repeat && fdata->type() != Type::ConicGradient;
+    uint32_t iAABegin = aa ? _estimateAAMargin(fdata) : 0;
     uint32_t iAAEnd = 0;
 
     fill->ctable[i++] = ALPHA_BLEND(rgba | 0xff000000, a);
@@ -156,7 +165,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     }
 
     for (uint32_t j = 0; j < cnt - 1; ++j) {
-        if (repeat && j == cnt - 2 && iAAEnd == 0) {
+        if (aa && j == cnt - 2 && iAAEnd == 0) {
             iAAEnd = iAABegin;
             _adjustAAMargin(iAAEnd, SW_COLOR_TABLE - i);
         }
@@ -183,7 +192,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         rgba = rgba2;
         a = a2;
 
-        if (repeat && j == 0) _adjustAAMargin(iAABegin, i - 1);
+        if (aa && j == 0) _adjustAAMargin(iAABegin, i - 1);
     }
     rgba = ALPHA_BLEND((rgba | 0xff000000), a);
 
@@ -191,9 +200,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         fill->ctable[i] = rgba;
     }
 
-    //For repeat fill spread apply anti-aliasing between the last and first colors,
-    //otherwise make sure the last color stop is represented at the end of the table.
-    if (repeat) _applyAA(fill, iAABegin, iAAEnd);
+    if (aa) _applyAA(fill, iAABegin, iAAEnd);
     else fill->ctable[SW_COLOR_TABLE - 1] = rgba;
 
     return true;
@@ -266,6 +273,31 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     fill->radial.a21 = itransform.e21;
     fill->radial.a22 = itransform.e22;
     fill->radial.a23 = itransform.e23;
+
+    return true;
+}
+
+
+bool _prepareConic(SwFill* fill, const ConicGradient* conic, const Matrix& pTransform)
+{
+    float cx, cy, angle;
+    conic->conic(&cx, &cy, &angle);
+
+    fill->conic.cx = cx;
+    fill->conic.cy = cy;
+    fill->conic.offset = -angle / 360.0f;
+
+    const auto& transform = pTransform * conic->transform();
+
+    Matrix itransform;
+    if (!inverse(&transform, &itransform)) return false;
+
+    fill->conic.a11 = itransform.e11;
+    fill->conic.a12 = itransform.e12;
+    fill->conic.a13 = itransform.e13;
+    fill->conic.a21 = itransform.e21;
+    fill->conic.a22 = itransform.e22;
+    fill->conic.a23 = itransform.e23;
 
     return true;
 }
@@ -489,6 +521,98 @@ void fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uin
                 deltaDet += deltaDeltaDet;
                 b += deltaB;
             }
+        }
+    }
+}
+
+
+void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+{
+    auto conic = &fill->conic;
+    auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
+    auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+
+    if (opacity == 255) {
+        for (uint32_t i = 0; i < len; ++i, ++dst, cmp += csize) {
+            *dst = opBlendNormal(_pixel(fill, _conicT(fill, rx, ry)), *dst, alpha(cmp));
+            rx += conic->a11;
+            ry += conic->a21;
+        }
+    } else {
+        for (uint32_t i = 0; i < len; ++i, ++dst, cmp += csize) {
+            *dst = opBlendNormal(_pixel(fill, _conicT(fill, rx, ry)), *dst, MULTIPLY(opacity, alpha(cmp)));
+            rx += conic->a11;
+            ry += conic->a21;
+        }
+    }
+}
+
+
+void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
+{
+    auto conic = &fill->conic;
+    auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
+    auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+
+    for (uint32_t i = 0; i < len; ++i, ++dst) {
+        *dst = op(_pixel(fill, _conicT(fill, rx, ry)), *dst, a);
+        rx += conic->a11;
+        ry += conic->a21;
+    }
+}
+
+
+void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
+{
+    auto conic = &fill->conic;
+    auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
+    auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+
+    for (uint32_t i = 0; i < len; ++i, ++dst) {
+        auto src = MULTIPLY(a, A(_pixel(fill, _conicT(fill, rx, ry))));
+        *dst = maskOp(src, *dst, ~src);
+        rx += conic->a11;
+        ry += conic->a21;
+    }
+}
+
+
+void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
+{
+    auto conic = &fill->conic;
+    auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
+    auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+
+    for (uint32_t i = 0; i < len; ++i, ++dst, ++cmp) {
+        auto src = MULTIPLY(A(_pixel(fill, _conicT(fill, rx, ry))), a);
+        auto tmp = maskOp(src, *cmp, 0);
+        *dst = tmp + MULTIPLY(*dst, ~tmp);
+        rx += conic->a11;
+        ry += conic->a21;
+    }
+}
+
+
+void fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+{
+    auto conic = &fill->conic;
+    auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
+    auto ry = (x + 0.5f) * conic->a21 + (y + 0.5f) * conic->a22 + conic->a23 - conic->cy;
+
+    if (a == 255) {
+        for (uint32_t i = 0; i < len; ++i, ++dst) {
+            auto tmp = op(_pixel(fill, _conicT(fill, rx, ry)), *dst, 255);
+            *dst = op2(surface, tmp, *dst);
+            rx += conic->a11;
+            ry += conic->a21;
+        }
+    } else {
+        for (uint32_t i = 0; i < len; ++i, ++dst) {
+            auto tmp = op(_pixel(fill, _conicT(fill, rx, ry)), *dst, 255);
+            auto tmp2 = op2(surface, tmp, *dst);
+            *dst = INTERPOLATE(tmp2, *dst, a);
+            rx += conic->a11;
+            ry += conic->a21;
         }
     }
 }
@@ -779,6 +903,8 @@ bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix& transform,
         if (!_prepareLinear(fill, static_cast<const LinearGradient*>(fdata), transform)) return false;
     } else if (fdata->type() == Type::RadialGradient) {
         if (!_prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform)) return false;
+    } else if (fdata->type() == Type::ConicGradient) {
+        if (!_prepareConic(fill, static_cast<const ConicGradient*>(fdata), transform)) return false;
     }
 
     if (ctable) return _updateColorTable(fill, fdata, surface, opacity);

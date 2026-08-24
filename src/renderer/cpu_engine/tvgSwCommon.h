@@ -181,9 +181,17 @@ struct SwFill
         float invA, a;
     };
 
+    struct SwConic {
+        float a11, a12, a13;
+        float a21, a22, a23;
+        float cx, cy;
+        float offset;
+    };
+
     union {
         SwLinear linear;
         SwRadial radial;
+        SwConic conic;
     };
 
     uint32_t ctable[SW_COLOR_TABLE];
@@ -496,6 +504,12 @@ void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                           // blending ver.
 void fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);  // blending + BlendingMethod(op2) ver.
 void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);        // matting ver.
+
+void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask op, uint8_t a);                                                 // composite masking ver.
+void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask op, uint8_t a);                                   // direct masking ver.
+void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a);                                            // blending ver.
+void fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a);   // blending + BlendingMethod(op2) ver.
+void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity);         // matting ver.
 
 SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias);
 SwRle* rleRender(const RenderRegion* bbox);
