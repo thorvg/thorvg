@@ -47,6 +47,8 @@ private:
     uint32_t toCharStrings = 0;  // CharStrings offset in Top DICT INDEX in the cff table
     uint32_t gsubrs = 0;         // global Subr INDEX
     uint32_t subrs = 0;          // local Subr INDEX
+    uint32_t fdArray = 0;        // font DICT INDEX for CID-keyed fonts
+    uint32_t fdSelect = 0;       // glyph-to-font DICT mapping
 
     uint32_t skip(uint32_t idx);
     int32_t offset(uint32_t base, uint8_t size);
@@ -55,11 +57,12 @@ private:
     bool name(uint32_t idx);
     bool DICT(Array<int32_t>& args, uint8_t b, uint32_t& ptr);
     uint32_t localSubrs(Array<int32_t>& args, uint32_t offset, uint32_t size);
+    uint32_t fdSubrs(uint32_t glyph);
     bool charStrings(RenderPath& path, uint32_t glyph);
 
     // CharStrings decoding sub-routines
     bool subRoutine(float operand, uint32_t subrs, uint32_t& p, uint32_t& end, SubRoutine* stack, int& ssp);
-    void operand(Array<float>& v, uint8_t b, uint32_t& p);
+    bool operand(Array<float>& v, uint8_t b, uint32_t& p);
     void alternatingCurve(Array<float>& v, Point& pos, RenderPath& path, bool horizontal);
     void alignedCurve(Array<float>& v, Point& pos, RenderPath& path, bool horizontal);
     void rrCurveTo(Array<float>& v, Point& pos, RenderPath& path);
