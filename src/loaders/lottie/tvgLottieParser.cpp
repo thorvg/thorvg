@@ -549,9 +549,9 @@ LottieRect* LottieParser::parseRect()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(rect, key)) continue;
-        else if (KEY_AS("s")) parseProperty(rect->size);
-        else if (KEY_AS("p")) parseProperty(rect->position);
-        else if (KEY_AS("r")) parseProperty(rect->radius);
+        else if (KEY_AS("s")) parseProperty(rect->size, rect);
+        else if (KEY_AS("p")) parseProperty(rect->position, rect);
+        else if (KEY_AS("r")) parseProperty(rect->radius, rect);
         else if (parseDirection(rect, key)) continue;
         else skip();
     }
