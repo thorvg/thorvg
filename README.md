@@ -507,7 +507,11 @@ The [ThorVG Playground](https://www.thorvg.org/playground) is an interactive web
 <br />
 ## Tools
 ### ThorVG View
-ThorVG provides a resource verification tool for the ThorVG engine. The [ThorVG view](https://thorvg.github.io/thorvg.view/) enables instant rendering directly in the web browser using the ThorVG WebAssembly binary, allowing real-time editing of vector elements. It does not upload your resources to any external server and supports exporting to formats such as GIF, ensuring that designer copyrights remain protected.</br>
+
+[ThorVG view](https://thorvg.github.io/thorvg.view/) is an interactive web tool for testing and validating vector and motion graphics assets with ThorVG. It provides a quick way to verify how standard formats such as SVG and Lottie are parsed, rendered, and animated by the engine. <br />
+<br />
+Powered by ThorVG WebAssembly, assets are rendered directly in the browser with no server-side processing, making it useful for compatibility testing, visual inspection, debugging, and experimenting with asset behavior in real time.
+</br>
 
 <p align="center">
   <img width="1000" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_thorvgview.gif"/>
