@@ -35,12 +35,11 @@ struct WgImageData
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
 
-    void update(WgContext& context, const RenderSurface* surface, FilterMethod filter);
-    void update(WgContext& context, const Fill* fill);
+    void update(WgContext& context, const Fill* fill, FillSpread& currentSpread);
     void release(WgContext& context);
 };
 
-enum class WgRenderSettingsType { None = 0, Solid = 1, Linear = 2, Radial = 3 };
+enum class WgRenderSettingsType { None = 0, Solid = 1, Linear = 2, Radial = 3, Conic = 4 };
 
 static_assert(sizeof(RenderColor) == 4, "Solid color vertex data must remain tightly packed RGBA8");
 
@@ -61,6 +60,7 @@ struct WgRenderSettings
     WgRenderSettingsType fillType{};
     float opacityMultiplier = 1.0f;
     bool skip{};
+    FillSpread spread{};  // cached here to use existing tail padding
 
     uint8_t updateOpacity(tvg::ColorSpace cs, uint8_t opacity);
     void update(WgContext& context, const Fill* fill, const Matrix* modelTransform, bool updateColorRamp);

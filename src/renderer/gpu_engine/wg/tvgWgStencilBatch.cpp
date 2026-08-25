@@ -27,9 +27,6 @@ static bool eligible(const WgRenderDataShape* renderData, BlendMethod blendMetho
 {
     if (blendMethod != BlendMethod::Normal || renderData->renderSettingsShape.skip) return false;
 
-    const auto fillType = renderData->renderSettingsShape.fillType;
-    if (fillType != WgRenderSettingsType::Solid && fillType != WgRenderSettingsType::Linear && fillType != WgRenderSettingsType::Radial) return false;
-
     if (renderData->convex || renderData->viewport.invalid() || !renderData->clips.empty()) return false;
     if (renderData->meshShape.vbuffer.empty() || renderData->meshShape.ibuffer.empty() || renderData->meshBBox.vbuffer.empty() || renderData->meshBBox.ibuffer.empty()) return false;
     if (!renderData->renderSettingsStroke.skip && !renderData->meshStrokes.ibuffer.empty()) return false;
