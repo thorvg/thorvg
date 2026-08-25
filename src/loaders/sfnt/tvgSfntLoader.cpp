@@ -536,7 +536,7 @@ Result SfntLoader::open(const char* path, TVG_UNUSED const LoaderOps& ops)
     auto ret = gen(data, size, reader);
     if (ret != Result::Success) return ret;
     name = tvg::filename(path);
-    return reader->header() ? Result::Success : Result::InvalidArguments;
+    return reader->header();
 #endif
     return Result::NonSupport;
 }
@@ -553,7 +553,7 @@ Result SfntLoader::open(const char* data, uint32_t size, TVG_UNUSED const Loader
     }
     owner = ops.owner;
 
-    return reader->header() ? Result::Success : Result::InvalidArguments;
+    return reader->header();
 }
 
 bool SfntLoader::get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out)
