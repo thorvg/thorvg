@@ -489,11 +489,11 @@ static void _buildLayer(jerry_value_t context, float frameNo, LottieLayer* layer
     jerry_object_set_sz(context, "hasParent", hasParent);
     jerry_value_free(hasParent);
 
-    auto inPoint = jerry_number(layer->inFrame / exp->comp->frameRate);
+    auto inPoint = jerry_number(layer->inPoint / exp->comp->frameRate);
     jerry_object_set_sz(context, "inPoint", inPoint);
     jerry_value_free(inPoint);
 
-    auto outPoint = jerry_number(layer->outFrame / exp->comp->frameRate);
+    auto outPoint = jerry_number(layer->outPoint / exp->comp->frameRate);
     jerry_object_set_sz(context, "outPoint", outPoint);
     jerry_value_free(outPoint);
 
@@ -1127,7 +1127,7 @@ static jerry_value_t _loopOut(const jerry_call_info_t* info, const jerry_value_t
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto mode = static_cast<LottieProperty::Loop>((int) _loopCommon(args, argsCnt) + LOOP_OUT_OFFSET);
     auto key = (argsCnt > 1) ? jerry_value_as_int32(args[1]) : 0;
-    return _buildValue(data->exp->property->loop(data->frameNo, key, mode, data->exp->layer->outFrame), data->exp->property);
+    return _buildValue(data->exp->property->loop(data->frameNo, key, mode, data->exp->layer->outPoint), data->exp->property);
 }
 
 
@@ -1145,7 +1145,7 @@ static jerry_value_t _loopIn(const jerry_call_info_t* info, const jerry_value_t 
     auto data = static_cast<ExpContent*>(jerry_object_get_native_ptr(info->function, &freeCb));
     auto mode = _loopCommon(args, argsCnt);
     auto key = (argsCnt > 1) ? jerry_value_as_int32(args[1]) : 0;
-    return _buildValue(data->exp->property->loop(data->frameNo, key, mode, data->exp->layer->outFrame), data->exp->property);
+    return _buildValue(data->exp->property->loop(data->frameNo, key, mode, data->exp->layer->outPoint), data->exp->property);
 }
 
 
@@ -1418,11 +1418,11 @@ void LottieExpressions::buildGlobal(Context& context, float frameNo, LottieExpre
     jerry_object_set_sz(context.global, EXP_INDEX, index);
     jerry_value_free(index);
 
-    auto inPoint = jerry_number(exp->layer->inFrame / exp->comp->frameRate);
+    auto inPoint = jerry_number(exp->layer->inPoint / exp->comp->frameRate);
     jerry_object_set_sz(context.global, "inPoint", inPoint);
     jerry_value_free(inPoint);
 
-    auto outPoint = jerry_number(exp->layer->outFrame / exp->comp->frameRate);
+    auto outPoint = jerry_number(exp->layer->outPoint / exp->comp->frameRate);
     jerry_object_set_sz(context.global, "outPoint", outPoint);
     jerry_value_free(outPoint);
 }

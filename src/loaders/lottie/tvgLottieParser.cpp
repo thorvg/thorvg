@@ -1595,8 +1595,8 @@ LottieLayer* LottieParser::parseLayer(LottieRootLayer* precomp)
         }
         else if (KEY_AS("ao")) layer->autoOrient = getInt();
         else if (KEY_AS("shapes")) parseShapes(layer->children);
-        else if (KEY_AS("ip")) layer->inFrame = getFloat();
-        else if (KEY_AS("op")) layer->outFrame = getFloat();
+        else if (KEY_AS("ip")) layer->inPoint = getFloat();
+        else if (KEY_AS("op")) layer->outPoint = getFloat();
         else if (KEY_AS("st")) layer->startFrame = getFloat();
         else if (KEY_AS("bm")) layer->blendMethod = (BlendMethod) getInt();
         else if (KEY_AS("parent")) layer->pix = getInt();
@@ -1792,14 +1792,14 @@ bool LottieParser::parse()
 
     Array<LottieGlyph*> glyphs;
 
-    auto startFrame = 0.0f;
-    auto endFrame = 0.0f;
+    auto inPoint = 0.0f;
+    auto outPoint = 0.0f;
 
     while (auto key = nextObjectKey()) {
         if (KEY_AS("v")) comp->version = getStringCopy();
         else if (KEY_AS("fr")) comp->frameRate = getFloat();
-        else if (KEY_AS("ip")) startFrame = getFloat();
-        else if (KEY_AS("op")) endFrame = getFloat();
+        else if (KEY_AS("ip")) inPoint = getFloat();
+        else if (KEY_AS("op")) outPoint = getFloat();
         else if (KEY_AS("w")) comp->w = getFloat();
         else if (KEY_AS("h")) comp->h = getFloat();
         else if (KEY_AS("nm")) comp->name = getStringCopy();
@@ -1817,8 +1817,8 @@ bool LottieParser::parse()
         return false;
     }
 
-    comp->root->inFrame = startFrame;
-    comp->root->outFrame = endFrame;
+    comp->root->inPoint = inPoint;
+    comp->root->outPoint = outPoint;
 
     postProcess(glyphs);
 
