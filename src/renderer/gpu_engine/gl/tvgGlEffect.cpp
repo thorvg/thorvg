@@ -37,9 +37,16 @@ struct GlGaussianBlur
     float sigma{};
     float scale{};
     float extend{};
-    float dummy0{};
+    float quality{};
 };
 
+static float _blurQuality(uint8_t quality, float extend)
+{
+    float step = 1.0f;
+    if (quality <= 33) step = 3.0f;
+    else if (quality <= 66) step = 2.0f;
+    return std::min(step, float(std::max(int(extend), 1)));
+}
 
 bool GlEffect::region(RenderEffectGaussianBlur* effect)
 {
@@ -63,6 +70,7 @@ void GlEffect::update(RenderEffectGaussianBlur* effect, const Matrix& transform)
     blur->sigma = effect->sigma;
     blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
     blur->extend = 2 * blur->sigma * blur->scale;
+    blur->quality = _blurQuality(effect->quality, blur->extend);
     effect->rd = blur;
     effect->valid = (blur->extend > 0);
 }
@@ -143,6 +151,7 @@ void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
     dropShadow->offset[0] = offset.x;
     dropShadow->offset[1] = offset.y;
     dropShadow->extend = 2 * std::max(effect->sigma * scale + std::abs(offset.x), effect->sigma * scale + std::abs(offset.y));
+    dropShadow->quality = _blurQuality(effect->quality, dropShadow->extend);
     effect->rd = dropShadow;
     effect->valid = (dropShadow->extend >= 0);
 }
