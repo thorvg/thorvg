@@ -26,7 +26,7 @@
 #ifdef __EMSCRIPTEN__
     #include <GLES3/gl3.h>
     #include <emscripten/html5_webgl.h>
-    #define GL_CHECK(stmt) stmt
+    #define GL_CHECK(stmt) do { stmt; } while(0)
 #else //__EMSCRIPTEN__
     #if defined (THORVG_GL_TARGET_GLES)
         #define TVG_REQUIRE_GL_MAJOR_VER 3
@@ -39,9 +39,10 @@
     #include "tvgCommon.h"
 
     #ifdef _DEBUG
-        #define GL_CHECK(stmt) stmt; assert(glGetError() == GL_NO_ERROR);
+        #include <cassert>
+        #define GL_CHECK(stmt) do { stmt; assert(glGetError() == GL_NO_ERROR); } while(0)
     #else
-        #define GL_CHECK(stmt) stmt
+        #define GL_CHECK(stmt) do { stmt; } while(0)
     #endif
 
     #ifdef _WIN64
