@@ -17,6 +17,7 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Jinny You @tinyjin
 - Jay WenJie @wenjieshen
 - SoonGeon Noh @Nor-s
+- Abdelrahman Ashraf @theashraf
 
 ## Contributors
 - Prudhvi Raj Vasireddi @prudhvirajv
@@ -42,7 +43,6 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Lorcán Mc Donagh @lmdsp
 - Lucas Niu @fall2019
 - Francisco Ramírez @franramirez688
-- Abdelrahman Ashraf @theashraf
 - Neo Xu @XuNeo
 - Thaddeus Crews @Repiteo
 - Josh Soref @jsoref
