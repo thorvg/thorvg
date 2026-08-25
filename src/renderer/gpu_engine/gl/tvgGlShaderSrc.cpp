@@ -176,17 +176,17 @@ const char* STR_LINEAR_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
 );
 
 //See: GlRenderer::initShaders()
-const char* STR_LINEAR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
+const char* STR_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
     out vec4 FragColor;                                                                                     \n
     void main()                                                                                             \n
     {                                                                                                       \n
-        FragColor = linearGradientColor(vPos);                                                              \n
+        FragColor = gradientColor(vPos);                                                                    \n
     }                                                                                                       \n
 );
 
 //See: GlRenderer::initShaders()
 const char* STR_LINEAR_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
-    vec4 linearGradientColor(vec2 pos)                                                                      \n
+    vec4 gradientColor(vec2 pos)                                                                            \n
     {                                                                                                       \n
         vec2 st = uGradientInfo.gradStartPos;                                                               \n
         vec2 ed = uGradientInfo.gradEndPos;                                                                 \n
@@ -207,16 +207,6 @@ const char* STR_RADIAL_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
         vec4  stopPoints[MAX_STOP_COUNT / 4];                                                               \n
         vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
     } uGradientInfo ;                                                                                       \n
-);
-
-//See: GlRenderer::initShaders()
-const char* STR_RADIAL_GRADIENT_MAIN = TVG_COMPOSE_SHADER(
-    out vec4 FragColor;                                                                                     \n
-                                                                                                            \n
-    void main()                                                                                             \n
-    {                                                                                                       \n
-        FragColor = radialGradientColor(vPos);                                                              \n
-    }                                                                                                       \n
 );
 
 // TODO: Precompute radial_matrix, f, r1n, inv_r1, d_radius_sign, is_focal_on_circle, is_well_behaved, is_swapped in CPU as a uniform
@@ -301,7 +291,7 @@ const char* STR_RADIAL_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
         }                                                                                                   \n
     }                                                                                                       \n
                                                                                                             \n
-    vec4 radialGradientColor(vec2 pos)                                                                      \n
+    vec4 gradientColor(vec2 pos)                                                                            \n
     {                                                                                                       \n
         vec2 res = compute_radial_t(uGradientInfo.centerPos.xy,                                             \n
                                     uGradientInfo.radius.x,                                                 \n
@@ -312,6 +302,37 @@ const char* STR_RADIAL_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
                                                                                                             \n
         float t = gradientWrap(res.x);                                                                      \n
         vec4 color = gradient(t, res.x, length(pos - uGradientInfo.centerPos.xy));                          \n
+        return vec4(color.rgb * color.a, color.a);                                                          \n
+    }                                                                                                       \n
+);
+
+//See: GlRenderer::initShaders()
+const char* STR_CONIC_GRADIENT_VARIABLES = TVG_COMPOSE_SHADER(
+    layout(std140) uniform GradientInfo {                                                                   \n
+        vec4  nStops;                                                                                       \n
+        vec4  stopPoints[MAX_STOP_COUNT / 4];                                                               \n
+        vec4  stopColors[MAX_STOP_COUNT];                                                                   \n
+    } uGradientInfo;                                                                                        \n
+);
+
+//See: GlRenderer::initShaders()
+const char* STR_CONIC_GRADIENT_FUNCTIONS = TVG_COMPOSE_SHADER(
+    vec4 gradientColor(vec2 pos)                                                                            \n
+    {                                                                                                       \n
+        float width = fwidth(pos.y);                                                                        \n
+        vec4 color;                                                                                         \n
+        if (pos.x >= 0.0 && abs(pos.y) < 0.5 * width) {                                                     \n
+            int count = int(uGradientInfo.nStops[0]);                                                       \n
+            float coverage = pos.y / width + 0.5;                                                           \n
+            // Seam coverage averages premultiplied colors, unlike gradient interpolation.
+            vec4 first = uGradientInfo.stopColors[0];                                                       \n
+            vec4 last = uGradientInfo.stopColors[count - 1];                                                \n
+            return mix(vec4(last.rgb * last.a, last.a), vec4(first.rgb * first.a, first.a), coverage);      \n
+        } else {                                                                                            \n
+            const float INV_TWO_PI = 0.15915494309189535;                                                   \n
+            float t = fract(atan(pos.y, pos.x) * INV_TWO_PI);                                               \n
+            color = gradient(t, 0.0, 1.0);                                                                  \n
+        }                                                                                                   \n
         return vec4(color.rgb * color.a, color.a);                                                          \n
     }                                                                                                       \n
 );
@@ -602,7 +623,7 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; }
 )";
 
-const char* BLEND_SHAPE_LINEAR_FRAG_HEADER = R"(
+const char* BLEND_SHAPE_GRADIENT_FRAG_HEADER = R"(
 layout(std140) uniform BlendRegion {
     vec4 region;
 } uBlendRegion;
@@ -616,7 +637,7 @@ struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
 void getFragData() {
-    vec4 colorSrc = linearGradientColor(vPos);
+    vec4 colorSrc = gradientColor(vPos);
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
     vec4 colorDst = texture(uDstTexture, uv);
 
@@ -625,41 +646,9 @@ void getFragData() {
     d.So = 1.0;
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
-    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
+    // RGB is premultiplied.
     float srcOpacity = d.Sa * d.So;
-    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
-    d.Sa = mix(d.Da, 1.0, srcOpacity);
-}
-
-vec4 postProcess(vec4 R) { return R; }
-)";
-
-const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
-layout(std140) uniform BlendRegion {
-    vec4 region;
-} uBlendRegion;
-
-uniform sampler2D uDstTexture;
-
-out vec4 FragColor;
-
-vec3 One = vec3(1.0, 1.0, 1.0);
-struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
-FragData d;
-
-void getFragData() {
-    vec4 colorSrc = radialGradientColor(vPos);
-    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
-    vec4 colorDst = texture(uDstTexture, uv);
-
-    d.Sc = colorSrc.rgb;
-    d.Sa = colorSrc.a;
-    d.So = 1.0;
-    d.Dc = colorDst.rgb;
-    d.Da = colorDst.a;
-    if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
-    float srcOpacity = d.Sa * d.So;
-    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
+    d.Sc = d.Dc * (1.0 - srcOpacity) + d.Sc * d.So;
     d.Sa = mix(d.Da, 1.0, srcOpacity);
 }
 
