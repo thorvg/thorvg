@@ -1047,8 +1047,8 @@ struct LottieRootLayer : LottieGroup
 
     float timeStretch = 1.0f;
     float w = 0.0f, h = 0.0f;
-    float inFrame = 0.0f;
-    float outFrame = 0.0f;
+    float inFrame = 0.0f;   // frame when the layer becomes visible
+    float outFrame = 0.0f;  // frame when the layer becomes invisible
     float startFrame = 0.0f;
 
     bool effect = false;  // true if any effect is activated in its tree
@@ -1216,7 +1216,7 @@ struct LottieComposition
     {
         frameNo += root->inFrame;
         if (frameNo < root->inFrame) frameNo = root->inFrame;
-        if (frameNo >= root->outFrame) frameNo = root->outFrame - 1;
+        if (frameNo > root->outFrame - 1.0f) frameNo = root->outFrame - 1.0f;
     }
 
     LottieRootLayer* root = nullptr;
