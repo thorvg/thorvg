@@ -23,7 +23,6 @@
 #include "tvgWgShaderSrc.h"
 #include "tvgWgPipelines.h"
 #include <cstring>
-#include <cassert>
 
 WGPUShaderModule WgPipelines::createShaderModule(WGPUDevice device, const char* label, const char* code)
 {
@@ -192,12 +191,14 @@ void WgPipelines::initialize(WgContext& context)
     shader_solid  = createShaderModule(context.device, "The shader solid",  cShaderSrc_Solid);
     shader_radial = createShaderModule(context.device, "The shader radial", cShaderSrc_Radial);
     shader_linear = createShaderModule(context.device, "The shader linear", cShaderSrc_Linear);
+    shader_conic  = createShaderModule(context.device, "The shader conic",  cShaderSrc_Conic);
     shader_image  = createShaderModule(context.device, "The shader image",  cShaderSrc_Image);
     shader_scene  = createShaderModule(context.device, "The shader scene",  cShaderSrc_Scene);
     // shader custom blend
     shader_solid_blend  = createShaderModule(context.device, "The shader blend solid",  strcat(strcpy(shaderSourceBuff, cShaderSrc_Solid_Blend), cShaderSrc_BlendFuncs));
     shader_linear_blend = createShaderModule(context.device, "The shader blend linear", strcat(strcpy(shaderSourceBuff, cShaderSrc_Linear_Blend), cShaderSrc_BlendFuncs));
     shader_radial_blend = createShaderModule(context.device, "The shader blend radial", strcat(strcpy(shaderSourceBuff, cShaderSrc_Radial_Blend), cShaderSrc_BlendFuncs));
+    shader_conic_blend  = createShaderModule(context.device, "The shader blend conic",  strcat(strcpy(shaderSourceBuff, cShaderSrc_Conic_Blend), cShaderSrc_BlendFuncs));
     shader_image_blend  = createShaderModule(context.device, "The shader blend image",  strcat(strcpy(shaderSourceBuff, cShaderSrc_Image_Blend), cShaderSrc_BlendFuncs));
     shader_scene_blend  = createShaderModule(context.device, "The shader blend scene",  strcat(strcpy(shaderSourceBuff, cShaderSrc_Scene_Blend), cShaderSrc_BlendFuncs));
     // shader compose
@@ -307,6 +308,13 @@ void WgPipelines::initialize(WgContext& context)
         layout_gradient, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
         depthStencilStateShape, multisampleState);
+    // render pipeline conic
+    conic = createRenderPipeline(
+        context.device, "The render pipeline conic",
+        shader_conic, "vs_main", "fs_main",
+        layout_gradient, vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
+        depthStencilStateShape, multisampleState);
     // render pipeline solid (no stencil)
     solid_conv = createRenderPipeline(
         context.device, "The render pipeline solid",
@@ -339,6 +347,13 @@ void WgPipelines::initialize(WgContext& context)
     linear_conv = createRenderPipeline(
         context.device, "The render pipeline linear",
         shader_linear, "vs_main", "fs_main",
+        layout_gradient, vertexBufferLayoutsShape, 1,
+        WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
+        depthStencilStateScene, multisampleState);
+    // render pipeline conic (no stencil)
+    conic_conv = createRenderPipeline(
+        context.device, "The render pipeline conic",
+        shader_conic, "vs_main", "fs_main",
         layout_gradient, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
         depthStencilStateScene, multisampleState);
@@ -399,6 +414,13 @@ void WgPipelines::initialize(WgContext& context)
         linear_blend[i] = createRenderPipeline(
             context.device, "The render pipeline linear blend",
             shader_linear_blend, "vs_main", shaderBlendNames[i],
+            layout_gradient_blend, vertexBufferLayoutsShape, 1,
+            WGPUColorWriteMask_All, offscreenTargetFormat, blendStateSrc,
+            depthStencilStateShape, multisampleState);
+        // blend conic
+        conic_blend[i] = createRenderPipeline(
+            context.device, "The render pipeline conic blend",
+            shader_conic_blend, "vs_main", shaderBlendNames[i],
             layout_gradient_blend, vertexBufferLayoutsShape, 1,
             WGPUColorWriteMask_All, offscreenTargetFormat, blendStateSrc,
             depthStencilStateShape, multisampleState);
@@ -538,6 +560,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     for (uint32_t i = 0; i < 18; i++) {
         releaseRenderPipeline(scene_blend[i]);
         releaseRenderPipeline(image_blend[i]);
+        releaseRenderPipeline(conic_blend[i]);
         releaseRenderPipeline(linear_blend[i]);
         releaseRenderPipeline(radial_blend[i]);
         releaseRenderPipeline(solid_blend[i]);
@@ -545,11 +568,13 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     // pipelines normal blend
     releaseRenderPipeline(scene);
     releaseRenderPipeline(image);
+    releaseRenderPipeline(conic_conv);
     releaseRenderPipeline(linear_conv);
     releaseRenderPipeline(radial_conv);
     releaseRenderPipeline(solid_stencil_batch);
     releaseRenderPipeline(solid_batch);
     releaseRenderPipeline(solid_conv);
+    releaseRenderPipeline(conic);
     releaseRenderPipeline(linear);
     releaseRenderPipeline(radial);
     releaseRenderPipeline(solid);
@@ -585,11 +610,13 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releaseShaderModule(shader_scene_compose);
     releaseShaderModule(shader_scene_blend);
     releaseShaderModule(shader_image_blend);
+    releaseShaderModule(shader_conic_blend);
     releaseShaderModule(shader_linear_blend);
     releaseShaderModule(shader_radial_blend);
     releaseShaderModule(shader_solid_blend);
     releaseShaderModule(shader_scene);
     releaseShaderModule(shader_image);
+    releaseShaderModule(shader_conic);
     releaseShaderModule(shader_linear);
     releaseShaderModule(shader_radial);
     releaseShaderModule(shader_solid);
