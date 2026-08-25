@@ -128,11 +128,77 @@ uint32_t OtfReader::localSubrs(Array<int32_t>& args, uint32_t offset, uint32_t s
     while (ptr < end) {
         auto b = u8(ptr);
         if (DICT(args, b, ptr)) continue;
-        // sub routine offset is relative to the start of Private DICT
+        // subroutine offset is relative to the start of Private DICT
         if (b == 19 && args.count > 0) return base + args.last();
         ++ptr;
         args.clear();
     }
+    return 0;
+}
+
+uint32_t OtfReader::fdSubrs(uint32_t glyph)
+{
+    int32_t fd = -1;
+    auto format = u8(fdSelect);
+
+    // FDSelect format 0 stores one font dictionary index per glyph.
+    if (format == 0) {
+        fd = u8(fdSelect + 1 + glyph);
+    // FDSelect format 3 groups consecutive glyphs into ranges. Each range
+    // ends at the first glyph of the following range (or the sentinel).
+    } else if (format == 3) {
+        auto nRanges = u16(fdSelect + 1);
+        auto ranges = fdSelect + 3;
+
+        for (uint16_t i = 0; i < nRanges; ++i) {
+            auto range = ranges + i * 3;
+            auto first = u16(range);
+            auto next = u16(range + 3);
+            auto rangeFd = u8(range + 2);
+
+            if (glyph >= first && glyph < next) {
+                fd = rangeFd;
+                break;
+            }
+        }
+    } else return 0;
+
+    auto count = u16(fdArray);
+    if (fd < 0 || static_cast<uint32_t>(fd) >= count) return 0;
+
+    // Locate the selected Font DICT in the FDArray INDEX. CFF INDEX offsets
+    // are one-based and relative to the beginning of the object data.
+    auto offSize = u8(fdArray + 2);
+    auto offsets = fdArray + 3;
+    auto data = offsets + (count + 1) * offSize;
+    auto begin = data + (offset(offsets + fd * offSize, offSize) - 1);
+    auto end = data + (offset(offsets + (fd + 1) * offSize, offSize) - 1);
+
+    Array<int32_t> args(32);
+    auto ptr = begin;
+
+    while (ptr < end) {
+        auto b = u8(ptr);
+
+        if (b == 12) {
+            ptr += 2;
+            args.clear();
+            continue;
+        }
+        if (DICT(args, b, ptr)) continue;
+
+        // The Private operator supplies [size, offset] for the Private DICT;
+        // its Subrs operator, if present, identifies the local Subr INDEX.
+        if (b == 18 && args.count >= 2) {  // Private
+            auto privateSize = args[args.count - 2];
+            auto privateOffset = args[args.count - 1];
+            return localSubrs(args, privateOffset, privateSize);
+        }
+
+        ++ptr;
+        args.clear();
+    }
+
     return 0;
 }
 
@@ -152,15 +218,16 @@ uint32_t OtfReader::localSubrs(Array<int32_t>& args, uint32_t offset, uint32_t s
 //     ├── offSize (u8)
 //     ├── offset array [(count + 1) * offSize]
 //     └── data (CharString bytecode per glyph)
-bool OtfReader::CFF()
+Result OtfReader::CFF()
 {
-    cff = table("CFF ");  // PostScript outlines
-    auto cff2 = false;
-    if (!cff) {
-        cff = table("CFF2");  // variable font
-        cff2 = true;
+    cff = table("CFF ");
+    if (!cff || !validate(cff, 4)) {
+        if (table("CFF2")) {
+            TVGLOG("OTF", "CFF2 is not supported");
+            return Result::NonSupport;
+        }
+        return Result::InvalidArguments;
     }
-    if (!cff || !validate(cff, 4)) return false;
 
     auto p = cff + u8(cff + 2);  // skip the header size
 
@@ -169,7 +236,7 @@ bool OtfReader::CFF()
 
     // parse Top DICT INDEX
     auto count = u16(p);
-    if (count == 0) return false;
+    if (count == 0) return Result::InvalidArguments;
 
     Array<int32_t> args(32);  // arguments stack for CFF decoding
 
@@ -181,7 +248,19 @@ bool OtfReader::CFF()
 
     while (ptr < end) {
         auto b = u8(ptr);
+
+        // CID-keyed font offsets use escaped Top DICT operators.
+        if (b == 12) {
+            auto op = u8(ptr + 1);
+            if (op == 36) fdArray = cff + args.last();
+            else if (op == 37) fdSelect = cff + args.last();
+            ptr += 2;
+            args.clear();
+            continue;
+        }
+
         if (DICT(args, b, ptr)) continue;
+
         // CharStrings
         if (b == 17) {
             toCharStrings = args.last();
@@ -192,15 +271,15 @@ bool OtfReader::CFF()
         ++ptr;
         args.clear();
     }
-    if (toCharStrings == 0) return false;
+    if (toCharStrings == 0) return Result::InvalidArguments;
     toCharStrings += cff;
 
     p = skip(p);             // jump to the end of INDEX
-    if (!cff2) p = skip(p);  // only cff1 has the String INDEX
+    p = skip(p);             // jump to the end of String INDEX
 
     gsubrs = p;
 
-    return true;
+    return Result::Success;
 }
 
 bool OtfReader::subRoutine(float operand, uint32_t subrs, uint32_t& p, uint32_t& end, SubRoutine* subRoutines, int& srp)
@@ -310,7 +389,7 @@ void OtfReader::rLineCurve(Array<float>& v, Point& pos, RenderPath& path)
     path.cubicTo(cp1, cp2, pos);
 }
 
-void OtfReader::operand(Array<float>& v, uint8_t b, uint32_t& p)
+bool OtfReader::operand(Array<float>& v, uint8_t b, uint32_t& p)
 {
     if (b >= 32) {
         if (b <= 246) {
@@ -329,10 +408,11 @@ void OtfReader::operand(Array<float>& v, uint8_t b, uint32_t& p)
     } else if (b == 28) {
         v.push(float(i16(p + 1)));
         p += 3;
-    } else if (b == 29) {
-        v.push(float(i32(p + 1)));
-        p += 5;
+    } else {
+        TVGERR("OTF", "Unsupported CharString opcode: %u", b);
+        return false;
     }
+    return true;
 }
 
 bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
@@ -340,6 +420,8 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
     // get the glyph data offset
     auto count = u16(toCharStrings);
     if (glyph >= count) return false;
+
+    if (fdSelect && fdArray) subrs = fdSubrs(glyph);
 
     auto size = u8(toCharStrings + 2);
     auto base = toCharStrings + 3;
@@ -357,10 +439,16 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
     SubRoutine subRoutines[SUBROUTINE_MAX];   // subroutine stack
     auto srp = 0;  // subroutine stack pointer
     Array<float> values(40);  // values stack for path coordinates
+    auto nStems = 0;          // running hint count, needed to size the hintmask/cntrmask operands
 
     while (p < end) {
         auto b = u8(p);
         switch (b) {
+            case 1:    // TODO: hstem
+            case 3: {  // TODO: vstem
+                nStems += values.count / 2;
+                break;
+            }
             case 4: {  // vmoveto
                 pos.y -= values.pick();
                 path.moveTo(pos);
@@ -394,7 +482,7 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
                 rrCurveTo(values, pos, path);
                 break;
             }
-            case 10: {
+            case 10: {  // callsubr
                 if (this->subRoutine(values.pick(), subrs, p, end, subRoutines, srp)) continue;
                 return false;
             }
@@ -407,12 +495,24 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
                 continue;
             }
             case 12: {  // 2-byte escape operator
+                values.clear();
                 p += 2;
-                break;
+                continue;
             }
             case 14: {  // close
                 path.close();
                 break;
+            }
+            case 18: {  // TODO: hstemhm
+                nStems += values.count / 2;
+                break;
+            }
+            case 19:                         // hintmask
+            case 20: {                       // cntrmask
+                nStems += values.count / 2;  // pending operands are an implicit vstemhm
+                p += 1 + (nStems + 7) / 8;   // operator byte + one mask bit per stem
+                values.clear();
+                continue;
             }
             case 21: {  // rmoveto
                 pos.y -= values.pick();
@@ -423,6 +523,10 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
             case 22: {  // hmoveto
                 pos.x += values.pick();
                 path.moveTo(pos);
+                break;
+            }
+            case 23: {  // TODO: vstemhm
+                nStems += values.count / 2;
                 break;
             }
             case 24: {  // rcurveline
@@ -441,7 +545,7 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
                 alignedCurve(values, pos, path, true);
                 break;
             }
-            case 29: {
+            case 29: {  // callgsubr
                 if (this->subRoutine(values.pick(), gsubrs, p, end, subRoutines, srp)) continue;
                 return false;
             }
@@ -454,8 +558,8 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
                 break;
             }
             default: {
-                operand(values, b, p);
-                continue;
+                if (operand(values, b, p)) continue;
+                return false;
             }
         }
         values.clear();
@@ -468,10 +572,10 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool OtfReader::header()
+Result OtfReader::header()
 {
-    if (!SfntReader::header()) return false;
-    return CFF();
+    if (SfntReader::header() == Result::Success) return CFF();
+    return Result::InvalidArguments;
 }
 
 bool OtfReader::positioning(uint32_t lglyph, uint32_t rglyph, Point& out)

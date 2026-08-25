@@ -62,7 +62,7 @@ struct SfntReader
         data(data), size(size) {}
     virtual ~SfntReader() {}
 
-    virtual bool header();
+    virtual Result header();
     virtual bool positioning(uint32_t lglyph, uint32_t rglyph, Point& out) = 0;
     virtual bool convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path) = 0;
 

@@ -208,20 +208,20 @@ uint32_t SfntReader::glyph(uint32_t codepoint)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-bool SfntReader::header()
+Result SfntReader::header()
 {
-    if (!validate(0, 12)) return false;
+    if (!validate(0, 12)) return Result::InvalidArguments;
 
     // header
     auto head = table("head");
-    if (!head || !validate(head, 54)) return false;
+    if (!head || !validate(head, 54)) return Result::InvalidArguments;
 
     metrics.unitsPerEm = u16(head + 18);
     metrics.locaFormat = u16(head + 50);
 
     // horizontal header
     auto hhea = table("hhea");
-    if (!hhea || !validate(hhea, 36)) return false;
+    if (!hhea || !validate(hhea, 36)) return Result::InvalidArguments;
 
     metrics.hhea.ascent = i16(hhea + 4);
     metrics.hhea.descent = i16(hhea + 6);
@@ -230,22 +230,22 @@ bool SfntReader::header()
     metrics.numHmtx = u16(hhea + 34);
 
     maxp = table("maxp");
-    if (!maxp || !validate(maxp, 6)) return false;
+    if (!maxp || !validate(maxp, 6)) return Result::InvalidArguments;
 
     // glyph outlines count
     auto glyphs = u16(maxp + 4);
-    if (glyphs == 0) return false;
+    if (glyphs == 0) return Result::InvalidArguments;
 
     // horizontal metrics count
     auto hmtxs = u16(hhea + 34);
-    if (hmtxs == 0 || hmtxs > glyphs) return false;
+    if (hmtxs == 0 || hmtxs > glyphs) return Result::InvalidArguments;
 
     cmap = table("cmap");
-    if (!cmap || !validate(cmap, 4)) return false;
+    if (!cmap || !validate(cmap, 4)) return Result::InvalidArguments;
 
     // horizontal metrics
     hmtx = table("hmtx");
-    if (!validate(hmtx, metrics.numHmtx * 4)) return false;
+    if (!validate(hmtx, metrics.numHmtx * 4)) return Result::InvalidArguments;
 
-    return true;
+    return Result::Success;
 }
