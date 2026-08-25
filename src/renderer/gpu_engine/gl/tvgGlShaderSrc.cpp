@@ -1091,7 +1091,7 @@ layout(std140) uniform Gaussian {
     float sigma;
     float scale;
     float extend;
-    float dummy0;
+    float quality;
 } uGaussian;
 
 layout(std140) uniform Viewport {
@@ -1113,17 +1113,22 @@ void main()
     float sigma = uGaussian.sigma * uGaussian.scale;
     float weightSum = 0.0;
     int radius = int(uGaussian.extend);
+    int quality = int(uGaussian.quality);
     vec2 texelStep = vec2(0.0, texelSize.y);
 
     // Clamp the kernel range once so edge pixels skip taps outside the valid viewport.
     int first = max(-radius, int(ceil(uViewport.vp.y - gl_FragCoord.y)));
     int last = min(radius, int(ceil(uViewport.vp.w - gl_FragCoord.y)) - 1);
+    int remainder = first % quality;
+    if (remainder < 0) remainder += quality;
+    if (remainder > 0) first += quality - remainder;
     vec2 coord = vUV + texelStep * float(first);
-    for (int y = first; y <= last; ++y) {
+    vec2 sampleStep = texelStep * float(quality);
+    for (int y = first; y <= last; y += quality) {
         float weight = gaussian(float(y), sigma);
         colorSum += texture(uSrcTexture, coord) * weight;
         weightSum += weight;
-        coord += texelStep;
+        coord += sampleStep;
     }
     FragColor = weightSum > 0.0 ? colorSum / weightSum : texture(uSrcTexture, vUV);
 } 
@@ -1135,7 +1140,7 @@ layout(std140) uniform Gaussian {
     float sigma;
     float scale;
     float extend;
-    float dummy0;
+    float quality;
 } uGaussian;
 
 layout(std140) uniform Viewport {
@@ -1157,17 +1162,22 @@ void main()
     float sigma = uGaussian.sigma * uGaussian.scale;
     float weightSum = 0.0;
     int radius = int(uGaussian.extend);
+    int quality = int(uGaussian.quality);
     vec2 texelStep = vec2(texelSize.x, 0.0);
 
     // Clamp the kernel range once so edge pixels skip taps outside the valid viewport.
     int first = max(-radius, int(ceil(uViewport.vp.x - gl_FragCoord.x)));
     int last = min(radius, int(ceil(uViewport.vp.z - gl_FragCoord.x)) - 1);
+    int remainder = first % quality;
+    if (remainder < 0) remainder += quality;
+    if (remainder > 0) first += quality - remainder;
     vec2 coord = vUV + texelStep * float(first);
-    for (int x = first; x <= last; ++x) {
+    vec2 sampleStep = texelStep * float(quality);
+    for (int x = first; x <= last; x += quality) {
         float weight = gaussian(float(x), sigma);
         colorSum += texture(uSrcTexture, coord) * weight;
         weightSum += weight;
-        coord += texelStep;
+        coord += sampleStep;
     }
     FragColor = weightSum > 0.0 ? colorSum / weightSum : texture(uSrcTexture, vUV);
 } 
