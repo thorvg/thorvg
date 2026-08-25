@@ -116,7 +116,8 @@ int32_t GlProgram::getUniformBlockIndex(GlShaderUniformBlock block)
     auto& index = mUniformBlockIndices[type];
     if (index != UNKNOWN_LOCATION) return index;
 
-    GL_CHECK(uint32_t blockIndex = glGetUniformBlockIndex(mProgramObj, UNIFORM_BLOCK_NAMES[type]));
+    uint32_t blockIndex;
+    GL_CHECK(blockIndex = glGetUniformBlockIndex(mProgramObj, UNIFORM_BLOCK_NAMES[type]));
     index = blockIndex == GL_INVALID_INDEX ? -1 : static_cast<int32_t>(blockIndex);
     return index;
 }

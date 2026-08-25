@@ -43,7 +43,6 @@ void GlRenderTask::run(GlStateCache& state)
 
     int32_t dLoc = program->getUniformLocation(GlShaderUniform::Depth);
     if (dLoc >= 0) {
-        // fixme: prevent compiler warning: macro expands to multiple statements [-Wmultistatement-macros]
         GL_CHECK(glUniform1f(dLoc, drawDepth));
     }
 
