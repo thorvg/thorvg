@@ -1726,7 +1726,7 @@ void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, flo
     // audio condition is changed
     if ((active != ctrl->prevActive) || (active && !tvg::equal(volume, ctrl->prevVolume))) {
         auto& src = static_cast<LottieAudio*>(layer->children.first())->src;
-        auto offset = active ? (layer->remap(comp, frameNo, exps) - layer->remap(comp, layer->inPoint, exps)) / comp->frameRate : 0.0f;
+        auto offset = active ? layer->remap(comp, frameNo, exps) / comp->frameRate : 0.0f;
         LottieAudioResolver info = {src.data, src.mimeType, src.size, offset, volume, active, (src.size > 0)};
         audioResolver.func(info, audioResolver.data);
     }
