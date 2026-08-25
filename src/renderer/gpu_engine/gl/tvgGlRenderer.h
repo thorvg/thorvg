@@ -41,6 +41,7 @@ struct GlRenderer : RenderMethod
         RT_Color = 0,
         RT_LinGradient,
         RT_RadGradient,
+        RT_ConGradient,
         RT_Image,
         RT_MaskAlpha,
         RT_MaskAlphaInv,
@@ -144,6 +145,24 @@ struct GlRenderer : RenderMethod
         RT_ShapeBlend_Radial_Color,
         RT_ShapeBlend_Radial_Luminosity,
         RT_ShapeBlend_Radial_Add,
+        // shape blends (conic gradient)
+        RT_ShapeBlend_Conic_Normal,
+        RT_ShapeBlend_Conic_Multiply,
+        RT_ShapeBlend_Conic_Screen,
+        RT_ShapeBlend_Conic_Overlay,
+        RT_ShapeBlend_Conic_Darken,
+        RT_ShapeBlend_Conic_Lighten,
+        RT_ShapeBlend_Conic_ColorDodge,
+        RT_ShapeBlend_Conic_ColorBurn,
+        RT_ShapeBlend_Conic_HardLight,
+        RT_ShapeBlend_Conic_SoftLight,
+        RT_ShapeBlend_Conic_Difference,
+        RT_ShapeBlend_Conic_Exclusion,
+        RT_ShapeBlend_Conic_Hue,
+        RT_ShapeBlend_Conic_Saturation,
+        RT_ShapeBlend_Conic_Color,
+        RT_ShapeBlend_Conic_Luminosity,
+        RT_ShapeBlend_Conic_Add,
         RT_None
     };
 
@@ -187,7 +206,7 @@ struct GlRenderer : RenderMethod
     static bool term();
 
 private:
-    enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
+    enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient, ConicGradient };
     friend struct GlSolidBatch;
 
     GlRenderer(); 

@@ -172,6 +172,13 @@ struct GlRadialGradientBlock
     alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
 };
 
+struct GlConicGradientBlock
+{
+    alignas(16) float nStops[4] = {};
+    alignas(16) float stopPoints[MAX_GRADIENT_STOPS] = {};
+    alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
+};
+
 struct GlCompositor : RenderCompositor
 {
     RenderRegion bbox;
