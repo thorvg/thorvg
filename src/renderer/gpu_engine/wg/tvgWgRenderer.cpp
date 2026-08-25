@@ -98,6 +98,7 @@ void WgRenderer::clearTargets()
 
 void WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height, ColorSpace cs)
 {
+    releaseSurfaceTexture();
     this->surface = surface;
 
     // setup surface configuration
