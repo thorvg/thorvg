@@ -184,6 +184,7 @@ void LottieSlot::reset()
     if (!overridden) return;
 
     ARRAY_FOREACH(pair, pairs) {
+        if (!pair->prop) continue;  //the target didn't support this slot property
         pair->obj->override(pair->prop, true);
         delete(pair->prop);
         pair->prop = nullptr;
@@ -198,6 +199,7 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
 
     //apply slot object to all targets
     ARRAY_FOREACH(pair, pairs) {
+        if (!pair->obj) continue;  //the sid was registered without a target
         auto backup = pair->obj->override(prop, release);
         if (!release) pair->prop = backup;
     }

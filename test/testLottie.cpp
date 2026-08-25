@@ -243,6 +243,16 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
         REQUIRE(animation->apply(id17) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
         REQUIRE(animation->del(id17) == Result::Success);
+
+        //Slot Test 11: Unsupported Slot Target
+        //rect_anchor_point is registered as a slot but no override() handles it
+        const char* unsupportedSlot = R"({"rect_anchor_point":{"p":{"a":0,"k":[10,10]}}})";
+        auto id18 = animation->gen(unsupportedSlot);
+        REQUIRE(id18 > 0);
+        REQUIRE(animation->apply(id18) == Result::Success);
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->apply(id18) == Result::Success);
+        REQUIRE(animation->del(id18) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
