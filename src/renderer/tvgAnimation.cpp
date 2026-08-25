@@ -43,7 +43,7 @@ Result Animation::frame(float no) noexcept
     if (!loader->playable) return Result::NonSupport;
 
     if (static_cast<AnimLoader*>(loader)->frame(no)) {
-        PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+        PAINT(pImpl->picture)->mark(RenderUpdateFlag::Children);
         return Result::Success;
     }
     return Result::InsufficientCondition;

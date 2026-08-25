@@ -46,7 +46,7 @@ Result LottieAnimation::apply(uint32_t id) noexcept
     FETCH_LOADER(Result::InsufficientCondition);
 
     if (loader->apply(id)) {
-        PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+        PAINT(pImpl->picture)->mark(RenderUpdateFlag::Children);
         return Result::Success;
     }
 
@@ -59,7 +59,7 @@ Result LottieAnimation::del(uint32_t id) noexcept
     FETCH_LOADER(Result::InsufficientCondition);
 
     if (loader->del(id)) {
-        PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+        PAINT(pImpl->picture)->mark(RenderUpdateFlag::Children);
         return Result::Success;
     }
 
@@ -86,7 +86,7 @@ Result LottieAnimation::tween(float from, float to, float progress) noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
     if (!loader->tween(from, to, progress)) return Result::InsufficientCondition;
-    PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+    PAINT(pImpl->picture)->mark(RenderUpdateFlag::Children);
     return Result::Success;
 }
 
@@ -94,7 +94,7 @@ Result LottieAnimation::tween(float progress) noexcept
 {
     FETCH_LOADER(Result::InsufficientCondition);
     if (!loader->tween(progress)) return Result::InsufficientCondition;
-    PAINT(pImpl->picture)->mark(RenderUpdateFlag::All);
+    PAINT(pImpl->picture)->mark(RenderUpdateFlag::Children);
     return Result::Success;
 }
 

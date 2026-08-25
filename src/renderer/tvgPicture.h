@@ -251,6 +251,7 @@ struct PictureImpl : Picture
                 }
             } else {
                 bitmap = loader->bitmap();
+                if (bitmap) return RenderUpdateFlag::Image;
             }
         }
         // animations updates the properties essentially. here update is not necessary.
