@@ -72,28 +72,16 @@ LottieEffect* LottieParser::getEffect(int type)
 }
 
 
-MaskMethod LottieParser::getMaskMethod(bool inversed)
+MaskMethod LottieParser::getMaskMethod()
 {
     auto mode = getString();
     if (!mode) return MaskMethod::None;
 
     switch (mode[0]) {
-        case 'a': {
-            if (inversed) return MaskMethod::InvAlpha;
-            else return MaskMethod::Add;
-        }
-        case 's': {
-            if (inversed) return MaskMethod::Intersect;
-            return MaskMethod::Subtract;
-        }
-        case 'i': {
-            if (inversed) return MaskMethod::Difference;
-            return MaskMethod::Intersect;
-        }
-        case 'f': {
-            if (inversed) return MaskMethod::Intersect;
-            return MaskMethod::Difference;
-        }
+        case 'a': return MaskMethod::Add;
+        case 's': return MaskMethod::Subtract;
+        case 'i': return MaskMethod::Intersect;
+        case 'f': return MaskMethod::Difference;
         case 'l': return MaskMethod::Lighten;
         case 'd': return MaskMethod::Darken;
         default: return MaskMethod::None;
@@ -1395,7 +1383,7 @@ LottieMask* LottieParser::parseMask()
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("inv")) mask->inverse = getBool();
-        else if (KEY_AS("mode")) mask->method = getMaskMethod(mask->inverse);
+        else if (KEY_AS("mode")) mask->method = getMaskMethod();
         else if (KEY_AS("pt")) getPathSet(nullptr, mask->pathset);
         else if (KEY_AS("o")) parseProperty(mask->opacity);
         else if (KEY_AS("x")) parseProperty(mask->expand);
