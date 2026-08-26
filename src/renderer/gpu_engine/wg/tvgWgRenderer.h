@@ -103,6 +103,7 @@ private:
     // rendering states
     RenderSurface mTargetSurface;
     BlendMethod mBlendMethod{};
+    bool mClearBuffer{};
 
     // disposable data list
     Array<RenderData> mDisposeRenderDatas{};
