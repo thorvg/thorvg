@@ -955,9 +955,7 @@ void LottieBuilder::updatePrecomp(LottieComposition* comp, LottieLayer* precomp,
 
 void LottieBuilder::updateSolid(LottieLayer* layer)
 {
-    auto solidFill = layer->statical.pooling(true);
-    solidFill->opacity(layer->cache.opacity);
-    layer->scene->add(solidFill);
+    layer->scene->add(layer->statical.pooling(true));
 }
 
 void LottieBuilder::updateImage(LottieLayer* layer, float frameNo)
