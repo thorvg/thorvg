@@ -1019,53 +1019,58 @@ static bool _rasterDirectMaskedImage(SwSurface* surface, const SwImage& image, c
     return false;
 }
 
+static bool _rasterDirectMattedGrayscale(SwSurface* surface, const SwImage& image, SwCompositor* compositor, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
+{
+    auto csize = compositor->image.channelSize;
+    auto alpha = surface->alpha(compositor->method);
+    auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
+    auto cbuffer = compositor->image.buf8 + (bbox.min.y * compositor->image.stride + bbox.min.x) * csize;  // compositor buffer
+    auto dbuffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
+
+    for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
+        auto cmp = cbuffer;
+        auto src = sbuffer;
+        if (opacity == 255) {
+            for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
+                auto tmp = MULTIPLY(A(*src), alpha(cmp));
+                *dst = tmp + MULTIPLY(*dst, 255 - tmp);
+            }
+        } else {
+            for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
+                auto tmp = MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp)));
+                *dst = tmp + MULTIPLY(*dst, 255 - tmp);
+            }
+        }
+        cbuffer += compositor->image.stride * csize;
+    }
+    return true;
+}
+
 static bool _rasterDirectMattedImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
+    if (surface->channelSize == sizeof(uint8_t)) return _rasterDirectMattedGrayscale(surface, image, surface->compositor, bbox, w, h, opacity);
+
     auto csize = surface->compositor->image.channelSize;
     auto alpha = surface->alpha(surface->compositor->method);
     auto sbuffer = image.buf32 + (bbox.min.y + image.oy) * image.stride + (bbox.min.x + image.ox);
     auto cbuffer = surface->compositor->image.buf8 + (bbox.min.y * surface->compositor->image.stride + bbox.min.x) * csize; //compositor buffer
+    auto dbuffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
 
-    TVGLOG("SW_ENGINE", "Direct Matted(%d) Image  [Region: %u %u %u %u]", (int)surface->compositor->method, bbox.x(), bbox.y(), bbox.w(), bbox.h());
-
-    //32 bits
-    if (surface->channelSize == sizeof(uint32_t)) {
-        auto dbuffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
-        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
-            auto cmp = cbuffer;
-            auto src = sbuffer;
-            if (opacity == 255) {
-                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
-                    auto tmp = ALPHA_BLEND(*src, alpha(cmp));
-                    *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
-                }
-            } else {
-                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
-                    auto tmp = ALPHA_BLEND(*src, MULTIPLY(opacity, alpha(cmp)));
-                    *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
-                }
+    for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
+        auto cmp = cbuffer;
+        auto src = sbuffer;
+        if (opacity == 255) {
+            for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
+                auto tmp = ALPHA_BLEND(*src, alpha(cmp));
+                *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
             }
-            cbuffer += surface->compositor->image.stride * csize;
-        }
-    //8 bits
-    } else if (surface->channelSize == sizeof(uint8_t)) {
-        auto dbuffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
-        for (auto y = 0; y < h; ++y, dbuffer += surface->stride, sbuffer += image.stride) {
-            auto cmp = cbuffer;
-            auto src = sbuffer;
-            if (opacity == 255) {
-                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
-                    auto tmp = MULTIPLY(A(*src), alpha(cmp));
-                    *dst = tmp + MULTIPLY(*dst, 255 - tmp);
-                }
-            } else {
-                for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
-                    auto tmp = MULTIPLY(A(*src), MULTIPLY(opacity, alpha(cmp)));
-                    *dst = tmp + MULTIPLY(*dst, 255 - tmp);
-                }
+        } else {
+            for (auto dst = dbuffer; dst < dbuffer + w; ++dst, ++src, cmp += csize) {
+                auto tmp = ALPHA_BLEND(*src, MULTIPLY(opacity, alpha(cmp)));
+                *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
             }
-            cbuffer += surface->compositor->image.stride * csize;
         }
+        cbuffer += surface->compositor->image.stride * csize;
     }
     return true;
 }
@@ -1103,10 +1108,8 @@ static bool _rasterDirectImage(SwSurface* surface, const SwImage& image, const R
 
 static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage& image, SwCompositor* compositor, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
-    if (surface->channelSize == sizeof(uint8_t)) {
-        TVGERR("SW_ENGINE", "Not supported grayscale image!");
-        return false;
-    }
+    // blending doesn't work for grayscale
+    if (surface->channelSize == sizeof(uint8_t)) return _rasterDirectMattedGrayscale(surface, image, compositor, bbox, w, h, opacity);
 
     auto csize = compositor->image.channelSize;
     auto alpha = surface->alpha(compositor->method);
@@ -1133,10 +1136,8 @@ static bool _rasterDirectMattedBlendingImage(SwSurface* surface, const SwImage& 
 
 static bool _rasterDirectBlendingImage(SwSurface* surface, const SwImage& image, const RenderRegion& bbox, int32_t w, int32_t h, uint8_t opacity)
 {
-    if (surface->channelSize == sizeof(uint8_t)) {
-        TVGERR("SW_ENGINE", "Not supported grayscale image!");
-        return false;
-    }
+    // blending doesn't work for grayscale
+    if (surface->channelSize == sizeof(uint8_t)) return _rasterDirectImage(surface, image, bbox, w, h, opacity);
 
     // fast-track: mix the blending & masking composition
     auto injecting = [](const SwCompositor* cmp) {
