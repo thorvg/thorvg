@@ -22,7 +22,7 @@
 
 #include <thorvg.h>
 #include "config.h"
-#include "catch.hpp"
+#include "testFramework.h"
 #include <cstring>
 
 using namespace tvg;
