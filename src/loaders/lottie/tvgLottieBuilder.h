@@ -214,7 +214,7 @@ private:
     void updateLocalFont(LottieLayer* layer, float frameNo, LottieText* text, const TextDocument& doc);
     bool updateTextRange(LottieText* text, float frameNo, Shape* shape, const TextDocument& doc, RenderText& ctx);
     void updateText(LottieLayer* layer, float frameNo);
-    void updateMasks(LottieLayer* layer, float frameNo);
+    void updateMasks(LottieComposition* comp, LottieLayer* layer, float frameNo);
     void updateTransform(LottieLayer* layer, float frameNo);
     void updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts);
     void updateGroup(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& pcontexts, RenderContext* ctx);

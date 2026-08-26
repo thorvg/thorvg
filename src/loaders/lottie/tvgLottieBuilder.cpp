@@ -1472,7 +1472,85 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 }
 
 
-void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
+static PathOp _pathop(MaskMethod method)
+{
+    switch (method) {
+        case MaskMethod::Subtract: return PathOp::Difference;
+        case MaskMethod::Intersect: return PathOp::Intersect;
+        case MaskMethod::Difference: return PathOp::Xor;
+        default: return PathOp::Union;
+    }
+}
+
+
+static bool _boolean(MaskMethod method)
+{
+    return method == MaskMethod::Add || method == MaskMethod::Subtract || method == MaskMethod::Intersect || method == MaskMethod::Difference;
+}
+
+
+static void _assign(RenderPath& out, RenderPath& in)
+{
+    out.clear();
+    out.cmds.push(in.cmds);
+    out.pts.push(in.pts);
+}
+
+
+static void _combine(RenderPath& acc, RenderPath& rhs, PathOp op)
+{
+    if (acc.empty()) {
+        if (op == PathOp::Union || op == PathOp::Xor) _assign(acc, rhs);
+        return;
+    }
+    if (rhs.empty()) {
+        if (op == PathOp::Intersect) acc.clear();
+        return;
+    }
+
+    RenderPath out;
+    if (tvg::pathop(acc, rhs, out, op)) _assign(acc, out);
+    //a union of two non-empty paths is never empty, the operation just gave up
+    else if (op == PathOp::Union) {
+        acc.cmds.push(rhs.cmds);
+        acc.pts.push(rhs.pts);
+    } else acc.clear();
+}
+
+
+static void _plane(RenderPath& out, LottieComposition* comp, LottieLayer* layer)
+{
+    Matrix im;
+    if (!inverse(&layer->cache.matrix, &im)) return;
+
+    //keep it well beyond the drawing area, the mask paths must not touch its edges
+    auto w = (layer->w > comp->w) ? layer->w : comp->w;
+    auto h = (layer->h > comp->h) ? layer->h : comp->h;
+    Point pts[] = {{-w, -h}, {2.0f * w, -h}, {2.0f * w, 2.0f * h}, {-w, 2.0f * h}};
+
+    for (auto& pt : pts) pt *= im;
+
+    out.moveTo(pts[0]);
+    out.lineTo(pts[1]);
+    out.lineTo(pts[2]);
+    out.lineTo(pts[3]);
+    out.close();
+}
+
+
+static void _flush(Shape* shape, RenderPath& acc)
+{
+    if (!shape) return;
+
+    auto& path = to<ShapeImpl>(shape)->rs.path;
+    path.cmds.push(acc.cmds);
+    path.pts.push(acc.pts);
+    PAINT(shape)->mark(RenderUpdateFlag::Path);
+    acc.clear();
+}
+
+
+void LottieBuilder::updateMasks(LottieComposition* comp, LottieLayer* layer, float frameNo)
 {
     if (layer->masks.count == 0) return;
 
@@ -1483,9 +1561,11 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         layer->scene = scene;
     }
 
+    RenderPath acc, cur, plane;
     Shape* pShape = nullptr;
-    MaskMethod pMethod;
-    uint8_t pOpacity;
+    uint8_t pOpacity = 0;
+    auto folding = false;
+    auto seeded = false;
 
     ARRAY_FOREACH(p, layer->masks) {
         auto mask = *p;
@@ -1494,42 +1574,59 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         auto method = mask->method;
         auto opacity = mask->opacity(frameNo);
         auto expand = mask->expand(frameNo);
+        auto lead = !pShape;
 
-        //the first mask
-        if (!pShape) {
-            pShape = layer->pooling();
-            to<ShapeImpl>(pShape)->reset();
-            auto compMethod = (method == MaskMethod::Subtract || method == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
-            //Cheaper. Replace the masking with a clipper
-            if (!layer->effect && layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
-                layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
-                layer->scene->clip(pShape);
-            } else {
-                layer->scene->mask(pShape, compMethod);
-            }
-        //Chain mask composition
-        } else if (pMethod != method || pOpacity != opacity || (method != MaskMethod::Subtract && method != MaskMethod::Difference)) {
+        //a run of masks sharing the opacity folds into a single path, the rest keeps chaining
+        if (lead || pOpacity != opacity || !folding || !_boolean(method)) {
+            _flush(pShape, acc);
             auto shape = layer->pooling();
             to<ShapeImpl>(shape)->reset();
-            pShape->mask(shape, method);
+            shape->fill(255, 255, 255, opacity);
+            shape->transform(layer->cache.matrix);
+            //Cheaper. Replace the masking with a clipper
+            if (lead && !layer->effect && layer->masks.count == 1) {
+                layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
+                layer->scene->clip(shape);
+            } else if (lead) {
+                layer->scene->mask(shape, MaskMethod::Alpha);
+            } else {
+                pShape->mask(shape, method);
+            }
             pShape = shape;
+            pOpacity = opacity;
+            folding = _boolean(method);
+            seeded = false;
         }
 
-        pShape->fill(255, 255, 255, opacity);
-        pShape->transform(layer->cache.matrix);
-
+        cur.clear();
         //Default Masking
         if (expand == 0.0f) {
-            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps);
+            mask->pathset(frameNo, cur, nullptr, tween, exps);
         //Masking with Expansion (Offset)
         } else {
             //TODO: Once path direction support is implemented, ensure that the direction is ignored here
             auto offset = LottieOffsetModifier(expand);
-            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps, &offset);
+            mask->pathset(frameNo, cur, nullptr, tween, exps, &offset);
         }
-        pOpacity = opacity;
-        pMethod = method;
+
+        if (mask->inverse) {
+            if (plane.empty()) _plane(plane, comp, layer);
+            RenderPath out;
+            if (tvg::pathop(plane, cur, out, PathOp::Difference)) _assign(cur, out);
+            else cur.clear();
+        }
+
+        if (!seeded) {
+            if (lead && (method == MaskMethod::Subtract || method == MaskMethod::Intersect)) {
+                if (plane.empty()) _plane(plane, comp, layer);
+                _assign(acc, plane);
+                _combine(acc, cur, _pathop(method));
+            } else _assign(acc, cur);
+            seeded = true;
+        } else _combine(acc, cur, _pathop(method));
     }
+
+    _flush(pShape, acc);
 }
 
 
@@ -1720,7 +1817,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
         }
     }
 
-    updateMasks(layer, frameNo);
+    updateMasks(comp, layer, frameNo);
 
     updateEffect(layer, frameNo, comp->quality);
 
