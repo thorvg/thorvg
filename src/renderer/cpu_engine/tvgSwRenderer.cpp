@@ -81,6 +81,7 @@ struct SwTask : Task
     bool complete()
     {
         prvBox = valid ? curBox : RenderRegion{};
+        nodirty = false;
         return true;
     }
 
