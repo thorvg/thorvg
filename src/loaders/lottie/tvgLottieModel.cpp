@@ -596,7 +596,7 @@ void LottieGroup::prepare()
 float LottieRootLayer::remap(LottieComposition* comp, float frameNo, LottieExpressions* exp)
 {
     if (timeRemap.frames || timeRemap.value >= 0.0f) return comp->frameAtTime(timeRemap(frameNo, exp));
-    return (frameNo - startFrame) / timeStretch;
+    return (frameNo - inPoint) / timeStretch;
 }
 
 LottieLayer* LottieRootLayer::layerById(unsigned long id)
