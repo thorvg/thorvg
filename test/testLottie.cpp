@@ -27,7 +27,7 @@
 #endif
 #include <fstream>
 #include <cstring>
-#include "catch.hpp"
+#include "testFramework.h"
 
 using namespace tvg;
 using namespace std;

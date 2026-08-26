@@ -22,7 +22,7 @@
 
 #include <memory>
 #include <thorvg.h>
-#include "catch.hpp"
+#include "testFramework.h"
 #include "testGlEngine.h"
 
 using namespace tvg;

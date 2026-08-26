@@ -23,7 +23,7 @@
 #include <thorvg.h>
 #include <string.h>
 #include "config.h"
-#include "catch.hpp"
+#include "testFramework.h"
 
 using namespace tvg;
 using namespace std;
