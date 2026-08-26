@@ -136,7 +136,9 @@ jobs:
         MATRIX_KEY: ${{ matrix.key }}
         MATRIX_LABEL: ${{ matrix.label }}
       run: |
-        LIB_NAME="libthorvg-1.so.1.0.0"
+        VERSION=$(sed -n "s/^[[:space:]]*version[[:space:]]*:[[:space:]]*'\([^']*\)'.*/\1/p" meson.build)
+        VERSION_MAJOR=${VERSION%%.*}
+        LIB_NAME="libthorvg-${VERSION_MAJOR}.so.${VERSION}"
 
         build_thorvg() {
           local src_dir="$1" build_dir="$2"
