@@ -32,6 +32,7 @@
 #define SW_CURVE_TYPE_POINT 0
 #define SW_CURVE_TYPE_CUBIC 1
 #define SW_COLOR_TABLE 1024
+#define SW_FRAC_BITS 6
 
 struct SwCompositor;
 struct SwSurface;
