@@ -1084,6 +1084,7 @@ in vec2 vUV;
 out vec4 FragColor;
 
 float gaussian(float x) {
+    if (uGaussian.invTwoSigmaSquared == 0.0) return x == 0.0 ? 1.0 : 0.0;
     return exp(x * x * uGaussian.invTwoSigmaSquared);
 }
 
@@ -1135,6 +1136,7 @@ in vec2 vUV;
 out vec4 FragColor;
 
 float gaussian(float x) {
+    if (uGaussian.invTwoSigmaSquared == 0.0) return x == 0.0 ? 1.0 : 0.0;
     return exp(x * x * uGaussian.invTwoSigmaSquared);
 }
 
