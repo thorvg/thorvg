@@ -23,7 +23,8 @@ source_file = [
    'tvgLottieModel.cpp',
    'tvgLottieModifier.cpp',
    'tvgLottieParserHandler.cpp',
-   'tvgLottieParser.cpp'
+   'tvgLottieParser.cpp',
+   'tvgLottieProperty.cpp'
 ]
 
 subloader_dep += [declare_dependency(
