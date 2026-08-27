@@ -213,7 +213,6 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
     if (renderFlag & RenderUpdateFlag::Transform) tr.update();
 
     /* 1. Composition Pre Processing */
-    RenderData trd = nullptr;                 //composite target render data
     RenderRegion viewport;
     auto compFastTrack = false;
 
@@ -238,9 +237,7 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
                 }
             }
         }
-        if (!compFastTrack) {
-            trd = PAINT(target)->update(renderer, pm, clips, 255, flag, false);
-        }
+        if (!compFastTrack) PAINT(target)->update(renderer, pm, clips, 255, flag, false);
     }
 
     /* 2. Clipping */
@@ -253,8 +250,8 @@ RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<R
             compFastTrack = true;
         } else {
             mark(RenderUpdateFlag::Clip);
-            trd = pclip->update(renderer, pm, clips, 255, flag, true);
-            clips.push(trd);
+            Array<RenderData> noClip;
+            clips.push(pclip->update(renderer, pm, noClip, 255, flag, true));
         }
     }
 
