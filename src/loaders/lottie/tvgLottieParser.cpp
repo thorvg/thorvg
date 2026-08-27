@@ -1706,6 +1706,14 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
             parseSlotProperty(*static_cast<LottieColor*>(prop));
             break;
         }
+        case LottieProperty::Type::PathSet: {
+            prop = new LottiePathSet;
+            while (auto key = nextObjectKey()) {
+                if (KEY_AS("p")) getPathSet(nullptr, *static_cast<LottiePathSet*>(prop));
+                else skip();
+            }
+            break;
+        }
         case LottieProperty::Type::ColorStop: {
             LottieGradient obj(slot->context.parent->type);
             while (auto key = nextObjectKey()) {
