@@ -93,7 +93,8 @@ void WgRenderer::clearTargets()
     mTargetSurface.stride = 0;
     mTargetSurface.w = 0;
     mTargetSurface.h = 0;
-
+    mClearBuffer = false;
+    mRenderPending = false;
 }
 
 void WgRenderer::surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height, ColorSpace cs)
@@ -299,6 +300,7 @@ bool WgRenderer::postRender()
     mRenderTaskList.clear();
     ARRAY_FOREACH(p, mCompositorList) { delete (*p); };
     mCompositorList.clear();
+    mRenderPending = true;
     return true;
 }
 
@@ -375,7 +377,7 @@ bool WgRenderer::clear()
 {
     if (mContext.invalid()) return false;
 
-    //TODO: clear the current target buffer only if clear() is called
+    mClearBuffer = true;
     return true;
 }
 
@@ -385,6 +387,7 @@ bool WgRenderer::sync()
     if (mContext.invalid()) return false;
 
     disposeObjects();
+    if (!mRenderPending) return true;
 
     // if texture buffer used
     WGPUTexture dstTexture = targetTexture;
@@ -402,12 +405,14 @@ bool WgRenderer::sync()
         WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
         WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
         // show root offscreen buffer
-        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView, mTargetSurface.premultiplied);
+        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView, mTargetSurface.premultiplied, mClearBuffer);
         mContext.submitCommandEncoder(commandEncoder);
         mContext.releaseCommandEncoder(commandEncoder);
         mContext.releaseTextureView(dstTextureView);
     }
 
+    mClearBuffer = false;
+    mRenderPending = false;
     return true;
 }
 
@@ -444,6 +449,8 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
     mTargetSurface.h = h;
     mTargetSurface.cs = cs;
     mTargetSurface.premultiplied = true;  // TODO: by default for v1 backward compat. properly addressed later v2 by aligning with actual alpha mode.
+    mClearBuffer = false;
+    mRenderPending = false;
 
     // configure surface (must be called after context creation)
     if (type == 0) surfaceConfigure((WGPUSurface)target, mContext, w, h, cs);

@@ -491,10 +491,10 @@ void WgPipelines::initialize(WgContext& context)
         context.device, "The render pipeline blit",
         shader_blit, "vs_main", "fs_main",
         layout_blit, vertexBufferLayoutsImage, 2,
-        WGPUColorWriteMask_All, context.format, blendStateSrc,  // must be preferred screen pixel format
+        WGPUColorWriteMask_All, context.format, blendStateNrm,  // must be preferred screen pixel format
         depthStencilStateScene, multisampleStateX1);
 
-    // TODO: either premultiplied blit or unpremultplied bit used.
+    // TODO: support drawing over existing straight-alpha pixels without overwriting them.
     blit_unpremultiplied = createRenderPipeline(
         context.device, "The render pipeline blit unpremultiplied",
         shader_blit, "vs_main", "fs_main_unpremultiplied",
