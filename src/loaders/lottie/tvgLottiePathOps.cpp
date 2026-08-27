@@ -112,7 +112,8 @@ struct Segment
     Bezier curve;
     Contour* parent;
     List<Intersection> intersections;
-    bool coincident;
+    Segment* twin;
+    int32_t coincident;     //0 if apart, +1 if the twin runs along, -1 if against
 
     void sort();
     void split();
@@ -127,6 +128,7 @@ struct Contour
     INLIST_ITEM(Contour);
 
     List<Segment> segments;
+    bool rhs;               //the right hand operand, the one that gives its runs up
 };
 
 
@@ -162,12 +164,21 @@ struct Pool
 };
 
 
+struct Hit
+{
+    Segment* lhs;
+    Segment* rhs;
+    float t, u;
+};
+
+
 struct Workspace
 {
     Pool<Contour, 16> contours;
     Pool<Segment, 128> segments;
     Pool<Intersection, 128> intersections;
     Array<Root> roots, merged;
+    Array<Hit> pending;
 
     void reset()
     {
@@ -187,13 +198,68 @@ static Workspace& _workspace()
 }
 
 
-static bool _overlapped(const Bezier& lhs, const Bezier& rhs)
+//0 apart, +1 running along, -1 against
+static int32_t _overlapped(const Bezier& lhs, const Bezier& rhs)
 {
     auto same = [](const Point& lhs, const Point& rhs) {
         return length2(lhs - rhs) < PATHOP_EPSILON;
     };
-    return (same(lhs.start, rhs.start) && same(lhs.ctrl1, rhs.ctrl1) && same(lhs.ctrl2, rhs.ctrl2) && same(lhs.end, rhs.end)) ||
-           (same(lhs.start, rhs.end) && same(lhs.ctrl1, rhs.ctrl2) && same(lhs.ctrl2, rhs.ctrl1) && same(lhs.end, rhs.start));
+    if (same(lhs.start, rhs.start) && same(lhs.ctrl1, rhs.ctrl1) && same(lhs.ctrl2, rhs.ctrl2) && same(lhs.end, rhs.end)) return 1;
+    if (same(lhs.start, rhs.end) && same(lhs.ctrl1, rhs.ctrl2) && same(lhs.ctrl2, rhs.ctrl1) && same(lhs.end, rhs.start)) return -1;
+    return 0;
+}
+
+
+static bool _holds(const Bezier& bz, const Point& pt)
+{
+    auto lo = Point{fminf(fminf(bz.start.x, bz.ctrl1.x), fminf(bz.ctrl2.x, bz.end.x)), fminf(fminf(bz.start.y, bz.ctrl1.y), fminf(bz.ctrl2.y, bz.end.y))};
+    auto hi = Point{fmaxf(fmaxf(bz.start.x, bz.ctrl1.x), fmaxf(bz.ctrl2.x, bz.end.x)), fmaxf(fmaxf(bz.start.y, bz.ctrl1.y), fmaxf(bz.ctrl2.y, bz.end.y))};
+    auto slack = sqrtf(PATHOP_EPSILON);   //the tolerance is squared elsewhere
+    return pt.x >= lo.x - slack && pt.x <= hi.x + slack && pt.y >= lo.y - slack && pt.y <= hi.y + slack;
+}
+
+
+static float _project(const Bezier& bz, const Point& pt)
+{
+    auto curve = bz;
+    auto lo = 0.0f, hi = 1.0f;
+
+    for (uint32_t i = 0; i < PATHOP_DEPTH; ++i) {
+        Bezier left, right;
+        curve.split(left, right);
+        auto l = _holds(left, pt), r = _holds(right, pt);
+
+        if (l && r) {
+            if (length2(left.at(0.5f) - pt) <= length2(right.at(0.5f) - pt)) r = false;
+            else l = false;
+        }
+
+        auto mid = (lo + hi) * 0.5f;
+        if (l) {
+            curve = left;
+            hi = mid;
+        } else if (r) {
+            curve = right;
+            lo = mid;
+        } else return -1.0f;
+    }
+    return (lo + hi) * 0.5f;
+}
+
+
+//List carries no insert
+static void _insert(List<Segment>& list, Segment* element, Segment* at)
+{
+    if (!at) {
+        list.back(element);
+        return;
+    }
+    element->prev = at->prev;
+    element->next = at;
+    if (at->prev) at->prev->next = element;
+    else list.head = element;
+    at->prev = element;
+    ++list.count;
 }
 
 
@@ -409,7 +475,7 @@ static void _append(Workspace& ws, Contour* contour, const Bezier& curve)
 }
 
 
-static void _contour(Workspace& ws, const RenderPath& path, List<Contour>& out)
+static void _contour(Workspace& ws, const RenderPath& path, bool rhs, List<Contour>& out)
 {
     auto pts = path.pts.data;
     Contour* contour = nullptr;
@@ -420,6 +486,7 @@ static void _contour(Workspace& ws, const RenderPath& path, List<Contour>& out)
             case PathCommand::MoveTo: {
                 if (contour) _append(ws, contour, Bezier::line(cur, start));
                 contour = ws.contours.alloc();
+                contour->rhs = rhs;
                 out.back(contour);
                 start = cur = *pts++;
                 break;
@@ -453,17 +520,23 @@ static void _contour(Workspace& ws, const RenderPath& path, List<Contour>& out)
 }
 
 
-static void _reverse(List<Contour>& path)
+static void _reverse(Contour* contour)
 {
-    INLIST_FOREACH(path, contour) {
-        List<Segment> reversed;
+    List<Segment> reversed;
 
-        while (auto segment = contour->segments.pop()) {
-            segment->curve = segment->curve.reverse();
-            reversed.front(segment);
-        }
-        contour->segments = reversed;
+    while (auto segment = contour->segments.pop()) {
+        segment->curve = segment->curve.reverse();
+        reversed.front(segment);
     }
+    contour->segments = reversed;
+}
+
+
+static float _area(const Contour* contour)
+{
+    auto sum = 0.0f;
+    INLIST_FOREACH(contour->segments, segment) sum += cross(segment->curve.start, segment->curve.end);
+    return 0.5f * sum;
 }
 
 
@@ -504,40 +577,132 @@ static uint32_t _turns(const Bezier& bz, float* out)
 }
 
 
-static int32_t _winding(const List<Contour>& path, const Point& pt)
+static int32_t _winding(const Contour* contour, const Point& pt)
 {
     int32_t winding = 0;
     float turns[2];
 
-    INLIST_FOREACH(path, contour) {
-        INLIST_FOREACH(contour->segments, segment) {
-            auto& bz = segment->curve;
-            auto cnt = _turns(bz, turns);
-            auto t0 = 0.0f;
-            auto y0 = bz.start.y;
+    INLIST_FOREACH(contour->segments, segment) {
+        auto& bz = segment->curve;
+        auto cnt = _turns(bz, turns);
+        auto t0 = 0.0f;
+        auto y0 = bz.start.y;
 
-            for (uint32_t i = 0; i <= cnt; ++i) {
-                auto t1 = (i < cnt) ? turns[i] : 1.0f;
-                auto y1 = (i < cnt) ? bz.at(t1).y : bz.end.y;
-                auto up = (y0 <= pt.y && pt.y < y1);
-                auto down = (y1 <= pt.y && pt.y < y0);
+        for (uint32_t i = 0; i <= cnt; ++i) {
+            auto t1 = (i < cnt) ? turns[i] : 1.0f;
+            auto y1 = (i < cnt) ? bz.at(t1).y : bz.end.y;
+            auto up = (y0 <= pt.y && pt.y < y1);
+            auto down = (y1 <= pt.y && pt.y < y0);
 
-                if (up || down) {
+            if (up || down) {
 
-                    auto lo = t0, hi = t1;
-                    for (uint32_t k = 0; k < 30; ++k) {
-                        auto mid = (lo + hi) * 0.5f;
-                        if ((bz.at(mid).y <= pt.y) == up) lo = mid;
-                        else hi = mid;
-                    }
-                    if (bz.at((lo + hi) * 0.5f).x > pt.x) winding += up ? 1 : -1;
+                auto lo = t0, hi = t1;
+                for (uint32_t k = 0; k < 30; ++k) {
+                    auto mid = (lo + hi) * 0.5f;
+                    if ((bz.at(mid).y <= pt.y) == up) lo = mid;
+                    else hi = mid;
                 }
-                t0 = t1;
-                y0 = y1;
+                if (bz.at((lo + hi) * 0.5f).x > pt.x) winding += up ? 1 : -1;
             }
+            t0 = t1;
+            y0 = y1;
         }
     }
     return winding;
+}
+
+
+static int32_t _winding(const List<Contour>& path, const Point& pt)
+{
+    int32_t winding = 0;
+    INLIST_FOREACH(path, contour) winding += _winding(contour, pt);
+    return winding;
+}
+
+
+static float _site(Segment* segment, Segment* other)
+{
+    auto& corner = other->curve.start;
+    if (!_holds(segment->curve, corner)) return -1.0f;
+
+    if (length2(corner - segment->curve.start) < PATHOP_EPSILON) return -1.0f;
+    if (length2(corner - segment->curve.end) < PATHOP_EPSILON) return -1.0f;
+
+    auto t = _project(segment->curve, corner);
+    if (t < 0.0f) return -1.0f;
+
+    auto before = other->prevSegment()->curve.at(0.95f);
+    auto after = other->curve.at(0.05f);
+    if (_project(segment->curve, before) < 0.0f && _project(segment->curve, after) < 0.0f) return -1.0f;
+
+    return t;
+}
+
+
+static void _cut(Workspace& ws, Segment* segment, const Array<float>& ts)
+{
+    auto& list = segment->parent->segments;
+    auto from = 0.0f;
+
+    ARRAY_FOREACH(t, ts) {
+        auto piece = ws.segments.alloc();
+        piece->curve = segment->curve.sub(from, *t);
+        piece->parent = segment->parent;
+        _insert(list, piece, segment);
+        from = *t;
+    }
+    segment->curve = segment->curve.sub(from, 1.0f);
+}
+
+
+static void _slice(Workspace& ws, List<Contour>& path, const List<Contour>& other)
+{
+    Array<float> ts;
+
+    INLIST_FOREACH(path, contour) {
+        INLIST_FOREACH(contour->segments, segment) {
+            ts.clear();
+
+            INLIST_FOREACH(other, oc) {
+                INLIST_FOREACH(oc->segments, os) {
+                    auto t = _site(segment, os);
+                    if (t < 0.0f) continue;
+
+                    uint32_t at = 0;
+                    auto seen = false;
+                    for (; at < ts.count; ++at) {
+                        if (fabsf(ts[at] - t) < PATHOP_EPSILON) { seen = true; break; }
+                        if (ts[at] > t) break;
+                    }
+                    if (seen) continue;
+
+                    ts.push(t);
+                    for (auto i = ts.count - 1; i > at; --i) {
+                        auto swap = ts[i];
+                        ts[i] = ts[i - 1];
+                        ts[i - 1] = swap;
+                    }
+                }
+            }
+            if (!ts.empty()) _cut(ws, segment, ts);
+        }
+    }
+}
+
+
+static void _orient(List<Contour>& path)
+{
+    INLIST_FOREACH(path, contour) {
+        auto pt = contour->segments.head->curve.at(0.5f);
+        auto depth = 0;
+
+        INLIST_FOREACH(path, other) {
+            if (other != contour && _winding(other, pt) != 0) ++depth;
+        }
+
+        auto outward = (depth % 2 == 0);
+        if ((_area(contour) > 0.0f) != outward) _reverse(contour);
+    }
 }
 
 
@@ -576,12 +741,26 @@ static uint32_t _intersect(Workspace& ws, List<Contour>& lhs, List<Contour>& rhs
 {
     auto& roots = ws.roots;
     auto& merged = ws.merged;
+    auto& pending = ws.pending;
     uint32_t cnt = 0;
+
+    pending.clear();
 
     INLIST_FOREACH(lhs, lc) {
         INLIST_FOREACH(lc->segments, ls) {
+            if (ls->coincident) continue;
             INLIST_FOREACH(rhs, rc) {
                 INLIST_FOREACH(rc->segments, rs) {
+                    if (rs->coincident) continue;
+
+                    //a run never crosses the other path, and its ends would look like one
+                    if (auto dir = _overlapped(ls->curve, rs->curve)) {
+                        ls->coincident = rs->coincident = dir;
+                        ls->twin = rs;
+                        rs->twin = ls;
+                        break;
+                    }
+
                     if (!_overlap(ls->curve.hull(), rs->curve.hull())) continue;
 
                     roots.clear();
@@ -591,26 +770,48 @@ static uint32_t _intersect(Workspace& ws, List<Contour>& lhs, List<Contour>& rhs
                     ARRAY_FOREACH(root, roots) {
                         _refine(ls->curve, rs->curve, *root);
 
+                        //a hit on a shared vertex is reported by both neighbors
+                        auto hit = ls->curve.at(root->t);
+                        auto reach = fmaxf(fabsf(hit.x), fabsf(hit.y)) * 1e-6f;
+                        auto vertex = [&](const Point& pt) { return length2(hit - pt) < reach * reach; };
+
+                        //the parameter tells on a long piece, the distance on a short one
                         if (root->t > 1.0f - PATHOP_EPSILON || root->u > 1.0f - PATHOP_EPSILON) continue;
+                        if (vertex(ls->curve.end) || vertex(rs->curve.end)) continue;
+                        if (vertex(ls->curve.start)) root->t = PATHOP_EPSILON;
+                        if (vertex(rs->curve.start)) root->u = PATHOP_EPSILON;
                         if (root->t < PATHOP_EPSILON) root->t = PATHOP_EPSILON;
                         if (root->u < PATHOP_EPSILON) root->u = PATHOP_EPSILON;
+
+                        //a touch is not a crossing, the two parting on the same side
+                        auto lt = ls->curve.tangent(root->t);
+                        auto rt = rs->curve.tangent(root->u);
+                        auto span = sqrtf(length2(lt)) * sqrtf(length2(rt));
+                        if (span > 0.0f && fabsf(cross(lt, rt)) / span < sqrtf(PATHOP_EPSILON)) continue;
+
                         if (_duplicated(merged, *root)) continue;
                         merged.push(*root);
                     }
 
-                    if (merged.count > PATHOP_OVERLAP || _overlapped(ls->curve, rs->curve)) {
-                        ls->coincident = rs->coincident = true;
+                    //3rd-order bezier curve cannot cross 9+ times unless it is overlapped
+                    if (merged.count > PATHOP_OVERLAP) {
+                        ls->coincident = rs->coincident = 1;
                         continue;
                     }
 
-                    ARRAY_FOREACH(root, merged) {
-                        _pair(ws, ls, root->t, rs, root->u);
-                        ++cnt;
-                    }
+                    //held back until every run is known, a later one unmaking these
+                    ARRAY_FOREACH(root, merged) pending.push({ls, rs, root->t, root->u});
                 }
             }
         }
     }
+
+    ARRAY_FOREACH(hit, pending) {
+        if (hit->lhs->coincident || hit->rhs->coincident) continue;
+        _pair(ws, hit->lhs, hit->t, hit->rhs, hit->u);
+        ++cnt;
+    }
+
     return cnt;
 }
 
@@ -664,6 +865,23 @@ static void _mark(List<Contour>& path, const List<Contour>& other)
 /* Walk                                                                 */
 /************************************************************************/
 
+//who draws a run the two paths share, the left hand operand always carrying it
+static bool _owned(const Segment* segment, PathOp op)
+{
+    auto onward = (segment->coincident > 0) ? (op != PathOp::Difference) : (op == PathOp::Difference);
+    return onward && !segment->parent->rhs;
+}
+
+
+//turns the walk onto the twin at the end it stands at
+static Segment* _handover(const Segment* segment, bool& forward)
+{
+    auto twin = segment->twin;
+    if (segment->coincident > 0) forward = !forward;
+    return forward ? twin->nextSegment() : twin->prevSegment();
+}
+
+
 static void _emit(RenderPath& out, const Bezier& curve, bool forward)
 {
     auto bz = forward ? curve : curve.reverse();
@@ -672,13 +890,17 @@ static void _emit(RenderPath& out, const Bezier& curve, bool forward)
 }
 
 
-static Intersection* _advance(RenderPath& out, Intersection* from, bool forward)
+static Intersection* _advance(RenderPath& out, Intersection* from, bool& forward, PathOp op)
 {
     _emit(out, forward ? from->nextCurve : from->prevCurve, forward);
     if (auto hit = forward ? from->next : from->prev) return hit;
 
     auto segment = forward ? from->segment->nextSegment() : from->segment->prevSegment();
     while (segment->intersections.empty()) {
+        if (segment->twin && !_owned(segment, op)) {
+            segment = _handover(segment, forward);
+            continue;
+        }
         _emit(out, segment->curve, forward);
         segment = forward ? segment->nextSegment() : segment->prevSegment();
     }
@@ -703,7 +925,7 @@ static void _merge(List<Contour>& lhs, PathOp op, RenderPath& out)
                 auto forward = true;
                 while (cur && !cur->visited) {
                     cur->visited = true;
-                    auto next = _advance(out, cur, forward);
+                    auto next = _advance(out, cur, forward, op);
                     if (!next) break;
                     next->visited = true;
                     cur = next->pair;
@@ -713,6 +935,25 @@ static void _merge(List<Contour>& lhs, PathOp op, RenderPath& out)
             }
         }
     }
+}
+
+
+static void _stitch(Segment* from, PathOp op, RenderPath& out)
+{
+    auto segment = from;
+    auto forward = true;
+
+    out.moveTo(segment->curve.start);
+
+    do {
+        if (segment->twin && !_owned(segment, op)) {
+            segment = _handover(segment, forward);
+            continue;
+        }
+        _emit(out, segment->curve, forward);
+        segment = forward ? segment->nextSegment() : segment->prevSegment();
+    } while (segment != from);
+    out.close();
 }
 
 
@@ -734,17 +975,31 @@ static void _uncrossed(List<Contour>& path, const List<Contour>& other, PathOp o
     INLIST_FOREACH(path, contour) {
         auto crossed = false;
         auto shared = true;
+        auto shares = false;
         INLIST_FOREACH(contour->segments, segment) {
             if (!segment->intersections.empty()) {
                 crossed = true;
                 break;
             }
-            if (!segment->coincident) shared = false;
+            if (segment->coincident) shares = true;
+            else shared = false;
         }
         if (crossed) continue;
 
         if (shared) {
-            if (op != PathOp::Difference && lhs) _copy(contour, false, out);
+            if (_owned(contour->segments.head, op)) _copy(contour, false, out);
+            continue;
+        }
+
+        //only a part of it runs along, so it is stitched from the left hand operand
+        if (shares) {
+            if (lhs) {
+                INLIST_FOREACH(contour->segments, segment) {
+                    if (segment->twin) continue;
+                    _stitch(segment, op, out);
+                    break;
+                }
+            }
             continue;
         }
 
@@ -779,11 +1034,16 @@ static void _op(const RenderPath& lhs, const RenderPath& rhs, RenderPath& out, P
 
     List<Contour> a, b;
 
-    _contour(ws, lhs, a);
-    _contour(ws, rhs, b);
+    _contour(ws, lhs, false, a);
+    _contour(ws, rhs, true, b);
     if (a.empty() || b.empty()) return;
 
-    if (_area(lhs) * _area(rhs) < 0.0f) _reverse(b);
+    //align the directions
+    _orient(a);
+    _orient(b);
+
+    _slice(ws, a, b);
+    _slice(ws, b, a);
 
     if (_intersect(ws, a, b) > 0) {
         _mark(a, b);
