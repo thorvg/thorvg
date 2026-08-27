@@ -170,48 +170,13 @@ struct LottieProperty
     virtual uint32_t nearest(float frameNo) = 0;
     virtual float frameNo(int32_t key) = 0;
     virtual float loop(float frameNo, uint32_t key, Loop mode, float inout) = 0;
-
     bool copy(LottieProperty* rhs, bool shallow);
 
+    static uint32_t bsearch(const float* firstNo, uint32_t count, uint32_t stride, float frameNo);
+    static uint32_t nearest(const float* firstNo, uint32_t count, uint32_t stride, float frameNo);
+    static float frameNo(const float* firstNo, uint32_t count, uint32_t stride, int32_t key);
     static float loop(float frameNo, LottieProperty::Loop mode, float inout, float firstNo, float inNo, float outNo);
 };
-
-template<typename T>
-uint32_t _bsearch(T* frames, float frameNo)
-{
-    int32_t low = 0;
-    int32_t high = int32_t(frames->count) - 1;
-
-    while (low <= high) {
-        auto mid = low + (high - low) / 2;
-        auto frame = frames->data + mid;
-        if (frameNo < frame->no) high = mid - 1;
-        else low = mid + 1;
-    }
-    if (high < low) low = high;
-    if (low < 0) low = 0;
-    return low;
-}
-
-template<typename T>
-uint32_t _nearest(T* frames, float frameNo)
-{
-    if (frames) {
-        auto key = _bsearch(frames, frameNo);
-        if (key == frames->count - 1) return key;
-        return (fabsf(frames->data[key].no - frameNo) < fabsf(frames->data[key + 1].no - frameNo)) ? key : (key + 1);
-    }
-    return 0;
-}
-
-template<typename T>
-float _frameNo(T* frames, int32_t key)
-{
-    if (!frames) return 0.0f;
-    if (key < 0) key = 0;
-    if (key >= (int32_t) frames->count) key = (int32_t)(frames->count - 1);
-    return (*frames)[key].no;
-}
 
 template<typename Frame, typename Value, LottieProperty::Type PType = LottieProperty::Type::Invalid, bool Scalar = 1>
 struct LottieGenericProperty : LottieProperty
@@ -247,7 +212,7 @@ struct LottieGenericProperty : LottieProperty
 
     uint32_t nearest(float frameNo) override
     {
-        return _nearest(frames, frameNo);
+        return frames ? LottieProperty::nearest(&frames->data->no, frames->count, sizeof(Frame), frameNo) : 0;
     }
 
     uint32_t frameCnt() override
@@ -257,14 +222,13 @@ struct LottieGenericProperty : LottieProperty
 
     float frameNo(int32_t key) override
     {
-        return _frameNo(frames, key);
+        return frames ? LottieProperty::frameNo(&frames->data->no, frames->count, sizeof(Frame), key) : 0.0f;
     }
 
     float loop(float frameNo, uint32_t key, Loop mode, float inout) override
     {
         if (!frames || mode == Loop::None) return frameNo;
-        return LottieProperty::loop(frameNo, mode, inout, frames->first().no, (*frames)[key].no,
-                     (*frames)[frames->count - 1 - key].no);
+        return LottieProperty::loop(frameNo, mode, inout, frames->first().no, (*frames)[key].no, (*frames)[frames->count - 1 - key].no);
     }
 
     Frame& newFrame()
@@ -296,7 +260,8 @@ struct LottieGenericProperty : LottieProperty
         if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
         if (frameNo >= frames->last().no) return frames->last().value;
 
-        auto frame = frames->data + _bsearch(frames, frameNo);
+        auto key = LottieProperty::bsearch(&frames->data->no, frames->count, sizeof(Frame), frameNo);
+        auto frame = frames->data + key;
         if (tvg::equal(frame->no, frameNo)) return frame->value;
         return frame->interpolate(frame + 1, frameNo);
     }
@@ -338,7 +303,8 @@ struct LottieGenericProperty : LottieProperty
             return frame->angle(frame + 1, frames->last().no);
         }
 
-        auto frame = frames->data + _bsearch(frames, frameNo);
+        auto key = LottieProperty::bsearch(&frames->data->no, frames->count, sizeof(Frame), frameNo);
+        auto frame = frames->data + key;
         return frame->angle(frame + 1, frameNo);
     }
 
@@ -381,7 +347,7 @@ struct LottiePathSet : LottieProperty
 
     uint32_t nearest(float frameNo) override
     {
-        return _nearest(frames, frameNo);
+        return frames ? LottieProperty::nearest(&frames->data->no, frames->count, sizeof(*frames->data), frameNo) : 0;
     }
 
     uint32_t frameCnt() override
@@ -391,7 +357,7 @@ struct LottiePathSet : LottieProperty
 
     float frameNo(int32_t key) override
     {
-        return _frameNo(frames, key);
+        return frames ? LottieProperty::frameNo(&frames->data->no, frames->count, sizeof(*frames->data), key) : 0.0f;
     }
 
     float loop(float frameNo, uint32_t key, Loop mode, float inout) override
@@ -437,7 +403,7 @@ struct LottieColorStop : LottieProperty
 
     uint32_t nearest(float frameNo) override
     {
-        return _nearest(frames, frameNo);
+        return frames ? LottieProperty::nearest(&frames->data->no, frames->count, sizeof(*frames->data), frameNo) : 0;
     }
 
     uint32_t frameCnt() override
@@ -447,7 +413,7 @@ struct LottieColorStop : LottieProperty
 
     float frameNo(int32_t key) override
     {
-        return _frameNo(frames, key);
+        return frames ? LottieProperty::frameNo(&frames->data->no, frames->count, sizeof(*frames->data), key) : 0.0f;
     }
 
     float loop(float frameNo, uint32_t key, Loop mode, float inout) override
@@ -488,7 +454,7 @@ struct LottieTextDoc : LottieProperty
 
     uint32_t nearest(float frameNo) override
     {
-        return _nearest(frames, frameNo);
+        return frames ? LottieProperty::nearest(&frames->data->no, frames->count, sizeof(*frames->data), frameNo) : 0;
     }
 
     uint32_t frameCnt() override
@@ -498,7 +464,7 @@ struct LottieTextDoc : LottieProperty
 
     float frameNo(int32_t key) override
     {
-        return _frameNo(frames, key);
+        return frames ? LottieProperty::frameNo(&frames->data->no, frames->count, sizeof(*frames->data), key) : 0.0f;
     }
 
     float loop(float frameNo, uint32_t key, Loop mode, float inout) override
