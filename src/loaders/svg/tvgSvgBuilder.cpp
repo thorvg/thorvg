@@ -96,11 +96,16 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
         else finalTransform = m;
         fillGrad->linear(g->linear.x1, g->linear.y1, g->linear.x2, g->linear.y2);
     }
+
+    Matrix inv;
+    if (g->stops.count == 0 || !inverse(&finalTransform, &inv)) {
+        delete(fillGrad);
+        return nullptr;
+    }
+
     fillGrad->spread(g->spread);
 
     //Update the stops
-    if (g->stops.count == 0) return fillGrad;
-
     stops = tvg::malloc<Fill::ColorStop>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
@@ -146,11 +151,16 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
         else finalTransform = m;
         fillGrad->radial(g->radial.cx, g->radial.cy, g->radial.r, g->radial.fx, g->radial.fy, g->radial.fr);
     }
+
+    Matrix inv;
+    if (g->stops.count == 0 || !inverse(&finalTransform, &inv)) {
+        delete(fillGrad);
+        return nullptr;
+    }
+
     fillGrad->spread(g->spread);
 
     //Update the stops
-    if (g->stops.count == 0) return fillGrad;
-
     stops = tvg::malloc<Fill::ColorStop>(g->stops.count * sizeof(Fill::ColorStop));
     auto prevOffset = 0.0f;
     for (uint32_t i = 0; i < g->stops.count; ++i) {
@@ -515,11 +525,14 @@ static void _applyStroke(SvgStyleProperty* style, Shape* vg, const Box& vBox, co
         vg->strokeWidth(0.0f);
     } else if (style->stroke.paint.gradient) {
         auto bBox = style->stroke.paint.gradient->userSpace ? vBox : _bounds(vg);
+        Fill* fill = nullptr;
         if (style->stroke.paint.gradient->type == SvgGradientType::Linear) {
-            vg->strokeFill(_applyLinearGradientProperty(style->stroke.paint.gradient, bBox, viewport, style->stroke.opacity));
+            fill = _applyLinearGradientProperty(style->stroke.paint.gradient, bBox, viewport, style->stroke.opacity);
         } else if (style->stroke.paint.gradient->type == SvgGradientType::Radial) {
-            vg->strokeFill(_applyRadialGradientProperty(style->stroke.paint.gradient, bBox, viewport, style->stroke.opacity));
+            fill = _applyRadialGradientProperty(style->stroke.paint.gradient, bBox, viewport, style->stroke.opacity);
         }
+        if (fill) vg->strokeFill(fill);
+        else vg->strokeWidth(0.0f);
     } else if (style->stroke.paint.url) {
         TVGLOG("SVG", "The stroke's url not supported.");
     } else if (style->stroke.paint.curColor) {
@@ -541,11 +554,13 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
         //Do nothing
     } else if (style->fill.paint.gradient) {
         auto bBox = style->fill.paint.gradient->userSpace ? vBox : _bounds(vg);
+        Fill* fill = nullptr;
         if (style->fill.paint.gradient->type == SvgGradientType::Linear) {
-            vg->fill(_applyLinearGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity));
+            fill = _applyLinearGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity);
         } else if (style->fill.paint.gradient->type == SvgGradientType::Radial) {
-            vg->fill(_applyRadialGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity));
+            fill = _applyRadialGradientProperty(style->fill.paint.gradient, bBox, ctx.parser->global, style->fill.opacity);
         }
+        if (fill) vg->fill(fill);
     } else if (style->fill.paint.pattern) {
         if (auto patternPaint = _applyPatternProperty(ctx, vg, node, style->fill.paint.pattern, vBox, svgPath)) {
             vg->fillRule(style->fill.fillRule);
