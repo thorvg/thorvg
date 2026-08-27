@@ -1351,7 +1351,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 
 void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 {
-    if (layer->masks.count == 0) return;
+    if (layer->masks.empty()) return;
 
     //Introduce an intermediate scene for embracing matte + masking or precomp clipping + masking replaced by clipping
     if (layer->matteTarget || layer->type == LottieLayer::Precomp) {

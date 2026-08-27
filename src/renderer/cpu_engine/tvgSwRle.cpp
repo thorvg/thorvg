@@ -924,24 +924,38 @@ bool rleClip(SwRle* rle, const SwRle *clip)
             ++cspans;
             continue;
         }
-        //try clipping with all clip spans which have a same y-coordinate.
-        auto temp = cspans;
-        while(temp < cend && temp->y == cspans->y) {
-            //span must be left(x1) to right(x2) direction. Not intersected.
-            if ((spans->x + spans->len) < spans->x || (temp->x + temp->len) < temp->x) {
-                ++temp;
-                continue;
-            }
-            //clip span region
-            auto x = std::max(spans->x, temp->x);
-            auto len = std::min((spans->x + spans->len), (temp->x + temp->len)) - x;
-            if (len > 0) out.next() = {x, temp->y, len, (uint8_t)(((spans->coverage * temp->coverage) + 0xff) >> 8)};
-            ++temp;
+
+        // Both span lists are ordered and non-overlapping within a scanline.
+        if (spans->len <= 0) {
+            ++spans;
+            continue;
         }
-        ++spans;
+        if (cspans->len <= 0) {
+            ++cspans;
+            continue;
+        }
+
+        auto spanEnd = spans->x + spans->len;
+        auto clipEnd = cspans->x + cspans->len;
+
+        if (spanEnd <= cspans->x) {
+            ++spans;
+            continue;
+        }
+        if (clipEnd <= spans->x) {
+            ++cspans;
+            continue;
+        }
+
+        auto x = std::max(spans->x, cspans->x);
+        auto len = std::min(spanEnd, clipEnd) - x;
+        out.next() = {x, spans->y, len, (uint8_t)(((spans->coverage * cspans->coverage) + 0xff) >> 8)};
+
+        if (spanEnd <= clipEnd) ++spans;
+        if (clipEnd <= spanEnd) ++cspans;
     }
     out.move(rle->spans);
-    return true;
+    return !rle->spans.empty();
 }
 
 
@@ -976,7 +990,7 @@ bool rleClip(SwRle *rle, const RenderRegion* clip)
         }
     }
     out.move(rle->spans);
-    return true;
+    return !rle->spans.empty();
 }
 
 
