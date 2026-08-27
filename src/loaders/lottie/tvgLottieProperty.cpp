@@ -27,6 +27,11 @@
 /* LottieProperty                                                       */
 /************************************************************************/
 
+static float _at(const float* firstNo, uint32_t stride, uint32_t index)
+{
+    return *reinterpret_cast<const float*>(reinterpret_cast<const uint8_t*>(firstNo) + stride * index);
+}
+
 bool LottieProperty::copy(LottieProperty* rhs, bool shallow)
 {
     type = rhs->type;
@@ -42,6 +47,35 @@ bool LottieProperty::copy(LottieProperty* rhs, bool shallow)
     }
     exp->property = this;
     return true;
+}
+
+uint32_t LottieProperty::bsearch(const float* firstNo, uint32_t count, uint32_t stride, float frameNo)
+{
+    int32_t low = 0;
+    int32_t high = static_cast<int32_t>(count) - 1;
+
+    while (low <= high) {
+        auto mid = low + (high - low) / 2;
+        if (frameNo < _at(firstNo, stride, mid)) high = mid - 1;
+        else low = mid + 1;
+    }
+    if (high < low) low = high;
+    if (low < 0) low = 0;
+    return low;
+}
+
+uint32_t LottieProperty::nearest(const float* firstNo, uint32_t count, uint32_t stride, float frameNo)
+{
+    auto key = bsearch(firstNo, count, stride, frameNo);
+    if (key == count - 1) return key;
+    return (fabsf(_at(firstNo, stride, key) - frameNo) < fabsf(_at(firstNo, stride, key + 1) - frameNo)) ? key : (key + 1);
+}
+
+float LottieProperty::frameNo(const float* firstNo, uint32_t count, uint32_t stride, int32_t key)
+{
+    if (key < 0) key = 0;
+    if (key >= static_cast<int32_t>(count)) key = static_cast<int32_t>(count) - 1;
+    return _at(firstNo, stride, key);
 }
 
 float LottieProperty::loop(float frameNo, LottieProperty::Loop mode, float inout, float firstNo, float inNo, float outNo)
@@ -125,7 +159,8 @@ Result LottieColorStop::operator()(float frameNo, Fill* fill, LottieExpressions*
 
     if (frameNo >= frames->last().no) return fill->colorStops(frames->last().value.data, count);
 
-    auto frame = frames->data + _bsearch(frames, frameNo);
+    auto key = LottieProperty::bsearch(&frames->data->no, frames->count, sizeof(*frames->data), frameNo);
+    auto frame = frames->data + key;
     if (tvg::equal(frame->no, frameNo)) return fill->colorStops(frame->value.data, count);
 
     //interpolate
@@ -267,7 +302,8 @@ bool LottiePathSet::dispatch(float frameNo, PathSet*& path, LottieScalarFrame<Pa
     else if (frames->count == 1 || frameNo <= frames->first().no) path = &frames->first().value;
     else if (frameNo >= frames->last().no) path = &frames->last().value;
     else {
-        frame = frames->data + _bsearch(frames, frameNo);
+        auto key = LottieProperty::bsearch(&frames->data->no, frames->count, sizeof(*frames->data), frameNo);
+        frame = frames->data + key;
         if (tvg::equal(frame->no, frameNo)) path = &frame->value;
         else if (frame->value.ptsCnt != (frame + 1)->value.ptsCnt) {
             path = &frame->value;
@@ -442,7 +478,8 @@ TextDocument& LottieTextDoc::operator()(float frameNo)
     if (frames->count == 1 || frameNo <= frames->first().no) return frames->first().value;
     if (frameNo >= frames->last().no) return frames->last().value;
 
-    auto frame = frames->data + _bsearch(frames, frameNo);
+    auto key = LottieProperty::bsearch(&frames->data->no, frames->count, sizeof(*frames->data), frameNo);
+    auto frame = frames->data + key;
     return frame->value;
 }
 
