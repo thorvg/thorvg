@@ -73,7 +73,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
-        fetch-depth: 1
+        fetch-depth: 2
 
     - name: Cache apt archives
       uses: actions/cache@v4
@@ -135,7 +135,6 @@ jobs:
         CPP_LINK_ARGS: ${{ matrix.cpp_link_args }}
         MATRIX_KEY: ${{ matrix.key }}
         MATRIX_LABEL: ${{ matrix.label }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
         VERSION=$(sed -n "s/^[[:space:]]*version[[:space:]]*:[[:space:]]*'\([^']*\)'.*/\1/p" meson.build)
         VERSION_MAJOR=${VERSION%%.*}
@@ -164,11 +163,8 @@ jobs:
 
         mkdir -p ci-report
 
-        git fetch --no-tags --depth=1 origin \
-          "+refs/heads/main:refs/remotes/origin/main" \
-          "+refs/pull/$PR_NUMBER/merge:refs/remotes/origin/pr-merge"
-        BASE_REF=$(git rev-parse origin/main)
-        PR_REF=$(git rev-parse origin/pr-merge)
+        PR_REF=$(git rev-parse HEAD)
+        BASE_REF=$(git rev-parse HEAD^1)
         echo "PR:   $PR_REF"
         echo "BASE: $BASE_REF"
         git checkout "$BASE_REF"
