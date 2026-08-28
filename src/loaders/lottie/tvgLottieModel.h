@@ -391,7 +391,8 @@ struct LottieTextRange : LottieObject
     {
         LottieProperty* backup = nullptr;
         OVERRIDE(style.fillColor) || OVERRIDE(style.strokeColor) || OVERRIDE(style.position) || OVERRIDE(style.scale) || OVERRIDE(style.rotation) || OVERRIDE(style.letterSpace) ||
-        OVERRIDE(style.lineSpace) || OVERRIDE(style.strokeWidth) || OVERRIDE(style.fillOpacity) || OVERRIDE(style.strokeOpacity) || OVERRIDE(style.opacity);
+        OVERRIDE(style.lineSpace) || OVERRIDE(style.strokeWidth) || OVERRIDE(style.fillOpacity) || OVERRIDE(style.strokeOpacity) || OVERRIDE(style.opacity) ||
+        OVERRIDE(offset) || OVERRIDE(maxEase) || OVERRIDE(minEase) || OVERRIDE(maxAmount) || OVERRIDE(smoothness) || OVERRIDE(start) || OVERRIDE(end);
         return backup;
     }
 };
@@ -485,7 +486,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        OVERRIDE(doc);
+        OVERRIDE(doc) || OVERRIDE(alignOp.anchor);
         return backup;
     }
 
@@ -569,6 +570,13 @@ struct LottieRoundedCorner : LottieObject
         return nullptr;
     }
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(radius);
+        return backup;
+    }
+
     LottieFloat radius = 0.0f;
 };
 
@@ -635,6 +643,13 @@ struct LottiePolyStar : LottieShape
         if (rotation.ix == ix) return &rotation;
         if (ptsCnt.ix == ix) return &ptsCnt;
         return nullptr;
+    }
+
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(position) || OVERRIDE(innerRadius) || OVERRIDE(outerRadius) || OVERRIDE(innerRoundness) || OVERRIDE(outerRoundness) || OVERRIDE(rotation) || OVERRIDE(ptsCnt);
+        return backup;
     }
 
     LottieVector position = Point{0.0f, 0.0f};
@@ -717,7 +732,7 @@ struct LottieTransform : LottieObject
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieProperty* backup = nullptr;
-        OVERRIDE(rotation) || OVERRIDE(scale) || OVERRIDE(position) || OVERRIDE(opacity) || OVERRIDE(skewAngle) || OVERRIDE(skewAxis);
+        OVERRIDE(rotation) || OVERRIDE(scale) || OVERRIDE(position) || OVERRIDE(anchor) || OVERRIDE(opacity) || OVERRIDE(skewAngle) || OVERRIDE(skewAxis);
         return backup;
     }
 
@@ -971,6 +986,13 @@ struct LottieRepeater : LottieObject
         return nullptr;
     }
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(copies) || OVERRIDE(offset) || OVERRIDE(position) || OVERRIDE(rotation) || OVERRIDE(scale) || OVERRIDE(anchor) || OVERRIDE(startOpacity) || OVERRIDE(endOpacity);
+        return backup;
+    }
+
     LottieFloat copies = 0.0f;
     LottieFloat offset = 0.0f;
 
@@ -988,6 +1010,13 @@ struct LottieOffsetPath : LottieObject
 {
     LottieOffsetPath() : LottieObject(LottieObject::OffsetPath) {}
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(offset) || OVERRIDE(miterLimit);
+        return backup;
+    }
+
     LottieFloat offset = 0.0f;
     LottieFloat miterLimit = 4.0f;
     StrokeJoin join = StrokeJoin::Miter;
@@ -997,12 +1026,26 @@ struct LottiePuckerBloat : LottieObject
 {
     LottiePuckerBloat() : LottieObject(LottieObject::PuckerBloat) {}
 
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(amount);
+        return backup;
+    }
+
     LottieFloat amount = 0.0f;
 };
 
 struct LottieZigZag : LottieObject
 {
     LottieZigZag() : LottieObject(LottieObject::ZigZag) {}
+
+    LottieProperty* override(LottieProperty* prop, bool release) override
+    {
+        LottieProperty* backup = nullptr;
+        OVERRIDE(amplitude);
+        return backup;
+    }
 
     LottieFloat amplitude = 0.0f;
     LottieInteger frequency = 0;

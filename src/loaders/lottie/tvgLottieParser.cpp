@@ -606,7 +606,7 @@ LottieTransform* LottieParser::parseTransform(bool ddd)
                 else skip();
             }
         }
-        else if (KEY_AS("a")) parseProperty(transform->anchor);
+        else if (KEY_AS("a")) parseProperty(transform->anchor, transform);
         else if (KEY_AS("s")) parseProperty(transform->scale, transform);
         else if (KEY_AS("r")) parseProperty(transform->rotation, transform);
         else if (KEY_AS("o")) parseProperty(transform->opacity, transform);
@@ -720,13 +720,13 @@ LottiePolyStar* LottieParser::parsePolyStar()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(star, key)) continue;
-        else if (KEY_AS("p")) parseProperty(star->position);
-        else if (KEY_AS("pt")) parseProperty(star->ptsCnt);
-        else if (KEY_AS("ir")) parseProperty(star->innerRadius);
-        else if (KEY_AS("is")) parseProperty(star->innerRoundness);
-        else if (KEY_AS("or")) parseProperty(star->outerRadius);
-        else if (KEY_AS("os")) parseProperty(star->outerRoundness);
-        else if (KEY_AS("r")) parseProperty(star->rotation);
+        else if (KEY_AS("p")) parseProperty(star->position, star);
+        else if (KEY_AS("pt")) parseProperty(star->ptsCnt, star);
+        else if (KEY_AS("ir")) parseProperty(star->innerRadius, star);
+        else if (KEY_AS("is")) parseProperty(star->innerRoundness, star);
+        else if (KEY_AS("or")) parseProperty(star->outerRadius, star);
+        else if (KEY_AS("os")) parseProperty(star->outerRoundness, star);
+        else if (KEY_AS("r")) parseProperty(star->rotation, star);
         else if (KEY_AS("sy")) star->type = (LottiePolyStar::Type) getInt();
         else if (parseDirection(star, key)) continue;
         else skip();
@@ -743,7 +743,7 @@ LottieRoundedCorner* LottieParser::parseRoundedCorner()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(corner, key)) continue;
-        else if (KEY_AS("r")) parseProperty(corner->radius);
+        else if (KEY_AS("r")) parseProperty(corner->radius, corner);
         else skip();
     }
     return corner;
@@ -840,19 +840,19 @@ LottieRepeater* LottieParser::parseRepeater()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(repeater, key)) continue;
-        else if (KEY_AS("c")) parseProperty(repeater->copies);
-        else if (KEY_AS("o")) parseProperty(repeater->offset);
+        else if (KEY_AS("c")) parseProperty(repeater->copies, repeater);
+        else if (KEY_AS("o")) parseProperty(repeater->offset, repeater);
         else if (KEY_AS("m")) repeater->inorder = getInt() == 2;
         else if (KEY_AS("tr"))
         {
             enterObject();
             while (auto key = nextObjectKey()) {
-                if (KEY_AS("a")) parseProperty(repeater->anchor);
-                else if (KEY_AS("p")) parseProperty(repeater->position);
-                else if (KEY_AS("r")) parseProperty(repeater->rotation);
-                else if (KEY_AS("s")) parseProperty(repeater->scale);
-                else if (KEY_AS("so")) parseProperty(repeater->startOpacity);
-                else if (KEY_AS("eo")) parseProperty(repeater->endOpacity);
+                if (KEY_AS("a")) parseProperty(repeater->anchor, repeater);
+                else if (KEY_AS("p")) parseProperty(repeater->position, repeater);
+                else if (KEY_AS("r")) parseProperty(repeater->rotation, repeater);
+                else if (KEY_AS("s")) parseProperty(repeater->scale, repeater);
+                else if (KEY_AS("so")) parseProperty(repeater->startOpacity, repeater);
+                else if (KEY_AS("eo")) parseProperty(repeater->endOpacity, repeater);
                 else skip();
             }
         }
@@ -870,9 +870,9 @@ LottieOffsetPath* LottieParser::parseOffsetPath()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(offsetPath, key)) continue;
-        else if (KEY_AS("a")) parseProperty(offsetPath->offset);
+        else if (KEY_AS("a")) parseProperty(offsetPath->offset, offsetPath);
         else if (KEY_AS("lj")) offsetPath->join = (StrokeJoin) (getInt() - 1);
-        else if (KEY_AS("ml")) parseProperty(offsetPath->miterLimit);
+        else if (KEY_AS("ml")) parseProperty(offsetPath->miterLimit, offsetPath);
         else skip();
     }
     return offsetPath;
@@ -886,7 +886,7 @@ LottiePuckerBloat* LottieParser::parsePuckerBloat()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(puckerBloat, key)) continue;
-        else if (KEY_AS("a")) parseProperty(puckerBloat->amount);
+        else if (KEY_AS("a")) parseProperty(puckerBloat->amount, puckerBloat);
         else skip();
     }
     return puckerBloat;
@@ -900,7 +900,7 @@ LottieZigZag* LottieParser::parseZigZag()
 
     while (auto key = nextObjectKey()) {
         if (parseCommon(zigzag, key)) continue;
-        else if (KEY_AS("s")) parseProperty(zigzag->amplitude);
+        else if (KEY_AS("s")) parseProperty(zigzag->amplitude, zigzag);
         else if (KEY_AS("r")) parseProperty(zigzag->frequency);
         else if (KEY_AS("pt")) parseProperty(zigzag->point);
         else skip();
@@ -1246,7 +1246,7 @@ void LottieParser::parseTextAlignmentOption(LottieText* text)
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("g")) text->alignOp.group = (LottieText::AlignOption::Group) getInt();
-        else if (KEY_AS("a")) parseProperty(text->alignOp.anchor);
+        else if (KEY_AS("a")) parseProperty(text->alignOp.anchor, text);
         else skip();
     }
 }
@@ -1268,19 +1268,19 @@ void LottieParser::parseTextRange(LottieText* text)
                     if (KEY_AS("t")) selector->expressible = (bool) getInt();
                     else if (KEY_AS("xe"))
                     {
-                        parseProperty(selector->maxEase);
+                        parseProperty(selector->maxEase, selector);
                         selector->interpolator = tvg::malloc<LottieInterpolator>(sizeof(LottieInterpolator));
                     }
-                    else if (KEY_AS("ne")) parseProperty(selector->minEase);
-                    else if (KEY_AS("a")) parseProperty(selector->maxAmount);
+                    else if (KEY_AS("ne")) parseProperty(selector->minEase, selector);
+                    else if (KEY_AS("a")) parseProperty(selector->maxAmount, selector);
                     else if (KEY_AS("b")) selector->based = (LottieTextRange::Based) getInt();
                     else if (KEY_AS("rn")) selector->random = getInt() ? rand() : 0;
                     else if (KEY_AS("sh")) selector->shape = (LottieTextRange::Shape) getInt();
-                    else if (KEY_AS("o")) parseProperty(selector->offset);
+                    else if (KEY_AS("o")) parseProperty(selector->offset, selector);
                     else if (KEY_AS("r")) selector->rangeUnit = (LottieTextRange::Unit) getInt();
-                    else if (KEY_AS("sm")) parseProperty(selector->smoothness);
-                    else if (KEY_AS("s")) parseProperty(selector->start);
-                    else if (KEY_AS("e")) parseProperty(selector->end);
+                    else if (KEY_AS("sm")) parseProperty(selector->smoothness, selector);
+                    else if (KEY_AS("s")) parseProperty(selector->start, selector);
+                    else if (KEY_AS("e")) parseProperty(selector->end, selector);
                     else skip();
                 }
             } else if (KEY_AS("a")) { // text style
