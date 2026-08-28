@@ -844,16 +844,15 @@ SwTask* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const A
         tasks.push(task);
     }
 
-    //TODO: Failed threading them. It would be better if it's possible.
-    //See: https://github.com/thorvg/thorvg/issues/1409
-    //Guarantee composition targets get ready.
-    ARRAY_FOREACH(p, clips) {
-        static_cast<SwTask*>(*p)->done();
-    }
-
     if (task->ready(ready)) return task;
 
-    if (flags) TaskScheduler::request(task);
+    if (flags) {
+        // TODO: For deferred process, task scheduler dependency graph might be useful.
+        ARRAY_FOREACH(p, clips) {
+            static_cast<SwTask*>(*p)->done();
+        }
+        TaskScheduler::request(task);
+    }
 
     return task;
 }
