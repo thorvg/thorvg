@@ -343,7 +343,7 @@ struct SceneImpl : Scene
         target->ref();
 
         //Relocated the paint to the current scene space
-        timpl->mark(RenderUpdateFlag::Transform);
+        timpl->mark(RenderUpdateFlag::Transform | RenderUpdateFlag::Color);
 
         if (!at) {
             paints.push_back(target);
