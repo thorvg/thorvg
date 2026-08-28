@@ -420,8 +420,8 @@ static bool _rasterMattedRect(SwSurface* surface, const RenderRegion& bbox, cons
 
 static bool _rasterBlendingRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c)
 {
-    if (surface->channelSize != sizeof(uint8_t)) {
-        TVGERR("SW_ENGINE", "channel size is not 8bits?");
+    if (surface->channelSize != sizeof(uint32_t)) {
+        TVGERR("SW_ENGINE", "channel size is not 32bits?");
         return false;
     }
 
@@ -594,8 +594,8 @@ static bool _rasterMattedRle(SwSurface* surface, SwRle* rle, const RenderRegion&
 
 static bool _rasterBlendingRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
 {
-    if (surface->channelSize != sizeof(uint8_t)) {
-        TVGERR("SW_ENGINE", "channel size is not 8bits?");
+    if (surface->channelSize != sizeof(uint32_t)) {
+        TVGERR("SW_ENGINE", "channel size is not 32bits?");
         return false;
     }
 
