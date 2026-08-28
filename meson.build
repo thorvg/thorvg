@@ -120,7 +120,7 @@ if get_option('simd')
   elif host_machine.cpu_family().startswith('arm')
     config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
     simd_type = 'neon-arm'
-  elif host_machine.cpu().startswith('aarch')
+  elif host_machine.cpu_family().startswith('aarch64')
     config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
     simd_type = 'neon-aarch'
   endif
