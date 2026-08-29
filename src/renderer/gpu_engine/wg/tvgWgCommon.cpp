@@ -166,16 +166,22 @@ void WgContext::releaseSampler(WGPUSampler& sampler)
 
 bool WgContext::allocateBufferUniform(WGPUBuffer& buffer, const void* data, uint64_t size)
 {
-    if ((buffer) && (wgpuBufferGetSize(buffer) >= size))
-        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
-    else {
+    return allocateBufferUniform(buffer, data, size, size);
+}
+
+bool WgContext::allocateBufferUniform(WGPUBuffer& buffer, const void* data, uint64_t capacity, uint64_t size)
+{
+    if (capacity == 0) return false;
+
+    auto changed = false;
+    if (!buffer || wgpuBufferGetSize(buffer) < capacity) {
         releaseBuffer(buffer);
-        const WGPUBufferDescriptor bufferDesc { .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform, .size = size };
+        const WGPUBufferDescriptor bufferDesc { .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_Uniform, .size = capacity };
         buffer = wgpuDeviceCreateBuffer(device, &bufferDesc);
-        wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
-        return true;
+        changed = true;
     }
-    return false;
+    if (size) wgpuQueueWriteBuffer(queue, buffer, 0, data, size);
+    return changed;
 }
 
 bool WgContext::allocateBufferVertex(WGPUBuffer& buffer, const void* data, uint64_t size)
