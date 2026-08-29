@@ -27,7 +27,8 @@
 #include "tvgGpuCommon.h"
 #include "tvgWgBindGroups.h"
 
-struct WgContext {
+struct WgContext
+{
     WGPUInstance instance{};
     WGPUAdapter adapter{};
     WGPUDevice device{};

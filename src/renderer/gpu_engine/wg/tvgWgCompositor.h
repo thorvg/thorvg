@@ -82,28 +82,28 @@ private:
     void drawMeshImage(WgContext& context, WgMeshData* meshData);
 
     // shapes
-    void drawShape(WgContext& context, WgRenderDataShape* renderData);
-    void blendShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void clipShape(WgContext& context, WgRenderDataShape* renderData);
+    void drawShape(WgContext& context, WgRenderShape* rdata);
+    void blendShape(WgContext& context, WgRenderShape* rdata, BlendMethod blendMethod);
+    void clipShape(WgContext& context, WgRenderShape* rdata);
 
     // strokes
-    void drawStrokes(WgContext& context, WgRenderDataShape* renderData);
-    void blendStrokes(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
-    void clipStrokes(WgContext& context, WgRenderDataShape* renderData);
+    void drawStrokes(WgContext& context, WgRenderShape* rdata);
+    void blendStrokes(WgContext& context, WgRenderShape* rdata, BlendMethod blendMethod);
+    void clipStrokes(WgContext& context, WgRenderShape* rdata);
 
     // images
-    void drawImage(WgContext& context, WgRenderDataPicture* renderData);
-    void blendImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
-    void clipImage(WgContext& context, WgRenderDataPicture* renderData);
+    void drawImage(WgContext& context, WgRenderPicture* rdata);
+    void blendImage(WgContext& context, WgRenderPicture* rdata, BlendMethod blendMethod);
+    void clipImage(WgContext& context, WgRenderPicture* rdata);
 
     // scenes
     void drawScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose);
     void blendScene(WgContext& context, WgRenderTarget* src, WgCompose* compose);
 
     // the renderer prioritizes clipping with the stroke over the shape's fill
-    void markupClipPath(WgContext& context, WgRenderDataShape* renderData);
-    void renderClipPath(WgContext& context, WgRenderDataPaint* paint);
-    void clearClipPath(WgContext& context, WgRenderDataPaint* paint);
+    void markupClipPath(WgContext& context, WgRenderShape* rdata);
+    void renderClipPath(WgContext& context, WgRenderPaint* paint);
+    void clearClipPath(WgContext& context, WgRenderPaint* paint);
     void updateViewMat(WgContext& context, uint32_t width, uint32_t height);
 public:
     void initialize(WgContext& context, uint32_t width, uint32_t height);
@@ -122,16 +122,16 @@ public:
     void flush(WgContext& context);
 
     // request shapes for drawing (staging)
-    void requestShape(WgRenderDataShape* renderData);
-    void requestImage(WgRenderDataPicture* renderData);
-    void requestSolidBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgSolidBatchRange& range);
-    void requestStencilBatch(const Array<WgRenderDataShape*>& renderDataShapes, WgStencilBatchRange& range);
+    void requestShape(WgRenderShape* rdata);
+    void requestImage(WgRenderPicture* rdata);
+    void requestSolidBatch(const Array<WgRenderShape*>& renderShapes, WgSolidBatchRange& range);
+    void requestStencilBatch(const Array<WgRenderShape*>& renderShapes, WgStencilBatchRange& range);
 
     // render shapes, images and scenes
-    void renderShape(WgContext& context, WgRenderDataShape* renderData, BlendMethod blendMethod);
+    void renderShape(WgContext& context, WgRenderShape* rdata, BlendMethod blendMethod);
     void renderSolidBatch(const WgSolidBatchRange& range);
-    void renderStencilBatch(const Array<WgRenderDataShape*>& renderDataShapes, const WgStencilBatchRange& range);
-    void renderImage(WgContext& context, WgRenderDataPicture* renderData, BlendMethod blendMethod);
+    void renderStencilBatch(const Array<WgRenderShape*>& renderShapes, const WgStencilBatchRange& range);
+    void renderImage(WgContext& context, WgRenderPicture* rdata, BlendMethod blendMethod);
     void renderScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose);
     void composeScene(WgContext& context, WgRenderTarget* src, WgRenderTarget* mask, WgCompose* compose);
 

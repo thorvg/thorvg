@@ -91,9 +91,9 @@ private:
     WgRenderTargetPool mRenderTargetPool;
 
     // render data paint pools
-    WgRenderDataShapePool mRenderDataShapePool;
-    WgRenderDataPicturePool mRenderDataPicturePool;
-    WgRenderDataEffectParamsPool mRenderDataEffectParamsPool;
+    WgRenderShapePool mRenderDataShapePool;
+    WgRenderPicturePool mRenderDataPicturePool;
+    WgRenderEffectParamsPool mRenderDataEffectParamsPool;
     WgTextureMgr mTextures;
 
     // rendering context
