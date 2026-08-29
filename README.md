@@ -167,8 +167,7 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [Tools](#tools)
     - [ThorVG View](#thorvg-view)
     - [VS Code LiveView](#vs-code-liveview)
-    - [Lottie to GIF](#lottie-to-gif)
-    - [SVG to PNG](#svg-to-png)
+    - [CLI Tools](#cli-tools)
   - [Related Projects](#related-projects)
   - [API Bindings](#api-bindings)
   - [Documentation](#documentation)
@@ -459,7 +458,7 @@ Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to 
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tizen.png">
 </p>
 
-### More Projects
+### Other Projects
 - [ArcBrush](https://arcbrush.com/) is a free, node-based image editor that leverages ThorVG for high-performance SVG rasterization.
 - [Crank Software](https://www.cranksoftware.com/) integrates ThorVG into Storyboard Engine for SVG rendering in embedded and industrial HMIs.
 - [Evergine](https://evergine.com/) integrates ThorVG through its own ThorVG.Net, bringing vector graphics to its cross-platform graphics engine.
@@ -525,55 +524,9 @@ A [Visual Studio Code extension](https://marketplace.visualstudio.com/items?item
   <img width="1000" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_vscode.gif"/>
 </p>
 
-### Lottie to GIF
-ThorVG provides an executable `tvg-lottie2gif` converter that generates a GIF file from a Lottie file.
-
-To use the `tvg-lottie2gif`, you must turn on this feature in the build option:
-```
-meson setup builddir -Dtools=lottie2gif -Dsavers=gif
-```
-The usage examples of the `tvg-lottie2gif`:
-```
-Usage:
-    tvg-lottie2gif [Lottie file] or [Lottie folder] [-r resolution] [-f fps] [-b background color]
-
-Flags:
-    -r set the output image resolution.
-    -f specifies the frames per second (fps) for the generated animation.
-    -b specifies the base background color (RGB in hex). If not specified, the background color will follow the original content.
-
-Examples:
-    $ tvg-lottie2gif input.json
-    $ tvg-lottie2gif input.json -f 30
-    $ tvg-lottie2gif input.json -r 600x600 -f 30
-    $ tvg-lottie2gif lottiefolder
-    $ tvg-lottie2gif lottiefolder -r 600x600
-    $ tvg-lottie2gif lottiefolder -r 600x600 -f 30 -b fa7410
-```
-
-### SVG to PNG
-ThorVG provides an executable `tvg-svg2png` converter that generates a PNG file from an SVG file.
-
-To use the `tvg-svg2png`, you must turn on this feature in the build option:
-```
-meson setup builddir -Dtools=svg2png
-```
-The usage examples of the `tvg-svg2png`:
-```
-Usage:
-    tvg-svg2png [SVG files] [-r resolution] [-b bgColor]
-
-Flags:
-    -r set the output image resolution.
-    -b set the output image background color.
-
-Examples:
-    $ tvg-svg2png input.svg
-    $ tvg-svg2png input.svg -r 200x200
-    $ tvg-svg2png input.svg -r 200x200 -b ff00ff
-    $ tvg-svg2png input1.svg input2.svg -r 200x200 -b ff00ff
-    $ tvg-svg2png . -r 200x200
-```
+### CLI Tools
+[CLI Tools](https://github.com/thorvg/thorvg.cli-tools/) provides lightweight command-line tools, including **svg2png** for converting SVG files to PNG images and **lottie2gif** for converting Lottie animations to animated GIFs.
+<br />
 
 [Back to contents](#contents)
 <br />
@@ -582,13 +535,9 @@ Examples:
 ThorVG is designed to be portable and extensible across various platforms. The following projects integrate ThorVG into specific environments or tools: </br >
 
 * [ThorVG Android](https://github.com/thorvg/thorvg.android) – Kotlin-based ThorVG support for Android.
-* [ThorVG Example](https://github.com/thorvg/thorvg.example) – An example set demonstrates how to use ThorVG's APIs.
 * [ThorVG Flutter](https://github.com/thorvg/thorvg.flutter) - A Flutter plugin for using ThorVG on Android and iOS.
-* [ThorVG Janitor](https://github.com/thorvg/thorvg.janitor) - A demo game showcasing ThorVG’s real-time rendering features.
 * [ThorVG Swift](https://github.com/thorvg/thorvg.swift) - Swift bindings for rendering vector graphics with ThorVG.
 * [ThorVG Unity](https://github.com/thorvg/thorvg.unity) – ThorVG integration for Unity using C#.
-* [ThorVG View](https://github.com/thorvg/thorvg.view) - A browser-based preview tool for ThorVG.
-* [ThorVG VS Code](https://github.com/thorvg/thorvg.vscode) - ThorVG VS Code Extensions.
 * [ThorVG Web](https://github.com/thorvg/thorvg.web) - WebAssembly-based integration of ThorVG for web apps.
 
 [Back to contents](#contents)
