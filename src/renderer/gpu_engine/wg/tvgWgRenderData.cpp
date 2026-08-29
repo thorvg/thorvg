@@ -439,8 +439,8 @@ void WgRenderEffectParamsPool::release(WgContext& context)
 
 void WgStageBufferUniformBase::flush(WgContext& context, WGPUBuffer& buffer, const void* data, uint64_t reserved, uint32_t count, uint64_t stride)
 {
-    // Upload reserved storage to avoid reallocating the GPU buffer as data grows.
-    if (context.allocateBufferUniform(buffer, data, reserved)) releaseBindGroups(context);
+    // Reserve GPU storage for growth, but upload only initialized elements.
+    if (context.allocateBufferUniform(buffer, data, reserved, uint64_t(count) * stride)) releaseBindGroups(context);
 
     for (uint32_t i = bbuffer.count; i < count; ++i)
         bbuffer.push(context.layouts.createBindGroupBuffer1Un(buffer, i * stride, stride));
