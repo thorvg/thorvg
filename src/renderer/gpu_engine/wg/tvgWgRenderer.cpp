@@ -159,11 +159,9 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     // update paint settings
-    if ((!data) || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) {
-        rds->solidShape.opacity = rds->renderSettingsShape.updateOpacity(mTargetSurface.cs, opacity);
-        rds->solidStroke.opacity = rds->renderSettingsStroke.updateOpacity(mTargetSurface.cs, opacity);
-        rds->fillRule = rshape.rule;
-    }
+    rds->solidShape.opacity = rds->renderSettingsShape.updateOpacity(mTargetSurface.cs, opacity);
+    rds->solidStroke.opacity = rds->renderSettingsStroke.updateOpacity(mTargetSurface.cs, opacity);
+    rds->fillRule = rshape.rule;
 
     // setup fill settings
     rds->viewport = vport;
@@ -201,7 +199,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     // update paint settings
     rdp->viewport = vport;
     rdp->transform = transform;
-    if (!data || (flags & (RenderUpdateFlag::Blend | RenderUpdateFlag::Color))) rdp->renderSettings.updateOpacity(surface->cs, opacity);
+    rdp->renderSettings.updateOpacity(surface->cs, opacity);
 
     auto updateSurface = !data || (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image));
     if (updateSurface) rdp->updateSurface(surface, transform);
