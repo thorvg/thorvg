@@ -23,7 +23,11 @@
 #include "tvgWgRenderTask.h"
 #include <iostream>
 
-WgBatchTask::WgBatchTask(WgRenderDataShape* first, WgRenderDataShape* second, bool stencilBatch) :
+//***********************************************************************
+// WgBatchTask
+//***********************************************************************
+
+WgBatchTask::WgBatchTask(WgRenderShape* first, WgRenderShape* second, bool stencilBatch) :
     shapes{2}, stencilBatch(stencilBatch)
 {
     shapes.push(first);
@@ -48,17 +52,14 @@ void WgBatchTask::run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder)
 
 void WgPaintTask::stage(WgCompositor& compositor)
 {
-    if (renderData->type() == tvg::Type::Shape) compositor.requestShape((WgRenderDataShape*)renderData);
-    else if (renderData->type() == tvg::Type::Picture) compositor.requestImage((WgRenderDataPicture*)renderData);
+    if (renderPaint->type() == tvg::Type::Shape) compositor.requestShape((WgRenderShape*)renderPaint);
+    if (renderPaint->type() == tvg::Type::Picture) compositor.requestImage((WgRenderPicture*)renderPaint);
 }
 
 void WgPaintTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {
-    if (renderData->type() == tvg::Type::Shape)
-        compositor.renderShape(context, (WgRenderDataShape*)renderData, blendMethod);
-    if (renderData->type() == tvg::Type::Picture)
-        compositor.renderImage(context, (WgRenderDataPicture*)renderData, blendMethod);
-    else assert(true);
+    if (renderPaint->type() == tvg::Type::Shape) compositor.renderShape(context, (WgRenderShape*)renderPaint, blendMethod);
+    if (renderPaint->type() == tvg::Type::Picture) compositor.renderImage(context, (WgRenderPicture*)renderPaint, blendMethod);
 }
 
 //***********************************************************************
@@ -111,7 +112,6 @@ void WgSceneTask::runChildren(WgContext& context, WgCompositor& compositor, WGPU
 
 void WgSceneTask::runEffect(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {
-    assert(effect);
     switch (effect->type) {
         case SceneEffect::GaussianBlur: compositor.gaussianBlur(context, renderTarget, (RenderEffectGaussianBlur*)effect, compose); break;
         case SceneEffect::DropShadow: compositor.dropShadow(context, renderTarget, (RenderEffectDropShadow*)effect, compose); break;

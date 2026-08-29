@@ -27,11 +27,11 @@
 
 struct WgSolidBatch
 {
-    bool draw(WgSceneTask* sceneTask, WgRenderDataShape* renderData, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList);
+    bool draw(WgSceneTask* sceneTask, WgRenderShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList);
 
     WgSceneTask* sceneTask{};
     WgRenderTask* task{};
-    WgRenderDataShape* first{};
+    WgRenderShape* first{};
     RenderRegion viewport{};
 };
 
