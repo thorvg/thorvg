@@ -37,11 +37,11 @@ struct WgRenderTask
 struct WgPaintTask : WgRenderTask
 {
     // shape render properties
-    WgRenderDataPaint* renderData{};
+    WgRenderPaint* renderPaint{};
     BlendMethod blendMethod{};
 
-    WgPaintTask(WgRenderDataPaint* renderData, BlendMethod blendMethod) : 
-        renderData(renderData), blendMethod(blendMethod) {}
+    WgPaintTask(WgRenderPaint* renderPaint, BlendMethod blendMethod) :
+        renderPaint(renderPaint), blendMethod(blendMethod) {}
     // stage all resources used by this paint
     void stage(WgCompositor& compositor) override;
     // apply shape execution, including custom blending and clipping
@@ -50,12 +50,12 @@ struct WgPaintTask : WgRenderTask
 
 struct WgBatchTask : WgRenderTask
 {
-    Array<WgRenderDataShape*> shapes;
+    Array<WgRenderShape*> shapes;
     WgSolidBatchRange solidRange;
     WgStencilBatchRange stencilRange;
     bool stencilBatch{};
 
-    WgBatchTask(WgRenderDataShape* first, WgRenderDataShape* second, bool stencilBatch);
+    WgBatchTask(WgRenderShape* first, WgRenderShape* second, bool stencilBatch);
     void stage(WgCompositor& compositor) override;
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
 };

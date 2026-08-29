@@ -23,25 +23,25 @@
 #include "tvgMath.h"
 #include "tvgWgStencilBatch.h"
 
-static bool eligible(const WgRenderDataShape* renderData, BlendMethod blendMethod, RenderRegion& bounds)
+static bool eligible(const WgRenderShape* rdata, BlendMethod blendMethod, RenderRegion& bounds)
 {
-    if (blendMethod != BlendMethod::Normal || renderData->renderSettingsShape.skip) return false;
+    if (blendMethod != BlendMethod::Normal || !rdata->shape.setting.valid) return false;
 
-    const auto fillType = renderData->renderSettingsShape.fillType;
+    const auto fillType = rdata->shape.setting.fillType;
     if (fillType != WgRenderSettingsType::Solid && fillType != WgRenderSettingsType::Linear && fillType != WgRenderSettingsType::Radial) return false;
 
-    if (renderData->convex || renderData->viewport.invalid() || !renderData->clips.empty()) return false;
-    if (renderData->meshShape.vbuffer.empty() || renderData->meshShape.ibuffer.empty() || renderData->meshBBox.vbuffer.empty() || renderData->meshBBox.ibuffer.empty()) return false;
-    if (!renderData->renderSettingsStroke.skip && !renderData->meshStrokes.ibuffer.empty()) return false;
+    if (rdata->convex || rdata->viewport.invalid() || !rdata->clips.empty()) return false;
+    if (rdata->shape.mesh.vbuffer.empty() || rdata->shape.mesh.ibuffer.empty() || rdata->meshBBox.vbuffer.empty() || rdata->meshBBox.ibuffer.empty()) return false;
+    if (rdata->stroke.setting.valid && !rdata->stroke.mesh.ibuffer.empty()) return false;
 
     // Clip finite geometry bounds to the viewport before rounding to the integer overlap region.
-    const auto& aabb = renderData->aabb;
+    const auto& aabb = rdata->aabb;
     if (!std::isfinite(aabb.min.x) || !std::isfinite(aabb.min.y) || !std::isfinite(aabb.max.x) || !std::isfinite(aabb.max.y)) return false;
 
-    const auto minX = tvg::clamp(static_cast<double>(aabb.min.x), static_cast<double>(renderData->viewport.min.x), static_cast<double>(renderData->viewport.max.x));
-    const auto minY = tvg::clamp(static_cast<double>(aabb.min.y), static_cast<double>(renderData->viewport.min.y), static_cast<double>(renderData->viewport.max.y));
-    const auto maxX = tvg::clamp(static_cast<double>(aabb.max.x), static_cast<double>(renderData->viewport.min.x), static_cast<double>(renderData->viewport.max.x));
-    const auto maxY = tvg::clamp(static_cast<double>(aabb.max.y), static_cast<double>(renderData->viewport.min.y), static_cast<double>(renderData->viewport.max.y));
+    const auto minX = tvg::clamp(static_cast<double>(aabb.min.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
+    const auto minY = tvg::clamp(static_cast<double>(aabb.min.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
+    const auto maxX = tvg::clamp(static_cast<double>(aabb.max.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
+    const auto maxY = tvg::clamp(static_cast<double>(aabb.max.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
     if (maxX <= minX || maxY <= minY) return false;
 
     bounds = {{static_cast<int32_t>(std::floor(minX)), static_cast<int32_t>(std::floor(minY))}, {static_cast<int32_t>(std::ceil(maxX)), static_cast<int32_t>(std::ceil(maxY))}};
@@ -74,36 +74,36 @@ static void addBounds(WgStencilBatch& batch, const RenderRegion& bounds)
     batch.bounds[p] = bounds;
 }
 
-static bool appendable(const WgStencilBatch& batch, WgSceneTask* sceneTask, WgRenderDataShape* renderData, const RenderRegion& bounds, const Array<WgRenderTask*>& renderTaskList)
+static bool appendable(const WgStencilBatch& batch, WgSceneTask* sceneTask, WgRenderShape* rdata, const RenderRegion& bounds, const Array<WgRenderTask*>& renderTaskList)
 {
     if (batch.sceneTask != sceneTask || sceneTask->children.last() != batch.task || renderTaskList.last() != batch.task) return false;
-    if (!(batch.viewport == renderData->viewport) || batch.fillRule != renderData->fillRule) return false;
+    if (!(batch.viewport == rdata->viewport) || batch.fillRule != rdata->fillRule) return false;
     return !intersects(batch, bounds);
 }
 
-static void emitSingle(WgStencilBatch& batch, WgSceneTask* sceneTask, WgRenderDataShape* renderData, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
+static void emitSingle(WgStencilBatch& batch, WgSceneTask* sceneTask, WgRenderShape* rdata, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
 {
-    auto task = new WgPaintTask(renderData, BlendMethod::Normal);
+    auto task = new WgPaintTask(rdata, BlendMethod::Normal);
     sceneTask->children.push(task);
     renderTaskList.push(task);
 
     batch.sceneTask = sceneTask;
     batch.task = task;
-    batch.first = renderData;
-    batch.viewport = renderData->viewport;
-    batch.fillRule = renderData->fillRule;
+    batch.first = rdata;
+    batch.viewport = rdata->viewport;
+    batch.fillRule = rdata->fillRule;
     batch.ySorted = batch.viewport.sh() > batch.viewport.sw();
     batch.bounds.clear();
 
     addBounds(batch, bounds);
 }
 
-static void promote(WgStencilBatch& batch, WgRenderDataShape* renderData, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
+static void promote(WgStencilBatch& batch, WgRenderShape* rdata, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
 {
     assert(batch.sceneTask && batch.first && batch.task);
     assert(batch.sceneTask->children.last() == batch.task && renderTaskList.last() == batch.task);
 
-    auto batchTask = new WgBatchTask(batch.first, renderData, true);
+    auto batchTask = new WgBatchTask(batch.first, rdata, true);
     batch.sceneTask->children.last() = batchTask;
     renderTaskList.last() = batchTask;
     delete (batch.task);
@@ -113,24 +113,24 @@ static void promote(WgStencilBatch& batch, WgRenderDataShape* renderData, const 
     addBounds(batch, bounds);
 }
 
-static void append(WgStencilBatch& batch, WgRenderDataShape* renderData, const RenderRegion& bounds)
+static void append(WgStencilBatch& batch, WgRenderShape* rdata, const RenderRegion& bounds)
 {
     assert(batch.sceneTask && !batch.first && batch.task);
-    static_cast<WgBatchTask*>(batch.task)->shapes.push(renderData);
+    static_cast<WgBatchTask*>(batch.task)->shapes.push(rdata);
     addBounds(batch, bounds);
 }
 
-bool WgStencilBatch::draw(WgSceneTask* sceneTask, WgRenderDataShape* renderData, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
+bool WgStencilBatch::draw(WgSceneTask* sceneTask, WgRenderShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
 {
     RenderRegion bounds;
-    if (!eligible(renderData, blendMethod, bounds)) return false;
+    if (!eligible(rdata, blendMethod, bounds)) return false;
 
-    if (!appendable(*this, sceneTask, renderData, bounds, renderTaskList)) {
-        emitSingle(*this, sceneTask, renderData, bounds, renderTaskList);
+    if (!appendable(*this, sceneTask, rdata, bounds, renderTaskList)) {
+        emitSingle(*this, sceneTask, rdata, bounds, renderTaskList);
         return true;
     }
 
-    if (first) promote(*this, renderData, bounds, renderTaskList);
-    else append(*this, renderData, bounds);
+    if (first) promote(*this, rdata, bounds, renderTaskList);
+    else append(*this, rdata, bounds);
     return true;
 }

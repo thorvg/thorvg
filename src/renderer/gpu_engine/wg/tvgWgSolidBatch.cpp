@@ -22,38 +22,38 @@
 
 #include "tvgWgSolidBatch.h"
 
-static inline bool eligible(const WgRenderDataShape* renderData, BlendMethod blendMethod)
+static inline bool eligible(const WgRenderShape* rdata, BlendMethod blendMethod)
 {
     if (blendMethod != BlendMethod::Normal) return false;
-    if (renderData->renderSettingsShape.skip || renderData->renderSettingsShape.fillType != WgRenderSettingsType::Solid) return false;
-    if (!renderData->convex || renderData->viewport.invalid() || !renderData->clips.empty()) return false;
-    if (renderData->meshShape.vbuffer.empty() || renderData->meshShape.ibuffer.empty()) return false;
-    if (!renderData->renderSettingsStroke.skip && !renderData->meshStrokes.ibuffer.empty()) return false;
+    if (!rdata->shape.setting.valid || rdata->shape.setting.fillType != WgRenderSettingsType::Solid) return false;
+    if (!rdata->convex || rdata->viewport.invalid() || !rdata->clips.empty()) return false;
+    if (rdata->shape.mesh.vbuffer.empty() || rdata->shape.mesh.ibuffer.empty()) return false;
+    if (rdata->stroke.setting.valid && !rdata->stroke.mesh.ibuffer.empty()) return false;
     return true;
 }
 
-static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTask, const RenderRegion& batchViewport, WgSceneTask* sceneTask, const WgRenderDataShape* renderData, const Array<WgRenderTask*>& renderTaskList)
+static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTask, const RenderRegion& batchViewport, WgSceneTask* sceneTask, const WgRenderShape* rdata, const Array<WgRenderTask*>& renderTaskList)
 {
     // Any task submitted after the candidate is an implicit batch boundary.
     if (batchSceneTask != sceneTask) return false;
     if (sceneTask->children.last() != batchTask) return false;
     if (renderTaskList.last() != batchTask) return false;
-    if (!(batchViewport == renderData->viewport)) return false;
+    if (!(batchViewport == rdata->viewport)) return false;
     return true;
 }
 
-static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgRenderDataShape* renderData, Array<WgRenderTask*>& renderTaskList)
+static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgRenderShape* rdata, Array<WgRenderTask*>& renderTaskList)
 {
-    auto task = new WgPaintTask(renderData, BlendMethod::Normal);
+    auto task = new WgPaintTask(rdata, BlendMethod::Normal);
     sceneTask->children.push(task);
     renderTaskList.push(task);
     return task;
 }
 
-static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, WgRenderDataShape* first, WgRenderDataShape* renderData, Array<WgRenderTask*>& renderTaskList)
+static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, WgRenderShape* first, WgRenderShape* rdata, Array<WgRenderTask*>& renderTaskList)
 {
     // Tasks are staged only after the tree is complete, so replacing its tail is safe.
-    auto batchTask = new WgBatchTask(first, renderData, false);
+    auto batchTask = new WgBatchTask(first, rdata, false);
     sceneTask->children.last() = batchTask;
     renderTaskList.last() = batchTask;
     delete task;
@@ -61,26 +61,26 @@ static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, 
     return batchTask;
 }
 
-static inline void append(WgRenderTask* task, WgRenderDataShape* renderData)
+static inline void append(WgRenderTask* task, WgRenderShape* rdata)
 {
-    static_cast<WgBatchTask*>(task)->shapes.push(renderData);
+    static_cast<WgBatchTask*>(task)->shapes.push(rdata);
 }
 
-bool WgSolidBatch::draw(WgSceneTask* sceneTask, WgRenderDataShape* renderData, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
+bool WgSolidBatch::draw(WgSceneTask* sceneTask, WgRenderShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
 {
-    if (!eligible(renderData, blendMethod)) return false;
+    if (!eligible(rdata, blendMethod)) return false;
 
-    if (!appendable(this->sceneTask, task, viewport, sceneTask, renderData, renderTaskList)) {
-        task = emitSingle(sceneTask, renderData, renderTaskList);
+    if (!appendable(this->sceneTask, task, viewport, sceneTask, rdata, renderTaskList)) {
+        task = emitSingle(sceneTask, rdata, renderTaskList);
         this->sceneTask = sceneTask;
-        first = renderData;
-        viewport = renderData->viewport;
+        first = rdata;
+        viewport = rdata->viewport;
         return true;
     }
 
     if (first) {
-        task = promote(this->sceneTask, task, first, renderData, renderTaskList);
+        task = promote(this->sceneTask, task, first, rdata, renderTaskList);
         first = nullptr;
-    } else append(task, renderData);
+    } else append(task, rdata);
     return true;
 }
