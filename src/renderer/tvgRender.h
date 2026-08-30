@@ -218,7 +218,13 @@ struct RenderRegion
         }
 
     private:
-        void subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs);
+        static bool subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs);
+        //Merge the regions in the working list into the disjoint output list.
+        //Returns false if the working list capacity is insufficient, leaving the regions unmodified.
+        static bool sweepMerge(Array<RenderRegion>& targets, Array<RenderRegion>& output);
+        //Merge the input regions into the disjoint output list. The working list is enlarged
+        //and the merge restarted if the produced fragments exceed its capacity.
+        void merge(const Array<RenderRegion>& input, Array<RenderRegion>& output);
 
         struct Partition
         {
@@ -229,6 +235,7 @@ struct RenderRegion
 
         Key key;
         Partition partitions[PARTITIONING];
+        Array<RenderRegion> scratch;  //working list for the merge()
         bool disabled = false;
     };
 #else

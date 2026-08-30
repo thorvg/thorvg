@@ -329,8 +329,17 @@ void RenderDirtyRegion::clear()
 }
 
 
-void RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs)
+bool RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs)
 {
+    //verify the capacity upfront so that a failure leaves the regions unmodified
+    auto required = targets.count;
+    if (rhs.min.y < lhs.min.y) ++required;
+    if (rhs.max.y > lhs.max.y) ++required;
+    if (rhs.max.x > lhs.max.x) ++required;
+
+    //Please reserve memory enough with targets.reserve()
+    if (required - 1 >= targets.reserved) return false;
+
     RenderRegion temp[3];
     uint32_t cnt = 0;
 
@@ -349,12 +358,6 @@ void RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, Re
         temp[cnt++] = {{lhs.max.x, rhs.min.y}, {rhs.max.x, rhs.max.y}};
     }
 
-    //Please reserve memory enough with targets.reserve()
-    if (targets.count + cnt - 1 >= targets.reserved) {
-        TVGERR("RENDERER", "reserved(%d), required(%d)", targets.reserved, targets.count + cnt - 1);
-        return;
-    }
-
     /* Shift data. Considered using a list to avoid memory shifting,
        but ultimately, the array outperformed the list due to better cache locality. */
     auto src = &targets[idx + 1];
@@ -369,6 +372,66 @@ void RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, Re
     stable_sort(&targets[idx], dst, [](const RenderRegion& a, const RenderRegion& b) -> bool {
         return a.min.x < b.min.x;
     });
+    return true;
+}
+
+
+bool RenderDirtyRegion::sweepMerge(Array<RenderRegion>& targets, Array<RenderRegion>& output)
+{
+    //sorting by x coord. guarantee the stable performance: O(NlogN)
+    stable_sort(targets.begin(), targets.end(), [](const RenderRegion& a, const RenderRegion& b) -> bool {
+        return a.min.x < b.min.x;
+    });
+
+    //Optimized using sweep-line algorithm: O(NlogN)
+    for (uint32_t i = 0; i < targets.count; ++i) {
+        auto& lhs = targets[i];
+        if (lhs.invalid()) continue;
+        auto merged = false;
+
+        for (uint32_t j = i + 1; j < targets.count; ++j) {
+            auto& rhs = targets[j];
+            if (rhs.invalid()) continue;
+            if (lhs.max.x < rhs.min.x) break;   //line sweeping
+
+            //fully overlapped. drop lhs
+            if (rhs.contained(lhs)) {
+                merged = true;
+                break;
+            }
+            //fully overlapped. replace the lhs with rhs
+            if (lhs.contained(rhs)) {
+                rhs = {};
+                continue;
+            }
+            //just merge & expand on x axis
+            if (lhs.min.y == rhs.min.y && lhs.max.y == rhs.max.y) {
+                if (lhs.max.x >= rhs.min.x) {
+                    lhs.max.x = rhs.max.x;
+                    rhs = {};
+                    j = i;   //lhs dirty region has been damaged, try again.
+                    continue;
+                }
+            }
+            //just merge & expand on y axis
+            if (lhs.min.x == rhs.min.x && lhs.max.x == rhs.max.x) {
+                if (lhs.min.y <= rhs.max.y && rhs.min.y <= lhs.max.y) {
+                    rhs.min.y = std::min(lhs.min.y, rhs.min.y);
+                    rhs.max.y = std::max(lhs.max.y, rhs.max.y);
+                    merged = true;
+                    break;
+                }
+            }
+            //subdivide regions
+            if (lhs.intersected(rhs)) {
+                if (!subdivide(targets, j, lhs, rhs)) return false;  //insufficient capacity, retry required
+                --j; //rhs dirty region has been damaged, try again.
+            }
+        }
+        if (!merged) output.push(lhs);  //this region is complete isolated
+        lhs = {};
+    }
+    return true;
 }
 
 
@@ -381,67 +444,34 @@ void RenderDirtyRegion::commit()
         auto& targets = partitions[idx].list[current];
         if (targets.empty()) continue;
 
-        current = !current; //swapping buffers
-        auto& output = partitions[idx].list[current];
+        //merge the dirty regions into a disjoint set in the other list.
+        //the output list is cleared in advance, no stale regions can survive a re-commit.
+        merge(targets, partitions[idx].list[!current]);
+        partitions[idx].current = !current;
+    }
+}
 
-        targets.reserve(targets.count * 10);  //one intersection can be divided up to 3
-        output.reserve(targets.count);
 
-        partitions[idx].current = current;
+void RenderDirtyRegion::merge(const Array<RenderRegion>& input, Array<RenderRegion>& output)
+{
+    if (input.empty()) {
+        output.clear();
+        return;
+    }
 
-        //sorting by x coord. guarantee the stable performance: O(NlogN)
-        stable_sort(targets.begin(), targets.end(), [](const RenderRegion& a, const RenderRegion& b) -> bool {
-            return a.min.x < b.min.x;
-        });
+    scratch.reserve(input.count * 10);  //one intersection can be divided up to 3
 
-        //Optimized using sweep-line algorithm: O(NlogN)
-        for (uint32_t i = 0; i < targets.count; ++i) {
-            auto& lhs = targets[i];
-            if (lhs.invalid()) continue;
-            auto merged = false;
+    while (true) {
+        scratch.clear();
+        scratch.push(input);
+        output.clear();
+        output.reserve(input.count);
 
-            for (uint32_t j = i + 1; j < targets.count; ++j) {
-                auto& rhs = targets[j];
-                if (rhs.invalid()) continue;
-                if (lhs.max.x < rhs.min.x) break;   //line sweeping
+        if (sweepMerge(scratch, output)) return;
 
-                //fully overlapped. drop lhs
-                if (rhs.contained(lhs)) {
-                    merged = true;
-                    break;
-                }
-                //fully overlapped. replace the lhs with rhs
-                if (lhs.contained(rhs)) {
-                    rhs = {};
-                    continue;
-                }
-                //just merge & expand on x axis
-                if (lhs.min.y == rhs.min.y && lhs.max.y == rhs.max.y) {
-                    if (lhs.max.x >= rhs.min.x) {
-                        lhs.max.x = rhs.max.x;
-                        rhs = {};
-                        j = i;   //lhs dirty region has been damaged, try again.
-                        continue;
-                    }
-                }
-                //just merge & expand on y axis
-                if (lhs.min.x == rhs.min.x && lhs.max.x == rhs.max.x) {
-                    if (lhs.min.y <= rhs.max.y && rhs.min.y <= lhs.max.y) {
-                        rhs.min.y = std::min(lhs.min.y, rhs.min.y);
-                        rhs.max.y = std::max(lhs.max.y, rhs.max.y);
-                        merged = true;
-                        break;
-                    }
-                }
-                //subdivide regions
-                if (lhs.intersected(rhs)) {
-                    subdivide(targets, j, lhs, rhs);
-                    --j; //rhs dirty region has been damaged, try again.
-                }
-            }
-            if (!merged) output.push(lhs);  //this region is complete isolated
-            lhs = {};
-        }
+        //the region fragments exceeded the working list. enlarge it and restart.
+        TVGLOG("RENDERER", "regions(%d) overflown the reserved(%d) working list. retrying...", input.count, scratch.reserved);
+        scratch.reserve(scratch.reserved * 2);
     }
 }
 
