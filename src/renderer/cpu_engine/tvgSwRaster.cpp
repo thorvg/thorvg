@@ -1566,6 +1566,21 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
     return true;
 }
 
+/* Convert a premultiplied row into the straight-alpha space.
+   Fully transparent / fully opaque pixels are left untouched in the buffer,
+   sparing the write-back traffic for the regions without semi-transparent content. */
+static inline void _rasterUnpremultiply32(uint32_t* buffer, int32_t len)
+{
+    for (int32_t x = 0; x < len; ++x) {
+        auto c = buffer[x];
+        auto a = A(c);
+        if (a == 255 || a == 0) continue;
+        uint8_t r = std::min(C1(c) * 255u / a, 255u);
+        uint8_t g = std::min(C2(c) * 255u / a, 255u);
+        uint8_t b = std::min(C3(c) * 255u / a, 255u);
+        buffer[x] = JOIN(a, r, g, b);
+    }
+}
 
 uint32_t rasterUnpremultiply(uint32_t data)
 {
@@ -1587,15 +1602,24 @@ void rasterUnpremultiply(RenderSurface* surface)
     TVGLOG("SW_ENGINE", "Unpremultiply [Size: %d x %d]", surface->w, surface->h);
 
     //OPTIMIZE_ME: +SIMD
-    for (uint32_t y = 0; y < surface->h; y++) {
-        auto buffer = surface->buf32 + surface->stride * y;
-        for (uint32_t x = 0; x < surface->w; ++x) {
-            buffer[x] = rasterUnpremultiply(buffer[x]);
-        }
+    auto buffer = surface->buf32;
+    for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
+        _rasterUnpremultiply32(buffer, surface->w);
     }
     surface->premultiplied = false;
 }
 
+void rasterUnpremultiply(RenderSurface* surface, const RenderRegion& region)
+{
+    if (surface->channelSize != sizeof(uint32_t)) return;
+
+    auto clipped = RenderRegion::intersect(region, {{0, 0}, {(int32_t)surface->w, (int32_t)surface->h}});
+    if (clipped.invalid()) return;
+
+    for (int32_t y = clipped.min.y; y < clipped.max.y; ++y) {
+        _rasterUnpremultiply32(surface->buf32 + surface->stride * y + clipped.min.x, clipped.max.x - clipped.min.x);
+    }
+}
 
 void rasterPremultiply(RenderSurface* surface)
 {

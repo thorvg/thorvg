@@ -527,6 +527,7 @@ void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
 void rasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len);
 void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, bool flipped);
 void rasterUnpremultiply(RenderSurface* surface);
+void rasterUnpremultiply(RenderSurface* surface, const RenderRegion& region);
 void rasterPremultiply(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 uint32_t rasterUnpremultiply(uint32_t data);
