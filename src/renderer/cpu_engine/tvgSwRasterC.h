@@ -164,8 +164,9 @@ static bool inline cRasterABGRtoARGB(RenderSurface* surface)
     //64bits faster converting
     if (surface->w % 2 == 0) {
         auto buffer = reinterpret_cast<uint64_t*>(surface->buf32);
-        for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride / 2) {
-            auto dst = buffer;
+        #pragma omp parallel for
+        for (int32_t y = 0; y < (int32_t)surface->h; ++y) {
+            auto dst = buffer + uint32_t(y) * (surface->stride / 2);
             for (uint32_t x = 0; x < surface->w / 2; ++x, ++dst) {
                 auto c = *dst;
                 //flip Blue, Red channels
@@ -175,8 +176,9 @@ static bool inline cRasterABGRtoARGB(RenderSurface* surface)
     //default converting
     } else {
         auto buffer = surface->buf32;
-        for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
-            auto dst = buffer;
+        #pragma omp parallel for
+        for (int32_t y = 0; y < (int32_t)surface->h; ++y) {
+            auto dst = buffer + uint32_t(y) * surface->stride;
             for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
                 auto c = *dst;
                 //flip Blue, Red channels
