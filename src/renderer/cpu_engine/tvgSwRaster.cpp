@@ -908,26 +908,23 @@ static bool _rasterScaledMattedImage(SwSurface* surface, const SwImage& image, c
         return false;
     }
 
-    auto dbuffer = surface->buf32 + (bbox.min.y * surface->stride + bbox.min.x);
     auto csize = surface->compositor->image.channelSize;
-    auto cbuffer = surface->compositor->image.buf8 + (bbox.min.y * surface->compositor->image.stride + bbox.min.x) * csize;
     auto alpha = surface->alpha(surface->compositor->method);
     auto scaleMethod = _scaleMethod(image);
     auto sampleSize = _sampleSize(image.scale);
-    int32_t miny = 0, maxy = 0;
 
+    #pragma omp parallel for
     for (auto y = bbox.min.y; y < bbox.max.y; ++y) {
+        int32_t miny = 0, maxy = 0;
         SCALED_IMAGE_RANGE_Y(y)
-        auto dst = dbuffer;
-        auto cmp = cbuffer;
+        auto dst = surface->buf32 + y * surface->stride + bbox.min.x;
+        auto cmp = surface->compositor->image.buf8 + (y * surface->compositor->image.stride + bbox.min.x) * csize;
         for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst, cmp += csize) {
             SCALED_IMAGE_RANGE_X
             auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
             auto tmp = ALPHA_BLEND(src, opacity == 255 ? alpha(cmp) : MULTIPLY(opacity, alpha(cmp)));
             *dst = tmp + ALPHA_BLEND(*dst, IA(tmp));
         }
-        dbuffer += surface->stride;
-        cbuffer += surface->compositor->image.stride * csize;
     }
     return true;
 }
@@ -940,14 +937,14 @@ static bool _rasterScaledBlendingImage(SwSurface* surface, const SwImage& image,
         return false;
     }
 
-    auto dbuffer = surface->buf32 + (bbox.min.y * surface->stride + bbox.min.x);
     auto scaleMethod = _scaleMethod(image);
     auto sampleSize = _sampleSize(image.scale);
-    int32_t miny = 0, maxy = 0;
 
-    for (auto y = bbox.min.y; y < bbox.max.y; ++y, dbuffer += surface->stride) {
+    #pragma omp parallel for
+    for (auto y = bbox.min.y; y < bbox.max.y; ++y) {
+        int32_t miny = 0, maxy = 0;
         SCALED_IMAGE_RANGE_Y(y)
-        auto dst = dbuffer;
+        auto dst = surface->buf32 + y * surface->stride + bbox.min.x;
         for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
             SCALED_IMAGE_RANGE_X
             auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
@@ -962,14 +959,14 @@ static bool _rasterScaledImage(SwSurface* surface, const SwImage& image, const M
 {
     auto scaleMethod = _scaleMethod(image);
     auto sampleSize = _sampleSize(image.scale);
-    int32_t miny = 0, maxy = 0;
 
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
-        auto buffer = surface->buf32 + (bbox.min.y * surface->stride + bbox.min.x);
-        for (auto y = bbox.min.y; y < bbox.max.y; ++y, buffer += surface->stride) {
+        #pragma omp parallel for
+        for (auto y = bbox.min.y; y < bbox.max.y; ++y) {
+            int32_t miny = 0, maxy = 0;
             SCALED_IMAGE_RANGE_Y(y)
-            auto dst = buffer;
+            auto dst = surface->buf32 + y * surface->stride + bbox.min.x;
             if (opacity == 255) {
                 for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
                     SCALED_IMAGE_RANGE_X
@@ -991,10 +988,11 @@ static bool _rasterScaledImage(SwSurface* surface, const SwImage& image, const M
             }
         }
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        auto buffer = surface->buf8 + (bbox.min.y * surface->stride + bbox.min.x);
-        for (auto y = bbox.min.y; y < bbox.max.y; ++y, buffer += surface->stride) {
+        #pragma omp parallel for
+        for (auto y = bbox.min.y; y < bbox.max.y; ++y) {
+            int32_t miny = 0, maxy = 0;
             SCALED_IMAGE_RANGE_Y(y)
-            auto dst = buffer;
+            auto dst = surface->buf8 + y * surface->stride + bbox.min.x;
             for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
@@ -1579,16 +1577,16 @@ uint32_t rasterUnpremultiply(uint32_t data)
     return JOIN(a, r, g, b);
 }
 
-
+// TODO: +SIMD
 void rasterUnpremultiply(RenderSurface* surface)
 {
     if (surface->channelSize != sizeof(uint32_t)) return;
 
     TVGLOG("SW_ENGINE", "Unpremultiply [Size: %d x %d]", surface->w, surface->h);
 
-    //OPTIMIZE_ME: +SIMD
-    for (uint32_t y = 0; y < surface->h; y++) {
-        auto buffer = surface->buf32 + surface->stride * y;
+    #pragma omp parallel for
+    for (int32_t y = 0; y < (int32_t)surface->h; y++) {
+        auto buffer = surface->buf32 + surface->stride * uint32_t(y);
         for (uint32_t x = 0; x < surface->w; ++x) {
             buffer[x] = rasterUnpremultiply(buffer[x]);
         }
@@ -1596,7 +1594,7 @@ void rasterUnpremultiply(RenderSurface* surface)
     surface->premultiplied = false;
 }
 
-
+// TODO: +SIMD
 void rasterPremultiply(RenderSurface* surface)
 {
     ScopedLock lock(surface->key);
@@ -1605,10 +1603,9 @@ void rasterPremultiply(RenderSurface* surface)
 
     TVGLOG("SW_ENGINE", "Premultiply [Size: %d x %d]", surface->w, surface->h);
 
-    //OPTIMIZE_ME: +SIMD
-    auto buffer = surface->buf32;
-    for (uint32_t y = 0; y < surface->h; ++y, buffer += surface->stride) {
-        auto dst = buffer;
+    #pragma omp parallel for
+    for (int32_t y = 0; y < (int32_t)surface->h; ++y) {
+        auto dst = surface->buf32 + surface->stride * uint32_t(y);
         for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
             auto c = *dst;
             if (A(c) == 255) continue;
