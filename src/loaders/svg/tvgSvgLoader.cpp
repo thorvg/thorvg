@@ -642,54 +642,71 @@ static constexpr struct
     {"yellowgreen", {0x9a, 0xcd, 0x32}}
 };
 
-static bool _toColor(const char* str, uint8_t& r, uint8_t&g, uint8_t& b, char** ref)
+static bool _parseHexColor(const char* str, size_t len, uint8_t& r, uint8_t& g, uint8_t& b)
+{
+    if (len != 4 && len != 7) return false;
+
+    auto value = [](char c) {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
+    };
+
+    int8_t hex[6];
+    auto count = len - 1;
+    for (size_t i = 0; i < count; ++i) {
+        hex[i] = value(str[i + 1]);
+        if (hex[i] < 0) return false;
+    }
+
+    if (len == 4) {
+        r = hex[0] * 17;
+        g = hex[1] * 17;
+        b = hex[2] * 17;
+    } else {
+        r = (hex[0] << 4) | hex[1];
+        g = (hex[2] << 4) | hex[3];
+        b = (hex[4] << 4) | hex[5];
+    }
+    return true;
+}
+
+static bool _parseColor(const char* str, bool alpha, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t* a)
+{
+    char *red, *green, *blue;
+    auto tr = _parseColor(str + (alpha ? 5 : 4), &red);
+    if (!red || *red != ',') return false;
+    auto tg = _parseColor(red + 1, &green);
+    if (!green || *green != ',') return false;
+    auto tb = _parseColor(green + 1, &blue);
+
+    if (alpha) {
+        if (!blue || *blue != ',') return false;
+        char* end;
+        auto value = toFloat(blue + 1, &end);
+        end = (char*)svgUtilSkipWhiteSpace(end, nullptr);
+        if (!end || end[0] != ')' || end[1] != '\0' || value < 0.0f || value > 1.0f) return false;
+        if (a) *a = static_cast<uint8_t>(lrintf(value * 255.0f));
+    } else if (!blue || blue[0] != ')' || blue[1] != '\0') return false;
+
+    r = tr;
+    g = tg;
+    b = tb;
+
+    return true;
+}
+
+static bool _toColor(const char* str, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t* a, char** ref = nullptr)
 {
     auto len = strlen(str);
 
-    if (len == 4 && str[0] == '#') {
-        //Case for "#456" should be interpreted as "#445566"
-        if (isxdigit(str[1]) && isxdigit(str[2]) && isxdigit(str[3])) {
-            char tmp[3] = { '\0', '\0', '\0' };
-            tmp[0] = str[1];
-            tmp[1] = str[1];
-            r = strtol(tmp, nullptr, 16);
-            tmp[0] = str[2];
-            tmp[1] = str[2];
-            g = strtol(tmp, nullptr, 16);
-            tmp[0] = str[3];
-            tmp[1] = str[3];
-            b = strtol(tmp, nullptr, 16);
-        }
-        return true;
-    } else if (len == 7 && str[0] == '#') {
-        if (isxdigit(str[1]) && isxdigit(str[2]) && isxdigit(str[3]) && isxdigit(str[4]) && isxdigit(str[5]) && isxdigit(str[6])) {
-            char tmp[3] = { '\0', '\0', '\0' };
-            tmp[0] = str[1];
-            tmp[1] = str[2];
-            r = strtol(tmp, nullptr, 16);
-            tmp[0] = str[3];
-            tmp[1] = str[4];
-            g = strtol(tmp, nullptr, 16);
-            tmp[0] = str[5];
-            tmp[1] = str[6];
-            b = strtol(tmp, nullptr, 16);
-        }
-        return true;
-    } else if (len >= 10 && (str[0] == 'r' || str[0] == 'R') && (str[1] == 'g' || str[1] == 'G') && (str[2] == 'b' || str[2] == 'B') && str[3] == '(' && str[len - 1] == ')') {
-        char *red, *green, *blue;
-        auto tr = _parseColor(str + 4, &red);
-        if (red && *red == ',') {
-            auto tg = _parseColor(red + 1, &green);
-            if (green && *green == ',') {
-                auto tb = _parseColor(green + 1, &blue);
-                if (blue && blue[0] == ')' && blue[1] == '\0') {
-                    r = tr;
-                    g = tg;
-                    b = tb;
-                }
-            }
-        }
-        return true;
+    if (str[0] == '#') {
+        return _parseHexColor(str, len, r, g, b);
+    } else if (len >= 10 && !strncasecmp(str, "rgb(", 4) && str[len - 1] == ')') {
+        return _parseColor(str, false, r, g, b, a);
+    } else if (len >= 12 && !strncasecmp(str, "rgba(", 5) && str[len - 1] == ')') {
+        return _parseColor(str, true, r, g, b, a);
     } else if (ref && len >= 3 && !strncmp(str, "url", 3)) {
         tvg::free(*ref);
         *ref = _idFromUrl((const char*)(str + 3));
@@ -960,13 +977,17 @@ static void _handlePaintAttr(SvgPaint* paint, const char* value)
         paint->none = false;
         return;
     }
-    if (_toColor(value, paint->color.r, paint->color.g, paint->color.b, &paint->url)) paint->none = false;
+    paint->color.a = 255;
+    if (_toColor(value, paint->color.r, paint->color.g, paint->color.b, &paint->color.a, &paint->url)) {
+        paint->none = false;
+    }
 }
 
 static void _handleColorAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
     auto style = node->style;
-    if (_toColor(value, style->color.r, style->color.g, style->color.b, nullptr)) {
+    style->color.a = 255;
+    if (_toColor(value, style->color.r, style->color.g, style->color.b, &style->color.a)) {
         style->curColorSet = true;
     }
 }
@@ -1529,9 +1550,12 @@ static SvgNode* _createNode(SvgNode* parent, SvgNodeType type)
 
     //Set the default values other than 0/false: https://www.w3.org/TR/SVGTiny12/painting.html#SpecifyingPaint
     node->style->opacity = 255;
+    node->style->color.a = 255;
     node->style->fill.opacity = 255;
+    node->style->fill.paint.color.a = 255;
     node->style->fill.fillRule = FillRule::NonZero;
     node->style->stroke.paint.none = true;
+    node->style->stroke.paint.color.a = 255;
     node->style->stroke.opacity = 255;
     node->style->stroke.width = 1;
     node->style->stroke.cap = StrokeCap::Butt;
@@ -2671,7 +2695,7 @@ static SvgStyleGradient* _createRadialGradient(SvgParserContext* ctx, const char
     return ctx->parser->styleGrad;
 }
 
-static SvgColor* _findLatestColor(const SvgParserContext* ctx)
+static tvg::RGBA* _findLatestColor(const SvgParserContext* ctx)
 {
     auto parent = ctx->stack.count > 0 ? ctx->stack.last() : ctx->doc;
 
@@ -3672,6 +3696,7 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
     tempNode->style = tvg::calloc<SvgStyleProperty>(1, sizeof(SvgStyleProperty));
     tempNode->type = node->type;
     tempNode->style->opacity = 255;
+    tempNode->style->color.a = 255;
     tempNode->style->fill.opacity = 255;
     tempNode->style->stroke.opacity = 255;
 
