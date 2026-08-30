@@ -412,6 +412,7 @@ TEST_CASE("Intersection", "[tvgSwEngine]")
 // hundreds of thousands of values under --success and slow the test.
 static void requireBuffersEqual(const vector<uint32_t>& a, const vector<uint32_t>& b, uint32_t w)
 {
+    REQUIRE(a.size() == b.size());
     for (size_t i = 0; i < a.size(); ++i) {
         if (a[i] != b[i]) {
             FAIL("first mismatch at (" << i % w << ", " << i / w << "): "

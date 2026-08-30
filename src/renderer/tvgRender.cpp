@@ -328,17 +328,20 @@ void RenderDirtyRegion::clear()
     }
 }
 
-
 bool RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, RenderRegion& lhs, RenderRegion& rhs)
 {
-    //verify the capacity upfront so that a failure leaves the regions unmodified
-    auto required = targets.count;
+    if (idx >= targets.count) return false;
+
+    // Verify the capacity upfront so that a failure leaves the regions unmodified.
+    // The region at idx is replaced with its fragments, so one required slot is
+    // already available.
+    auto required = uint64_t(targets.count);
     if (rhs.min.y < lhs.min.y) ++required;
     if (rhs.max.y > lhs.max.y) ++required;
     if (rhs.max.x > lhs.max.x) ++required;
 
-    //Please reserve memory enough with targets.reserve()
-    if (required - 1 >= targets.reserved) return false;
+    // Please reserve memory enough with targets.reserve()
+    if (required > uint64_t(targets.reserved) + 1) return false;
 
     RenderRegion temp[3];
     uint32_t cnt = 0;
@@ -375,15 +378,14 @@ bool RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, Re
     return true;
 }
 
-
 bool RenderDirtyRegion::sweepMerge(Array<RenderRegion>& targets, Array<RenderRegion>& output)
 {
-    //sorting by x coord. guarantee the stable performance: O(NlogN)
+    // sorting by x coord. guarantee the stable performance: O(NlogN)
     stable_sort(targets.begin(), targets.end(), [](const RenderRegion& a, const RenderRegion& b) -> bool {
         return a.min.x < b.min.x;
     });
 
-    //Optimized using sweep-line algorithm: O(NlogN)
+    // Optimized using sweep-line algorithm: O(NlogN)
     for (uint32_t i = 0; i < targets.count; ++i) {
         auto& lhs = targets[i];
         if (lhs.invalid()) continue;
@@ -392,28 +394,28 @@ bool RenderDirtyRegion::sweepMerge(Array<RenderRegion>& targets, Array<RenderReg
         for (uint32_t j = i + 1; j < targets.count; ++j) {
             auto& rhs = targets[j];
             if (rhs.invalid()) continue;
-            if (lhs.max.x < rhs.min.x) break;   //line sweeping
+            if (lhs.max.x < rhs.min.x) break;  // line sweeping
 
-            //fully overlapped. drop lhs
+            // fully overlapped. drop lhs
             if (rhs.contained(lhs)) {
                 merged = true;
                 break;
             }
-            //fully overlapped. replace the lhs with rhs
+            // fully overlapped. replace the lhs with rhs
             if (lhs.contained(rhs)) {
                 rhs = {};
                 continue;
             }
-            //just merge & expand on x axis
+            // just merge & expand on x axis
             if (lhs.min.y == rhs.min.y && lhs.max.y == rhs.max.y) {
                 if (lhs.max.x >= rhs.min.x) {
                     lhs.max.x = rhs.max.x;
                     rhs = {};
-                    j = i;   //lhs dirty region has been damaged, try again.
+                    j = i;  // lhs dirty region has been damaged, try again.
                     continue;
                 }
             }
-            //just merge & expand on y axis
+            // just merge & expand on y axis
             if (lhs.min.x == rhs.min.x && lhs.max.x == rhs.max.x) {
                 if (lhs.min.y <= rhs.max.y && rhs.min.y <= lhs.max.y) {
                     rhs.min.y = std::min(lhs.min.y, rhs.min.y);
@@ -422,18 +424,17 @@ bool RenderDirtyRegion::sweepMerge(Array<RenderRegion>& targets, Array<RenderReg
                     break;
                 }
             }
-            //subdivide regions
+            // subdivide regions
             if (lhs.intersected(rhs)) {
-                if (!subdivide(targets, j, lhs, rhs)) return false;  //insufficient capacity, retry required
-                --j; //rhs dirty region has been damaged, try again.
+                if (!subdivide(targets, j, lhs, rhs)) return false;  // insufficient capacity, retry required
+                --j;                                                 // rhs dirty region has been damaged, try again.
             }
         }
-        if (!merged) output.push(lhs);  //this region is complete isolated
+        if (!merged) output.push(lhs);  // this region is complete isolated
         lhs = {};
     }
     return true;
 }
-
 
 void RenderDirtyRegion::commit()
 {
@@ -444,13 +445,12 @@ void RenderDirtyRegion::commit()
         auto& targets = partitions[idx].list[current];
         if (targets.empty()) continue;
 
-        //merge the dirty regions into a disjoint set in the other list.
-        //the output list is cleared in advance, no stale regions can survive a re-commit.
+        // merge the dirty regions into a disjoint set in the other list.
+        // the output list is cleared in advance, no stale regions can survive a re-commit.
         merge(targets, partitions[idx].list[!current]);
         partitions[idx].current = !current;
     }
 }
-
 
 void RenderDirtyRegion::merge(const Array<RenderRegion>& input, Array<RenderRegion>& output)
 {
@@ -459,7 +459,7 @@ void RenderDirtyRegion::merge(const Array<RenderRegion>& input, Array<RenderRegi
         return;
     }
 
-    scratch.reserve(input.count * 10);  //one intersection can be divided up to 3
+    scratch.reserve(input.count * 10);  // one intersection can be divided up to 3
 
     while (true) {
         scratch.clear();
@@ -469,8 +469,8 @@ void RenderDirtyRegion::merge(const Array<RenderRegion>& input, Array<RenderRegi
 
         if (sweepMerge(scratch, output)) return;
 
-        //the region fragments exceeded the working list. enlarge it and restart.
-        TVGLOG("RENDERER", "regions(%d) overflown the reserved(%d) working list. retrying...", input.count, scratch.reserved);
+        // the region fragments exceeded the working list. enlarge it and restart.
+        TVGLOG("RENDERER", "regions(%d) overflowed the reserved(%d) working list. retrying...", input.count, scratch.reserved);
         scratch.reserve(scratch.reserved * 2);
     }
 }

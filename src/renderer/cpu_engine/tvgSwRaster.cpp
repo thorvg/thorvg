@@ -1569,9 +1569,9 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
 /* Convert a premultiplied row into the straight-alpha space.
    Fully transparent / fully opaque pixels are left untouched in the buffer,
    sparing the write-back traffic for the regions without semi-transparent content. */
-static inline void _rasterUnpremultiply32(uint32_t* buffer, int32_t len)
+static inline void _rasterUnpremultiply32(uint32_t* buffer, uint32_t len)
 {
-    for (int32_t x = 0; x < len; ++x) {
+    for (uint32_t x = 0; x < len; ++x) {
         auto c = buffer[x];
         auto a = A(c);
         if (a == 255 || a == 0) continue;
@@ -1617,7 +1617,7 @@ void rasterUnpremultiply(RenderSurface* surface, const RenderRegion& region)
     if (clipped.invalid()) return;
 
     for (int32_t y = clipped.min.y; y < clipped.max.y; ++y) {
-        _rasterUnpremultiply32(surface->buf32 + surface->stride * y + clipped.min.x, clipped.max.x - clipped.min.x);
+        _rasterUnpremultiply32(surface->buf32 + surface->stride * y + clipped.min.x, uint32_t(clipped.max.x - clipped.min.x));
     }
 }
 
