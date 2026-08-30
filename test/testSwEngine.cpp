@@ -22,6 +22,7 @@
 
 #include <thorvg.h>
 #include <fstream>
+#include <cmath>
 #include "config.h"
 #include "catch.hpp"
 
@@ -407,4 +408,190 @@ TEST_CASE("Intersection", "[tvgSwEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+// Compares the buffers per pixel: a whole-vector REQUIRE would expand
+// hundreds of thousands of values under --success and slow the test.
+static void requireBuffersEqual(const vector<uint32_t>& a, const vector<uint32_t>& b, uint32_t w)
+{
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (a[i] != b[i]) {
+            FAIL("first mismatch at (" << i % w << ", " << i / w << "): "
+                                       << "a=0x" << hex << a[i] << " b=0x" << b[i]);
+        }
+    }
+    REQUIRE(true);
+}
+
+#ifdef THORVG_PARTIAL_RENDER_SUPPORT
+
+TEST_CASE("Partial Rendering. Composited scene consistency", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        const uint32_t W = 400, H = 200;
+
+        // a still half-transparent group and a recolored opaque shape aside
+        auto makeScene = [](uint8_t moverFill, Shape** moverOut) {
+            auto root = Scene::gen();
+            auto group = Scene::gen();
+            auto r1 = Shape::gen();
+            REQUIRE(r1->appendRect(20, 20, 30, 40) == Result::Success);
+            REQUIRE(r1->fill(120, 40, 200) == Result::Success);
+            auto r2 = Shape::gen();
+            REQUIRE(r2->appendRect(70, 20, 30, 40) == Result::Success);
+            REQUIRE(r2->fill(120, 40, 200) == Result::Success);
+            REQUIRE(group->add(r1) == Result::Success);
+            REQUIRE(group->add(r2) == Result::Success);
+            REQUIRE(group->opacity(128) == Result::Success);
+            REQUIRE(root->add(group) == Result::Success);
+
+            auto mover = Shape::gen();
+            REQUIRE(mover->appendRect(300, 20, 20, 20) == Result::Success);
+            REQUIRE(mover->fill(moverFill, 200, 40) == Result::Success);
+            REQUIRE(root->add(mover) == Result::Success);
+            if (moverOut) *moverOut = mover;
+            return root;
+        };
+
+        vector<uint32_t> incremental(W * H, 0), fresh(W * H, 0);
+        const int FRAMES = 4;
+
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(incremental.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            Shape* mover = nullptr;
+            REQUIRE(canvas->add(makeScene(20, &mover)) == Result::Success);
+            for (int f = 0; f <= FRAMES; ++f) {
+                if (f > 0) REQUIRE(mover->fill(uint8_t(20 + f), 200, 40) == Result::Success);
+                REQUIRE(canvas->update() == Result::Success);
+                REQUIRE(canvas->draw() == Result::Success);
+                REQUIRE(canvas->sync() == Result::Success);
+            }
+        }
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(fresh.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            REQUIRE(canvas->add(makeScene(20 + FRAMES, nullptr)) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+        requireBuffersEqual(incremental, fresh, W);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("Partial Rendering. Fragmented regions consistency", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        const uint32_t W = 800, H = 600;
+
+        // a still translucent background with a large number of tiny updated shapes
+        auto makeScene = [](uint8_t fill, vector<Shape*>* rectsOut) {
+            auto scene = Scene::gen();
+            auto bg = Shape::gen();
+            REQUIRE(bg->appendRect(0, 0, W, H) == Result::Success);
+            REQUIRE(bg->fill(120, 40, 200, 128) == Result::Success);
+            REQUIRE(scene->add(bg) == Result::Success);
+            for (int i = 0; i < 65; ++i) {
+                auto x = 20 + (i % 13) * 10, y = 20 + (i / 13) * 10;
+                auto rect = Shape::gen();
+                REQUIRE(rect->appendRect(float(x), float(y), 2, 2) == Result::Success);
+                REQUIRE(rect->fill(fill, 220, 40) == Result::Success);
+                REQUIRE(scene->add(rect) == Result::Success);
+                if (rectsOut) rectsOut->push_back(rect);
+            }
+            return scene;
+        };
+
+        vector<uint32_t> incremental(W * H, 0), fresh(W * H, 0);
+
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(incremental.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            vector<Shape*> rects;
+            REQUIRE(canvas->add(makeScene(20, &rects)) == Result::Success);
+            REQUIRE(canvas->update() == Result::Success);
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+
+            for (auto rect : rects)
+                REQUIRE(rect->fill(21, 220, 40) == Result::Success);
+            REQUIRE(canvas->update() == Result::Success);
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(fresh.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            REQUIRE(canvas->add(makeScene(21, nullptr)) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+        requireBuffersEqual(incremental, fresh, W);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("Partial Rendering. Heavy region fragmentation consistency", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        const uint32_t W = 800, H = 600;
+
+        // still composited bands crossed by recolored strips: the region union
+        // fragments beyond the initial working list capacity
+        auto makeScene = [](uint8_t stripFill, vector<Shape*>* stripsOut) {
+            auto root = Scene::gen();
+            for (int i = 0; i < 30; ++i) {
+                auto group = Scene::gen();
+                auto r1 = Shape::gen();
+                REQUIRE(r1->appendRect(0, float(i * 4), 30, 2) == Result::Success);
+                REQUIRE(r1->fill(30, 180, 60) == Result::Success);
+                auto r2 = Shape::gen();
+                REQUIRE(r2->appendRect(30, float(i * 4), 30, 2) == Result::Success);
+                REQUIRE(r2->fill(30, 180, 60) == Result::Success);
+                REQUIRE(group->add(r1) == Result::Success);
+                REQUIRE(group->add(r2) == Result::Success);
+                REQUIRE(group->opacity(128) == Result::Success);
+                REQUIRE(root->add(group) == Result::Success);
+            }
+            for (int i = 0; i < 15; ++i) {
+                auto strip = Shape::gen();
+                REQUIRE(strip->appendRect(float(i * 4), 0, 2, 120) == Result::Success);
+                REQUIRE(strip->fill(stripFill, 40, 200, 128) == Result::Success);
+                REQUIRE(root->add(strip) == Result::Success);
+                if (stripsOut) stripsOut->push_back(strip);
+            }
+            return root;
+        };
+
+        vector<uint32_t> incremental(W * H, 0), fresh(W * H, 0);
+
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(incremental.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            vector<Shape*> strips;
+            REQUIRE(canvas->add(makeScene(100, &strips)) == Result::Success);
+            REQUIRE(canvas->update() == Result::Success);
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+
+            for (auto strip : strips)
+                REQUIRE(strip->fill(101, 40, 200, 128) == Result::Success);
+            REQUIRE(canvas->update() == Result::Success);
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(fresh.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            REQUIRE(canvas->add(makeScene(101, nullptr)) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+        requireBuffersEqual(incremental, fresh, W);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+#endif
 #endif
