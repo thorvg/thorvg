@@ -46,17 +46,12 @@ if get_option('partial')
   config_h.set10('THORVG_PARTIAL_RENDER_SUPPORT', true)
 endif
 
-# Tools
-all_tools = get_option('tools').contains('all')
-lottie2gif = all_tools or get_option('tools').contains('lottie2gif')
-svg2png = all_tools or get_option('tools').contains('svg2png')
-
 # Loaders
 all_loaders = get_option('loaders').contains('all')
-svg_loader = all_loaders or get_option('loaders').contains('svg') or svg2png
+svg_loader = all_loaders or get_option('loaders').contains('svg')
 png_loader = all_loaders or get_option('loaders').contains('png')
 jpg_loader = all_loaders or get_option('loaders').contains('jpg')
-lottie_loader = all_loaders or get_option('loaders').contains('lottie') or lottie2gif
+lottie_loader = all_loaders or get_option('loaders').contains('lottie')
 ttf_loader = all_loaders or get_option('loaders').contains('ttf')
 otf_loader = all_loaders or get_option('loaders').contains('otf')
 webp_loader = all_loaders or get_option('loaders').contains('webp')
@@ -66,12 +61,12 @@ media_loader = get_option('loaders').contains('media')
 
 # Savers
 all_savers = get_option('savers').contains('all')
-gif_saver = all_savers or get_option('savers').contains('gif') or lottie2gif
+gif_saver = all_savers or get_option('savers').contains('gif')
 
 # Logging
 logging = get_option('log')
 
-# Loaders/savers/tools config
+# Loaders/savers config
 if svg_loader
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
@@ -179,7 +174,6 @@ headers = [include_directories('inc'), include_directories('.')]
 
 subdir('inc')
 subdir('src')
-subdir('tools')
 
 if get_option('tests')
    subdir('test')
@@ -237,15 +231,6 @@ summary(
     'CAPI': get_option('bindings').contains('capi'),
   },
   section: 'Binding',
-  bool_yn: true,
-)
-
-summary(
-  {
-    'Svg2Png': svg2png,
-    'Lottie2Gif': lottie2gif,
-  },
-  section: 'Tool',
   bool_yn: true,
 )
 
