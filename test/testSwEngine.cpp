@@ -422,6 +422,80 @@ static void requireBuffersEqual(const vector<uint32_t>& a, const vector<uint32_t
     REQUIRE(true);
 }
 
+TEST_CASE("RLE dense and tall fill consistency", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        // solid rect: interior is covered, a far corner stays clear (sweep / clip)
+        {
+            const uint32_t W = 64, H = 64;
+            vector<uint32_t> buffer(W * H, 0);
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(buffer.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            auto rect = Shape::gen();
+            REQUIRE(rect->appendRect(10, 10, 20, 20) == Result::Success);
+            REQUIRE(rect->fill(200, 40, 80) == Result::Success);
+            REQUIRE(canvas->add(rect) == Result::Success);
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+            REQUIRE(buffer[20 + 20 * W] != 0);
+            REQUIRE(buffer[0] == 0);
+            REQUIRE(buffer[(W - 1) + (H - 1) * W] == 0);
+        }
+
+        // tall sawtooth plus a dense star: many rows / cells, including pool growth
+        const uint32_t W = 64, H = 2048;
+        auto makeScene = []() {
+            const uint32_t TW = 64, TH = 2048;
+            auto scene = Scene::gen();
+            auto saw = Shape::gen();
+            REQUIRE(saw->moveTo(0, 0) == Result::Success);
+            for (int y = 0; y < int(TH); y += 8) {
+                REQUIRE(saw->lineTo(40, float(y + 4)) == Result::Success);
+                REQUIRE(saw->lineTo(8, float(y + 8)) == Result::Success);
+            }
+            REQUIRE(saw->lineTo(float(TW - 1), float(TH)) == Result::Success);
+            REQUIRE(saw->lineTo(float(TW - 1), 0) == Result::Success);
+            REQUIRE(saw->close() == Result::Success);
+            REQUIRE(saw->fill(120, 40, 200) == Result::Success);
+            REQUIRE(scene->add(saw) == Result::Success);
+
+            auto star = Shape::gen();
+            const int N = 200;
+            const float cx = 32.0f, cy = 32.0f, r = 28.0f;
+            REQUIRE(star->moveTo(cx + r, cy) == Result::Success);
+            for (int i = 1; i <= N; ++i) {
+                auto a = float(i) * 6.2831853f / float(N);
+                auto rad = (i % 2) ? r * 0.35f : r;
+                REQUIRE(star->lineTo(cx + rad * std::cos(a), cy + rad * std::sin(a)) == Result::Success);
+            }
+            REQUIRE(star->close() == Result::Success);
+            REQUIRE(star->fill(30, 180, 60) == Result::Success);
+            REQUIRE(scene->add(star) == Result::Success);
+            return scene;
+        };
+
+        vector<uint32_t> first(W * H, 0), second(W * H, 0);
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(first.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            REQUIRE(canvas->add(makeScene()) == Result::Success);
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(second.data(), W, W, H, ColorSpace::ARGB8888S) == Result::Success);
+            REQUIRE(canvas->add(makeScene()) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+        REQUIRE(first[32 + 32 * W] != 0);
+        requireBuffersEqual(first, second, W);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #ifdef THORVG_PARTIAL_RENDER_SUPPORT
 
 TEST_CASE("Partial Rendering. Composited scene consistency", "[tvgSwEngine]")
