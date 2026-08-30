@@ -189,6 +189,7 @@
 */
 
 #include <limits.h>
+#include <cstdint>
 #include "tvgSwCommon.h"
 
 /************************************************************************/
@@ -198,9 +199,12 @@
 constexpr auto PIXEL_BITS = 8;   //must be at least 6 bits!
 constexpr auto ONE_PIXEL = (1 << PIXEL_BITS);
 
-struct Band
+struct RawCell
 {
-    int32_t min, max;
+    int32_t x;
+    int32_t y;
+    int32_t cover;
+    long area;
 };
 
 struct RleWorker
@@ -216,9 +220,12 @@ struct RleWorker
     long area;
     int32_t cover;
 
-    SwCell* cells;
-    ptrdiff_t maxCells;
-    ptrdiff_t cellsCnt;
+    RawCell* raw;     // appended cells in the outline order
+    uint32_t rawMax;  // capacity of the raw cells in the scratch buffer
+    uint32_t rawCnt;
+
+    uint32_t* rowTable;  // start offsets of each row in the raw cells, size yCnt + 1
+    uint32_t* rowPos;    // fill positions for the row partitioning, size yCnt + 1
 
     SwPoint pos;
 
@@ -232,12 +239,11 @@ struct RleWorker
     SwOutline* outline;
 
     int bandSize;
-    int bandShoot;
 
-    SwCell* buffer;
+    SwCellPool* pool;  // scratch owner, kept to grow the buffer on demand
+    void* buffer;
     uint32_t bufferSize;
 
-    SwCell** yCells;
     int32_t yCnt;
 
     bool invalid;
@@ -369,66 +375,155 @@ static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_
 
 static void _sweep(RleWorker& rw)
 {
-    if (rw.cellsCnt == 0) return;
+    if (rw.rawCnt == 0) return;
 
-    for (int y = 0; y < rw.yCnt; ++y) {
+    for (int32_t y = 0; y < rw.yCnt; ++y) {
         auto cover = 0;
         auto x = 0;
-        auto cell = rw.yCells[y];
 
-        while (cell) {
+        for (auto i = rw.rowTable[y]; i < rw.rowTable[y + 1]; ++i) {
+            auto cell = rw.raw + i;
+
             if (cell->x > x && cover != 0) _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
             if (area != 0 && cell->x >= 0) _horizLine(rw, cell->x, y, area, 1);
             x = cell->x + 1;
-            cell = cell->next;
         }
 
         if (cover != 0) _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), rw.cellXCnt - x);
     }
 }
 
-
-static SwCell* _findCell(RleWorker& rw)
+static uint32_t _tableBytes(int32_t yCnt)
 {
-    auto x = rw.cellPos.x;
-    if (x > rw.cellXCnt) x = rw.cellXCnt;
-
-    auto pcell = &rw.yCells[rw.cellPos.y];
-
-    while(true) {
-        auto cell = *pcell;
-        if (!cell || cell->x > x) break;
-        if (cell->x == x) return cell;
-        pcell = &cell->next;
-    }
-
-    if (rw.cellsCnt >= rw.maxCells) return nullptr;
-
-    auto cell = rw.cells + rw.cellsCnt++;
-    cell->x = x;
-    cell->area = 0;
-    cell->cover = 0;
-    cell->next = *pcell;
-    *pcell = cell;
-
-    return cell;
+    if (yCnt < 0) return ~0u;
+    auto bytes = (uint64_t(yCnt) + 1) * 2 * sizeof(uint32_t);
+    bytes = (bytes + 7) & ~uint64_t(7);
+    if (bytes > ~0u) return ~0u;
+    return uint32_t(bytes);
 }
 
+static bool _layout(RleWorker& rw)
+{
+    // carve the scratch buffer: row tables at the head, the appended cells after.
+    // the raw capacity is computed in integers to avoid a pointer-subtraction UB
+    // that could produce a huge rawMax (the tables and the cells are distinct arrays).
+    auto tableBytes = _tableBytes(rw.yCnt);
+    if (tableBytes >= rw.bufferSize) {
+        rw.rawMax = 0;
+        return false;
+    }
+    auto rawMax = (rw.bufferSize - tableBytes) / sizeof(RawCell);
+    if (rawMax == 0) {
+        rw.rawMax = 0;
+        return false;
+    }
+    rw.rowTable = static_cast<uint32_t*>(rw.buffer);
+    rw.rowPos = rw.rowTable + (rw.yCnt + 1);
+    rw.raw = reinterpret_cast<RawCell*>((char*)rw.buffer + tableBytes);
+    rw.rawMax = rawMax;
+    return true;
+}
+
+static bool _growCells(RleWorker& rw)
+{
+    auto tableBytes = _tableBytes(rw.yCnt);
+    if (tableBytes > ~0u - sizeof(RawCell)) return false;
+    auto minSize = tableBytes + uint32_t(sizeof(RawCell));
+    auto sz = rw.bufferSize + (rw.bufferSize >> 1);  // grow by 1.5x
+    if (sz < rw.bufferSize) return false;            // overflow
+    if (sz < minSize) sz = minSize;
+    sz = ((sz + sizeof(RawCell) - 1) / sizeof(RawCell)) * sizeof(RawCell);
+    auto buffer = tvg::malloc<RawCell>(sz);
+    if (!buffer) return false;
+    if (rw.buffer && rw.bufferSize) memcpy(buffer, rw.buffer, rw.bufferSize);
+    tvg::free(rw.buffer);
+    rw.buffer = buffer;
+    rw.bufferSize = sz;
+    rw.pool->buffer = reinterpret_cast<SwCell*>(buffer);
+    rw.pool->size = sz;
+    return _layout(rw);
+}
 
 static bool _recordCell(RleWorker& rw)
 {
     if (rw.area | rw.cover) {
-        auto cell = _findCell(rw);
-        if (!cell) return false;
-        cell->area += rw.area;
-        cell->cover += rw.cover;
+        while (rw.rawCnt >= rw.rawMax) {
+            if (!_growCells(rw)) return false;
+        }
+        auto cell = rw.raw + rw.rawCnt++;
+        cell->x = rw.cellPos.x;
+        cell->y = rw.cellPos.y;
+        cell->area = rw.area;
+        cell->cover = rw.cover;
     }
 
     return true;
 }
 
+static bool _sortCells(RleWorker& rw)
+{
+    if (rw.rawCnt == 0) return true;
+
+    auto n = rw.rawCnt;
+    auto table = rw.rowTable;
+    auto raw = rw.raw;
+    auto pos = rw.rowPos;
+
+    // counting partition by row. coverage accumulation is a commutative addition,
+    // so the order of the recorded cells is irrelevant for the result.
+    for (int32_t y = 0; y <= rw.yCnt; ++y)
+        table[y] = 0;
+    for (uint32_t i = 0; i < n; ++i) {
+        ++table[rw.raw[i].y + 1];
+    }
+    for (int32_t y = 0; y < rw.yCnt; ++y)
+        table[y + 1] += table[y];
+    memcpy(pos, table, sizeof(uint32_t) * (rw.yCnt + 1));
+
+    // place the cells row by row (in-place cycle permutation). an element whose
+    // slot has already been consumed by its row is in its final position.
+    for (uint32_t i = 0; i < n; ++i) {
+        auto r = rw.raw[i].y;
+        if (table[r] <= i && pos[r] > i) continue;  // already placed
+        while (true) {
+            auto p = pos[r]++;
+            if (p == i) break;
+            std::swap(rw.raw[i], rw.raw[p]);
+            r = rw.raw[i].y;
+        }
+    }
+
+    // sort each row by x and merge the cells of the same x. the write position
+    // lags behind the read position, so the compaction never overwrites unread data.
+    uint32_t w = 0;
+    for (int32_t y = 0; y < rw.yCnt; ++y) {
+        auto rs = table[y];
+        auto re = table[y + 1];
+        table[y] = w;
+        if (rs == re) continue;
+
+        std::sort(rw.raw + rs, rw.raw + re, [](const RawCell& a, const RawCell& b) {
+            return a.x < b.x;
+        });
+
+        raw[w] = raw[rs];
+        for (auto i = rs + 1; i < re; ++i) {
+            if (rw.raw[i].x == raw[w].x) {
+                raw[w].area += rw.raw[i].area;
+                raw[w].cover += rw.raw[i].cover;
+            } else {
+                raw[++w] = rw.raw[i];
+            }
+        }
+        ++w;
+    }
+    table[rw.yCnt] = w;
+    rw.rawCnt = w;
+
+    return true;
+}
 
 static bool _setCell(RleWorker& rw, SwPoint pos)
 {
@@ -746,25 +841,31 @@ static bool _genRle(RleWorker& rw)
 SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox, SwMpool* mpool, unsigned tid, bool antiAlias)
 {
     if (!outline) return nullptr;
-  
+
     RleWorker rw;
     auto cellPool = mpool->cell(tid);
-    auto reqSize = uint32_t(std::max(bbox.w(), bbox.h()) * 0.75f) * sizeof(SwCell);  //experimental decision
+    auto dim = std::max(bbox.w(), bbox.h());
+    uint32_t reqSize = 0;
+    auto reqBytes = uint64_t(dim) * 3 / 4 * sizeof(RawCell);  // experimental: 0.75 of the long side
+    if (reqBytes <= ~0u) reqSize = uint32_t(reqBytes);
 
-    // grow by 1.25x and align to multiple of sizeof(SwCell)
+    // grow by 1.25x and align to multiple of sizeof(RawCell)
     if (reqSize > cellPool->size) {
-        cellPool->size = ((reqSize + (reqSize >> 2)) / sizeof(SwCell)) * sizeof(SwCell);
+        auto newSize = ((reqSize + (reqSize >> 2)) / sizeof(RawCell)) * sizeof(RawCell);
+        auto buffer = tvg::malloc<RawCell>(newSize);
+        if (!buffer) return nullptr;
         tvg::free(cellPool->buffer);
-        cellPool->buffer = tvg::malloc<SwCell>(cellPool->size);
+        cellPool->buffer = reinterpret_cast<SwCell*>(buffer);
+        cellPool->size = newSize;
     }
 
     //Init Cells
+    rw.pool = cellPool;
     rw.buffer = cellPool->buffer;
     rw.bufferSize = cellPool->size;
-    rw.yCells = reinterpret_cast<SwCell**>(cellPool->buffer);
-    rw.cells = nullptr;
-    rw.maxCells = 0;
-    rw.cellsCnt = 0;
+    rw.raw = nullptr;
+    rw.rawMax = 0;
+    rw.rawCnt = 0;
     rw.area = 0;
     rw.cover = 0;
     rw.invalid = true;
@@ -773,9 +874,9 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
     rw.outline = const_cast<SwOutline*>(outline);
-    rw.bandSize = rw.bufferSize / (sizeof(SwCell) * 2);
-    rw.bandShoot = 0;
+    rw.bandSize = rw.bufferSize / (sizeof(RawCell) * 2);
     rw.antiAlias = antiAlias;
+    if (rw.bandSize == 0) return nullptr;
 
     if (!rle) rw.rle = new SwRle;
     else rw.rle = rle;
@@ -783,9 +884,6 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
 
     //Generate RLE
     constexpr auto BAND_SIZE = 40;
-
-    Band bands[BAND_SIZE];
-    Band* band;
 
     /* set up vertical bands */
     auto bandCnt = static_cast<int>((rw.cellMax.y - rw.cellMin.y) / rw.bandSize);
@@ -800,66 +898,27 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
         max = min + rw.bandSize;
         if (n == bandCnt -1 || max > yMax) max = yMax;
 
-        bands[0].min = min;
-        bands[0].max = max;
-        band = bands;
+        // each band keeps its cells in the shared scratch buffer: the row tables
+        // carve the head of the buffer, the appended raw cells follow them.
+        // the scratch grows on demand, so the band is never re-processed.
+        rw.yCnt = max - min;
+        rw.cellMin.y = min;
+        rw.cellMax.y = max;
+        rw.cellYCnt = max - min;
+        rw.rawCnt = 0;
+        rw.invalid = true;
 
-        while (band >= bands) {
-            rw.yCells = reinterpret_cast<SwCell**>(rw.buffer);
-            rw.yCnt = band->max - band->min;
-
-            int cellStart = sizeof(SwCell*) * (int)rw.yCnt;
-            int cellMod = cellStart % sizeof(SwCell);
-
-            if (cellMod > 0) cellStart += sizeof(SwCell) - cellMod;
-
-            auto cellsMax = reinterpret_cast<SwCell*>((char*)rw.buffer + rw.bufferSize);
-            rw.cells = reinterpret_cast<SwCell*>((char*)rw.buffer + cellStart);
-
-            if (rw.cells >= cellsMax) goto reduce_bands;
-
-            rw.maxCells = cellsMax - rw.cells;
-            if (rw.maxCells < 2) goto reduce_bands;
-
-            for (int y = 0; y < rw.yCnt; ++y)
-                rw.yCells[y] = nullptr;
-
-            rw.cellsCnt = 0;
-            rw.invalid = true;
-            rw.cellMin.y = band->min;
-            rw.cellMax.y = band->max;
-            rw.cellYCnt = band->max - band->min;
-
-            if (_genRle(rw)) {
-                _sweep(rw);
-                --band;
-                continue;
-            }
-
-        reduce_bands:
-            /* render pool overflow: we will reduce the render band by half */
-            auto bottom = band->min;
-            auto top = band->max;
-            auto middle = bottom + ((top - bottom) >> 1);
-
-            /* This is too complex for a single scanline; there must
-               be some problems */
-            if (middle == bottom) {
-                rleFree(rw.rle);
-                return nullptr;
-            }
-
-            if (bottom - top >= rw.bandSize) ++rw.bandShoot;
-
-            band[1].min = bottom;
-            band[1].max = middle;
-            band[0].min = middle;
-            band[0].max = top;
-            ++band;
+        if (!_layout(rw) && !_growCells(rw)) {
+            rleFree(rw.rle);
+            return nullptr;
         }
-    }
-    if (rw.bandShoot > 8 && rw.bandSize > 16) {
-        rw.bandSize = (rw.bandSize >> 1);
+
+        if (!_genRle(rw) || !_sortCells(rw)) {
+            rleFree(rw.rle);
+            return nullptr;
+        }
+
+        _sweep(rw);
     }
     return rw.rle;
 }
