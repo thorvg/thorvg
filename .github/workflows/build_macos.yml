@@ -33,7 +33,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all,media -Dsavers=all -Dbindings=capi -Dtools=all -Dextra="lottie_exp"
+        meson setup build -Dlog=true -Dloaders=all,media -Dsavers=all -Dbindings=capi -Dextra="lottie_exp"
         ninja -C build install
 
   compact_test:

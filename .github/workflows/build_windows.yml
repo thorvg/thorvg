@@ -24,7 +24,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dtools=all
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi
         where link
         ninja -C build install
 

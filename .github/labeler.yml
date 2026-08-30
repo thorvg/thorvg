@@ -29,9 +29,6 @@
 "test":
   - test/**/*
 
-"tools":
-  - tools/**/*
-
 "infrastructure":
   - .github/**/*
   - meson.build
