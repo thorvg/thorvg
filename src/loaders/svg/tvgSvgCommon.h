@@ -29,8 +29,6 @@
 #include "tvgColor.h"
 #include "tvgAccessor.h"
 
-using SvgColor = tvg::RGB;
-
 #define STR_AS(A, B) !strcmp((A), (B))
 
 struct Box
@@ -472,7 +470,7 @@ struct SvgPaint
     SvgStyleGradient* gradient;
     SvgNode* pattern;
     char *url;
-    SvgColor color;
+    tvg::RGBA color;
     bool none;
     bool curColor;
 };
@@ -572,7 +570,7 @@ struct SvgStyleProperty
     SvgComposite mask;
     SvgFilter filter;
     int opacity;
-    SvgColor color;
+    tvg::RGBA color;
     char* cssClass;
     float textAnchor;  // 0=start, 0.5=middle, 1=end
     SvgBaseline alignmentBaseline;

@@ -523,9 +523,9 @@ static void _applyStroke(SvgStyleProperty* style, Shape* vg, const Box& vBox, co
     } else if (style->stroke.paint.url) {
         TVGLOG("SVG", "The stroke's url not supported.");
     } else if (style->stroke.paint.curColor) {
-        vg->strokeFill(style->color.r, style->color.g, style->color.b, style->stroke.opacity);
+        vg->strokeFill(style->color.r, style->color.g, style->color.b, MULTIPLY(style->stroke.opacity, style->color.a));
     } else {
-        vg->strokeFill(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, style->stroke.opacity);
+        vg->strokeFill(style->stroke.paint.color.r, style->stroke.paint.color.g, style->stroke.paint.color.b, MULTIPLY(style->stroke.opacity, style->stroke.paint.color.a));
     }
 }
 
@@ -564,10 +564,10 @@ static Paint* _applyProperty(SvgParserContext& ctx, SvgNode* node, Shape* vg, co
         TVGLOG("SVG", "The fill's url not supported.");
     } else if (style->fill.paint.curColor) {
         //Apply the current style color
-        vg->fill(style->color.r, style->color.g, style->color.b, style->fill.opacity);
+        vg->fill(style->color.r, style->color.g, style->color.b, MULTIPLY(style->fill.opacity, style->color.a));
     } else {
         //Apply the fill color
-        vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b, style->fill.opacity);
+        vg->fill(style->fill.paint.color.r, style->fill.paint.color.g, style->fill.paint.color.b, MULTIPLY(style->fill.opacity, style->fill.paint.color.a));
     }
 
     vg->fillRule(style->fill.fillRule);
