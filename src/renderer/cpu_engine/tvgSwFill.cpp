@@ -61,18 +61,10 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
 }
 
 
-static uint32_t _estimateAAMargin(const Fill* fdata)
+static uint32_t _estimateAAMargin(const SwFill* fill)
 {
     constexpr float marginScalingFactor = 800.0f;
-
-    if (fdata->type() == Type::RadialGradient) {
-        auto radius = CONST_RADIAL(fdata)->r;
-        return tvg::zero(radius) ? 0 : static_cast<uint32_t>(marginScalingFactor / radius);
-    } else {
-        auto grad = CONST_LINEAR(fdata);
-        auto len = length(grad->p1, grad->p2);
-        return tvg::zero(len) ? 0 : static_cast<uint32_t>(marginScalingFactor / len);
-    }
+    return tvg::zero(fill->extent) ? 0 : static_cast<uint32_t>(marginScalingFactor / fill->extent);
 }
 
 
@@ -144,7 +136,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 
     //If repeat is true, anti-aliasing must be applied between the last and the first colors.
     auto repeat = fill->spread == FillSpread::Repeat;
-    uint32_t iAABegin = repeat ? _estimateAAMargin(fdata) : 0;
+    uint32_t iAABegin = repeat ? _estimateAAMargin(fill) : 0;
     uint32_t iAAEnd = 0;
 
     fill->ctable[i++] = ALPHA_BLEND(rgba | 0xff000000, a);
@@ -231,6 +223,10 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pT
     fill->linear.dx = dx * itransform.e11 + fill->linear.dy * itransform.e21;
     fill->linear.dy = dx * itransform.e12 + fill->linear.dy * itransform.e22;
 
+    // dx/dy is amount of change in screen space. The reciprocal of its magnitude is
+    // the pixel span of one full color table cycle.
+    fill->extent = 1.0f / sqrtf(fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy);
+
     return true;
 }
 
@@ -266,6 +262,14 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     fill->radial.a21 = itransform.e21;
     fill->radial.a22 = itransform.e22;
     fill->radial.a23 = itransform.e23;
+
+    // The transform maps the gradient circle to an ellipse. Take its semi-minor axis
+    // (the smaller singular value), where the table packs tightest and needs most margin.
+    auto sx = transform.e11 * transform.e11 + transform.e21 * transform.e21;
+    auto sy = transform.e12 * transform.e12 + transform.e22 * transform.e22;
+    auto sxy = transform.e11 * transform.e12 + transform.e21 * transform.e22;
+    auto d = sqrtf((sx - sy) * (sx - sy) + 4.0f * sxy * sxy);
+    fill->extent = r * sqrtf(0.5f * std::max(0.0f, sx + sy - d));
 
     return true;
 }
