@@ -488,6 +488,53 @@ TEST_CASE("Lottie Audio Layer", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Master Volume", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        float received = -1.0f;
+
+        auto resolver = [&](const LottieAudioResolver& info, void*) {
+            if (info.active) received = info.volume;
+        };
+
+        //Negative: before loaded
+        REQUIRE(animation->volume(0.5f) == Result::InsufficientCondition);
+        REQUIRE(animation->volume() == Approx(1.0f).margin(0.01f));
+
+        REQUIRE(picture->load(TEST_DIR"/audio_layer.json") == Result::Success);
+
+        REQUIRE(animation->volume() == Approx(1.0f).margin(0.01f));
+
+        //The default master volume leaves original volume
+        REQUIRE(animation->resolver(resolver, nullptr) == Result::Success);
+        REQUIRE(animation->frame(1) == Result::Success);
+        REQUIRE(received == Approx(100.0f).margin(0.1f));
+
+        //The master volume scales the level
+        REQUIRE(animation->volume(0.5f) == Result::Success);
+        REQUIRE(animation->volume() == Approx(0.5f).margin(0.01f));
+        REQUIRE(animation->frame(2) == Result::Success);
+        REQUIRE(received == Approx(50.0f).margin(0.1f));
+
+        //Silencing
+        REQUIRE(animation->volume(0.0f) == Result::Success);
+        REQUIRE(animation->frame(3) == Result::Success);
+        REQUIRE(received == Approx(0.0f).margin(0.1f));
+
+        //Restoring
+        REQUIRE(animation->volume(1.0f) == Result::Success);
+        REQUIRE(animation->frame(4) == Result::Success);
+        REQUIRE(received == Approx(100.0f).margin(0.1f));
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("Lottie Embedded Fonts Share", "[tvgLottie]")
 {
     REQUIRE(Initializer::init() == Result::Success);

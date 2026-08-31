@@ -908,6 +908,15 @@ struct LottieImage : LottieObject
 #endif
     }
 
+    void volume(TVG_UNUSED float value)
+    {
+#ifdef THORVG_MEDIA_LOADER_SUPPORT
+        if (!video) return;
+        value = tvg::clamp(value, 0.0f, 1.0f);
+        if (!tvg::equal(video->volume(), value)) video->volume(value);
+#endif
+    }
+
     LottieProperty* override(LottieProperty* prop, bool release) override
     {
         LottieImage::release();

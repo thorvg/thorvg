@@ -555,3 +555,16 @@ void LottieLoader::resolver(std::function<void(const tvg::LottieAudioResolver&, 
 {
     builder->audioResolver = {std::move(func), data};
 }
+
+
+void LottieLoader::volume(float value)
+{
+    done();
+    builder->volume = value;
+}
+
+
+float LottieLoader::volume() const
+{
+    return builder->volume;
+}

@@ -139,6 +139,21 @@ Result LottieAnimation::resolver(std::function<void(const LottieAudioResolver&, 
 }
 
 
+Result LottieAnimation::volume(float value) noexcept
+{
+    FETCH_LOADER(Result::InsufficientCondition);
+    loader->volume(value);
+    return Result::Success;
+}
+
+
+float LottieAnimation::volume() const noexcept
+{
+    FETCH_LOADER(1.0f);
+    return loader->volume();
+}
+
+
 LottieAnimation* LottieAnimation::gen() noexcept
 {
     return new LottieAnimation;

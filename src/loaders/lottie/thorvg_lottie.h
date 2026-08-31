@@ -243,6 +243,41 @@ struct TVG_API LottieAnimation final : Animation
     Result resolver(std::function<void(const LottieAudioResolver& info, void* data)> func, void* data) noexcept;
 
     /**
+     * @brief Sets the master playback volume of the Lottie animation.
+     *
+     * The specified volume is applied to all media assets in the animation.
+     * Each media asset preserves its own volume, and the effective playback
+     * volume is calculated by multiplying the master volume by the media
+     * asset's volume.
+     *
+     * A value of 1.0 preserves the original volume.
+     * A value of 0.0 mutes all media.
+     * Values greater than 1.0 amplify the playback volume.
+     *
+     * The recommended range is [0.0, 2.0].
+     *
+     * @param[in] value Master playback volume.
+     *
+     * @retval Result::InsufficientCondition If the animation is not loaded.
+     *
+     * @see LottieAnimation::volume()
+     *
+     * @note Experimental API
+     */
+    Result volume(float value) noexcept;
+
+    /**
+     * @brief Retrieves the master playback volume of the Lottie animation.
+     *
+     * @return The current master playback volume.
+     *
+     * @see LottieAnimation::volume(float)
+     *
+     * @note Experimental API
+     */
+    float volume() const noexcept;
+
+    /**
      * @brief Creates a new LottieAnimation object.
      *
      * @return A new LottieAnimation object.
