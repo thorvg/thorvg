@@ -9,4 +9,5 @@
 /src/loaders/media/apple @Nor-s
 /src/loaders/media/web @tinyjin
 /src/savers/gif @Nor-s
+/test @Nor-s
 /.github/workflows @Nor-s
