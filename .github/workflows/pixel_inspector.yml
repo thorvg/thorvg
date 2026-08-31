@@ -271,7 +271,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: thorvg-pixel-report
+          name: thorvg-pixel-report-PR-${{ github.event.pull_request.number }}
           path: tvg-pixel-inspector/output/reporter.*.PR-${{ github.event.pull_request.number }}.pdf
           if-no-files-found: warn
 

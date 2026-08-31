@@ -113,7 +113,7 @@ jobs:
             });
 
             const pdfArtifact = artifacts.find(artifact =>
-              artifact.name === 'thorvg-pixel-report' && !artifact.expired
+              artifact.name === `thorvg-pixel-report-PR-${prNumber}` && !artifact.expired
             );
 
             if (pdfArtifact) {
