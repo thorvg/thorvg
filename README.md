@@ -353,19 +353,19 @@ ThorVG supports the most powerful [Lottie Animation features](https://github.com
 ThorVG offers great flexibility in building its binary. Besides serving as a general graphics engine, it can be configured as a compact Lottie animation playback library with specific build options:
 
 ```
-$meson setup builddir -Dloaders="lottie"
+$meson setup builddir -Dloaders="lottie, ..."
 ```
 
-Alternatively, to support additional bitmap image formats:
+Alternatively, to enable all loaders available for Lottie:
 
 ```
-$meson setup builddir -Dloaders="lottie, png, jpg, webp"
+$meson setup builddir -Dloaders="all"
 ```
 
-Please note that ThorVG supports Lottie Expressions by default. Lottie Expressions are small JavaScript code snippets that can be applied to animated properties in your Lottie animations, evaluating to a single value. This is an advanced feature in the Lottie specification and may impact binary size and performance, especially when targeting small devices such as MCUs. If this feature is not essential for your requirements, you can disable it using the `extra` build option in ThorVG:
+Lottie Expressions are small JavaScript code snippets that can be applied to animated properties and evaluated to a single value. Expressions are an advanced feature that is not currently part of the official Lottie specification and may increase binary size or affect performance, especially on small devices such as MCUs. ThorVG disables expression support by default; enable it explicitly with the `extra` build option when required:
 
 ```
-$meson setup builddir -Dloaders="lottie" -Dextra=""
+$meson setup builddir -Dloaders="lottie" -Dextra="lottie_exp, ..."
 ```
 
 The following code snippet demonstrates how to use ThorVG to play a Lottie animation.

@@ -16,7 +16,7 @@ jobs:
           sudo apt-get install meson ninja-build
       - name: Create source archive
         run: |
-          meson setup builddir thorvg
+          meson setup builddir thorvg -Dextra="lottie_exp,openmp"
           meson dist -C builddir
       - name: Upload to release
         uses: softprops/action-gh-release@v2

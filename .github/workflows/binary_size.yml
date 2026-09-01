@@ -150,6 +150,7 @@ jobs:
             -Dstatic=true
             -Doptimization=s
             -Derrorlogs=true
+            -Dextra="lottie_exp,openmp"
           )
           [ -n "$C_ARGS" ]        && meson_args+=("-Dc_args=$C_ARGS")
           [ -n "$CPP_ARGS" ]      && meson_args+=("-Dcpp_args=$CPP_ARGS")
