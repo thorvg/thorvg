@@ -24,7 +24,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dextra="lottie_exp,openmp"
         where link
         ninja -C build install
 
@@ -45,7 +45,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false
+        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false -Dextra="lottie_exp,openmp"
         where link
         ninja -C build install
 
@@ -66,7 +66,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=true --errorlogs
+        meson setup build -Dloaders=all -Dsavers=all -Dbindings=capi -Dtests=true -Dextra="lottie_exp,openmp" --errorlogs
         where link
         ninja -C build install test
 
@@ -74,4 +74,3 @@ jobs:
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt
-

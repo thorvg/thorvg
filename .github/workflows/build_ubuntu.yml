@@ -29,7 +29,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dbindings=capi
+        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dbindings=capi -Dextra="lottie_exp,openmp"
         sudo ninja -C build install
 
   compact_test:
@@ -46,7 +46,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false
+        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false -Dextra="lottie_exp,openmp"
         sudo ninja -C build install
 
   unit_test:
@@ -71,7 +71,7 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dloaders="all" -Dengines="all" -Dsavers="all" -Dbindings="capi" -Dtests=true --errorlogs
+        meson setup build -Dloaders="all" -Dengines="all" -Dsavers="all" -Dbindings="capi" -Dtests=true -Dextra="lottie_exp,openmp" --errorlogs
         sudo ninja -C build install
         env LIBGL_ALWAYS_SOFTWARE=1 meson test -C build --print-errorlogs --timeout 120
 
@@ -91,7 +91,7 @@ jobs:
     - name: Build & Run memcheck Script(ASAN)
       run: |
         sudo rm -rf ./build
-        meson setup build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="all" -Dtests="true" -Dbindings="capi"
+        meson setup build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="all" -Dtests="true" -Dbindings="capi" -Dextra="lottie_exp,openmp"
         sudo ninja -C build install
         export PATH=$PATH:~/.local/bin/
         chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"

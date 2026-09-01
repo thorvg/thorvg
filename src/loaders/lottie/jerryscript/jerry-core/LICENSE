@@ -1,5 +1,5 @@
 # JerryScript
-# Included with the ThorVG build options -Dloaders="lottie" (default) and -Dextra="lottie_exp" (default).
+# Included with the ThorVG build options -Dloaders="lottie" and -Dextra="lottie_exp".
 # This component is enabled when THORVG_LOTTIE_EXPRESSIONS_SUPPORT is set to 1.
 
 Copyright JS Foundation and other contributors, http://js.foundation
