@@ -99,167 +99,64 @@ TEST_CASE("Lottie Slot", "[tvgLottie]")
 
         auto picture = animation->picture();
 
-        //Slot Test 1
-        const char* slotJson = R"({"gradient_fill":{"p":{"p":2,"k":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}}})";
-
         //Negative: slot generation before loaded
-        REQUIRE(animation->gen(slotJson) == 0);
+        REQUIRE(animation->gen(R"({"stroke_width":{"p":{"a":0,"k":10}}})") == 0);
 
+        //Animation load with default slot
         REQUIRE(picture->load(TEST_DIR"/slot.lot") == Result::Success);
 
-        auto id = animation->gen(slotJson);
-        REQUIRE(id > 0);
-
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id) == Result::Success);
+        //Negative: invalid slots
         REQUIRE(animation->gen("") == 0);
+        REQUIRE(animation->gen("{}") == 0);
+        REQUIRE(animation->gen(R"({"no_such_sid":{"p":{"a":0,"k":10}}})") == 0);
+        REQUIRE(animation->apply(1) == Result::InvalidArguments);
+        REQUIRE(animation->del(0) == Result::InvalidArguments);
+
+        //Slot Test 1: Property Types
+        const char* slots = R"({
+            "stroke_width":{"p":{"a":0,"k":10}},
+            "gradient_stroke_width":{"p":{"a":0,"k":30}},
+            "trim_start":{"p":{"a":0,"k":25}},
+            "time_remap":{"p":{"a":0,"k":1.5}},
+            "rectangle_size":{"p":{"a":0,"k":[200,120]}},
+            "rectangle_position":{"p":{"a":0,"k":[400,400]}},
+            "rect_opacity":{"p":{"a":0,"k":50}},
+            "lottie-icon-outline":{"p":{"a":0,"k":[0,0,1]}},
+            "gradient_fill":{"p":{"p":2,"k":{"a":0,"k":[0,0.1,0.1,0.2,1,1,0.1,0.2,0.1,1]}}},
+            "bezier_path":{"p":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-50,-50],[50,-50],[0,50]]}}},
+            "text_doc":{"p":{"k":[{"s":{"f":"Ubuntu Light Italic","t":"ThorVG!","j":0,"s":48,"fc":[1,1,1]},"t":0}]}},
+            "path_img":{"p":{"id":"image_0","w":200,"h":300,"u":"images/","p":"logo.png","e":0}}
+        })";
+
+        auto id = animation->gen(slots);
+        REQUIRE(id > 0);
+        REQUIRE(animation->apply(id) == Result::Success);
+        REQUIRE(animation->apply(id) == Result::Success); //redundant
+        REQUIRE(animation->apply(0) == Result::Success);
+        REQUIRE(animation->apply(id) == Result::Success); //reapply
         REQUIRE(animation->del(id) == Result::Success);
 
-        //Slot Test 2
-        const char* slotJson2 = R"({"lottie-icon-outline":{"p":{"a":0,"k":[1,1,0]}},"lottie-icon-solid":{"p":{"a":0,"k":[0,0,1]}}})";
+        //Slot Test 2: Keyframes
+        const char* animated = R"({
+            "transform_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[100,100],"t":0},{"s":[200,300],"t":100}]}},
+            "rectangle_radius":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[60],"t":100}]}},
+            "bezier_path":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"t":0,"s":[{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-50,-50],[50,-50],[0,50]]}]},{"t":100,"s":[{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-80,-80],[80,-80],[0,80]]}]}]}}
+        })";
 
-        auto id2 = animation->gen(slotJson2);
-        REQUIRE(id2 > 0);
-
-        REQUIRE(animation->apply(id2) == Result::Success);
+        auto animatedId = animation->gen(animated);
+        REQUIRE(animatedId > 0);
+        REQUIRE(animation->apply(animatedId) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id2) == Result::Success);
-        REQUIRE(animation->del(id2) == Result::Success);
+        REQUIRE(animation->del(animatedId) == Result::Success);
 
-        //Slot Test 3 (Transform)
-        const char* positionSlot = R"({"transform_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[100,100],"t":0},{"s":[200,300],"t":100}]}}})";
-        auto id3 = animation->gen(positionSlot);
-        REQUIRE(id3 > 0);
-        REQUIRE(animation->apply(id3) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id3) == Result::Success);
+        //Slot Test 3: Expression
+        const char* expressions = R"({"rect_rotation":{"p":{"x":"var $bm_rt = time * 360;"}},"rect_scale":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}},"rect_position":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}}})";
 
-        const char* scaleSlot = R"({"transform_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0,0],"t":0},{"s":[100,100],"t":100}]}}})";
-        auto id4 = animation->gen(scaleSlot);
-        REQUIRE(id4 > 0);
-        REQUIRE(animation->apply(id4) == Result::Success);
+        auto expressionId = animation->gen(expressions);
+        REQUIRE(expressionId > 0);
+        REQUIRE(animation->apply(expressionId) == Result::Success);
         REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id4) == Result::Success);
-
-        const char* rotationSlot = R"({"transform_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[180],"t":100}]}}})";
-        auto id5 = animation->gen(rotationSlot);
-        REQUIRE(id5 > 0);
-        REQUIRE(animation->apply(id5) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id5) == Result::Success);
-
-        const char* opacitySlot = R"({"transform_id":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[100],"t":100}]}}})";
-        auto id6 = animation->gen(opacitySlot);
-        REQUIRE(id6 > 0);
-        REQUIRE(animation->apply(id6) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id6) == Result::Success);
-
-        //Slot Test 4: Expression
-        const char* expressionSlot = R"({"rect_rotation":{"p":{"x":"var $bm_rt = time * 360;"}},"rect_scale":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}},"rect_position":{"p":{"x":"var $bm_rt = [];$bm_rt[0] = value[0] + Math.cos(2 * Math.PI * time) * 100;$bm_rt[1] = value[1];"}}})";
-        auto id7 = animation->gen(expressionSlot);
-        REQUIRE(id7 > 0);
-        REQUIRE(animation->apply(id7) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id7) == Result::Success);
-
-        //Slot Test 5: Text
-        const char* textSlot = R"({"text_doc":{"p":{"k":[{"s":{"f":"Ubuntu Light Italic","t":"ThorVG!","j":0,"s":48,"fc":[1,1,1]},"t":0}]}}})";
-        auto id8 = animation->gen(textSlot);
-        REQUIRE(id8 > 0);
-        REQUIRE(animation->apply(id8) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id8) == Result::Success);
-
-        //Slot Test 6: Image
-        const char* imageSlot = R"({"path_img":{"p":{"id":"image_0","w":200,"h":300,"u":"images/","p":"logo.png","e":0}}})";
-        auto id9 = animation->gen(imageSlot);
-        REQUIRE(id9 > 0);
-        REQUIRE(animation->apply(id9) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id9) == Result::Success);
-
-        //Slot Test 7: Time Remap
-        const char* timeRemapSlot = R"({"time_remap":{"p":{"a":0,"k":1.5}}})";
-        auto id10 = animation->gen(timeRemapSlot);
-        REQUIRE(id10 > 0);
-        REQUIRE(animation->apply(id10) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id10) == Result::Success);
-
-        const char* timeRemapAnimatedSlot = R"({"time_remap":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[3],"t":0},{"s":[0],"t":180}]}}})";
-        auto id11 = animation->gen(timeRemapAnimatedSlot);
-        REQUIRE(id11 > 0);
-        REQUIRE(animation->apply(id11) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id11) == Result::Success);
-
-        //Slot Test 8: Rectangle
-        const char* rectSlot = R"({"rectangle_position":{"p":{"a":0,"k":[400,400]}},"rectangle_size":{"p":{"a":0,"k":[200,120]}},"rectangle_radius":{"p":{"a":0,"k":30}}})";
-        auto id12 = animation->gen(rectSlot);
-        REQUIRE(id12 > 0);
-        REQUIRE(animation->apply(id12) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id12) == Result::Success);
-        REQUIRE(animation->del(id12) == Result::Success);
-
-        const char* rectAnimatedSlot = R"({"rectangle_radius":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[60],"t":100}]}}})";
-        auto id13 = animation->gen(rectAnimatedSlot);
-        REQUIRE(id13 > 0);
-        REQUIRE(animation->apply(id13) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id13) == Result::Success);
-
-        //Slot Test 9: Trim Path
-        const char* trimpathSlot = R"({"trim_start":{"p":{"a":0,"k":25}},"trim_end":{"p":{"a":0,"k":100}},"trim_offset":{"p":{"a":0,"k":90}}})";
-        auto id14 = animation->gen(trimpathSlot);
-        REQUIRE(id14 > 0);
-        REQUIRE(animation->apply(id14) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id14) == Result::Success);
-        REQUIRE(animation->del(id14) == Result::Success);
-
-        const char* trimpathAnimatedSlot = R"({"trim_end":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[0],"t":0},{"s":[100],"t":100}]}}})";
-        auto id15 = animation->gen(trimpathAnimatedSlot);
-        REQUIRE(id15 > 0);
-        REQUIRE(animation->apply(id15) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id15) == Result::Success);
-
-        //Slot Test 10: Stroke Width
-        const char* strokeWidthSlot = R"({"stroke_width":{"p":{"a":0,"k":10}},"gradient_stroke_width":{"p":{"a":0,"k":30}}})";
-        auto id16 = animation->gen(strokeWidthSlot);
-        REQUIRE(id16 > 0);
-        REQUIRE(animation->apply(id16) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id16) == Result::Success);
-        REQUIRE(animation->del(id16) == Result::Success);
-
-        const char* strokeWidthAnimatedSlot = R"({"stroke_width":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"s":[1],"t":0},{"s":[20],"t":100}]}}})";
-        auto id17 = animation->gen(strokeWidthAnimatedSlot);
-        REQUIRE(id17 > 0);
-        REQUIRE(animation->apply(id17) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->del(id17) == Result::Success);
-
-        //Slot Test 11: Bezier
-        const char* bezierSlot = R"({"bezier_path":{"p":{"a":0,"k":{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-50,-50],[50,-50],[0,50]]}}}})";
-        auto id18 = animation->gen(bezierSlot);
-        REQUIRE(id18 > 0);
-        REQUIRE(animation->apply(id18) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id18) == Result::Success);
-        REQUIRE(animation->del(id18) == Result::Success);
-
-        const char* bezierAnimatedSlot = R"({"bezier_path":{"p":{"a":1,"k":[{"i":{"x":0.833,"y":0.833},"o":{"x":0.167,"y":0.167},"t":0,"s":[{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-50,-50],[50,-50],[0,50]]}]},{"t":100,"s":[{"c":true,"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-80,-80],[80,-80],[0,80]]}]}]}}})";
-        auto id19 = animation->gen(bezierAnimatedSlot);
-        REQUIRE(id19 > 0);
-        REQUIRE(animation->apply(id19) == Result::Success);
-        REQUIRE(animation->apply(0) == Result::Success);
-        REQUIRE(animation->apply(id19) == Result::Success);
-        REQUIRE(animation->del(id19) == Result::Success);
+        REQUIRE(animation->del(expressionId) == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
