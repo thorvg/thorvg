@@ -243,6 +243,15 @@ struct TVG_API LottieAnimation final : Animation
     Result resolver(std::function<void(const LottieAudioResolver& info, void* data)> func, void* data) noexcept;
 
     /**
+     * @brief Checks whether Lottie expressions are supported.
+     *
+     * @return @c true if expression support is enabled in this build, otherwise @c false.
+     *
+     * @note Experimental API
+     */
+    static bool expressions() noexcept;
+
+    /**
      * @brief Creates a new LottieAnimation object.
      *
      * @return A new LottieAnimation object.

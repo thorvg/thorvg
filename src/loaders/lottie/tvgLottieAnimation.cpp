@@ -138,6 +138,14 @@ Result LottieAnimation::resolver(std::function<void(const LottieAudioResolver&, 
     return Result::Success;
 }
 
+bool LottieAnimation::expressions() noexcept
+{
+#ifdef THORVG_LOTTIE_EXPRESSIONS_SUPPORT
+    return true;
+#else
+    return false;
+#endif
+}
 
 LottieAnimation* LottieAnimation::gen() noexcept
 {

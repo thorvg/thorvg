@@ -1318,6 +1318,15 @@ TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uin
 }
 
 
+TVG_API bool tvg_lottie_animation_expressions_supported()
+{
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+    return LottieAnimation::expressions();
+#endif
+    return false;
+}
+
+
 TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animation, Tvg_Audio_Resolver resolver, void* data)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
