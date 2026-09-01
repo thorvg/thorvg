@@ -9,6 +9,8 @@ env:
   THORVG_PIXEL_GOLDEN_REF: origin/main
   THORVG_PIXEL_SHARD_COUNT: 3
   WGPU_NATIVE_VERSION: v29.0.1.1
+  PIXEL_REPORT_EXPORT_DIR: ${{ github.workspace }}/tvg-pixel-inspector/output/ci-report
+  PIXEL_REPORT_INPUT_DIR: ${{ github.workspace }}/pixel-reports
 
 jobs:
   build:
@@ -108,14 +110,12 @@ jobs:
       - name: Install runtime packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+          sudo apt-get install -y libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
 
-      - name: Install Chrome if missing
-        run: |
-          if ! command -v google-chrome >/dev/null 2>&1; then
-            curl -fsSL -o /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-            sudo apt-get install -y /tmp/google-chrome.deb
-          fi
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
 
       - name: Download built revisions
         uses: actions/download-artifact@v4
@@ -149,41 +149,88 @@ jobs:
       - name: Export report tabs to PDFs
         if: always()
         run: |
-          set -euo pipefail
-
-          REPORT_DIR="$GITHUB_WORKSPACE/tvg-pixel-inspector/output"
-          for BACKEND in cpu gl wg; do
-            REPORT_HTML="$REPORT_DIR/$BACKEND/reporter.PR-${{ github.event.pull_request.number }}.html"
-            if [ -f "$REPORT_HTML" ]; then
-              REPORT_PDF="$REPORT_DIR/reporter.$BACKEND.shard-${{ matrix.shard }}.PR-${{ github.event.pull_request.number }}.pdf"
-              google-chrome \
-                --headless \
-                --disable-gpu \
-                --no-sandbox \
-                --print-to-pdf="$REPORT_PDF" \
-                "file://$REPORT_HTML#$BACKEND" \
-                && echo "Wrote $REPORT_PDF" || echo "Failed to print $REPORT_PDF"
-            else
-              echo "Report HTML not found: $REPORT_HTML"
-            fi
-          done
+          bash "$GITHUB_WORKSPACE/tvg-pixel-inspector/ci_report.sh" export-shard \
+            "${{ github.event.pull_request.number }}" \
+            "${{ matrix.shard }}"
 
       - name: Upload shard reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: thorvg-pixel-shard-${{ matrix.shard }}
-          path: |
-            tvg-pixel-inspector/output/reporter.*.shard-${{ matrix.shard }}.PR-${{ github.event.pull_request.number }}.pdf
-            tvg-pixel-inspector/output/cpu/reporter.csv
-            tvg-pixel-inspector/output/gl/reporter.csv
-            tvg-pixel-inspector/output/wg/reporter.csv
+          path: ${{ env.PIXEL_REPORT_EXPORT_DIR }}
+          if-no-files-found: warn
+
+  compliance:
+    name: Compliance
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      LD_LIBRARY_PATH: ${{ github.workspace }}/pixel-builds/runtime/lib:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu
+
+    steps:
+      - name: Checkout Pixel-Inspector
+        uses: actions/checkout@v4
+        with:
+          repository: thorvg/thorvg.pixel-inspector
+          path: tvg-pixel-inspector
+          ref: main
+
+      - name: Install runtime packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Download built revisions
+        uses: actions/download-artifact@v4
+        with:
+          name: thorvg-pixel-build
+          path: ${{ runner.temp }}/thorvg-pixel-build
+
+      - name: Extract built revisions
+        run: |
+          tar -C "$GITHUB_WORKSPACE" -xzf "$RUNNER_TEMP/thorvg-pixel-build/thorvg-pixel-build.tar.gz"
+
+      - name: Install WebGPU runtime
+        run: |
+          sudo install -m 755 "$GITHUB_WORKSPACE/pixel-builds/runtime/lib/libwgpu_native.so" /usr/local/lib/libwgpu_native.so
+          sudo ldconfig
+
+      - name: Run compliance
+        run: |
+          set -euo pipefail
+
+          PIXEL_PARALLEL_WORKDIR="$GITHUB_WORKSPACE/pixel-builds" \
+          PIXEL_PR_NUMBER="${{ github.event.pull_request.number }}" \
+          PIXEL_SKIP_BUILD=true \
+            bash "$GITHUB_WORKSPACE/tvg-pixel-inspector/compliance.sh" \
+              --unzip "$THORVG_PIXEL_GOLDEN_REF" "${{ github.sha }}"
+
+      - name: Export compliance report
+        if: always()
+        run: |
+          bash "$GITHUB_WORKSPACE/tvg-pixel-inspector/ci_report.sh" export-compliance \
+            "${{ github.event.pull_request.number }}"
+
+      - name: Upload compliance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thorvg-pixel-compliance
+          path: ${{ env.PIXEL_REPORT_EXPORT_DIR }}
           if-no-files-found: warn
 
   aggregate_reports:
     name: Aggregate reports
     if: always()
-    needs: pixel_inspector
+    needs: [pixel_inspector, compliance]
     runs-on: ubuntu-latest
 
     steps:
@@ -192,51 +239,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: thorvg-pixel-shard-*
-          path: pixel-shards
+          path: ${{ env.PIXEL_REPORT_INPUT_DIR }}
 
-      - name: Aggregate shard summaries
-        if: always()
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
+      - name: Download compliance report
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: thorvg-pixel-compliance
+          path: ${{ env.PIXEL_REPORT_INPUT_DIR }}
 
-          INPUT_DIR="$GITHUB_WORKSPACE/pixel-shards"
-          OUTPUT_DIR="$GITHUB_WORKSPACE/tvg-pixel-inspector/output"
-          mkdir -p "$OUTPUT_DIR"
-
-          shopt -s nullglob
-          REPORTS=("$INPUT_DIR"/thorvg-pixel-shard-*/*/reporter.csv)
-          awk -F, -v shardCount="$THORVG_PIXEL_SHARD_COUNT" '
-            # Print the Markdown report header before reading shard results.
-            BEGIN {
-              print "## Pixel Inspector Report"
-              print ""
-              print "| Backend | Compared | Differences | Errors |"
-              print "| --- | ---: | ---: | ---: |"
-            }
-            # Skip each CSV header and aggregate valid backend rows.
-            FNR == 1 { next }
-            $0 ~ /^(cpu|gl|wg),[0-9]+,[0-9]+,[0-9]+$/ {
-              compared[$1] += $2
-              differences[$1] += $3
-              errors[$1] += $4
-              seen[$1]++
-            }
-            # Emit backend totals, counting each missing shard report as an error.
-            END {
-              count = split("cpu gl wg", backends, " ")
-              for (i = 1; i <= count; i++) {
-                backend = backends[i]
-                missing = shardCount - seen[backend]
-                if (missing > 0) errors[backend] += missing
-                printf "| `%s` | %d | %d | %d |\n", backend, compared[backend], differences[backend], errors[backend]
-              }
-            }
-          ' "${REPORTS[@]}" /dev/null > "$OUTPUT_DIR/reporter.md"
-
-          cp "$OUTPUT_DIR/reporter.md" "$OUTPUT_DIR/reporter.PR-$PR_NUMBER.md"
-          echo "$PR_NUMBER" > "$OUTPUT_DIR/pr-number.txt"
+      - name: Checkout Pixel-Inspector
+        uses: actions/checkout@v4
+        with:
+          repository: thorvg/thorvg.pixel-inspector
+          path: tvg-pixel-inspector
+          ref: main
 
       - name: Install PDF tools
         if: always()
@@ -246,33 +263,19 @@ jobs:
             sudo apt-get install -y poppler-utils
           fi
 
-      - name: Merge shard PDFs
+      - name: Aggregate reports
         if: always()
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          set -euo pipefail
-
-          INPUT_DIR="$GITHUB_WORKSPACE/pixel-shards"
-          OUTPUT_DIR="$GITHUB_WORKSPACE/tvg-pixel-inspector/output"
-          mkdir -p "$OUTPUT_DIR"
-
-          shopt -s nullglob
-          for BACKEND in cpu gl wg; do
-            PDFS=("$INPUT_DIR"/thorvg-pixel-shard-*/reporter.$BACKEND.shard-*.PR-$PR_NUMBER.pdf)
-            if [ "${#PDFS[@]}" -eq 1 ]; then
-              cp "${PDFS[0]}" "$OUTPUT_DIR/reporter.$BACKEND.PR-$PR_NUMBER.pdf"
-            elif [ "${#PDFS[@]}" -gt 1 ]; then
-              pdfunite "${PDFS[@]}" "$OUTPUT_DIR/reporter.$BACKEND.PR-$PR_NUMBER.pdf"
-            fi
-          done
+          bash "$GITHUB_WORKSPACE/tvg-pixel-inspector/ci_report.sh" aggregate \
+            "${{ github.event.pull_request.number }}" \
+            "$THORVG_PIXEL_SHARD_COUNT"
 
       - name: Upload report PDFs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: thorvg-pixel-report-PR-${{ github.event.pull_request.number }}
-          path: tvg-pixel-inspector/output/reporter.*.PR-${{ github.event.pull_request.number }}.pdf
+          path: ${{ env.PIXEL_REPORT_EXPORT_DIR }}/reporter.*.PR-${{ github.event.pull_request.number }}.pdf
           if-no-files-found: warn
 
       - name: Upload pixel report summary
@@ -281,7 +284,6 @@ jobs:
         with:
           name: thorvg-pixel-summary
           path: |
-            tvg-pixel-inspector/output/reporter.md
-            tvg-pixel-inspector/output/reporter.PR-${{ github.event.pull_request.number }}.md
-            tvg-pixel-inspector/output/pr-number.txt
+            ${{ env.PIXEL_REPORT_EXPORT_DIR }}/reporter.md
+            ${{ env.PIXEL_REPORT_EXPORT_DIR }}/pr-number.txt
           if-no-files-found: warn
