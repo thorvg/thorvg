@@ -42,17 +42,9 @@ static inline bool _tiny(const Point& pt)
     return fabsf(pt.x) < EPSILON && fabsf(pt.y) < EPSILON;
 }
 
-static float _diff(float angle1, float angle2)
-{
-    auto delta = fmodf((angle2 - angle1), MATH_2PI);
-    if (delta < 0.0f) delta += MATH_2PI;
-    if (delta > MATH_PI) delta -= MATH_2PI;
-    return delta;
-}
-
 static inline float _mean(float angle1, float angle2)
 {
-    return angle1 + _diff(angle1, angle2) * 0.5f;
+    return angle1 + remainderf(angle2 - angle1, MATH_2PI) * 0.5f;
 }
 
 static void _rotate(Point& pt, float radian)
@@ -165,7 +157,7 @@ static void _borderArcTo(SwStroke& stroke, int32_t side)
     auto border = stroke.borders[side];
     auto rotate = _sideToRotate(side);
     auto angleStart = stroke.angleIn + rotate;
-    auto angleDiff = _diff(stroke.angleIn, stroke.angleOut);
+    auto angleDiff = remainderf(stroke.angleOut - stroke.angleIn, MATH_2PI);
     if (tvg::equal(angleDiff, MATH_PI)) angleDiff = -rotate * 2.0f;
 
     auto a = Point{stroke.width, 0.0f};
@@ -228,7 +220,7 @@ static void _outside(SwStroke& stroke, int32_t side, float length)
         auto thcos = 0.0f;
 
         if (!bevel) {
-            auto theta = _diff(stroke.angleIn, stroke.angleOut);
+            auto theta = remainderf(stroke.angleOut - stroke.angleIn, MATH_2PI);
             if (tvg::equal(theta, MATH_PI)) {
                 theta = rotate;
                 phi = stroke.angleIn;
@@ -271,7 +263,7 @@ static void _outside(SwStroke& stroke, int32_t side, float length)
 static void _inside(SwStroke& stroke, int32_t side, float length)
 {
     auto border = stroke.borders[side];
-    auto theta = _diff(stroke.angleIn, stroke.angleOut) * 0.5f;
+    auto theta = remainderf(stroke.angleOut - stroke.angleIn, MATH_2PI) * 0.5f;
     auto intersect = false;
 
     /* Only intersect borders if between two line_to's and both
@@ -303,7 +295,7 @@ static void _inside(SwStroke& stroke, int32_t side, float length)
 
 static void _processCorner(SwStroke& stroke, float length)
 {
-    auto turn = _diff(stroke.angleIn, stroke.angleOut);
+    auto turn = remainderf(stroke.angleOut - stroke.angleIn, MATH_2PI);
 
     //no specific corner processing is required if the turn is 0
     if (tvg::zero(turn)) return;
@@ -414,8 +406,8 @@ static int _cubicAngle(const Point* base, float& angleIn, float& angleMid, float
         }
     }
 
-    auto theta1 = fabsf(_diff(angleIn, angleMid));
-    auto theta2 = fabsf(_diff(angleMid, angleOut));
+    auto theta1 = fabsf(remainderf(angleMid - angleIn, MATH_2PI));
+    auto theta2 = fabsf(remainderf(angleOut - angleMid, MATH_2PI));
 
     if ((theta1 < (MATH_PI / 8)) && (theta2 < (MATH_PI / 8))) return 0;  // small size
     return 1;
@@ -484,7 +476,7 @@ static void _cubicTo(SwStroke& stroke, const Point& ctrl1, const Point& ctrl2, c
                 stroke.angleOut = angleIn;
                 _processCorner(stroke, 0.0f);
             }
-        } else if (fabsf(_diff(stroke.angleIn, angleIn)) > (MATH_PI / 8) / 4) {
+        } else if (fabsf(remainderf(angleIn - stroke.angleIn, MATH_2PI)) > (MATH_PI / 8) / 4) {
             //if the deviation from one arc to the next is too great add a round corner
             stroke.center = arc[3];
             stroke.angleOut = angleIn;
@@ -496,8 +488,8 @@ static void _cubicTo(SwStroke& stroke, const Point& ctrl1, const Point& ctrl2, c
         }
 
         //the arc's angle is small enough; we can add it directly to each border
-        auto theta1 = _diff(angleIn, angleMid) * 0.5f;
-        auto theta2 = _diff(angleMid, angleOut) * 0.5f;
+        auto theta1 = remainderf(angleMid - angleIn, MATH_2PI) * 0.5f;
+        auto theta2 = remainderf(angleOut - angleMid, MATH_2PI) * 0.5f;
         auto phi1 = _mean(angleIn, angleMid);
         auto phi2 = _mean(angleMid, angleOut);
         auto length1 = stroke.width / std::cos(theta1);
@@ -532,7 +524,7 @@ static void _cubicTo(SwStroke& stroke, const Point& ctrl1, const Point& ctrl2, c
                 auto alpha1 = tvg::atan(end - start);
 
                 //is the direction of the border arc opposite to that of the original arc?
-                if (fabsf(_diff(alpha0, alpha1)) > MATH_PI2) {
+                if (fabsf(remainderf(alpha1 - alpha0, MATH_2PI)) > MATH_PI2) {
                     //use the sine rule to find the intersection point
                     auto beta = tvg::atan(arc[3] - start);
                     auto gamma = tvg::atan(arc[0] - end);
@@ -672,7 +664,7 @@ static void _endSubPath(SwStroke& stroke)
 
         //process the corner
         stroke.angleOut = stroke.subPathAngle;
-        auto turn = _diff(stroke.angleIn, stroke.angleOut);
+        auto turn = remainderf(stroke.angleOut - stroke.angleIn, MATH_2PI);
 
         //No specific corner processing is required if the turn is 0
         if (!tvg::zero(turn)) {
