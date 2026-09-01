@@ -120,7 +120,7 @@ jobs:
               const url = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${workflowRun.id}/artifacts/${pdfArtifact.id}`;
               body += `- [Download PDF report](${url})\n`;
             } else {
-              body += '- PDF report was not generated.\n';
+              body += '- PDF report skipped: nothing to report.\n';
             }
 
             core.info(`Resolved PR number: #${prNumber}`);
