@@ -3262,6 +3262,15 @@ TVG_API Tvg_Result tvg_lottie_animation_tween_go(Tvg_Animation animation, float 
 TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uint8_t value);
 
 /**
+ * @brief Checks whether Lottie expressions are supported.
+ *
+ * @return @c true if expression support is enabled in this build, otherwise @c false.
+ *
+ * @note Experimental API
+ */
+TVG_API bool tvg_lottie_animation_expressions_supported();
+
+/**
  * @brief Describes the current state of a Lottie audio layer.
  *
  * This structure is provided to the audio resolver callback and contains
