@@ -258,11 +258,11 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
     };
 
     // vecLen is guaranteed to be non-zero since closed points are already merged
-    auto point2Line = [](const Point& point, const Point& start, const Point& vec, float vecLen, float& maxDist, float& minT, float& maxT) {
+    auto point2Line = [](const Point& point, const Point& start, const Point& vec, float vecLenInv, float vecLenSqInv, float& maxDist, float& minT, float& maxT) {
         Point offset = point - start;
-        auto dist = fabsf(tvg::cross(vec, offset)) / vecLen;
+        auto dist = fabsf(tvg::cross(vec, offset)) * vecLenInv;
         if (dist > maxDist) maxDist = dist;
-        auto t = tvg::dot(offset, vec) / (vecLen * vecLen);
+        auto t = tvg::dot(offset, vec) * vecLenSqInv;
         if (t < minT) minT = t;
         if (t > maxT) maxT = t;
     };
@@ -270,11 +270,13 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
     auto validateCubic = [&point2Line](const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end, float& maxDist, float& minT, float& maxT, float& vecLen) {
         auto vec = end - start;
         vecLen = sqrtf(vec.x * vec.x + vec.y * vec.y);
+        auto vecLenInv = 1.0f / vecLen;
+        auto vecLenSqInv = vecLenInv * vecLenInv;
         maxDist = 0.0f;
         minT = FLT_MAX;
         maxT = FLT_MIN;
-        point2Line(ctrl1, start, vec, vecLen, maxDist, minT, maxT);
-        point2Line(ctrl2, start, vec, vecLen, maxDist, minT, maxT);
+        point2Line(ctrl1, start, vec, vecLenInv, vecLenSqInv, maxDist, minT, maxT);
+        point2Line(ctrl2, start, vec, vecLenInv, vecLenSqInv, maxDist, minT, maxT);
     };
 
     auto addLineCmd = [&](const Point& local, const Point& transformed) {
@@ -301,7 +303,7 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
             if (flat && inSpan) thinTracker.trackFlatCubic(startT, ctrl1T, ctrl2T, endT);
             else thinTracker.disable();
         };
-        trackThinCubic(startInT);
+        if (thinTracker.candidate) trackThinCubic(startInT);
 
         if (tvg::closed(startOutT, endT, PATH_OPT_PX_TOLERANCE)) return;
 
@@ -488,17 +490,19 @@ static inline DashPatternState dashPatternState(const RenderStroke::Dash& dash)
     state.offset = dash.offset;
     if (tvg::zero(dash.offset)) return state;
 
-    auto length = (dash.count % 2) ? dash.length * 2 : dash.length;
+    auto oddPattern = dash.count & 1u;
+    auto length = oddPattern ? dash.length * 2 : dash.length;
     state.offset = fmodf(state.offset, length);
     if (state.offset < 0) state.offset += length;
 
-    for (uint32_t i = 0; i < dash.count * (dash.count % 2 + 1); ++i, ++state.idx) {
-        auto curPattern = dash.pattern[i % dash.count];
+    auto patternCount = dash.count * (oddPattern + 1u);
+    for (uint32_t i = 0; i < patternCount; ++i) {
+        auto curPattern = dash.pattern[state.idx];
         if (state.offset < curPattern) break;
         state.offset -= curPattern;
         state.gap = !state.gap;
+        if (++state.idx == int32_t(dash.count)) state.idx = 0;
     }
-    state.idx = state.idx % dash.count;
     return state;
 }
 
@@ -567,11 +571,8 @@ static inline void resetDashedSubpath(RenderPath& subOut, DashSubpathState& stat
 
 static inline void appendDashedCommands(RenderPath& out, const RenderPath& subOut)
 {
-    auto ptIdx = 0u;
-    ARRAY_FOREACH(cmd, subOut.cmds)
-    {
-        appendDashedCommand(out, subOut, *cmd, ptIdx, false);
-    }
+    out.cmds.push(subOut.cmds);
+    out.pts.push(subOut.pts);
 }
 
 static inline bool prepareDashedPieces(RenderPath& subOut, DashSubpathState& state, Array<PieceRange>& pieces)
@@ -623,6 +624,12 @@ static inline bool appendClosedDashedSubpath(RenderPath& out, const RenderPath& 
 
 static inline void appendDashedSubpath(RenderPath& out, RenderPath& subOut, const Point& mappedStart, DashSubpathState& state, Array<PieceRange>& pieces)
 {
+    if (!state.closed) {
+        appendDashedCommands(out, subOut);
+        resetDashedSubpath(subOut, state);
+        return;
+    }
+
     if (!prepareDashedPieces(subOut, state, pieces)) return;
 
     if (!appendClosedDashedSubpath(out, subOut, pieces, mappedStart, state)) {
@@ -695,7 +702,7 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
                 right = seg;
             }
 
-            curIdx = (curIdx + 1) % dash.count;
+            if (++curIdx == int32_t(dash.count)) curIdx = 0;
             curLen = dash.pattern[curIdx];
             opGap = !opGap;
             seg = right;
@@ -711,7 +718,7 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
             drawFn(seg);
         }
         if (curLen < MIN_CURR_LEN_THRESHOLD) {
-            curIdx = (curIdx + 1) % dash.count;
+            if (++curIdx == int32_t(dash.count)) curIdx = 0;
             curLen = dash.pattern[curIdx];
             opGap = !opGap;
         }
