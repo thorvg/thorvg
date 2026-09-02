@@ -24,27 +24,6 @@ jobs:
 
     - name: Build
       run: |
-        meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dbindings=capi -Dextra="lottie_exp,openmp"
-        where link
-        ninja -C build install
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: result_windows
-        path: build/src/thorvg*
-
-  compact_test:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ilammy/msvc-dev-cmd@v1
-
-    - name: Install Packages
-      run: |
-        pip install meson ninja
-
-    - name: Build
-      run: |
         meson setup build -Dlog=true -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false -Dextra="lottie_exp,openmp"
         where link
         ninja -C build install

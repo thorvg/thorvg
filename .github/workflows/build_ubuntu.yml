@@ -19,25 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: true
-
-    - name: Install Packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install meson ninja-build libturbojpeg0-dev libpng-dev libwebp-dev
-
-    - name: Build
-      run: |
-        meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dbindings=capi -Dextra="lottie_exp,openmp"
-        sudo ninja -C build install
-
-  compact_test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
 
     - name: Install Packages
       run: |
@@ -57,8 +38,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: true
 
     - name: Install Packages
       run: |
