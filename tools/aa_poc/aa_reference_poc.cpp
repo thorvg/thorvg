@@ -95,6 +95,7 @@ struct Mesh
 struct Options : aa_poc::RunOptions
 {
     SceneKind scene = SceneKind::CurveDirect;
+    float renderScale = 1.0f;
 };
 
 constexpr Matrix IDENTITY = {1.0f, 0.0f, 0.0f,
@@ -667,12 +668,19 @@ bool parseOptions(int argc, char** argv, Options& options)
         if (std::strcmp(argv[i], "--scene") == 0) {
             if (i + 1 >= argc) return false;
             if (!parseScene(argv[++i], options.scene)) return false;
+        } else if (std::strcmp(argv[i], "--render-scale") == 0) {
+            if (i + 1 >= argc ||
+                !aa_poc::parseFloat(argv[++i], options.renderScale) ||
+                options.renderScale <= 0.0f) {
+                return false;
+            }
         } else {
             auto result = aa_poc::parseCommonOption(i, argc, argv, options);
             if (result != aa_poc::ParseOptionResult::Matched) return false;
         }
     }
-    return aa_poc::validOptions(options);
+    return aa_poc::validOptions(options) &&
+           (options.scene == SceneKind::Comparison || options.renderScale == 1.0f);
 }
 
 } // namespace
@@ -683,7 +691,8 @@ int run(Mode mode, int argc, char** argv)
     options.outputDir = mode == Mode::Msaa4 ? "aa_msaa4_poc-output" : "aa_ssaa8_poc-output";
     if (!parseOptions(argc, argv, options)) {
         aa_poc::printUsage(
-            argv[0], "[--scene flat-direct|curve-direct|flat-mask|curve-mask|comparison]");
+            argv[0], "[--scene flat-direct|curve-direct|flat-mask|curve-mask|comparison] "
+                     "[--render-scale S]");
         return EXIT_FAILURE;
     }
     if (!aa_poc::makeOutputDirectory(options.outputDir)) {
@@ -710,7 +719,8 @@ int run(Mode mode, int argc, char** argv)
             return EXIT_FAILURE;
         }
     } else {
-        auto scaledScene = makeScene(options.scene, 0.0f, 0.0f, static_cast<float>(SSAA_SCALE));
+        auto scaledScene = makeScene(options.scene, 0.0f, 0.0f,
+                                     options.renderScale * SSAA_SCALE);
         GLint maxRenderbufferSize = 0;
         glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxRenderbufferSize);
         if (maxRenderbufferSize < static_cast<GLint>(scaledScene.width) ||
@@ -747,10 +757,15 @@ int run(Mode mode, int argc, char** argv)
             return renderThorvgMaskReference(
                 context, mode, options.scene, offsetX, offsetY, filename);
         }
-        auto scale = mode == Mode::Ssaa8 ? static_cast<float>(SSAA_SCALE) : 1.0f;
-        auto scene = makeScene(options.scene, offsetX, offsetY, scale);
+        auto downsample = mode == Mode::Ssaa8 ? SSAA_SCALE : 1u;
+        auto scale = options.renderScale * downsample;
+        auto sceneOffsetX = options.scene == SceneKind::Comparison ?
+                            offsetX / options.renderScale : offsetX;
+        auto sceneOffsetY = options.scene == SceneKind::Comparison ?
+                            offsetY / options.renderScale : offsetY;
+        auto scene = makeScene(options.scene, sceneOffsetX, sceneOffsetY, scale);
         return renderReference(scene, mode == Mode::Msaa4 ? 4u : 1u,
-                               mode == Mode::Ssaa8 ? SSAA_SCALE : 1u,
+                               downsample,
                                program, vao, vbo, ebo, filename);
     };
 

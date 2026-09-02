@@ -51,7 +51,7 @@ bool takeComparisonOption(int& argc, char** argv);
 std::vector<ComparisonShape> makeComparisonScene(float offsetX, float offsetY,
                                                   float scale = 1.0f);
 
-bool populateComparisonScene(tvg::GlCanvas& canvas, float offsetX, float offsetY,
+bool populateComparisonScene(tvg::Canvas& canvas, float offsetX, float offsetY,
                              float scale, const char* diagnosticName);
 
 } // namespace aa_poc

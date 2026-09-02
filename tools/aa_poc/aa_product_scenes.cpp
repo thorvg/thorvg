@@ -105,7 +105,7 @@ private:
 };
 
 template<typename Builder>
-bool addShape(tvg::GlCanvas& canvas, const Coordinates& coordinates,
+bool addShape(tvg::Canvas& canvas, const Coordinates& coordinates,
               const Color& color, tvg::FillRule fillRule,
               const char* diagnosticName, const Builder& builder)
 {
@@ -123,7 +123,7 @@ bool addShape(tvg::GlCanvas& canvas, const Coordinates& coordinates,
     return true;
 }
 
-bool addCircle(tvg::GlCanvas& canvas, const Coordinates& coordinates,
+bool addCircle(tvg::Canvas& canvas, const Coordinates& coordinates,
                float cx, float cy, float radius, const Color& color,
                const char* diagnosticName)
 {
@@ -134,7 +134,7 @@ bool addCircle(tvg::GlCanvas& canvas, const Coordinates& coordinates,
                     });
 }
 
-bool populateFlatCore(tvg::GlCanvas& canvas, const Coordinates& coordinates,
+bool populateFlatCore(tvg::Canvas& canvas, const Coordinates& coordinates,
                       const char* diagnosticName)
 {
     if (!addShape(canvas, coordinates, {20, 107, 224, 255},
@@ -162,7 +162,7 @@ bool populateFlatCore(tvg::GlCanvas& canvas, const Coordinates& coordinates,
                     });
 }
 
-bool populateCurveCore(tvg::GlCanvas& canvas, const Coordinates& coordinates,
+bool populateCurveCore(tvg::Canvas& canvas, const Coordinates& coordinates,
                        const char* diagnosticName)
 {
     if (!addCircle(canvas, coordinates, 63.375f, 61.625f, 38.25f,
@@ -187,7 +187,7 @@ bool populateCurveCore(tvg::GlCanvas& canvas, const Coordinates& coordinates,
                     });
 }
 
-bool addFlatTile(tvg::GlCanvas& canvas, const Coordinates& coordinates,
+bool addFlatTile(tvg::Canvas& canvas, const Coordinates& coordinates,
                  float cx, float cy, float skew, const Color& color,
                  const char* diagnosticName)
 {
@@ -197,7 +197,7 @@ bool addFlatTile(tvg::GlCanvas& canvas, const Coordinates& coordinates,
                     });
 }
 
-bool addCurvedTile(tvg::GlCanvas& canvas, const Coordinates& coordinates,
+bool addCurvedTile(tvg::Canvas& canvas, const Coordinates& coordinates,
                    float cx, float cy, const Color& color,
                    const char* diagnosticName)
 {
@@ -207,7 +207,7 @@ bool addCurvedTile(tvg::GlCanvas& canvas, const Coordinates& coordinates,
                     });
 }
 
-bool populateMixedProductTile(tvg::GlCanvas& canvas,
+bool populateMixedProductTile(tvg::Canvas& canvas,
                               const Coordinates& coordinates,
                               const char* diagnosticName)
 {
@@ -237,7 +237,7 @@ bool populateMixedProductTile(tvg::GlCanvas& canvas,
     return true;
 }
 
-bool populateTransparencyCore(tvg::GlCanvas& canvas,
+bool populateTransparencyCore(tvg::Canvas& canvas,
                               const Coordinates& coordinates,
                               const char* diagnosticName)
 {
@@ -285,7 +285,7 @@ uint32_t expectedShapeCount(SceneKind scene)
     return 0;
 }
 
-bool populateProductScene(tvg::GlCanvas& canvas, SceneKind scene,
+bool populateProductScene(tvg::Canvas& canvas, SceneKind scene,
                           float coordinateScale, float offsetX, float offsetY,
                           const char* diagnosticName)
 {

@@ -134,3 +134,23 @@ executable('aa_aabb_diagnostic',
     link_with: thorvg_lib,
     install: false,
 )
+
+if wg_engine and host_machine.system() != 'emscripten'
+    aa_poc_wgpu_dep = [dependency('wgpu_native')]
+    if host_machine.system() == 'darwin'
+        aa_poc_wgpu_dep += dependency('appleframeworks', modules: ['Cocoa', 'IOKit'])
+    endif
+
+    executable('thorvg_webgpu_quality',
+        files(
+            'thorvg_webgpu_quality.cpp',
+            'aa_poc_comparison_scene.cpp',
+            '../svg2png/lodepng.cpp',
+        ) + aa_poc_product_scene_sources,
+        include_directories: aa_poc_render_includes,
+        cpp_args: aa_poc_args,
+        dependencies: aa_poc_wgpu_dep,
+        link_with: thorvg_lib,
+        install: false,
+    )
+endif

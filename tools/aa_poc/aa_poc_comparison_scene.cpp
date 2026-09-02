@@ -208,7 +208,7 @@ std::vector<ComparisonShape> makeComparisonScene(float offsetX, float offsetY,
     return scene;
 }
 
-bool populateComparisonScene(tvg::GlCanvas& canvas, float offsetX, float offsetY,
+bool populateComparisonScene(tvg::Canvas& canvas, float offsetX, float offsetY,
                              float scale, const char* diagnosticName)
 {
     auto scene = makeComparisonScene(offsetX, offsetY, scale);

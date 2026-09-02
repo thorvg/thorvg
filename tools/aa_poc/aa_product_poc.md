@@ -7,6 +7,7 @@ The harness runs seven modes through the same `GlRenderer` path, checks the sele
 ## Prerequisites
 
 - A C++ toolchain, Meson, Ninja, and pkg-config.
+- Rust 1.88 or newer and Cargo for the optional Vello comparison runner.
 - macOS with OpenGL, or Linux with OpenGL 3.3 and EGL development packages.
 - Python 3 for the quality evaluator.
 - Enough free space for the 336 quality candidates and their SSAA8 references.
@@ -97,6 +98,105 @@ AA_HEADLINE_DIR="$PWD/aa-product-headline"
 
 Creation, shader/program initialization, warmup, PNG encoding, readback, and reporting are outside the timed region. Each repetition is bracketed by `glFinish()`.
 
+## WebGPU and Vello quality comparison
+
+The WebGPU comparison reuses the four-scene, three-scale, four-offset product
+matrix and its SSAA8 oracle. ThorVG WebGPU and Vello produce separate external
+manifests, so neither renderer claims the GL-only route and sample-count proof.
+This is an offscreen raster-quality test, not a browser integration or
+performance benchmark.
+
+Configure the POCs with both GL and WebGPU, then build the reference and ThorVG
+WebGPU runners:
+
+```sh
+meson setup --reconfigure build-aa-poc-release \
+  -Dbuildtype=release \
+  -Dengines=gl,wg \
+  -Dtools=aa_poc \
+  -Dloaders='' \
+  -Dsavers='' \
+  -Dbindings='' \
+  -Dthreads=false \
+  -Dpartial=false
+
+meson compile -C build-aa-poc-release \
+  aa_product_poc aa_ssaa8_poc thorvg_webgpu_quality
+```
+
+Generate the trusted SSAA8 references, render both WebGPU candidates, and
+evaluate them with the existing metric implementation and thresholds:
+
+```sh
+AA_WEBGPU_DIR="$PWD/aa-webgpu-quality"
+
+./build-aa-poc-release/tools/aa_poc/aa_product_poc \
+  --suite quality \
+  --mode noaa \
+  --scene all \
+  --scale all \
+  --output-dir "$AA_WEBGPU_DIR"
+
+./build-aa-poc-release/tools/aa_poc/thorvg_webgpu_quality \
+  --suite product \
+  --output-dir "$AA_WEBGPU_DIR"
+
+cargo run \
+  --manifest-path tools/aa_poc/vello_quality/Cargo.toml \
+  --release \
+  --locked \
+  -- \
+  --suite product \
+  --output-dir "$AA_WEBGPU_DIR"
+
+python3 tools/aa_poc/evaluate_external_aa_product.py \
+  "$AA_WEBGPU_DIR/thorvg-webgpu-quality-manifest.tsv" \
+  --external-mode thorvg-webgpu-msaa4 \
+  --reference-manifest "$AA_WEBGPU_DIR/quality-manifest.tsv" \
+  --output-dir "$AA_WEBGPU_DIR/thorvg-webgpu-evaluation"
+
+python3 tools/aa_poc/evaluate_external_aa_product.py \
+  "$AA_WEBGPU_DIR/vello-quality-manifest.tsv" \
+  --external-mode vello-area \
+  --reference-manifest "$AA_WEBGPU_DIR/quality-manifest.tsv" \
+  --output-dir "$AA_WEBGPU_DIR/vello-evaluation"
+```
+
+The external evaluator rejects incomplete or duplicate matrices and obtains
+every reference path from the trusted ThorVG manifest.
+
+### Feature-level comparison diagnostic
+
+The diagnostic scores the established eight-feature comparison scene at three
+display scales and four subpixel offsets. It deliberately reports each feature
+and scale separately instead of producing a mixed whole-frame ranking.
+
+```sh
+AA_WEBGPU_DIAGNOSTIC_DIR="$PWD/aa-webgpu-diagnostic"
+
+python3 tools/aa_poc/render_webgpu_diagnostic_references.py \
+  --ssaa8-bin ./build-aa-poc-release/tools/aa_poc/aa_ssaa8_poc \
+  --output-dir "$AA_WEBGPU_DIAGNOSTIC_DIR"
+
+./build-aa-poc-release/tools/aa_poc/thorvg_webgpu_quality \
+  --suite comparison \
+  --output-dir "$AA_WEBGPU_DIAGNOSTIC_DIR"
+
+cargo run \
+  --manifest-path tools/aa_poc/vello_quality/Cargo.toml \
+  --release \
+  --locked \
+  -- \
+  --suite comparison \
+  --output-dir "$AA_WEBGPU_DIAGNOSTIC_DIR"
+
+python3 tools/aa_poc/evaluate_webgpu_diagnostic.py \
+  --reference-manifest "$AA_WEBGPU_DIAGNOSTIC_DIR/comparison-reference-manifest.tsv" \
+  --thorvg-manifest "$AA_WEBGPU_DIAGNOSTIC_DIR/thorvg-webgpu-comparison-manifest.tsv" \
+  --vello-manifest "$AA_WEBGPU_DIAGNOSTIC_DIR/vello-comparison-manifest.tsv" \
+  --output-dir "$AA_WEBGPU_DIAGNOSTIC_DIR/report"
+```
+
 ## Focused diagnostics
 
 ```sh
@@ -113,6 +213,8 @@ The size diagnostic isolates route eligibility across scale. The AABB diagnostic
 
 ```sh
 python3 tools/aa_poc/test_evaluate_aa_product.py
+python3 tools/aa_poc/test_evaluate_external_aa_product.py
+python3 tools/aa_poc/test_evaluate_webgpu_diagnostic.py
 python3 tools/aa_poc/test_aa_report.py
 ```
 

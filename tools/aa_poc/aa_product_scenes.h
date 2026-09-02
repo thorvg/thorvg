@@ -51,7 +51,7 @@ uint32_t expectedShapeCount(SceneKind scene);
 
 // Adds only normal-blended solid fills. The fixtures intentionally contain no
 // strokes, gradients, clips, masks, or paint-to-paint overlap.
-bool populateProductScene(tvg::GlCanvas& canvas, SceneKind scene,
+bool populateProductScene(tvg::Canvas& canvas, SceneKind scene,
                           float coordinateScale, float offsetX, float offsetY,
                           const char* diagnosticName);
 

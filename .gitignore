@@ -8,3 +8,6 @@ doc
 *.tmp
 *.code-workspace
 .DS_Store
+/.cache/
+__pycache__/
+/tools/aa_poc/vello_quality/target/
