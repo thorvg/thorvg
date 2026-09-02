@@ -1537,15 +1537,16 @@ void LottieBuilder::updateEffect(LottieLayer* layer, float frameNo, uint8_t qual
 
 void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLayer* layer, float frameNo)
 {
+    auto active = (frameNo >= layer->inPoint && frameNo < layer->outPoint);
+
     if (layer->type == LottieLayer::Audio) {
-        if (audioResolver.func) updateAudio(comp, layer, frameNo);
+        if (audioResolver.func) updateAudio(comp, layer, frameNo, active);
         return;
     }
 
     layer->scene = nullptr;
 
-    //visibility
-    if (frameNo < layer->inPoint || frameNo >= layer->outPoint) {
+    if (!active) {
         layer->invalidate();
         return;
     }
@@ -1715,12 +1716,11 @@ static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, float frameNo)
+void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, float frameNo, bool active)
 {
     if (layer->children.empty()) return;
 
     auto ctrl = layer->audio();
-    auto active = frameNo >= layer->inPoint && frameNo < layer->outPoint;
     auto volume = active ? ctrl->volume(frameNo, tween, exps) : 100.0f;
 
     // audio condition is changed
