@@ -194,6 +194,7 @@ private:
     ~GlRenderer();
 
     void initShaders();
+    bool prepareCommon(GlShape* sdata, RenderUpdateFlag& flags, uint8_t opacity, bool clipper);
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);

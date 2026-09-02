@@ -1276,27 +1276,40 @@ void GlRenderer::dispose(RenderData data)
     delete sdata;
 }
 
-RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
+bool GlRenderer::prepareCommon(GlShape* sdata, RenderUpdateFlag& flags, uint8_t opacity, bool clipper)
 {
-    //TODO: redefine GlImage?
-    auto sdata = static_cast<GlShape*>(data);
-    if (!sdata) sdata = new GlShape;
-
-    if (opacity == 0) {
+    // Defer updates while transparent.
+    if (opacity == 0 && !clipper) {
         sdata->opacity = 0;
         sdata->deferredFlags |= flags;
-        return sdata;
+        return true;
     }
 
     flags |= sdata->deferredFlags;
     sdata->deferredFlags = RenderUpdateFlag::None;
+    if (flags == RenderUpdateFlag::None) return true;
 
-    auto cacheStale = sdata->texId && (sdata->texStamp != mTextures.stamp);
-    if (flags == RenderUpdateFlag::None && !cacheStale) return data;
-
-    sdata->validFill = false;
     sdata->viewWd = static_cast<float>(surface.w);
     sdata->viewHt = static_cast<float>(surface.h);
+    sdata->opacity = opacity;
+
+    return false;
+}
+
+RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, FilterMethod filter, RenderUpdateFlag flags)
+{
+    //TODO: redefine GlImage?
+    auto sdata = static_cast<GlShape*>(data);
+    if (!sdata) {
+        sdata = new GlShape;
+        flags = RenderUpdateFlag::All;
+    }
+
+    auto cacheStale = sdata->texId && (sdata->texStamp != mTextures.stamp);
+    if (cacheStale) flags |= RenderUpdateFlag::Image;
+    if (prepareCommon(sdata, flags, opacity, false)) return sdata;
+
+    sdata->validFill = false;
 
     if (cacheStale || sdata->texId == 0 || sdata->texSource != image || sdata->texFilter != filter) {
         auto ownsTexture = sdata->texId && (sdata->texStamp == mTextures.stamp);
@@ -1310,16 +1323,12 @@ RenderData GlRenderer::prepare(RenderSurface* image, RenderData data, const Matr
         mTextures.upload(mStateCache, sdata->texId, image, filter);
     }
 
-    sdata->opacity = opacity;
     sdata->geometry.setMatrix(transform);
     sdata->geometry.viewport = vport;
     sdata->geometry.tesselateImage(image);
     sdata->validFill = true;
 
-    if (flags & RenderUpdateFlag::Clip) {
-        sdata->clips.clear();
-        sdata->clips.push(clips);
-    }
+    if (flags & RenderUpdateFlag::Clip) sdata->clips = clips;
 
     return sdata;
 }
@@ -1333,20 +1342,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         flags = RenderUpdateFlag::All;
     }
 
-    // Defer updates while transparent.
-    if (opacity == 0 && !clipper) {
-        sdata->opacity = 0;
-        sdata->deferredFlags |= flags;
-        return sdata;
-    }
-
-    flags |= sdata->deferredFlags;
-    sdata->deferredFlags = RenderUpdateFlag::None;
-    if (flags == RenderUpdateFlag::None) return sdata;
-
-    sdata->viewWd = static_cast<float>(surface.w);
-    sdata->viewHt = static_cast<float>(surface.h);
-    sdata->opacity = opacity;
+    if (prepareCommon(sdata, flags, opacity, clipper)) return sdata;
 
     if (flags & RenderUpdateFlag::Path) sdata->geometry = GlGeometry();
 
@@ -1371,10 +1367,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         if (sdata->geometry.tesselateStroke(*(sdata->rshape))) sdata->validStroke = true;
     }
 
-    if (flags & RenderUpdateFlag::Clip) {
-        sdata->clips.clear();
-        sdata->clips.push(clips);
-    }
+    if (flags & RenderUpdateFlag::Clip) sdata->clips = clips;
 
     return sdata;
 }
