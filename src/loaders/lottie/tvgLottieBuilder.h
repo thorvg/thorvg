@@ -180,7 +180,7 @@ struct LottieBuilder
     LottieTween tween;
 
 private:
-    void updateAudio(LottieComposition* comp, LottieLayer* layer, float frameNo);
+    void updateAudio(LottieComposition* comp, LottieLayer* layer, float frameNo, bool active);
     void appendRect(LottieRect* rect, Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx);
     void appendCircle(LottieEllipse* ellipse, Shape* shape, Point& center, Point& radius, bool clockwise, RenderContext* ctx);
     bool fragmented(LottieGroup* parent, LottieObject** child, Inlist<RenderContext>& contexts, RenderContext* ctx, RenderFragment fragment);
