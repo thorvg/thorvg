@@ -331,13 +331,28 @@ bool LottieParser::getValue(RGB32& color)
 }
 
 
-void LottieParser::getInterpolatorPoint(Point& pt)
+bool LottieParser::getInterpolatorPoint(Point pt[DimCnt])
 {
+    auto getField = [&](float& x, float& y) {
+        if (peekType() != kArrayType) {
+            x = y = getFloat();
+            return;
+        }
+        enterArray();
+        if (!nextArrayValue()) return;
+        x = y = getFloat();
+        if (nextArrayValue()) {
+            y = getFloat();
+            while (nextArrayValue()) getFloat();
+        }
+    };
+
     enterObject();
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("x")) getValue(pt.x);
-        else if (KEY_AS("y")) getValue(pt.y);
+        if (KEY_AS("x")) getField(pt[DimX].x, pt[DimY].x);
+        else if (KEY_AS("y")) getField(pt[DimX].y, pt[DimY].y);
     }
+    return pt[DimX] != pt[DimY];
 }
 
 
@@ -400,19 +415,20 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
 template<typename T>
 void LottieParser::parseKeyFrame(T& prop)
 {
-    Point inTangent, outTangent;
+    Point inTangent[DimCnt], outTangent[DimCnt];
     const char* interpolatorKey = nullptr;
     auto& frame = prop.newFrame();
     auto interpolator = false;
+    auto split = false;
 
     enterObject();
 
     while (auto key = nextObjectKey()) {
         if (KEY_AS("i")) {
             interpolator = true;
-            getInterpolatorPoint(inTangent);
+            split |= getInterpolatorPoint(inTangent);
         } else if (KEY_AS("o")) {
-            getInterpolatorPoint(outTangent);
+            split |= getInterpolatorPoint(outTangent);
         } else if (KEY_AS("n")) {
             if (peekType() == kStringType) {
                 interpolatorKey = getString();
@@ -440,7 +456,8 @@ void LottieParser::parseKeyFrame(T& prop)
     }
 
     if (interpolator) {
-        frame.interpolator = getInterpolator(interpolatorKey, inTangent, outTangent);
+        frame.setInterpolator(getInterpolator(interpolatorKey, inTangent[DimX], outTangent[DimX]), DimX);
+        if (split) frame.setInterpolator(getInterpolator(nullptr, inTangent[DimY], outTangent[DimY]), DimY);
     }
 }
 
