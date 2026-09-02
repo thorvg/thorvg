@@ -70,7 +70,7 @@ executable('aa_curve_direct_poc',
 aa_reference_sources = files(
     'aa_reference_poc.cpp',
     '../../src/common/tvgMath.cpp',
-) + aa_poc_common_sources + aa_poc_flat_mask_scene_sources + aa_poc_curve_mask_scene_sources
+) + aa_poc_common_sources + aa_poc_flat_mask_scene_sources + aa_poc_curve_mask_scene_sources + aa_poc_product_renderer_sources
 
 executable('aa_msaa4_poc',
     files('aa_msaa4_poc.cpp') + aa_reference_sources,

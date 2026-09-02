@@ -38,6 +38,7 @@
 #include "aa_poc_curve_mask_scene.h"
 #include "aa_poc_flat_mask_scene.h"
 #include "aa_poc_gl.h"
+#include "aa_product_renderer.h"
 #include "tvgMath.h"
 #include "tvgRender.h"
 
@@ -529,6 +530,12 @@ bool renderThorvgMaskReference(aa_poc::GlContext& context, Mode mode,
                                SceneKind sceneKind, float offsetX, float offsetY,
                                const std::string& filename)
 {
+    const auto productMode = mode == Mode::Msaa4 ?
+                             aa_poc::ProductAaMode::Msaa4 :
+                             aa_poc::ProductAaMode::NoAa;
+    const auto expectedSamples = mode == Mode::Msaa4 ? 4u : 1u;
+    const auto* diagnostic = mode == Mode::Msaa4 ?
+                             "aa_msaa4_poc" : "aa_ssaa8_poc";
     auto baseWidth = sceneKind == SceneKind::CurveMask ?
         aa_poc::CURVE_MASK_WIDTH : aa_poc::FLAT_MASK_WIDTH;
     auto baseHeight = sceneKind == SceneKind::CurveMask ?
@@ -536,17 +543,18 @@ bool renderThorvgMaskReference(aa_poc::GlContext& context, Mode mode,
     auto scale = mode == Mode::Ssaa8 ? static_cast<float>(SSAA_SCALE) : 1.0f;
     auto width = static_cast<uint32_t>(baseWidth * scale);
     auto height = static_cast<uint32_t>(baseHeight * scale);
-    auto samples = mode == Mode::Msaa4 ? 4u : 1u;
     auto downsample = mode == Mode::Ssaa8 ? SSAA_SCALE : 1u;
 
     aa_poc::RenderTarget renderTarget;
-    aa_poc::RenderTarget resolveTarget;
-    if (!renderTarget.init(width, height, samples, "aa_reference_poc")) return false;
-    if (samples > 1 && !resolveTarget.init(width, height, 1, "aa_reference_poc")) return false;
+    if (!renderTarget.init(width, height, 1, "aa_reference_poc")) return false;
 
     auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen(EngineOption::Default));
     if (!canvas) {
         std::fprintf(stderr, "aa_reference_poc: GlCanvas::gen() failed\n");
+        return false;
+    }
+    if (!aa_poc::setProductAaMode(*canvas, productMode)) {
+        std::fprintf(stderr, "%s: failed to select the ThorVG AA mode\n", diagnostic);
         return false;
     }
 
@@ -582,20 +590,25 @@ bool renderThorvgMaskReference(aa_poc::GlContext& context, Mode mode,
     if (success) {
         success = aa_poc::checkThorvg(canvas->sync(), "Canvas::sync", "aa_reference_poc");
     }
-    canvas.reset();
-
-    GLuint readTarget = renderTarget.framebuffer();
-    if (success && samples > 1) {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, renderTarget.framebuffer());
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolveTarget.framebuffer());
-        glBlitFramebuffer(0, 0, width, height, 0, 0, width, height,
-                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        readTarget = resolveTarget.framebuffer();
+    if (success) {
+        const auto stats = aa_poc::productAaStats(*canvas);
+        if (stats.mode != productMode || stats.rootSamples != expectedSamples) {
+            std::fprintf(stderr,
+                         "%s: AA route assertion failed: selected-mode=%u "
+                         "expected-mode=%u root=%u expected-root=%u\n",
+                         diagnostic,
+                         static_cast<unsigned int>(stats.mode),
+                         static_cast<unsigned int>(productMode),
+                         stats.rootSamples, expectedSamples);
+            success = false;
+        }
     }
+    canvas.reset();
 
     if (success) {
         success = aa_poc::writeFramebufferPng(
-            filename, readTarget, width, height, downsample, "aa_reference_poc");
+            filename, renderTarget.framebuffer(), width, height,
+            downsample, "aa_reference_poc");
     }
     if (success) std::printf("wrote %s\n", filename.c_str());
     return success;
@@ -612,6 +625,16 @@ bool renderReference(const Scene& scene, uint32_t samples, uint32_t downsample,
         !resolveTarget.init(scene.width, scene.height, 1, "aa_reference_poc")) return false;
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderTarget.framebuffer());
+    GLint reportedSamples = 0;
+    glGetIntegerv(GL_SAMPLES, &reportedSamples);
+    auto actualSamples = reportedSamples > 1 ?
+                         static_cast<uint32_t>(reportedSamples) : 1u;
+    if (actualSamples != samples) {
+        std::fprintf(stderr,
+                     "aa_reference_poc: sample assertion failed: actual=%u expected=%u\n",
+                     actualSamples, samples);
+        return false;
+    }
     glBindVertexArray(vao);
     glDisable(GL_DEPTH_TEST);
     aa_poc::clearFramebuffer(renderTarget.framebuffer(), scene.width, scene.height);
