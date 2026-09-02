@@ -19,7 +19,6 @@ jobs:
     - uses: nttld/setup-ndk@v1.3.1
       id: setup-ndk
       with:
-        submodules: true
         ndk-version: r21e
         local-cache: true
 
@@ -49,7 +48,6 @@ jobs:
     - uses: nttld/setup-ndk@v1.3.1
       id: setup-ndk
       with:
-        submodules: true
         ndk-version: r21e
         local-cache: true
 
