@@ -30,28 +30,15 @@
 static SwOutline* _genOutline(SwImage& image, SwMpool* mpool, unsigned tid)
 {
     auto outline = mpool->outline(tid);
-    outline->in.reserve(5);
-    outline->types.reserve(5);
-    outline->cntrs.reserve(1);
-    outline->closed.reserve(1);
-
     auto w = static_cast<float>(image.w);
     auto h = static_cast<float>(image.h);
 
-    outline->in.push({0.0f, 0.0f});
-    outline->in.push({w, 0.0f});
-    outline->in.push({w, h});
-    outline->in.push({0.0f, h});
-    outline->in.push({0.0f, 0.0f});
-
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->cntrs.push(outline->in.count - 1);
-    outline->closed.push(true);
-
+    outline->synth.moveTo({0.0f, 0.0f});
+    outline->synth.lineTo({w, 0.0f});
+    outline->synth.lineTo({w, h});
+    outline->synth.lineTo({0.0f, h});
+    outline->synth.close();
+    outline->path = &outline->synth;
     outline->fillRule = FillRule::NonZero;
 
     return outline;
@@ -78,8 +65,9 @@ bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& c
     image.outline = _genOutline(image, mpool, tid);
     if (!image.outline) return false;
 
+    image.outline->transform = transform;
     BBox bbox;
-    utilExport(image.outline, transform, bbox);
+    utilBounds(*image.outline->path, transform, bbox);
     return utilBBox(bbox, clipBox, renderBox, image.direct);
 }
 

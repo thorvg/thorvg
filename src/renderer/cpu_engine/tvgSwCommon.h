@@ -29,8 +29,6 @@
 #include "tvgColor.h"
 #include "tvgRender.h"
 
-#define SW_CURVE_TYPE_POINT 0
-#define SW_CURVE_TYPE_CUBIC 1
 #define SW_COLOR_TABLE 1024
 
 struct SwCompositor;
@@ -100,11 +98,9 @@ struct SwSize
 
 struct SwOutline
 {
-    Array<Point> in;        // the outlines' points in float-point form
-    Array<SwPoint> out;     // the outline's points in fixed-point form
-    Array<uint32_t> cntrs;  // the contour end points
-    Array<uint8_t> types;   // curve type
-    Array<bool> closed;     // opened or closed path?
+    RenderPath synth;  //locally generated path for trim, dash, stroke border, and image outlines
+    const RenderPath* path = nullptr;
+    Matrix transform = tvg::identity();
     FillRule fillRule;
 };
 
@@ -227,7 +223,7 @@ struct SwStroke
 
 struct SwDashStroke
 {
-    SwOutline* outline = nullptr;
+    RenderPath* path = nullptr;
     float curLen = 0;
     int32_t curIdx = 0;
     Point ptStart = {0, 0};
@@ -358,11 +354,8 @@ struct SwMpool
 
     SwOutline* outline(unsigned idx)
     {
-        outlines[idx].in.clear();
-        outlines[idx].out.clear();
-        outlines[idx].cntrs.clear();
-        outlines[idx].types.clear();
-        outlines[idx].closed.clear();
+        outlines[idx].synth.clear();
+        outlines[idx].path = nullptr;
 
         return &outlines[idx];
     }
@@ -454,7 +447,7 @@ static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNU
     return s;
 }
 
-void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox);
+void utilBounds(const RenderPath& path, const Matrix& transform, BBox& bbox);
 bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
@@ -470,7 +463,7 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
 void shapeDelFill(SwShape& shape);
 
 void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform, SwMpool* mpool, unsigned tid);
-bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpool, unsigned tid);
+bool strokeParsePath(SwStroke* stroke, const RenderPath& path);
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 

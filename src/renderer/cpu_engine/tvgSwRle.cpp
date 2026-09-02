@@ -229,7 +229,7 @@ struct RleWorker
     SwPoint lineStack[LINE_STACK_SIZE];
     int levStack[32];
 
-    SwOutline* outline;
+    const SwOutline* outline;
 
     int bandSize;
     int bandShoot;
@@ -688,52 +688,73 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
     return false;
 }
 
-
-static bool _decomposeOutline(RleWorker& rw)
+static SwPoint _transform(const Point& pt, const Matrix& transform)
 {
-    auto outline = rw.outline;
-    auto first = 0;  //index of first point in contour
+    auto t = pt * transform;
+    return UPSCALE({int32_t(t.x * 64.0f), int32_t(t.y * 64.0f)});
+}
 
-    ARRAY_FOREACH(p, outline->cntrs) {
-        auto last = *p;
-        auto limit = outline->out.data + last;
-        auto start = UPSCALE(outline->out[first]);
-        auto pt = outline->out.data + first;
-        auto types = outline->types.data + first;
-        ++types;
+static bool _decomposePath(RleWorker& rw)
+{
+    auto path = rw.outline->path;
+    auto pts = path->pts.data;
+    SwPoint start{};
+    auto begun = false;
+    auto opened = false;
 
-        if (!_moveTo(rw, UPSCALE(outline->out[first]))) return false;
-
-        while (pt < limit) {
-            //emit a single line_to
-            if (types[0] == SW_CURVE_TYPE_POINT) {
-                ++pt;
-                ++types;
-                if (!_lineTo(rw, UPSCALE(*pt))) return false;
-            //types cubic
-            } else {
-                pt += 3;
-                types += 3;
-                if (pt <= limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]))) return false;
-                } else if (pt - 1 == limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start)) return false;
+    ARRAY_FOREACH(cmd, path->cmds)
+    {
+        switch (*cmd) {
+            case PathCommand::MoveTo: {
+                if (opened && !_lineTo(rw, start)) return false;
+                start = _transform(*pts++, rw.outline->transform);
+                if (!_moveTo(rw, start)) return false;
+                begun = opened = true;
+                break;
+            }
+            case PathCommand::LineTo: {
+                auto to = _transform(*pts++, rw.outline->transform);
+                if (!begun) {
+                    start = to;
+                    if (!_moveTo(rw, start)) return false;
+                    begun = opened = true;
+                    break;
                 }
-                else goto close;
+                if (!opened) {
+                    if (!_moveTo(rw, start)) return false;
+                    opened = true;
+                }
+                if (!_lineTo(rw, to)) return false;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                if (!begun) return false;
+                auto ctrl1 = _transform(pts[0], rw.outline->transform);
+                auto ctrl2 = _transform(pts[1], rw.outline->transform);
+                auto to = _transform(pts[2], rw.outline->transform);
+                pts += 3;
+                if (!opened) {
+                    if (!_moveTo(rw, start)) return false;
+                    opened = true;
+                }
+                if (!_cubicTo(rw, ctrl1, ctrl2, to)) return false;
+                break;
+            }
+            case PathCommand::Close: {
+                if (opened && !_lineTo(rw, start)) return false;
+                opened = false;
+                break;
             }
         }
-    close:
-        if (!_lineTo(rw, start)) return false;
-        first = last + 1;
     }
 
+    if (opened && !_lineTo(rw, start)) return false;
     return true;
 }
 
-
 static bool _genRle(RleWorker& rw)
 {
-    if (!_decomposeOutline(rw)) return false;
+    if (!_decomposePath(rw)) return false;
     if (!rw.invalid && !_recordCell(rw)) return false;
     return true;
 }
@@ -772,7 +793,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     rw.cellMax = {bbox.max.x, bbox.max.y};
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
-    rw.outline = const_cast<SwOutline*>(outline);
+    rw.outline = outline;
     rw.bandSize = rw.bufferSize / (sizeof(SwCell) * 2);
     rw.bandShoot = 0;
     rw.antiAlias = antiAlias;

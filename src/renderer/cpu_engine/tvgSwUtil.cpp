@@ -27,19 +27,17 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox)
+void utilBounds(const RenderPath& path, const Matrix& transform, BBox& bbox)
 {
-    outline->out.reserve(outline->in.count);
-
     bbox = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
 
-    ARRAY_FOREACH(pt, outline->in) {
+    ARRAY_FOREACH(pt, path.pts)
+    {
         auto t = *pt * transform;
         if (bbox.min.x > t.x) bbox.min.x = t.x;
         if (bbox.max.x < t.x) bbox.max.x = t.x;
         if (bbox.min.y > t.y) bbox.min.y = t.y;
         if (bbox.max.y < t.y) bbox.max.y = t.y;
-        outline->out.push({int32_t(t.x * 64.0f), int32_t(t.y * 64.0f)});
     }
 }
 
