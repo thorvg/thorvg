@@ -30,7 +30,7 @@ if media_loader
     subdir('media')
 endif
 
-if gif_saver
+if gif_loader or gif_saver
     subdir('gif')
 endif
 
