@@ -27,20 +27,23 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox)
+void utilExport(const Point* pts, uint32_t count, const Matrix& transform, SwPoint* out, BBox& bbox)
 {
-    outline->out.reserve(outline->in.count);
-
-    bbox = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
-
-    ARRAY_FOREACH(pt, outline->in) {
-        auto t = *pt * transform;
-        if (bbox.min.x > t.x) bbox.min.x = t.x;
-        if (bbox.max.x < t.x) bbox.max.x = t.x;
-        if (bbox.min.y > t.y) bbox.min.y = t.y;
-        if (bbox.max.y < t.y) bbox.max.y = t.y;
-        outline->out.push({int32_t(t.x * 64.0f), int32_t(t.y * 64.0f)});
+    auto bounds = bbox;
+    auto end = pts + count;
+    for (auto pt = pts; pt < end; ++pt) {
+        auto t = Point{pt->x * transform.e11 + pt->y * transform.e12 + transform.e13,
+                       pt->x * transform.e21 + pt->y * transform.e22 + transform.e23};
+        if (bounds.min.x > t.x) bounds.min.x = t.x;
+        if (bounds.max.x < t.x) bounds.max.x = t.x;
+        if (bounds.min.y > t.y) bounds.min.y = t.y;
+        if (bounds.max.y < t.y) bounds.max.y = t.y;
+        auto x = int32_t(t.x * 64.0f);
+        auto y = int32_t(t.y * 64.0f);
+        *out++ = {int32_t(static_cast<uint32_t>(x) << (SW_PIXEL_BITS - 6)),
+                  int32_t(static_cast<uint32_t>(y) << (SW_PIXEL_BITS - 6))};
     }
+    bbox = bounds;
 }
 
 bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)
