@@ -78,9 +78,9 @@ bool GlIntersector::intersectClips(const Point& pt, const tvg::Array<tvg::Render
 {
     for (uint32_t i = 0; i < clips.count; i++) {
         auto clip = (const GlShape*)clips[i];
-        if (clip->validFill) {
+        if (clip->valid.fill) {
             if (!isPointInMesh(pt, clip->geometry.fill, clip->geometry.fillWorld ? tvg::identity() : clip->geometry.matrix)) return false;
-        } else if (clip->validStroke) {
+        } else if (clip->valid.stroke) {
             if (!isPointInTris(pt * *clip->geometry.inverseMatrix(), clip->geometry.stroke)) return false;
         }
     }
@@ -98,16 +98,15 @@ bool GlIntersector::intersectShape(const RenderRegion region, const GlShape* sha
             Point pt{(float)x + region.min.x, (float)y + region.min.y};
             if (y % 2 == 1) pt.y = (float)sizeY - y - sizeY % 2 + region.min.y;
             if (intersectClips(pt, shape->clips)) {
-                if (shape->validFill && isPointInMesh(pt, shape->geometry.fill, shape->geometry.fillWorld ? tvg::identity() : shape->geometry.matrix)) return true;
-                if (shape->validStroke && isPointInTris(pt * *shape->geometry.inverseMatrix(), shape->geometry.stroke)) return true;
+                if (shape->valid.fill && isPointInMesh(pt, shape->geometry.fill, shape->geometry.fillWorld ? tvg::identity() : shape->geometry.matrix)) return true;
+                if (shape->valid.stroke && isPointInTris(pt * *shape->geometry.inverseMatrix(), shape->geometry.stroke)) return true;
             }
         }
     }
     return false;
 }
 
-
-bool GlIntersector::intersectImage(const RenderRegion region, const GlShape* image)
+bool GlIntersector::intersectImage(const RenderRegion region, const GlImage* image)
 {
     if (image) {
         auto sizeX = region.sw();

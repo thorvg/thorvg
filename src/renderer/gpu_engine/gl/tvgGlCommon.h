@@ -31,6 +31,7 @@
 
 struct GlStageBuffer;
 struct GlRenderTask;
+struct GlRenderer;
 
 constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
 constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
@@ -122,22 +123,38 @@ struct GlGeometry
     bool convex;
 };
 
-
-struct GlShape
+struct GlDrawable
 {
-  const RenderShape* rshape = nullptr;
-  float viewWd;
-  float viewHt;
-  uint32_t opacity = 0;
-  RenderUpdateFlag deferredFlags = RenderUpdateFlag::None;
-  GLuint texId = 0;
-  const RenderSurface* texSource = nullptr;
-  FilterMethod texFilter = FilterMethod::Bilinear;
-  GlGeometry geometry;
-  Array<RenderData> clips;
-  uint16_t texStamp = 0;  // Tracks TextureMgr::stamp ownership of texId.
-  bool validFill = false;
-  bool validStroke = false;
+    virtual ~GlDrawable() = default;
+    virtual void destroy(GlRenderer& renderer) = 0;
+    bool prepare(RenderUpdateFlag& updateFlags, const Point& viewSize, uint8_t opacity, bool clipper);
+
+    GlGeometry geometry;
+    Array<RenderData> clips;
+    Point size;  // view size
+    uint32_t opacity;
+    RenderUpdateFlag flags = RenderUpdateFlag::None;  // a backup flag for deferred update
+};
+
+struct GlShape : GlDrawable
+{
+    void destroy(GlRenderer& renderer) override {}
+
+    const RenderShape* rshape;
+    struct {
+        bool fill = false;
+        bool stroke = false;
+    } valid;
+};
+
+struct GlImage : GlDrawable
+{
+    void destroy(GlRenderer& renderer) override;
+
+    const RenderSurface* surface;
+    GLuint texId = 0;
+    uint16_t stamp;  // Tracks TextureMgr::stamp ownership of texId.
+    FilterMethod filter;
 };
 
 struct GlIntersector
@@ -147,7 +164,7 @@ struct GlIntersector
     bool isPointInMesh(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
     bool intersectClips(const Point& pt, const tvg::Array<tvg::RenderData>& clips);
     bool intersectShape(const RenderRegion region, const GlShape* shape);
-    bool intersectImage(const RenderRegion region, const GlShape* image);
+    bool intersectImage(const RenderRegion region, const GlImage* image);
 };
 
 #define MAX_GRADIENT_STOPS 16
