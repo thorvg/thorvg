@@ -187,13 +187,13 @@ struct BitmapLoader : ImageLoader
 struct AnimLoader : ImageLoader
 {
     float segmentBegin = 0.0f;
-    float segmentEnd;  // initialize the value with the total frame number
+    float segmentEnd = 0.0f;
 
     AnimLoader(FileType type) : ImageLoader(type, true) {}
     virtual ~AnimLoader() {}
 
     virtual bool frame(float no) = 0;  // set the current frame number
-    virtual float totalFrame() = 0;  // return the total frame count
+    virtual float totalFrame() { return segmentEnd - segmentBegin; }  // return the total frame count
     virtual float curFrame() = 0;  // return the current frame number
     virtual float duration() = 0;  // return the animation duration in seconds
     virtual Result segment(float begin, float end) = 0;

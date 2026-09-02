@@ -84,7 +84,6 @@ struct LottieLoader : AnimLoader, Task
 
     //Frame Controls
     bool frame(float no) override;
-    float totalFrame() override;
     float curFrame() override;
     float duration() override;
     bool sync() override;

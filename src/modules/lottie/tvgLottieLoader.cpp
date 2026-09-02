@@ -382,13 +382,6 @@ float LottieLoader::startFrame()
     return segmentBegin;
 }
 
-
-float LottieLoader::totalFrame()
-{
-    return segmentEnd - segmentBegin;
-}
-
-
 float LottieLoader::curFrame()
 {
     return frameNo - startFrame();
