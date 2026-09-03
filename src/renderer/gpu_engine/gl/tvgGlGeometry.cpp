@@ -183,12 +183,13 @@ void GlGeometry::prepare(const RenderShape& rshape)
 }
 
 
-bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultiplier)
+bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
 {
     fill.clear();
     fillBounds = {};
     fillWorld = true;
     convex = false;
+    multiplier = 1.0f;
 
     // `skipFill` means the path stayed thin enough that even thin fallback should not draw a fill.
     if (optPathSkipFill) return false;
@@ -199,7 +200,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     // Visible thin fills use stroke tessellation; sub-quantum fills are skipped earlier.
     if (optPathThin && tvg::zero(rshape.strokeWidth())) {
         if (tesselateThinFill(optPath)) {
-            if (opacityMultiplier) *opacityMultiplier = MIN_GL_STROKE_ALPHA;
+            multiplier = MIN_GL_STROKE_ALPHA;
             fillRule = rshape.rule;
             return true;
         }
@@ -212,7 +213,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float* opacityMultipl
     fillRule = rshape.rule;
     fillBounds = bwTess.bounds();
     convex = bwTess.convex;
-    if (opacityMultiplier) *opacityMultiplier = 1.0f;
+
     return true;
 }
 
