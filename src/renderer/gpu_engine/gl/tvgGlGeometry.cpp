@@ -25,20 +25,12 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
 
-bool GlIntersector::isPointInImage(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr)
-{
-    for (uint32_t i = 0; i < mesh.index.count; i += 3) {
-        auto p0 = Point{mesh.vertex[mesh.index[i+0]*4+0], mesh.vertex[mesh.index[i+0]*4+1]} * tr;
-        auto p1 = Point{mesh.vertex[mesh.index[i+1]*4+0], mesh.vertex[mesh.index[i+1]*4+1]} * tr;
-        auto p2 = Point{mesh.vertex[mesh.index[i+2]*4+0], mesh.vertex[mesh.index[i+2]*4+1]} * tr;
-        if (gpuPointInTriangle(p, p0, p1, p2)) return true;
-    }
-    return false;
-}
-
+/************************************************************************/
+/* GlIntersector                                                        */
+/************************************************************************/
 
 // triangle list
-bool GlIntersector::isPointInTris(const Point& p, const GlGeometryBuffer& mesh)
+bool GlIntersector::pointInTris(const Point& p, const GlGeometryBuffer& mesh)
 {
     for (uint32_t i = 0; i < mesh.index.count; i += 3) {
         auto p0 = Point{mesh.vertex[mesh.index[i + 0] * 2 + 0], mesh.vertex[mesh.index[i + 0] * 2 + 1]};
@@ -49,79 +41,120 @@ bool GlIntersector::isPointInTris(const Point& p, const GlGeometryBuffer& mesh)
     return false;
 }
 
-
 // even-odd triangle list
-bool GlIntersector::isPointInMesh(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr)
+bool GlIntersector::pointInMesh(const Point& p, const GlGeometryBuffer& mesh)
 {
+    auto vertices = mesh.vertex.data;
+    auto indices = mesh.index.data;
     uint32_t crossings = 0;
+
+    auto intersects = [&](const Point& p1, const Point& p2) {
+        if ((p1.y < p.y) == (p2.y < p.y)) return;
+        auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
+        if (intersectionX > p.x) ++crossings;
+    };
+
     for (uint32_t i = 0; i < mesh.index.count; i += 3) {
-        Point triangle[3] = {
-            Point{mesh.vertex[mesh.index[i+0]*2+0], mesh.vertex[mesh.index[i+0]*2+1]} * tr,
-            Point{mesh.vertex[mesh.index[i+1]*2+0], mesh.vertex[mesh.index[i+1]*2+1]} * tr,
-            Point{mesh.vertex[mesh.index[i+2]*2+0], mesh.vertex[mesh.index[i+2]*2+1]} * tr
-        };
-        for (uint32_t j = 0; j < 3; j++) {
-            auto p1 = triangle[j];
-            auto p2 = triangle[(j + 1) % 3];
-            if (p1.y == p2.y) continue;
-            if (p1.y > p2.y) std::swap(p1, p2);
-            if ((p.y > p1.y) && (p.y <= p2.y)) {
-                auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
-                if (intersectionX > p.x) crossings++;
-            }
-        }
+        auto i0 = indices[i];
+        auto i1 = indices[i + 1];
+        auto i2 = indices[i + 2];
+        auto p0 = Point{vertices[i0 * 2], vertices[i0 * 2 + 1]};
+        auto p1 = Point{vertices[i1 * 2], vertices[i1 * 2 + 1]};
+        auto p2 = Point{vertices[i2 * 2], vertices[i2 * 2 + 1]};
+        intersects(p0, p1);
+        intersects(p1, p2);
+        intersects(p2, p0);
     }
     return (crossings % 2) == 1;
 }
 
-bool GlIntersector::intersectClips(const Point& pt, const tvg::Array<tvg::RenderData>& clips)
+bool GlIntersector::intersect(const Point& pt, const tvg::Array<tvg::RenderData>& clips)
 {
-    for (uint32_t i = 0; i < clips.count; i++) {
-        auto clip = (const GlShape*)clips[i];
+    ARRAY_FOREACH(c, clips) {
+        auto clip = static_cast<const GlShape*>(*c);
+        const auto& geometry = clip->geometry;
         if (clip->valid.fill) {
-            if (!isPointInMesh(pt, clip->geometry.fill, clip->geometry.fillWorld ? tvg::identity() : clip->geometry.matrix)) return false;
+            auto p = geometry.fillWorld ? pt : pt * geometry.inverseMatrix();
+            const auto& bounds = geometry.fillBounds;
+            if (p.x < bounds.min.x || p.x > bounds.max.x || p.y < bounds.min.y || p.y > bounds.max.y) return false;
+            if (!pointInMesh(p, geometry.fill)) return false;
         } else if (clip->valid.stroke) {
-            if (!isPointInTris(pt * *clip->geometry.inverseMatrix(), clip->geometry.stroke)) return false;
+            auto p = pt * geometry.inverseMatrix();
+            const auto& bounds = geometry.strokeBounds;
+            if (p.x < bounds.min.x || p.x > bounds.max.x || p.y < bounds.min.y || p.y > bounds.max.y) return false;
+            if (!pointInTris(p, geometry.stroke)) return false;
         }
     }
     return true;
 }
 
-bool GlIntersector::intersectShape(const RenderRegion region, const GlShape* shape)
+bool GlIntersector::intersect(const RenderRegion region, const GlShape* shape)
 {
-    if (!shape || ((shape->geometry.fill.index.count == 0) && (shape->geometry.stroke.index.count == 0))) return false;
+    if (!shape) return false;
+    const auto& geometry = shape->geometry;
+    auto validFill = shape->valid.fill && !geometry.fill.index.empty();
+    auto validStroke = shape->valid.stroke && !geometry.stroke.index.empty();
+    if (!validFill && !validStroke) return false;
+
+    const Matrix* inverse = nullptr;
+    if ((!geometry.fillWorld && validFill) || validStroke) inverse = geometry.inverseMatrix();
     auto sizeX = region.sw();
     auto sizeY = region.sh();
 
-    for (int32_t y = 0; y <= sizeY; y++) {
-        for (int32_t x = 0; x <= sizeX; x++) {
-            Point pt{(float)x + region.min.x, (float)y + region.min.y};
-            if (y % 2 == 1) pt.y = (float)sizeY - y - sizeY % 2 + region.min.y;
-            if (intersectClips(pt, shape->clips)) {
-                if (shape->valid.fill && isPointInMesh(pt, shape->geometry.fill, shape->geometry.fillWorld ? tvg::identity() : shape->geometry.matrix)) return true;
-                if (shape->valid.stroke && isPointInTris(pt * *shape->geometry.inverseMatrix(), shape->geometry.stroke)) return true;
+    for (int32_t y = 0; y < sizeY; y++) {
+        auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
+        for (int32_t x = 0; x < sizeX; x++) {
+            Point pt{(float)x + region.min.x, (float)py + region.min.y};
+            auto hit = false;
+
+            if (validFill) {
+                auto p = geometry.fillWorld ? pt : pt * *inverse;
+                const auto& bounds = geometry.fillBounds;
+                hit = p.x >= bounds.min.x && p.x <= bounds.max.x && p.y >= bounds.min.y && p.y <= bounds.max.y && pointInMesh(p, geometry.fill);
             }
+            if (!hit && validStroke) {
+                auto p = pt * *inverse;
+                const auto& bounds = geometry.strokeBounds;
+                hit = p.x >= bounds.min.x && p.x <= bounds.max.x && p.y >= bounds.min.y && p.y <= bounds.max.y && pointInTris(p, geometry.stroke);
+            }
+            if (hit && intersect(pt, shape->clips)) return true;
         }
     }
     return false;
 }
 
-bool GlIntersector::intersectImage(const RenderRegion region, const GlImage* image)
+bool GlIntersector::intersect(const RenderRegion region, const GlImage* image)
 {
-    if (image) {
-        auto sizeX = region.sw();
-        auto sizeY = region.sh();
-        for (int32_t y = 0; y <= sizeY; y++) {
-            for (int32_t x = 0; x <= sizeX; x++) {
-                Point pt{(float) x + region.min.x, (float) y + region.min.y};
-                if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
-                if (intersectClips(pt, image->clips) && isPointInImage(pt, image->geometry.fill, image->geometry.fillWorld ? tvg::identity() : image->geometry.matrix)) return true;
-            }
+    if (!image || image->geometry.fill.index.count < 6) return false;
+
+    const auto& geometry = image->geometry;
+    const auto& mesh = geometry.fill;
+    Point triangle[6];
+
+    for (uint32_t i = 0; i < 6; ++i) {
+        auto idx = mesh.index[i] * 4;
+        triangle[i] = Point{mesh.vertex[idx], mesh.vertex[idx + 1]};
+    }
+
+    auto contains = [&](const Point& p) {
+        return gpuPointInTriangle(p, triangle[0], triangle[1], triangle[2]) || gpuPointInTriangle(p, triangle[3], triangle[4], triangle[5]);
+    };
+
+    auto sizeX = region.sw();
+    auto sizeY = region.sh();
+    for (int32_t y = 0; y < sizeY; y++) {
+        auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
+        for (int32_t x = 0; x < sizeX; x++) {
+            Point pt{(float)x + region.min.x, (float)py + region.min.y};
+            if (contains(pt) && intersect(pt, image->clips)) return true;
         }
     }
     return false;
 }
 
+/************************************************************************/
+/* GlGeometry                                                           */
+/************************************************************************/
 
 void GlGeometry::prepare(const RenderShape& rshape)
 {

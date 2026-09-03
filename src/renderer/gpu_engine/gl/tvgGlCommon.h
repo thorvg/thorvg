@@ -159,12 +159,11 @@ struct GlImage : GlDrawable
 
 struct GlIntersector
 {
-    bool isPointInImage(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
-    bool isPointInTris(const Point& p, const GlGeometryBuffer& mesh);
-    bool isPointInMesh(const Point& p, const GlGeometryBuffer& mesh, const Matrix& tr);
-    bool intersectClips(const Point& pt, const tvg::Array<tvg::RenderData>& clips);
-    bool intersectShape(const RenderRegion region, const GlShape* shape);
-    bool intersectImage(const RenderRegion region, const GlImage* image);
+    bool pointInTris(const Point& p, const GlGeometryBuffer& mesh);
+    bool pointInMesh(const Point& p, const GlGeometryBuffer& mesh);
+    bool intersect(const Point& pt, const tvg::Array<tvg::RenderData>& clips);
+    bool intersect(const RenderRegion region, const GlShape* shape);
+    bool intersect(const RenderRegion region, const GlImage* image);
 };
 
 #define MAX_GRADIENT_STOPS 16
