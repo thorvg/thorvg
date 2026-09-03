@@ -770,8 +770,7 @@ bool strokeParsePath(SwStroke* stroke, const RenderPath& path)
     auto active = false;
     auto closed = false;
 
-    ARRAY_FOREACH(cmd, path.cmds)
-    {
+    ARRAY_FOREACH(cmd, path.cmds) {
         switch (*cmd) {
             case PathCommand::MoveTo: {
                 if (active && !stroke->firstPt) _endSubPath(*stroke);

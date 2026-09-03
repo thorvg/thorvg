@@ -65,9 +65,8 @@ bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& c
     image.outline = _genOutline(image, mpool, tid);
     if (!image.outline) return false;
 
-    image.outline->transform = transform;
     BBox bbox;
-    utilBounds(*image.outline->path, transform, bbox);
+    utilExport(image.outline, transform, bbox);
     return utilBBox(bbox, clipBox, renderBox, image.direct);
 }
 

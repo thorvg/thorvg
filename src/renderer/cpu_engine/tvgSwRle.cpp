@@ -688,32 +688,26 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
     return false;
 }
 
-static SwPoint _transform(const Point& pt, const Matrix& transform)
-{
-    auto t = pt * transform;
-    return UPSCALE({int32_t(t.x * 64.0f), int32_t(t.y * 64.0f)});
-}
-
 static bool _decomposePath(RleWorker& rw)
 {
     auto path = rw.outline->path;
-    auto pts = path->pts.data;
+    auto pts = rw.outline->out.data;
+    auto end = path->cmds.end();
     SwPoint start{};
     auto begun = false;
     auto opened = false;
 
-    ARRAY_FOREACH(cmd, path->cmds)
-    {
+    ARRAY_FOREACH(cmd, path->cmds) {
         switch (*cmd) {
             case PathCommand::MoveTo: {
                 if (opened && !_lineTo(rw, start)) return false;
-                start = _transform(*pts++, rw.outline->transform);
+                start = UPSCALE(*pts++);
                 if (!_moveTo(rw, start)) return false;
                 begun = opened = true;
                 break;
             }
             case PathCommand::LineTo: {
-                auto to = _transform(*pts++, rw.outline->transform);
+                auto to = UPSCALE(*pts++);
                 if (!begun) {
                     start = to;
                     if (!_moveTo(rw, start)) return false;
@@ -725,13 +719,17 @@ static bool _decomposePath(RleWorker& rw)
                     opened = true;
                 }
                 if (!_lineTo(rw, to)) return false;
+                while (cmd + 1 < end && cmd[1] == PathCommand::LineTo) {
+                    ++cmd;
+                    if (!_lineTo(rw, UPSCALE(*pts++))) return false;
+                }
                 break;
             }
             case PathCommand::CubicTo: {
                 if (!begun) return false;
-                auto ctrl1 = _transform(pts[0], rw.outline->transform);
-                auto ctrl2 = _transform(pts[1], rw.outline->transform);
-                auto to = _transform(pts[2], rw.outline->transform);
+                auto ctrl1 = UPSCALE(pts[0]);
+                auto ctrl2 = UPSCALE(pts[1]);
+                auto to = UPSCALE(pts[2]);
                 pts += 3;
                 if (!opened) {
                     if (!_moveTo(rw, start)) return false;

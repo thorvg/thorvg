@@ -27,18 +27,22 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void utilBounds(const RenderPath& path, const Matrix& transform, BBox& bbox)
+void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox)
 {
+    auto path = outline->path;
+    outline->out.reserve(path->pts.count);
     bbox = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
 
-    ARRAY_FOREACH(pt, path.pts)
-    {
+    auto out = outline->out.data;
+    ARRAY_FOREACH(pt, path->pts) {
         auto t = *pt * transform;
         if (bbox.min.x > t.x) bbox.min.x = t.x;
         if (bbox.max.x < t.x) bbox.max.x = t.x;
         if (bbox.min.y > t.y) bbox.min.y = t.y;
         if (bbox.max.y < t.y) bbox.max.y = t.y;
+        *out++ = {int32_t(t.x * 64.0f), int32_t(t.y * 64.0f)};
     }
+    outline->out.count = path->pts.count;
 }
 
 bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack)

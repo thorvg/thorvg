@@ -99,8 +99,8 @@ struct SwSize
 struct SwOutline
 {
     RenderPath synth;  //locally generated path for trim, dash, stroke border, and image outlines
+    Array<SwPoint> out;
     const RenderPath* path = nullptr;
-    Matrix transform = tvg::identity();
     FillRule fillRule;
 };
 
@@ -355,6 +355,7 @@ struct SwMpool
     SwOutline* outline(unsigned idx)
     {
         outlines[idx].synth.clear();
+        outlines[idx].out.clear();
         outlines[idx].path = nullptr;
 
         return &outlines[idx];
@@ -447,7 +448,7 @@ static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNU
     return s;
 }
 
-void utilBounds(const RenderPath& path, const Matrix& transform, BBox& bbox);
+void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox);
 bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
