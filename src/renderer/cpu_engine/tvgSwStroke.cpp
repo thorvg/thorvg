@@ -770,7 +770,7 @@ bool strokeParsePath(SwStroke* stroke, const RenderPath& path)
     auto active = false;
     auto closed = false;
 
-    ARRAY_FOREACH(cmd, path.cmds) {
+    for (auto cmd = path.cmds.begin(); cmd < end; ++cmd) {
         switch (*cmd) {
             case PathCommand::MoveTo: {
                 if (active && !stroke->firstPt) _endSubPath(*stroke);
@@ -787,17 +787,20 @@ bool strokeParsePath(SwStroke* stroke, const RenderPath& path)
                     break;
                 }
                 if (!active) {
-                    _beginSubPath(*stroke, start, _closed(cmd, end));
+                    _beginSubPath(*stroke, start, _closed(cmd + 1, end));
                     active = true;
                 }
-                _lineTo(*stroke, *pts++);
+                do {
+                    _lineTo(*stroke, *pts++);
+                } while (++cmd < end && *cmd == PathCommand::LineTo);
+                --cmd;
                 closed = false;
                 break;
             }
             case PathCommand::CubicTo: {
                 if (!begun) return false;
                 if (!active) {
-                    _beginSubPath(*stroke, start, _closed(cmd, end));
+                    _beginSubPath(*stroke, start, _closed(cmd + 1, end));
                     active = true;
                 }
                 _cubicTo(*stroke, pts[0], pts[1], pts[2]);

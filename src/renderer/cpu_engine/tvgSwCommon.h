@@ -30,6 +30,7 @@
 #include "tvgRender.h"
 
 #define SW_COLOR_TABLE 1024
+constexpr auto SW_PIXEL_BITS = 8;   //must be at least 6 bits!
 
 struct SwCompositor;
 struct SwSurface;
@@ -99,7 +100,7 @@ struct SwSize
 struct SwOutline
 {
     RenderPath synth;  //locally generated path for trim, dash, stroke border, and image outlines
-    Array<SwPoint> out;
+    Array<SwPoint> out;  //transformed path in RLE fixed-point form
     const RenderPath* path = nullptr;
     FillRule fillRule;
 };

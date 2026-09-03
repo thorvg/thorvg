@@ -195,8 +195,7 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-constexpr auto PIXEL_BITS = 8;   //must be at least 6 bits!
-constexpr auto ONE_PIXEL = (1 << PIXEL_BITS);
+constexpr auto ONE_PIXEL = (1 << SW_PIXEL_BITS);
 
 struct Band
 {
@@ -245,15 +244,9 @@ struct RleWorker
 };
 
 
-static inline SwPoint UPSCALE(const SwPoint& pt)
-{
-    return {int32_t(((unsigned long) pt.x) << (PIXEL_BITS - 6)), int32_t(((unsigned long) pt.y) << (PIXEL_BITS - 6))};
-}
-
-
 static inline int32_t TRUNC(const int32_t x)
 {
-    return  x >> PIXEL_BITS;
+    return  x >> SW_PIXEL_BITS;
 }
 
 
@@ -320,8 +313,8 @@ static void _horizLine(RleWorker& rw, int32_t x, int32_t y, int32_t area, int32_
     if (y < rw.cellMin.y || y >= rw.cellMax.y) return;
 
     /* compute the coverage line's coverage, depending on the outline fill rule */
-    /* the coverage percentage is area/(PIXEL_BITS*PIXEL_BITS*2) */
-    auto coverage = static_cast<int>(area >> (PIXEL_BITS * 2 + 1 - 8));    //range 0 - 255
+    //convert the signed area to 8-bit coverage
+    auto coverage = static_cast<int>(area >> (SW_PIXEL_BITS * 2 + 1 - 8));    //range 0 - 255
     if (coverage < 0) coverage = -coverage;
 
     if (rw.outline->fillRule == FillRule::EvenOdd) {
@@ -701,13 +694,13 @@ static bool _decomposePath(RleWorker& rw)
         switch (*cmd) {
             case PathCommand::MoveTo: {
                 if (opened && !_lineTo(rw, start)) return false;
-                start = UPSCALE(*pts++);
+                start = *pts++;
                 if (!_moveTo(rw, start)) return false;
                 begun = opened = true;
                 break;
             }
             case PathCommand::LineTo: {
-                auto to = UPSCALE(*pts++);
+                auto to = *pts++;
                 if (!begun) {
                     start = to;
                     if (!_moveTo(rw, start)) return false;
@@ -721,15 +714,15 @@ static bool _decomposePath(RleWorker& rw)
                 if (!_lineTo(rw, to)) return false;
                 while (cmd + 1 < end && cmd[1] == PathCommand::LineTo) {
                     ++cmd;
-                    if (!_lineTo(rw, UPSCALE(*pts++))) return false;
+                    if (!_lineTo(rw, *pts++)) return false;
                 }
                 break;
             }
             case PathCommand::CubicTo: {
                 if (!begun) return false;
-                auto ctrl1 = UPSCALE(pts[0]);
-                auto ctrl2 = UPSCALE(pts[1]);
-                auto to = UPSCALE(pts[2]);
+                auto ctrl1 = pts[0];
+                auto ctrl2 = pts[1];
+                auto to = pts[2];
                 pts += 3;
                 if (!opened) {
                     if (!_moveTo(rw, start)) return false;

@@ -41,7 +41,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point& to, bool validPoint)
     auto len = cur.length();
     if (tvg::zero(len)) {
         dash.path->moveTo(dash.ptCur);
-    // draw the current line fully
+        // draw the current line fully
     } else if (len <= dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
@@ -253,7 +253,13 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, SwMpool* mpool, uns
     return outline;
 }
 
-static bool _axisAlignedRect(const SwOutline* outline)
+static SwPoint _transform(const Point& pt, const Matrix& transform)
+{
+    auto t = pt * transform;
+    return {int32_t(t.x * 64.0f), int32_t(t.y * 64.0f)};
+}
+
+static bool _axisAlignedRect(const SwOutline* outline, const Matrix& transform)
 {
     // TODO: We can return false if the coordinates have a fractional part, for smoother rectangle movement
     auto path = outline->path;
@@ -264,12 +270,12 @@ static bool _axisAlignedRect(const SwOutline* outline)
     auto implicitClose = path->pts.count == 5 && path->cmds[4] == PathCommand::LineTo;
     if ((!explicitClose && !implicitClose) || path->cmds[0] != PathCommand::MoveTo || path->cmds[1] != PathCommand::LineTo || path->cmds[2] != PathCommand::LineTo || path->cmds[3] != PathCommand::LineTo) return false;
 
-    auto pt1 = outline->out[0];
-    auto pt2 = outline->out[1];
-    auto pt3 = outline->out[2];
-    auto pt4 = outline->out[3];
+    auto pt1 = _transform(path->pts[0], transform);
+    auto pt2 = _transform(path->pts[1], transform);
+    auto pt3 = _transform(path->pts[2], transform);
+    auto pt4 = _transform(path->pts[3], transform);
 
-    if (implicitClose && outline->out[4] != pt1) return false;
+    if (implicitClose && _transform(path->pts[4], transform) != pt1) return false;
 
     auto a = SwPoint{pt1.x, pt3.y};
     auto b = SwPoint{pt3.x, pt1.y};
@@ -313,7 +319,7 @@ bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transf
     utilExport(outline, transform, bbox);
 
     shape.outline = outline;
-    shape.fastTrack = !composite && _axisAlignedRect(outline);
+    shape.fastTrack = !composite && _axisAlignedRect(outline, transform);
 
     if (!utilBBox(bbox, clipBox, renderBox, shape.fastTrack)) return false;
     shape.bbox = renderBox;
