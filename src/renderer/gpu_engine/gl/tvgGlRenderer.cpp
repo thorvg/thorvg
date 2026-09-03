@@ -1408,7 +1408,7 @@ bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
         GlIntersector intersector;
-        return intersector.intersectShape(RenderRegion::intersect(region, bbox), shape);
+        return intersector.intersect(RenderRegion::intersect(region, bbox), shape);
     }
     return false;
 }
@@ -1423,7 +1423,7 @@ bool GlRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion&
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
         GlIntersector intersector;
-        if (intersector.intersectImage(RenderRegion::intersect(region, bbox), image)) return true;
+        if (intersector.intersect(RenderRegion::intersect(region, bbox), image)) return true;
     }
     return false;
 }
