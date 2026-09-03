@@ -92,7 +92,7 @@ struct GlGeometry
     void setMatrix(const Matrix& tr) { matrix = tr; inverseMatrixDirty = true;}
 
     void prepare(const RenderShape& rshape);
-    bool tesselateShape(const RenderShape& rshape, float* opacityMultiplier = nullptr);
+    bool tesselateShape(const RenderShape& rshape, float& multiplier);
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinFill(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
@@ -141,6 +141,7 @@ struct GlShape : GlDrawable
     void destroy(GlRenderer& renderer) override {}
 
     const RenderShape* rshape;
+    float multiplier = 1.0f;
     struct {
         bool fill = false;
         bool stroke = false;

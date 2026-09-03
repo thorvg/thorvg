@@ -50,13 +50,10 @@ bool GlDrawable::prepare(RenderUpdateFlag& updateFlags, const Point& viewSize, u
         flags |= updateFlags;
         return true;
     }
-
     updateFlags |= flags;
     flags = RenderUpdateFlag::None;
     if (updateFlags == RenderUpdateFlag::None) return true;
-
     size = viewSize;
-    this->opacity = opacity;
     return false;
 }
 
@@ -1328,11 +1325,15 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
         textures.upload(mStateCache, image->texId, surface, filter);
     }
 
-    image->geometry.setMatrix(transform);
-    image->geometry.viewport = vport;
-    image->geometry.tesselateImage(surface);
+    if (flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform)) {
+        image->geometry.setMatrix(transform);
+        image->geometry.tesselateImage(surface);
+    }
 
     if (flags & RenderUpdateFlag::Clip) image->clips = clips;
+
+    image->geometry.viewport = vport;
+    image->opacity = opacity;
 
     return image;
 }
@@ -1352,24 +1353,20 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     shape->geometry.setMatrix(transform);
     shape->geometry.viewport = vport;
-    auto strokePathMissing = (flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && shape->geometry.optStrokePath.empty();
-    if ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) || strokePathMissing) shape->geometry.prepare(rshape);
 
-    //TODO: Please precisely update tessellation not to update only if the color is changed.
-    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
+    auto updateStroke = (flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && shape->geometry.optStrokePath.empty();
+    auto updatePath = (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) || updateStroke;
+
+    if (updatePath) {
+        shape->geometry.prepare(rshape);
         shape->valid.fill = false;
-        float opacityMultiplier = 1.0f;
-        if (shape->geometry.tesselateShape(*(shape->rshape), &opacityMultiplier)) {
-            shape->opacity *= opacityMultiplier;
+        if (shape->geometry.tesselateShape(*(shape->rshape), shape->multiplier)) {
             shape->valid.fill = true;
         }
+        shape->valid.stroke = shape->geometry.tesselateStroke(*(shape->rshape));
     }
 
-    //TODO: Please precisely update tessellation not to update only if the color is changed.
-    if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) {
-        shape->valid.stroke = false;
-        if (shape->geometry.tesselateStroke(*(shape->rshape))) shape->valid.stroke = true;
-    }
+    shape->opacity = float(opacity) * shape->multiplier;
 
     if (flags & RenderUpdateFlag::Clip) shape->clips = clips;
 
