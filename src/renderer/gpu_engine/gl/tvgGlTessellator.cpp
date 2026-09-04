@@ -25,7 +25,7 @@
 namespace tvg
 {
 
-static inline uint32_t _pushVertex(Array<float>& array, float x, float y)
+static uint32_t _pushVertex(Array<float>& array, float x, float y)
 {
     auto index = array.count / 2;
     array.grow(2);
@@ -34,7 +34,7 @@ static inline uint32_t _pushVertex(Array<float>& array, float x, float y)
     return index;
 }
 
-static inline void _pushTriangle(Array<uint32_t>& array, uint32_t a, uint32_t b, uint32_t c)
+static void _pushTriangle(Array<uint32_t>& array, uint32_t a, uint32_t b, uint32_t c)
 {
     array.grow(3);
     array.data[array.count++] = a;
