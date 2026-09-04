@@ -179,6 +179,7 @@ void WgRenderShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag fla
             if (shape.mesh.ibuffer.empty()) {
                 shape.mesh.clear();
             } else {
+                shape.bounds = bbox;
                 shape.bbox.bbox(bbox.min, bbox.max);
                 updateBBox(bbox);
             }
@@ -203,6 +204,7 @@ void WgRenderShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag fla
                 stroke.mesh.clear();
             } else {
                 auto bbox = stroker.getBBox();
+                stroke.bounds = bbox;
                 stroke.bbox.bbox(bbox.min, bbox.max);
                 auto strokeBounds = gpuTransformBounds(stroker.bounds(), matrix);
                 updateBBox({{(float)strokeBounds.min.x, (float)strokeBounds.min.y}, {(float)strokeBounds.max.x, (float)strokeBounds.max.y}});
@@ -219,8 +221,10 @@ void WgRenderShape::releaseMeshes()
 {
     stroke.mesh.clear();
     stroke.bbox.clear();
+    stroke.bounds = {};
     shape.mesh.clear();
     shape.bbox.clear();
+    shape.bounds = {};
     meshBBox.clear();
     bbox.min = {FLT_MAX, FLT_MAX};
     bbox.max = {0.0f, 0.0f};
@@ -593,7 +597,6 @@ void WgStageBufferSolidColor::release(WgContext& context)
     context.releaseBuffer(vbuffer_gpu);
 }
 
-
 void WgStageBufferSolidColor::clear()
 {
     vbuffer.clear();
@@ -614,102 +617,4 @@ void WgStageBufferSolidColor::appendRepeated(const RenderColor& value, uint32_t 
 void WgStageBufferSolidColor::flush(WgContext& context)
 {
     if (vbuffer.count > 0) context.allocateBufferVertex(vbuffer_gpu, vbuffer.data, vbuffer.count * sizeof(RenderColor));
-}
-
-//***********************************************************************
-// WgIntersector
-//***********************************************************************
-
-bool WgIntersector::isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
-{
-    auto d1 = tvg::cross(p - a, p - b);
-    auto d2 = tvg::cross(p - b, p - c);
-    auto d3 = tvg::cross(p - c, p - a);
-    auto has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    auto has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-    return !(has_neg && has_pos);
-}
-
-
-// triangle list
-bool WgIntersector::isPointInTris(const Point& p, const WgMeshData& mesh)
-{
-    for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
-        auto p0 = mesh.vbuffer[mesh.ibuffer[i+0]];
-        auto p1 = mesh.vbuffer[mesh.ibuffer[i+1]];
-        auto p2 = mesh.vbuffer[mesh.ibuffer[i+2]];
-        if (isPointInTriangle(p, p0, p1, p2)) return true;
-    }
-    return false;
-}
-
-
-// even-odd triangle list
-bool WgIntersector::isPointInMesh(const Point& p, const WgMeshData& mesh)
-{
-    uint32_t crossings = 0;
-    for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
-        Point triangle[3] = {
-            mesh.vbuffer[mesh.ibuffer[i+0]],
-            mesh.vbuffer[mesh.ibuffer[i+1]],
-            mesh.vbuffer[mesh.ibuffer[i+2]]
-        };
-        for (uint32_t j = 0; j < 3; j++) {
-            auto p1 = triangle[j];
-            auto p2 = triangle[(j + 1) % 3];
-            if (p1.y == p2.y) continue;
-            if (p1.y > p2.y) std::swap(p1, p2);
-            if ((p.y > p1.y) && (p.y <= p2.y)) {
-                auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
-                if (intersectionX > p.x) crossings++;
-            }
-        }
-    }
-    return (crossings % 2) == 1;
-}
-
-bool WgIntersector::intersectClips(const Point& pt, const Array<WgRenderPaint*>& clips)
-{
-    for (uint32_t i = 0; i < clips.count; i++) {
-        auto clip = (WgRenderShape*)clips[i];
-        if (!isPointInMesh(pt, clip->shape.mesh)) return false;
-    }
-    return true;
-}
-
-bool WgIntersector::intersectShape(const RenderRegion region, const WgRenderShape* shape)
-{
-    if (!shape || ((shape->shape.mesh.ibuffer.count == 0) && (shape->stroke.mesh.ibuffer.count == 0))) return false;
-    Matrix inverseModel;
-    auto testStroke = shape->stroke.setting.valid && inverse(&shape->transform, &inverseModel);
-    auto sizeX = region.sw();
-    auto sizeY = region.sh();
-    for (int32_t y = 0; y <= sizeY; y++) {
-        for (int32_t x = 0; x <= sizeX; x++) {
-            Point pt{(float)x + region.min.x, (float)y + region.min.y};
-            if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
-            if (intersectClips(pt, shape->clips)) {
-                if (shape->shape.setting.valid && isPointInMesh(pt, shape->shape.mesh)) return true;
-                if (testStroke && isPointInTris(pt * inverseModel, shape->stroke.mesh)) return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool WgIntersector::intersectImage(const RenderRegion region, const WgRenderPicture* image)
-{
-    if (!image) return false;
-    auto sizeX = region.sw();
-    auto sizeY = region.sh();
-    for (int32_t y = 0; y <= sizeY; y++) {
-        for (int32_t x = 0; x <= sizeX; x++) {
-            Point pt{(float)x + region.min.x, (float)y + region.min.y};
-            if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
-            if (intersectClips(pt, image->clips)) {
-                if (isPointInTris(pt, image->meshData)) return true;
-            }
-        }
-    }
-    return false;
 }
