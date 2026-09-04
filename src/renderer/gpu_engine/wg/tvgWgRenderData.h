@@ -92,6 +92,7 @@ struct WgRenderShape : WgRenderPaint
         WgSolidData solid;
         WgMeshData mesh;
         WgMeshData bbox;
+        BBox bounds;
     } shape;
 
     struct
@@ -100,6 +101,7 @@ struct WgRenderShape : WgRenderPaint
         WgSolidData solid;
         WgMeshData mesh;
         WgMeshData bbox;
+        BBox bounds;
     } stroke;
 
     WgMeshData meshBBox;
@@ -295,12 +297,11 @@ struct WgStageBufferUniform : WgStageBufferUniformBase
 
 struct WgIntersector
 {
-    bool isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c);
-    bool isPointInTris(const Point& p, const WgMeshData& mesh);
-    bool isPointInMesh(const Point& p, const WgMeshData& mesh);
-    bool intersectClips(const Point& pt, const Array<WgRenderPaint*>& clips);
-    bool intersectShape(const RenderRegion region, const WgRenderShape* shape);
-    bool intersectImage(const RenderRegion region, const WgRenderPicture* image);
+    bool pointInTris(const Point& p, const WgMeshData& mesh);
+    bool pointInMesh(const Point& p, const WgMeshData& mesh);
+    bool intersect(const Point& pt, const Array<WgRenderPaint*>& clips);
+    bool intersect(const RenderRegion region, const WgRenderShape* shape);
+    bool intersect(const RenderRegion region, const WgRenderPicture* image);
 };
 
 #endif // _TVG_WG_RENDER_DATA_H_

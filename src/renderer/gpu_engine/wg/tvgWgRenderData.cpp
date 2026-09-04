@@ -179,6 +179,7 @@ void WgRenderShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag fla
             if (shape.mesh.ibuffer.empty()) {
                 shape.mesh.clear();
             } else {
+                shape.bounds = bbox;
                 shape.bbox.bbox(bbox.min, bbox.max);
                 updateBBox(bbox);
             }
@@ -203,6 +204,7 @@ void WgRenderShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag fla
                 stroke.mesh.clear();
             } else {
                 auto bbox = stroker.getBBox();
+                stroke.bounds = bbox;
                 stroke.bbox.bbox(bbox.min, bbox.max);
                 auto strokeBounds = gpuTransformBounds(stroker.bounds(), matrix);
                 updateBBox({{(float)strokeBounds.min.x, (float)strokeBounds.min.y}, {(float)strokeBounds.max.x, (float)strokeBounds.max.y}});
@@ -219,8 +221,10 @@ void WgRenderShape::releaseMeshes()
 {
     stroke.mesh.clear();
     stroke.bbox.clear();
+    stroke.bounds = {};
     shape.mesh.clear();
     shape.bbox.clear();
+    shape.bounds = {};
     meshBBox.clear();
     bbox.min = {FLT_MAX, FLT_MAX};
     bbox.max = {0.0f, 0.0f};
@@ -620,95 +624,113 @@ void WgStageBufferSolidColor::flush(WgContext& context)
 // WgIntersector
 //***********************************************************************
 
-bool WgIntersector::isPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
-{
-    auto d1 = tvg::cross(p - a, p - b);
-    auto d2 = tvg::cross(p - b, p - c);
-    auto d3 = tvg::cross(p - c, p - a);
-    auto has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    auto has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-    return !(has_neg && has_pos);
-}
-
-
 // triangle list
-bool WgIntersector::isPointInTris(const Point& p, const WgMeshData& mesh)
+bool WgIntersector::pointInTris(const Point& p, const WgMeshData& mesh)
 {
     for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
         auto p0 = mesh.vbuffer[mesh.ibuffer[i+0]];
         auto p1 = mesh.vbuffer[mesh.ibuffer[i+1]];
         auto p2 = mesh.vbuffer[mesh.ibuffer[i+2]];
-        if (isPointInTriangle(p, p0, p1, p2)) return true;
+        if (gpuPointInTriangle(p, p0, p1, p2)) return true;
     }
     return false;
 }
 
 
 // even-odd triangle list
-bool WgIntersector::isPointInMesh(const Point& p, const WgMeshData& mesh)
+bool WgIntersector::pointInMesh(const Point& p, const WgMeshData& mesh)
 {
+    auto vertices = mesh.vbuffer.data;
+    auto indices = mesh.ibuffer.data;
     uint32_t crossings = 0;
+
+    auto intersects = [&](const Point& p1, const Point& p2) {
+        if ((p1.y < p.y) == (p2.y < p.y)) return;
+        auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
+        if (intersectionX > p.x) ++crossings;
+    };
+
     for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
-        Point triangle[3] = {
-            mesh.vbuffer[mesh.ibuffer[i+0]],
-            mesh.vbuffer[mesh.ibuffer[i+1]],
-            mesh.vbuffer[mesh.ibuffer[i+2]]
-        };
-        for (uint32_t j = 0; j < 3; j++) {
-            auto p1 = triangle[j];
-            auto p2 = triangle[(j + 1) % 3];
-            if (p1.y == p2.y) continue;
-            if (p1.y > p2.y) std::swap(p1, p2);
-            if ((p.y > p1.y) && (p.y <= p2.y)) {
-                auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
-                if (intersectionX > p.x) crossings++;
-            }
-        }
+        auto p0 = vertices[indices[i]];
+        auto p1 = vertices[indices[i + 1]];
+        auto p2 = vertices[indices[i + 2]];
+        intersects(p0, p1);
+        intersects(p1, p2);
+        intersects(p2, p0);
     }
     return (crossings % 2) == 1;
 }
 
-bool WgIntersector::intersectClips(const Point& pt, const Array<WgRenderPaint*>& clips)
+bool WgIntersector::intersect(const Point& pt, const Array<WgRenderPaint*>& clips)
 {
-    for (uint32_t i = 0; i < clips.count; i++) {
-        auto clip = (WgRenderShape*)clips[i];
-        if (!isPointInMesh(pt, clip->shape.mesh)) return false;
+    ARRAY_FOREACH(c, clips) {
+        auto clip = static_cast<const WgRenderShape*>(*c);
+        if (clip->shape.mesh.ibuffer.empty()) return false;
+        const auto& bounds = clip->shape.bounds;
+        if (pt.x < bounds.min.x || pt.x > bounds.max.x ||
+            pt.y < bounds.min.y || pt.y > bounds.max.y) return false;
+        if (!pointInMesh(pt, clip->shape.mesh)) return false;
     }
     return true;
 }
 
-bool WgIntersector::intersectShape(const RenderRegion region, const WgRenderShape* shape)
+bool WgIntersector::intersect(const RenderRegion region, const WgRenderShape* shape)
 {
-    if (!shape || ((shape->shape.mesh.ibuffer.count == 0) && (shape->stroke.mesh.ibuffer.count == 0))) return false;
+    if (!shape) return false;
+    auto validFill = shape->shape.setting.valid && !shape->shape.mesh.ibuffer.empty();
+    auto validStroke = shape->stroke.setting.valid && !shape->stroke.mesh.ibuffer.empty();
+    if (!validFill && !validStroke) return false;
+
     Matrix inverseModel;
-    auto testStroke = shape->stroke.setting.valid && inverse(&shape->transform, &inverseModel);
+    if (validStroke && !inverse(&shape->transform, &inverseModel)) validStroke = false;
     auto sizeX = region.sw();
     auto sizeY = region.sh();
-    for (int32_t y = 0; y <= sizeY; y++) {
-        for (int32_t x = 0; x <= sizeX; x++) {
-            Point pt{(float)x + region.min.x, (float)y + region.min.y};
-            if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
-            if (intersectClips(pt, shape->clips)) {
-                if (shape->shape.setting.valid && isPointInMesh(pt, shape->shape.mesh)) return true;
-                if (testStroke && isPointInTris(pt * inverseModel, shape->stroke.mesh)) return true;
+
+    for (int32_t y = 0; y < sizeY; y++) {
+        auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
+        for (int32_t x = 0; x < sizeX; x++) {
+            Point pt{(float)x + region.min.x, (float)py + region.min.y};
+            auto hit = false;
+
+            if (validFill) {
+                const auto& bounds = shape->shape.bounds;
+                hit = pt.x >= bounds.min.x && pt.x <= bounds.max.x &&
+                      pt.y >= bounds.min.y && pt.y <= bounds.max.y &&
+                      pointInMesh(pt, shape->shape.mesh);
             }
+            if (!hit && validStroke) {
+                auto p = pt * inverseModel;
+                const auto& bounds = shape->stroke.bounds;
+                hit = p.x >= bounds.min.x && p.x <= bounds.max.x &&
+                      p.y >= bounds.min.y && p.y <= bounds.max.y &&
+                      pointInTris(p, shape->stroke.mesh);
+            }
+            if (hit && intersect(pt, shape->clips)) return true;
         }
     }
     return false;
 }
 
-bool WgIntersector::intersectImage(const RenderRegion region, const WgRenderPicture* image)
+bool WgIntersector::intersect(const RenderRegion region, const WgRenderPicture* image)
 {
-    if (!image) return false;
+    if (!image || image->meshData.ibuffer.count < 6) return false;
+
+    const auto& mesh = image->meshData;
+    Point triangle[6];
+    for (uint32_t i = 0; i < 6; ++i) triangle[i] = mesh.vbuffer[mesh.ibuffer[i]];
+
+    auto contains = [&](const Point& p) {
+        return gpuPointInTriangle(p, triangle[0], triangle[1], triangle[2]) ||
+               gpuPointInTriangle(p, triangle[3], triangle[4], triangle[5]);
+    };
+
     auto sizeX = region.sw();
     auto sizeY = region.sh();
-    for (int32_t y = 0; y <= sizeY; y++) {
-        for (int32_t x = 0; x <= sizeX; x++) {
-            Point pt{(float)x + region.min.x, (float)y + region.min.y};
-            if (y % 2 == 1) pt.y = (float) sizeY - y - sizeY % 2 + region.min.y;
-            if (intersectClips(pt, image->clips)) {
-                if (isPointInTris(pt, image->meshData)) return true;
-            }
+    for (int32_t y = 0; y < sizeY; y++) {
+        auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
+        for (int32_t x = 0; x < sizeX; x++) {
+            Point pt{(float)x + region.min.x, (float)py + region.min.y};
+            if (contains(pt) && intersect(pt, image->clips)) return true;
         }
     }
     return false;

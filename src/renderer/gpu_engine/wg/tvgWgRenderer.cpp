@@ -647,7 +647,7 @@ bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
         WgIntersector intersector;
-        return intersector.intersectShape(RenderRegion::intersect(region, bbox), shape);
+        return intersector.intersect(RenderRegion::intersect(region, bbox), shape);
     }
     return false;
 }
@@ -658,7 +658,7 @@ bool WgRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion&
     if (!data) return false;
     auto picture = (WgRenderPicture*)data;
     WgIntersector intersector;
-    if (intersector.intersectImage(region, picture)) return true;
+    if (intersector.intersect(region, picture)) return true;
     return false;
 }
 
