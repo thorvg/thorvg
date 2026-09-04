@@ -768,6 +768,15 @@ struct TVG_API Paint
     uint32_t id = 0;
 
     /**
+     * @brief User-defined data associated with this instance.
+     *
+     * ThorVG does not interpret or manage the lifetime of this data.
+     *
+     * @note Experimental API
+     */
+    void* data = nullptr;
+
+    /**
      * @brief Safely releases a Paint object.
      *
      * This is the counterpart to the `gen()` API, and releases the given Paint object safely, 

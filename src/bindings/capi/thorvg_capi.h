@@ -998,6 +998,33 @@ TVG_API uint32_t tvg_paint_get_id(const Tvg_Paint paint);
 TVG_API Tvg_Result tvg_paint_set_id(Tvg_Paint paint, uint32_t id);
 
 /**
+ * @brief Gets the user-defined data associated with the Paint object.
+ *
+ * @param[in] paint The paint object whose user-defined data will be returned.
+ *
+ * @return The user-defined data, or @c NULL if none is set or @p paint is invalid.
+ *
+ * @see tvg_paint_set_data()
+ *
+ * @note Experimental API
+ */
+TVG_API void* tvg_paint_get_data(const Tvg_Paint paint);
+
+/**
+ * @brief Associates user-defined data with the Paint object.
+ *
+ * ThorVG does not interpret or manage the lifetime of this data.
+ *
+ * @param[in] paint The paint object whose user-defined data will be set.
+ * @param[in] data The user-defined data to associate with the paint object.
+ *
+ * @see tvg_paint_get_data()
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_paint_set_data(Tvg_Paint paint, void* data);
+
+/**
  * @brief Scales the given Tvg_Paint object by the given factor.
  *
  * @param[in] paint The paint object to be scaled.
