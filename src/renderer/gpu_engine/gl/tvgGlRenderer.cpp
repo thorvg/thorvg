@@ -299,12 +299,12 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     if (viewBounds.invalid()) return;
 
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
-    auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBounds, shape.geometry.matrix) : shape.geometry.fillBounds;
+    auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBBox, shape.geometry.matrix) : shape.geometry.fillBBox;
     bbox.intersect(viewBounds);
     if (bbox.invalid()) return;
 
     auto viewRegion = viewportRegion(vp, bbox);
-    auto stencilMode = shape.geometry.getStencilMode(flag);
+    auto stencilMode = shape.geometry.stencilMode(flag);
 
     if (!blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
         mSolidBatch.draw(*this, shape, c, depth, viewRegion, viewportRegion(vp, viewBounds));
@@ -358,7 +358,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     if (viewBounds.invalid()) return;
 
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
-    auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBounds, shape.geometry.matrix) : shape.geometry.fillBounds;
+    auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBBox, shape.geometry.matrix) : shape.geometry.fillBBox;
     bbox.intersect(viewBounds);
     if (bbox.invalid()) return;
 
@@ -402,7 +402,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 
     task->setViewport(viewRegion);
 
-    GlStencilMode stencilMode = shape.geometry.getStencilMode(flag);
+    GlStencilMode stencilMode = shape.geometry.stencilMode(flag);
     RenderRegion stencilBounds{};
     const GlGeometryBuffer* stencilBuffer = nullptr;
     uint32_t* stencilIndices = nullptr;
@@ -561,7 +561,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBoun
         clipTask->setViewMatrix(_viewMatrix(shape->geometry, viewMatrix, flag));
         shape->geometry.draw(clipTask, &mGpuBuffer, flag);
 
-        auto clipBounds = shape->geometry.getBounds();
+        auto clipBounds = shape->geometry.bounds();
         clipBounds.intersect(viewBounds);
         clipTask->setViewport(viewportRegion(passViewport, clipBounds));
 
@@ -1066,7 +1066,7 @@ RenderRegion GlRenderer::region(RenderData data)
 {
     if (!data) return {};
     auto paint = static_cast<GlDrawable*>(data);
-    return paint->geometry.getBounds();
+    return paint->geometry.bounds();
 }
 
 
@@ -1213,7 +1213,7 @@ bool GlRenderer::renderImage(void* data)
     task->setDrawDepth(drawDepth);
     image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
 
-    bool complexBlend = beginComplexBlending(bbox, image->geometry.getBounds());
+    bool complexBlend = beginComplexBlending(bbox, image->geometry.bounds());
     if (complexBlend) vp = currentPass()->getViewport();
     task->setViewMatrix(currentPass()->getViewMatrix());
 
@@ -1326,7 +1326,7 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     }
 
     if (flags & (RenderUpdateFlag::Image | RenderUpdateFlag::Transform)) {
-        image->geometry.setMatrix(transform);
+        image->geometry.transform(transform);
         image->geometry.tesselateImage(surface);
     }
 
@@ -1351,7 +1351,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 
     if (flags & RenderUpdateFlag::Path) shape->geometry = GlGeometry();
 
-    shape->geometry.setMatrix(transform);
+    shape->geometry.transform(transform);
     shape->geometry.viewport = vport;
 
     auto updateStroke = (flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && shape->geometry.optStrokePath.empty();
@@ -1407,11 +1407,11 @@ bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
     if (!data) return false;
     auto shape = (GlShape*)data;
     if (shape->opacity == 0) return false;
-    const auto& bbox = shape->geometry.getBounds();
+    const auto& bbox = shape->geometry.bounds();
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
         GlIntersector intersector;
-        return intersector.intersect(RenderRegion::intersect(region, bbox), shape);
+        return intersector.intersect(shape, RenderRegion::intersect(region, bbox));
     }
     return false;
 }
@@ -1422,11 +1422,11 @@ bool GlRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion&
     if (!data) return false;
     auto image = static_cast<GlImage*>(data);
     if (image->opacity == 0) return false;
-    const auto& bbox = image->geometry.getBounds();
+    const auto& bbox = image->geometry.bounds();
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
         GlIntersector intersector;
-        if (intersector.intersect(RenderRegion::intersect(region, bbox), image)) return true;
+        if (intersector.intersect(image, RenderRegion::intersect(region, bbox))) return true;
     }
     return false;
 }

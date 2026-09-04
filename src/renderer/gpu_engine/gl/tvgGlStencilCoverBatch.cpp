@@ -131,7 +131,7 @@ GlRenderTask* GlStencilCoverBatch::prepare(GlProgram* stencilProgram, GlRenderPa
                                            bool& merge)
 {
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
-    auto bbox = stroke ? geometry.strokeBounds : geometry.fillBounds;
+    auto bbox = stroke ? geometry.strokeBBox : geometry.fillBBox;
     geometryBounds = stroke ? gpuTransformBounds(bbox, geometry.matrix) : bbox;
     geometryBounds.intersect(viewBounds);
 
