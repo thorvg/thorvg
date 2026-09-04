@@ -30,21 +30,24 @@ if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
     run_shard wg_rest --test-suite="[tvgWgEngine]" --test-case-exclude="WG Image Draw,WG Image Rotation"
 
     rc=0
-    for pid in "${pids[@]}"; do
-        wait "$pid" || rc=1
+    PAYLOAD_MEMCHECK=
+    for i in "${!pids[@]}"; do
+        shard_rc=0
+        wait "${pids[$i]}" || { rc=1; shard_rc=1; }
+
+        if [[ $shard_rc != 0 ]] || grep -Eq 'ERROR SUMMARY:[[:space:]]*[1-9][0-9,]*[[:space:]]+errors|definitely lost:[[:space:]]*[1-9][0-9,]*[[:space:]]+bytes in|Invalid (read|write) ' "${logs[$i]}"; then
+            PAYLOAD_MEMCHECK+="$(<"${logs[$i]}")"$'\n'
+        fi
     done
 
     SHARD_COUNT=${#pids[@]}
-    PAYLOAD_MEMCHECK=$(cat "${logs[@]}")
     COMMENTS_URL=$(jq -r .pull_request.comments_url "$GITHUB_EVENT_PATH")
 
     echo "$COMMENTS_URL"
-    echo "MEMCHECK errors:"
-    echo "$PAYLOAD_MEMCHECK"
+    echo "MEMCHECK results:"
+    cat "${logs[@]}"
 
-    DEFINITELY_LOST_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'definitely lost:\s*\K[0-9,]+(?=\s*bytes in)' | awk '{gsub(",", "", $1); sum += $1} END {print sum + 0}')
-    ERROR_NUMBER=$(echo "$PAYLOAD_MEMCHECK" | grep -oP 'ERROR SUMMARY:\s*\K[0-9,]+(?=\s*errors)' | awk '{gsub(",", "", $1); sum += $1} END {print sum + 0}')
-    if [[ $rc != 0 || $ERROR_NUMBER != 0 || $DEFINITELY_LOST_NUMBER != 0 || $PAYLOAD_MEMCHECK == *"Invalid read "* || $PAYLOAD_MEMCHECK == *"Invalid write "* ]]; then
+    if [[ -n $PAYLOAD_MEMCHECK ]]; then
         OUTPUT+=$'\n**MEMCHECK(VALGRIND) RESULT**:\n'
         OUTPUT+=$'\n'"$SHARD_COUNT"$' parallel shards using `'"$VALGRIND_CMD"$'`\n'
         OUTPUT+=$'\n```\n'
