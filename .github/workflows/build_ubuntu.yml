@@ -30,7 +30,8 @@ jobs:
         meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dstatic=true -Dthreads=false -Dextra="lottie_exp,openmp"
         sudo ninja -C build install
 
-  unit_test:
+  unit_test_valgrind:
+    name: unit_test(valgrind)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -52,28 +53,47 @@ jobs:
       run: |
         meson setup build -Dloaders="all" -Dengines="all" -Dsavers="all" -Dbindings="capi" -Dtests=true -Dextra="lottie_exp,openmp" --errorlogs
         sudo ninja -C build install
-        env LIBGL_ALWAYS_SOFTWARE=1 meson test -C build --print-errorlogs --timeout 120
+
+    - name: Run unit tests
+      if: github.event_name == 'push'
+      run: env LIBGL_ALWAYS_SOFTWARE=1 meson test -C build --print-errorlogs --timeout 120
 
     - uses: actions/upload-artifact@v4
+      if: github.event_name == 'push'
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt
 
     - name: Run memcheck Script(valgrind)
-      run: |
-        export PATH=$PATH:~/.local/bin/
-        chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_valgrind.sh"
-        "${GITHUB_WORKSPACE}/.github/workflows/memcheck_valgrind.sh"
+      if: github.event_name == 'pull_request'
+      run: bash "${GITHUB_WORKSPACE}/.github/workflows/memcheck_valgrind.sh"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build & Run memcheck Script(ASAN)
+  unit_test_asan:
+    name: unit_test(asan)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Packages
       run: |
-        sudo rm -rf ./build
-        meson setup build -Db_sanitize="address,undefined" -Dloaders="all" -Dsavers="all" -Dtests="true" -Dbindings="capi" -Dextra="lottie_exp,openmp"
-        sudo ninja -C build install
-        export PATH=$PATH:~/.local/bin/
-        chmod +x "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"
-        "${GITHUB_WORKSPACE}/.github/workflows/memcheck_asan.sh"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        sudo apt-get update
+        sudo apt-get install -y meson ninja-build pkg-config curl unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+
+    - name: Install wgpu_native
+      run: |
+        bash .github/workflows/install_wgpu_native.sh
+
+    - name: Build & Test
+      run: |
+        meson setup build -Dloaders="all" -Dengines="all" -Dsavers="all" -Dbindings="capi" -Dtests=true -Dextra="lottie_exp,openmp" -Db_sanitize="address,undefined" --errorlogs
+        ninja -C build
+        # LP_NUM_THREADS limits Mesa llvmpipe rendering threads, not OpenMP threads.
+        env LIBGL_ALWAYS_SOFTWARE=1 LP_NUM_THREADS=1 ASAN_OPTIONS=halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 meson test -C build --print-errorlogs --timeout 120
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: UnitTestReport
+        path: build/meson-logs/testlog.txt
