@@ -68,36 +68,35 @@ bool GlIntersector::pointInMesh(const Point& p, const GlGeometryBuffer& mesh)
     return (crossings % 2) == 1;
 }
 
-bool GlIntersector::intersect(const Point& pt, const tvg::Array<tvg::RenderData>& clips)
+bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Point& pt)
 {
     ARRAY_FOREACH(c, clips) {
         auto clip = static_cast<const GlShape*>(*c);
         const auto& geometry = clip->geometry;
         if (clip->valid.fill) {
-            auto p = geometry.fillWorld ? pt : pt * geometry.inverseMatrix();
-            const auto& bounds = geometry.fillBounds;
-            if (p.x < bounds.min.x || p.x > bounds.max.x || p.y < bounds.min.y || p.y > bounds.max.y) return false;
+            auto p = geometry.fillWorld ? pt : pt * geometry.itransform();
+            const auto& bbox = geometry.fillBBox;
+            if (p.x < bbox.min.x || p.x > bbox.max.x || p.y < bbox.min.y || p.y > bbox.max.y) return false;
             if (!pointInMesh(p, geometry.fill)) return false;
         } else if (clip->valid.stroke) {
-            auto p = pt * geometry.inverseMatrix();
-            const auto& bounds = geometry.strokeBounds;
-            if (p.x < bounds.min.x || p.x > bounds.max.x || p.y < bounds.min.y || p.y > bounds.max.y) return false;
+            auto p = pt * geometry.itransform();
+            const auto& bbox = geometry.strokeBBox;
+            if (p.x < bbox.min.x || p.x > bbox.max.x || p.y < bbox.min.y || p.y > bbox.max.y) return false;
             if (!pointInTris(p, geometry.stroke)) return false;
         }
     }
     return true;
 }
 
-bool GlIntersector::intersect(const RenderRegion region, const GlShape* shape)
+bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
 {
-    if (!shape) return false;
     const auto& geometry = shape->geometry;
     auto validFill = shape->valid.fill && !geometry.fill.index.empty();
     auto validStroke = shape->valid.stroke && !geometry.stroke.index.empty();
     if (!validFill && !validStroke) return false;
 
     const Matrix* inverse = nullptr;
-    if ((!geometry.fillWorld && validFill) || validStroke) inverse = geometry.inverseMatrix();
+    if ((!geometry.fillWorld && validFill) || validStroke) inverse = &geometry.itransform();
     auto sizeX = region.sw();
     auto sizeY = region.sh();
 
@@ -109,23 +108,23 @@ bool GlIntersector::intersect(const RenderRegion region, const GlShape* shape)
 
             if (validFill) {
                 auto p = geometry.fillWorld ? pt : pt * *inverse;
-                const auto& bounds = geometry.fillBounds;
-                hit = p.x >= bounds.min.x && p.x <= bounds.max.x && p.y >= bounds.min.y && p.y <= bounds.max.y && pointInMesh(p, geometry.fill);
+                const auto& bbox = geometry.fillBBox;
+                hit = p.x >= bbox.min.x && p.x <= bbox.max.x && p.y >= bbox.min.y && p.y <= bbox.max.y && pointInMesh(p, geometry.fill);
             }
             if (!hit && validStroke) {
                 auto p = pt * *inverse;
-                const auto& bounds = geometry.strokeBounds;
-                hit = p.x >= bounds.min.x && p.x <= bounds.max.x && p.y >= bounds.min.y && p.y <= bounds.max.y && pointInTris(p, geometry.stroke);
+                const auto& bbox = geometry.strokeBBox;
+                hit = p.x >= bbox.min.x && p.x <= bbox.max.x && p.y >= bbox.min.y && p.y <= bbox.max.y && pointInTris(p, geometry.stroke);
             }
-            if (hit && intersect(pt, shape->clips)) return true;
+            if (hit && intersect(shape->clips, pt)) return true;
         }
     }
     return false;
 }
 
-bool GlIntersector::intersect(const RenderRegion region, const GlImage* image)
+bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 {
-    if (!image || image->geometry.fill.index.count < 6) return false;
+    if (image->geometry.fill.index.count < 6) return false;
 
     const auto& geometry = image->geometry;
     const auto& mesh = geometry.fill;
@@ -146,7 +145,7 @@ bool GlIntersector::intersect(const RenderRegion region, const GlImage* image)
         auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
         for (int32_t x = 0; x < sizeX; x++) {
             Point pt{(float)x + region.min.x, (float)py + region.min.y};
-            if (contains(pt) && intersect(pt, image->clips)) return true;
+            if (contains(pt) && intersect(image->clips, pt)) return true;
         }
     }
     return false;
@@ -165,9 +164,9 @@ void GlGeometry::prepare(const RenderShape& rshape)
     auto strokeWidth = rshape.strokeWidth();
     auto localOut = (std::isfinite(strokeWidth) && !tvg::zero(strokeWidth)) ? &optStrokePath : nullptr;
     auto path = &rshape.path;
-    RenderPath trimmedPath;
 
     if (rshape.trimpath()) {
+        auto& trimmedPath = RenderPath::scratch();
         if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
             path = &trimmedPath;
         } else {
@@ -186,7 +185,7 @@ void GlGeometry::prepare(const RenderShape& rshape)
 bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
 {
     fill.clear();
-    fillBounds = {};
+    fillBBox = {};
     fillWorld = true;
     convex = false;
     multiplier = 1.0f;
@@ -211,7 +210,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
     BWTessellator bwTess{&fill};
     bwTess.tessellate(optPath);
     fillRule = rshape.rule;
-    fillBounds = bwTess.bounds();
+    fillBBox = bwTess.bounds();
     convex = bwTess.convex;
 
     return true;
@@ -221,7 +220,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
 bool GlGeometry::tesselateThinFill(const RenderPath& path)
 {
     stroke.clear();
-    strokeBounds = {};
+    strokeBBox = {};
     if (path.pts.count < 2) return false;
 
     // Thin fills borrow stroke tessellation, but the generated stroke buffer is
@@ -230,8 +229,7 @@ bool GlGeometry::tesselateThinFill(const RenderPath& path)
     stroker.run(path); // path is already in world space.
     stroke.index.move(fill.index);
     stroke.vertex.move(fill.vertex);
-    fillBounds = stroker.bounds();
-    strokeBounds = {};
+    fillBBox = stroker.bounds();
     strokeRenderWidth = 0.0f;
     return true;
 }
@@ -240,7 +238,7 @@ bool GlGeometry::tesselateThinFill(const RenderPath& path)
 bool GlGeometry::tesselateStroke(const RenderShape& rshape)
 {
     stroke.clear();
-    strokeBounds = {};
+    strokeBBox = {};
     strokeRenderWidth = 0.0f;
 
     auto strokeWidth = rshape.strokeWidth();
@@ -258,7 +256,7 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     auto& dashed = RenderPath::scratch();
     if (gpuStrokeDash(rshape, dashed, nullptr)) stroker.run(dashed);
     else stroker.run(optStrokePath);
-    strokeBounds = stroker.bounds();
+    strokeBBox = stroker.bounds();
     return true;
 }
 
@@ -266,7 +264,6 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
 void GlGeometry::tesselateImage(const RenderSurface* image)
 {
     fill.clear();
-    fillBounds = {};
     fillWorld = true;
     strokeRenderWidth = 0.0f;
     fill.vertex.reserve(5 * 4);
@@ -297,7 +294,7 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
     fill.index.push(1);
     fill.index.push(3);
 
-    fillBounds = gpuTransformBounds(RenderRegion{{0, 0}, {int32_t(image->w), int32_t(image->h)}}, matrix);
+    fillBBox = gpuTransformBounds(RenderRegion{{0, 0}, {int32_t(image->w), int32_t(image->h)}}, matrix);
 }
 
 void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const
@@ -317,7 +314,7 @@ void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     task->setDrawRange(indexOffset, buffer->index.count);
 }
 
-GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
+GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag)
 {
     if (flag & RenderUpdateFlag::Stroke) return GlStencilMode::Stroke;
     if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
@@ -330,31 +327,26 @@ GlStencilMode GlGeometry::getStencilMode(RenderUpdateFlag flag)
     return GlStencilMode::None;
 }
 
-
-RenderRegion GlGeometry::getBounds() const
+RenderRegion GlGeometry::bounds() const
 {
-    auto bounds = RenderRegion{};
-    auto hasBounds = false;
+    auto bbox = RenderRegion{};
+    auto valid = false;
 
     if (!fill.index.empty()) {
-        auto fill = fillWorld ? fillBounds : gpuTransformBounds(fillBounds, matrix);
+        auto fill = fillWorld ? fillBBox : gpuTransformBounds(fillBBox, matrix);
         if (fill.valid()) {
-            bounds = fill;
-            hasBounds = true;
+            bbox = fill;
+            valid = true;
         }
     }
 
     if (!stroke.index.empty()) {
-        auto stroke = gpuTransformBounds(strokeBounds, matrix);
+        auto stroke = gpuTransformBounds(strokeBBox, matrix);
         if (stroke.valid()) {
-            if (hasBounds) bounds.add(stroke);
-            else {
-                bounds = stroke;
-                hasBounds = true;
-            }
+            if (valid) bbox.add(stroke);
+            else bbox = stroke;
         }
     }
 
-    if (hasBounds) return bounds;
-    return {};
+    return bbox;
 }
