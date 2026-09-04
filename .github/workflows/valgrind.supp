@@ -37,3 +37,30 @@
    ...
    fun:*wgpu_core*indirect_validation*IndirectValidation*new*
 }
+
+#------------------------------------------------------------------------------
+# Mesa llvmpipe worker teardown
+#
+# Mesa may access synchronization state after freeing it while an llvmpipe
+# worker exits. Suppress only the observed 4-byte condition-variable and mutex
+# accesses whose next frames are entirely inside libgallium.
+#------------------------------------------------------------------------------
+
+{
+   mesa-llvmpipe-worker-cond-teardown
+   Memcheck:Addr4
+   fun:pthread_cond_broadcast*
+   obj:*libgallium*.so*
+   obj:*libgallium*.so*
+   ...
+}
+
+{
+   mesa-llvmpipe-worker-mutex-teardown
+   Memcheck:Addr4
+   fun:*mutex_unlock*
+   ...
+   obj:*libgallium*.so*
+   obj:*libgallium*.so*
+   ...
+}
