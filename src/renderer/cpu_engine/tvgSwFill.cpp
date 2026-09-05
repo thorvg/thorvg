@@ -61,29 +61,20 @@ static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, f
 }
 
 
-static uint32_t _estimateAAMargin(const Fill* fdata)
+static uint32_t _estimateAAMargin(const SwFill* fill)
 {
     constexpr float marginScalingFactor = 800.0f;
-
-    if (fdata->type() == Type::RadialGradient) {
-        auto radius = CONST_RADIAL(fdata)->r;
-        return tvg::zero(radius) ? 0 : static_cast<uint32_t>(marginScalingFactor / radius);
-    } else {
-        auto grad = CONST_LINEAR(fdata);
-        auto len = length(grad->p1, grad->p2);
-        return tvg::zero(len) ? 0 : static_cast<uint32_t>(marginScalingFactor / len);
-    }
+    return tvg::zero(fill->extent) ? 0 : static_cast<uint32_t>(marginScalingFactor / fill->extent);
 }
 
 
 static void _adjustAAMargin(uint32_t& iMargin, uint32_t index)
 {
     constexpr float threshold = 0.1f;
-    constexpr uint32_t iMarginMax = 40;
 
     auto iThreshold = static_cast<uint32_t>(index * threshold);
     if (iMargin > iThreshold) iMargin = iThreshold;
-    if (iMargin > iMarginMax) iMargin = iMarginMax;
+    if (iMargin > SW_MARGIN_MAX) iMargin = SW_MARGIN_MAX;
 }
 
 
@@ -121,14 +112,9 @@ static void _applyAA(SwFill* fill, uint32_t begin, uint32_t end)
 }
 
 
-static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint8_t opacity)
+// Generate the ctable entries over the [begin, end) range
+static void _genColorTable(SwFill* fill, const Fill::ColorStop* colors, uint32_t cnt, const SwSurface* surface, uint8_t opacity, uint32_t begin, uint32_t end)
 {
-    if (fill->solid) return true;
-
-    const Fill::ColorStop* colors;
-    auto cnt = fdata->colorStops(&colors);
-    if (cnt == 0 || !colors) return false;
-
     auto pColors = colors;
 
     auto a = MULTIPLY(pColors->a, opacity);
@@ -139,27 +125,21 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
     auto b = pColors->b;
     auto rgba = surface->join(r, g, b, a);
     auto inc = 1.0f / static_cast<float>(SW_COLOR_TABLE);
-    auto pos = 1.5f * inc;
-    uint32_t i = 0;
+    auto pos = (begin + 0.5f) * inc;
+    auto i = begin;
 
-    //If repeat is true, anti-aliasing must be applied between the last and the first colors.
     auto repeat = fill->spread == FillSpread::Repeat;
-    uint32_t iAABegin = repeat ? _estimateAAMargin(fdata) : 0;
-    uint32_t iAAEnd = 0;
+    auto full = begin == 0 && end == SW_COLOR_TABLE;
 
-    fill->ctable[i++] = ALPHA_BLEND(rgba | 0xff000000, a);
+    auto padColor = ALPHA_BLEND(rgba | 0xff000000, a);
 
-    while (pos <= pColors->offset) {
-        fill->ctable[i] = fill->ctable[i - 1];
-        ++i;
+    while (i < end && (i == 0 || pos <= pColors->offset)) {
+        fill->ctable[i++] = padColor;
         pos += inc;
     }
 
     for (uint32_t j = 0; j < cnt - 1; ++j) {
-        if (repeat && j == cnt - 2 && iAAEnd == 0) {
-            iAAEnd = iAABegin;
-            _adjustAAMargin(iAAEnd, SW_COLOR_TABLE - i);
-        }
+        if (repeat && full && j == cnt - 2) fill->countSegmentEnd = SW_COLOR_TABLE - i;
 
         auto curr = colors + j;
         auto next = curr + 1;
@@ -171,7 +151,7 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 
         auto rgba2 = surface->join(next->r, next->g, next->b, a2);
 
-        while (pos < next->offset && i < SW_COLOR_TABLE) {
+        while (i < end && pos < next->offset) {
             auto t = (pos - curr->offset) * delta;
             auto dist = static_cast<int32_t>(255 * t);
             auto dist2 = 255 - dist;
@@ -183,24 +163,66 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
         rgba = rgba2;
         a = a2;
 
-        if (repeat && j == 0) _adjustAAMargin(iAABegin, i - 1);
+        if (repeat && full && j == 0) fill->countSegmentBegin = i - 1;
     }
     rgba = ALPHA_BLEND((rgba | 0xff000000), a);
 
-    for (; i < SW_COLOR_TABLE; ++i) {
+    for (; i < end; ++i) {
         fill->ctable[i] = rgba;
     }
 
-    //For repeat fill spread apply anti-aliasing between the last and first colors,
-    //otherwise make sure the last color stop is represented at the end of the table.
-    if (repeat) _applyAA(fill, iAABegin, iAAEnd);
-    else fill->ctable[SW_COLOR_TABLE - 1] = rgba;
+    if (end == SW_COLOR_TABLE) fill->ctable[SW_COLOR_TABLE - 1] = rgba;
+}
+
+
+static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint8_t opacity)
+{
+    if (fill->solid) return true;
+
+    const Fill::ColorStop* colors;
+    auto cnt = fdata->colorStops(&colors);
+    if (cnt == 0 || !colors) return false;
+
+    _genColorTable(fill, colors, cnt, surface, opacity, 0, SW_COLOR_TABLE);
+
+    if (fill->spread == FillSpread::Repeat) {
+        uint32_t iAABegin = _estimateAAMargin(fill);
+        _adjustAAMargin(iAABegin, fill->countSegmentBegin);
+        uint32_t iAAEnd = iAABegin;
+        _adjustAAMargin(iAAEnd, fill->countSegmentEnd);
+
+        _applyAA(fill, iAABegin, iAAEnd);
+    }
 
     return true;
 }
 
 
-bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pTransform)
+// Update only the ctable corresponding to the margin based on the updated extent
+static bool _updateAAMargin(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint8_t opacity)
+{
+    auto repeat = fill->spread == FillSpread::Repeat;
+    if (!repeat) return true;
+
+    const Fill::ColorStop* colors;
+    auto cnt = fdata->colorStops(&colors);
+    if (cnt == 0 || !colors) return false;
+
+    _genColorTable(fill, colors, cnt, surface, opacity, 0, SW_MARGIN_MAX);
+    _genColorTable(fill, colors, cnt, surface, opacity, SW_COLOR_TABLE - SW_MARGIN_MAX, SW_COLOR_TABLE);
+
+    uint32_t iAABegin = _estimateAAMargin(fill);
+    _adjustAAMargin(iAABegin, fill->countSegmentBegin);
+    uint32_t iAAEnd = iAABegin;
+    _adjustAAMargin(iAAEnd, fill->countSegmentEnd);
+
+    _applyAA(fill, iAABegin, iAAEnd);
+
+    return true;
+}
+
+
+bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pTransform, bool* extentChanged)
 {
     float x1, x2, y1, y2;
     linear->linear(&x1, &y1, &x2, &y2);
@@ -231,11 +253,19 @@ bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pT
     fill->linear.dx = dx * itransform.e11 + fill->linear.dy * itransform.e21;
     fill->linear.dy = dx * itransform.e12 + fill->linear.dy * itransform.e22;
 
+    // dx/dy is amount of change in screen space. The reciprocal of its magnitude is
+    // the pixel span of one full color table cycle.
+    auto ext = 1.0f / sqrtf(fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy);
+    if (!tvg::equal(ext, fill->extent)) {
+        *extentChanged = true;
+        fill->extent = ext;
+    }
+
     return true;
 }
 
 
-bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pTransform)
+bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pTransform, bool* extentChanged)
 {
     float cx, cy, r, fx, fy, fr;
     radial->radial(&cx, &cy, &r, &fx, &fy, &fr);
@@ -266,6 +296,18 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     fill->radial.a21 = itransform.e21;
     fill->radial.a22 = itransform.e22;
     fill->radial.a23 = itransform.e23;
+
+    // The transform maps the gradient circle to an ellipse. Take its semi-minor axis
+    // (the smaller singular value), where the table packs tightest and needs most margin.
+    auto sx = transform.e11 * transform.e11 + transform.e21 * transform.e21;
+    auto sy = transform.e12 * transform.e12 + transform.e22 * transform.e22;
+    auto sxy = transform.e11 * transform.e12 + transform.e21 * transform.e22;
+    auto d = sqrtf((sx - sy) * (sx - sy) + 4.0f * sxy * sxy);
+    auto ext = r * sqrtf(0.5f * std::max(0.0f, sx + sy - d));
+    if (!tvg::equal(ext, fill->extent)) {
+        *extentChanged = true;
+        fill->extent = ext;
+    }
 
     return true;
 }
@@ -773,15 +815,18 @@ void fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uin
 
 bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
+    bool extentChanged = false;
+
     fill->spread = fdata->spread();
 
     if (fdata->type() == Type::LinearGradient) {
-        if (!_prepareLinear(fill, static_cast<const LinearGradient*>(fdata), transform)) return false;
+        if (!_prepareLinear(fill, static_cast<const LinearGradient*>(fdata), transform, &extentChanged)) return false;
     } else if (fdata->type() == Type::RadialGradient) {
-        if (!_prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform)) return false;
+        if (!_prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform, &extentChanged)) return false;
     }
 
     if (ctable) return _updateColorTable(fill, fdata, surface, opacity);
+    else if (extentChanged) return _updateAAMargin(fill, fdata, surface, opacity);
     return true;
 }
 

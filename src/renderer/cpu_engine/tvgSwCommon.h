@@ -32,6 +32,7 @@
 #define SW_CURVE_TYPE_POINT 0
 #define SW_CURVE_TYPE_CUBIC 1
 #define SW_COLOR_TABLE 1024
+#define SW_MARGIN_MAX 40
 
 struct SwCompositor;
 struct SwSurface;
@@ -187,6 +188,10 @@ struct SwFill
     };
 
     uint32_t ctable[SW_COLOR_TABLE];
+    uint32_t countSegmentBegin;
+    uint32_t countSegmentEnd;
+    float extent;
+
     FillSpread spread;
 
     bool solid = false; //solid color fill with the last color from colorStops
