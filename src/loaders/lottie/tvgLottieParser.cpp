@@ -931,8 +931,7 @@ LottieObject* LottieParser::parseObject(const char* type)
     return nullptr;
 }
 
-
-//capture the type name if the upcoming type is irregularly addressed after the actual properties.
+// capture the type if the upcoming type is irregularly addressed after the actual properties.
 char* LottieParser::captureType()
 {
     if (!isPrimitive() || !strcmp(val.GetString(), "ty")) return nullptr;
@@ -948,11 +947,22 @@ char* LottieParser::captureType()
                 while (*p != '\0' && (isspace(*p) || *p == '\n')) ++p;
                 if (*p++ != ':') return nullptr;
                 while (*p != '\0' && (isspace(*p) || *p == '\n')) ++p;
-                if (*p++ != '\"') return nullptr;
-                const char* start = p;
-                while (*p != '\0' && *p != '\"') ++p;
-                if (*p == '\"') return tvg::duplicate(start, p - start);
-                return nullptr;
+
+                const char* start;
+                // If type given as a string
+                if (*p == '\"') {
+                    start = ++p;
+                    while (*p != '\0' && *p != '\"') ++p;
+                    if (*p != '\"') return nullptr;
+                }
+                // If type given as an integer
+                else {
+                    start = p;
+                    while (isdigit(*p)) ++p;
+                    // Allow up to 9 digits so that atoi() can be used safely
+                    if ((p == start) || (p - start > 9) || (*p != ',' && *p != '}' && !isspace(*p))) return nullptr;
+                }
+                return tvg::duplicate(start, p - start);
             }
         }
     }
@@ -1543,11 +1553,18 @@ void LottieParser::parseEffects(LottieLayer* layer)
         LottieEffect* effect = nullptr;
         auto invalid = true;
         enterObject();
+
+        if (auto type = captureType()) {
+            effect = getEffect(atoi(type));
+            if (effect) invalid = false;
+            tvg::free(type);
+        }
+
         while (auto key = nextObjectKey()) {
-            //type must be prioritized.
             if (KEY_AS("ty"))
             {
-                effect = getEffect(getInt());
+                if (effect) skip();
+                else effect = getEffect(getInt());
                 if (!effect) break;
                 else invalid = false;
             }
