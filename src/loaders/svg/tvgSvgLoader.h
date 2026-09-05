@@ -31,8 +31,8 @@ struct SvgLoader : ImageLoader, Task
     SvgParserContext ctx;
     string svgPath = "";
     char* content = nullptr;
-    uint32_t size = 0;
     Scene* root = nullptr;
+    uint32_t size = 0;
 
     SvgLoader() : ImageLoader(FileType::Svg) {}
     ~SvgLoader();
@@ -49,10 +49,10 @@ struct SvgLoader : ImageLoader, Task
     Paint* paint() override;
 
 private:
-    SvgViewFlag viewFlag = SvgViewFlag::None;
+    Box vbox{};
     AspectRatioAlign align = AspectRatioAlign::XMidYMid;
     AspectRatioMeetOrSlice meetOrSlice = AspectRatioMeetOrSlice::Meet;
-    Box vbox{};
+    SvgViewFlag viewFlag = SvgViewFlag::None;
 
     Result header();
     void clear(bool all = true);
