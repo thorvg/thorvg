@@ -34,12 +34,14 @@ private:
     WGPUShaderModule shader_solid{};
     WGPUShaderModule shader_radial{};
     WGPUShaderModule shader_linear{};
+    WGPUShaderModule shader_conic{};
     WGPUShaderModule shader_image{};
     WGPUShaderModule shader_scene{};
     // shaders custom blend
     WGPUShaderModule shader_solid_blend{};
     WGPUShaderModule shader_radial_blend{};
     WGPUShaderModule shader_linear_blend{};
+    WGPUShaderModule shader_conic_blend{};
     WGPUShaderModule shader_image_blend{};
     WGPUShaderModule shader_scene_blend{};
     // shader scene compose
@@ -85,17 +87,20 @@ public:
     WGPURenderPipeline solid{};
     WGPURenderPipeline radial{};
     WGPURenderPipeline linear{};
+    WGPURenderPipeline conic{};
     WGPURenderPipeline solid_conv{};  // convex geometry (no stencil)
     WGPURenderPipeline solid_batch{};  // batched convex geometry (no stencil)
     WGPURenderPipeline solid_stencil_batch{};  // batched complex geometry cover
     WGPURenderPipeline radial_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline linear_conv{}; // convex geometry (no stencil)
+    WGPURenderPipeline conic_conv{};  // convex geometry (no stencil)
     WGPURenderPipeline image{};
     WGPURenderPipeline scene{};
     // pipelines custom blend
     WGPURenderPipeline solid_blend[18]{};
     WGPURenderPipeline radial_blend[18]{};
     WGPURenderPipeline linear_blend[18]{};
+    WGPURenderPipeline conic_blend[18]{};
     WGPURenderPipeline image_blend[18]{};
     WGPURenderPipeline scene_blend[18]{};
     // pipelines compose

@@ -33,7 +33,7 @@
 // WgImageData
 //***********************************************************************
 
-void WgImageData::update(WgContext& context, const Fill* fill)
+void WgImageData::update(WgContext& context, const Fill* fill, FillSpread& currentSpread)
 {
     // compute gradient data
     WgShaderTypeGradientData gradientData;
@@ -41,17 +41,22 @@ void WgImageData::update(WgContext& context, const Fill* fill)
     // allocate new texture handle
     auto bytesPerRow = WG_TEXTURE_GRADIENT_SIZE * sizeof(uint32_t);
     bool texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data, bytesPerRow, bytesPerRow);
-    // update texture view of texture handle was changed
+    // update texture view if texture handle was changed
     if (texHandleChanged) {
         context.releaseTextureView(textureView);
         textureView = context.createTextureView(texture);
-        // get sampler by spread type
-        WGPUSampler sampler = context.samplerLinearClamp;
-        if (fill->spread() == FillSpread::Reflect) sampler = context.samplerLinearMirror;
-        if (fill->spread() == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
+    }
+    // get sampler by spread type. Conic gradients always use repeat to filter
+    // across the first/last ramp texels at their seam.
+    auto spread = fill->type() == Type::ConicGradient ? FillSpread::Repeat : fill->spread();
+    if (texHandleChanged || currentSpread != spread) {
+        auto sampler = context.samplerLinearClamp;
+        if (spread == FillSpread::Reflect) sampler = context.samplerLinearMirror;
+        if (spread == FillSpread::Repeat) sampler = context.samplerLinearRepeat;
         // update bind group
         context.layouts.releaseBindGroup(bindGroup);
         bindGroup = context.layouts.createBindGroupTexSampled(sampler, textureView);
+        currentSpread = spread;
     }
 };
 
@@ -78,11 +83,13 @@ void WgRenderSettings::update(WgContext& context, const Fill* fill, const Matrix
 {
     assert(fill);
     settings.gradient.update(fill, modelTransform);
-    if (updateColorRamp) gradientData.update(context, fill);
+    if (updateColorRamp) gradientData.update(context, fill, spread);
     if (fill->type() == Type::LinearGradient)
         fillType = WgRenderSettingsType::Linear;
     else if (fill->type() == Type::RadialGradient)
         fillType = WgRenderSettingsType::Radial;
+    else if (fill->type() == Type::ConicGradient)
+        fillType = WgRenderSettingsType::Conic;
 };
 
 

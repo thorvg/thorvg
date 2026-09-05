@@ -25,6 +25,7 @@
 #include <cstring>
 #include "tvgMath.h"
 #include "tvgFill.h"
+#include "tvgGpuCommon.h"
 
 //************************************************************************
 // WgShaderTypeMat4x4f
@@ -124,6 +125,11 @@ void WgShaderTypeGradSettings::update(const Fill* fill, const Matrix* modelTrans
     if (inverse(&fill->transform(), &invTransform)) {
         Matrix invModel;
         if (modelTransform && inverse(modelTransform, &invModel)) invTransform = invTransform * invModel;
+        if (fill->type() == Type::ConicGradient) {
+            float cx, cy, angle;
+            static_cast<const ConicGradient*>(fill)->conic(&cx, &cy, &angle);
+            invTransform = tvg::gpuConicTransform({cx, cy}, angle) * invTransform;
+        }
         transform.update(invTransform);
     } else transform.identity();
     // update gradient base points
@@ -141,10 +147,12 @@ void WgShaderTypeGradSettings::update(const Fill* fill, const Matrix* modelTrans
 
 void WgShaderTypeGradientData::update(const Fill* fill)
 {
-    if (!fill) return;
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = fill->colorStops(&stops);
-    if (stopCnt == 0) return;
+    if (stopCnt == 0) {
+        std::memset(data, 0, sizeof(data));
+        return;
+    }
 
     auto assign = [](uint8_t* dst, const Fill::ColorStop& color) {
         std::memcpy(dst, &color.r, 4);
