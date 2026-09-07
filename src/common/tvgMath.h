@@ -448,6 +448,11 @@ struct BBox
 {
     Point min, max;
 
+    bool inside(const Point& pt) const
+    {
+        return (pt.x >= min.x && pt.x <= max.x && pt.y >= min.y && pt.y <= max.y);
+    }
+
     void init()
     {
         min = {FLT_MAX, FLT_MAX};

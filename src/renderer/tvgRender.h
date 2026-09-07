@@ -152,6 +152,11 @@ struct RenderRegion
         if (rhs.max.y > max.y) max.y = rhs.max.y;
     }
 
+    bool inside(const Point& pt) const
+    {
+        return (pt.x >= min.x && pt.x < max.x && pt.y >= min.y && pt.y < max.y);
+    }
+
     bool contained(const RenderRegion& rhs) const
     {
         return (min.x <= rhs.min.x && max.x >= rhs.max.x && min.y <= rhs.min.y && max.y >= rhs.max.y);
