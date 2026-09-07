@@ -348,47 +348,53 @@ The result is:
 <br />
 ## Lottie
 
-ThorVG supports the most powerful [Lottie Animation features](https://github.com/thorvg/thorvg/wiki/Lottie-Support). Lottie is an industry standard, JSON-based vector animation file format that enables seamless distribution of animations on any platform, akin to shipping static assets. These files are compact and compatible with various devices, scaling up or down without pixelation. With Lottie, you can easily create, edit, test, collaborate, and distribute animations in a user-friendly manner. For more information, please visit [Lottie Animation Community](https://lottie.github.io/)' website. <br />
-<br />
-ThorVG offers great flexibility in building its binary. Besides serving as a general graphics engine, it can be configured as a compact Lottie animation playback library with specific build options:
+ThorVG supports a wide range of [Lottie animation features](https://github.com/thorvg/thorvg/wiki/Lottie-Support). Lottie is an industry-standard, JSON-based vector animation format that enables animations to be distributed seamlessly across platforms, much like static assets. Lottie files are compact, compatible with a wide range of devices, and can be scaled without pixelation. The format also makes it easy to create, edit, test, collaborate on, and distribute animations. For more information, visit the [Lottie Animation Community](https://lottie.github.io/) website.
+
+<p align="center">
+  <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lottie.gif">
+</p>
+
+Please check out the [ThorVG Test](https://thorvg-perf-test.vercel.app/) to explore the performance of various Lottie animations powered by ThorVG. For frontend developement, you can also install [ThorVG Lottie Player npm package](https://www.npmjs.com/package/@thorvg/lottie-player).
+
+### Basic Usage
+ThorVG offers flexibility in configuring its binary. In addition to serving as a general-purpose graphics engine, it can be built as a compact Lottie animation playback library using specific build options:
 
 ```
 $meson setup builddir -Dloaders="lottie, ..."
 ```
 
-Alternatively, to enable all loaders available for Lottie:
+Alternatively, enable all loaders available for Lottie:
 
 ```
 $meson setup builddir -Dloaders="all"
 ```
 
-Lottie Expressions are small JavaScript code snippets that can be applied to animated properties and evaluated to a single value. Expressions are an advanced feature that is not currently part of the official Lottie specification and may increase binary size or affect performance, especially on small devices such as MCUs. ThorVG disables expression support by default; enable it explicitly with the `extra` build option when required:
-
-```
-$meson setup builddir -Dloaders="lottie" -Dextra="lottie_exp, ..."
-```
-
-The following code snippet demonstrates how to use ThorVG to play a Lottie animation.
+The following example demonstrates how to play a Lottie animation with ThorVG:
 
 ```cpp
 auto animation = tvg::Animation::gen();     //generate an animation
-auto picture = animation->picture()         //acquire a picture which associated with the animation.
+auto picture = animation->picture();        //acquire a picture which associated with the animation.
 picture->load("lottie.json");               //load a Lottie file
 auto duration = animation->duration();      //figure out the animation duration time in seconds.
 canvas->add(picture);                       //add the picture to the canvas
 ```
-First, an animation and a picture are generated. The Lottie file (lottie.json) is loaded into the picture, and then the picture is added to the canvas. The animation frames are controlled using the animation object to play the Lottie animation. Also you might want to know the animation duration time to run your animation loop.
+First, create an animation and retrieve its associated picture. Load the Lottie file (lottie.json) into the picture, and then add the picture to the canvas. Use the animation object to control the frames during playback. You can also retrieve the animation duration when implementing the playback loop.
 ```cpp
 animation->frame(animation->totalFrame() * progress);  //Set a current animation frame to display
-canvas->update(animation->picture());                  //Update the picture to be redrawn.
 ```
-Let's suppose the progress variable determines the position of the animation, ranging from 0 to 1 based on the total duration time of the animation. Adjusting the progress value allows you to control the animation at the desired position. Afterwards, the canvas is updated to redraw the picture with the updated animation frame.<br />
-<br />
-<p align="center">
-  <img width="600" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lottie.gif">
-</p>
+The progress variable represents the animation position, ranging from 0 to 1 over its total duration. Adjust it to display the animation at the desired position, and then update the canvas to redraw the corresponding frame.
 
-Please check out the [ThorVG Test App](https://thorvg-perf-test.vercel.app/) to see the performance of various Lottie animations powered by ThorVG. If you're working on the frontend, you can also download the ThorVG npm package [here](https://www.npmjs.com/package/@thorvg/lottie-player).</br>
+### Expressions
+
+ThorVG supports Lottie Expressions, enabling small JavaScript snippets to dynamically control animated properties. This unlocks advanced capabilities such as interactivity, dynamic theming, and context-aware animation behavior. However, expressions are not currently part of the official Lottie specification and may increase binary size or affect performance, especially on resource-constrained devices. ThorVG therefore disables expression support by default; enable it explicitly with the `extra` build option when required:
+
+```
+$meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
+```
+
+<p align="center">
+  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_expressions.gif">
+</p>
 
 [Back to contents](#contents)
 <br />
