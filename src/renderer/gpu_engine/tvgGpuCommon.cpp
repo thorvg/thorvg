@@ -22,12 +22,13 @@
 
 #include "tvgGpuCommon.h"
 
-/************************************************************************/
-/* Utility Functions Implementation                                     */
-/************************************************************************/
 
 namespace tvg
 {
+
+/************************************************************************/
+/* Utility Functions Implementation                                     */
+/************************************************************************/
 
 constexpr auto PATH_OPT_PX_TOLERANCE = 0.25f;
 constexpr auto DASH_ENDPOINT_TOLERANCE = DASH_PATTERN_THRESHOLD;
@@ -44,16 +45,6 @@ uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius)
     // Sagitta-based formula Approximation: 1 - cos(θ/2) ≈ (θ/2)²/2, so θ ≈ 2 * sqrt(2 * s/r)
     auto segmentAngle = 2.0f * sqrtf(2.0f * PX_TOLERANCE / pixelRadius);
     return static_cast<uint32_t>(ceilf(fabsf(arcAngle) / segmentAngle)) + 1;
-}
-
-bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
-{
-    auto d1 = tvg::cross(p - a, p - b);
-    auto d2 = tvg::cross(p - b, p - c);
-    auto d3 = tvg::cross(p - c, p - a);
-    auto hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    auto hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-    return !(hasNeg && hasPos);
 }
 
 RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix)
@@ -833,6 +824,65 @@ bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transfo
         else return false;
     }
     return dash.gen(rs.path, out, allowDot, transform);
+}
+
+/************************************************************************/
+/* Intersector Functions Implementation                                 */
+/************************************************************************/
+
+static inline void _point(const void* vertices, uint32_t index, Point& point)
+{
+    static_assert(sizeof(Point) == 2 * sizeof(float), "vertices must be packed x/y floats.");
+    memcpy(&point, static_cast<const unsigned char*>(vertices) + size_t(index) * sizeof(Point), sizeof(Point));
+}
+
+bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
+{
+    auto d1 = tvg::cross(p - a, p - b);
+    auto d2 = tvg::cross(p - b, p - c);
+    auto d3 = tvg::cross(p - c, p - a);
+    return !(((d1 < 0) || (d2 < 0) || (d3 < 0)) && ((d1 > 0) || (d2 > 0) || (d3 > 0)));
+}
+
+bool gpuPointInQuad(const Point& p, const Point (&triangle)[6])
+{
+    return gpuPointInTriangle(p, triangle[0], triangle[1], triangle[2]) || gpuPointInTriangle(p, triangle[3], triangle[4], triangle[5]);
+}
+
+// @p vertices are packed x/y float pairs (Point[] or float[]), @p count is the number of indices in the triangle list.
+// GL and WG vertices share the same packed (x, y) float layout as Point.
+bool gpuPointInAnyMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count)
+{
+    Point p0, p1, p2;
+    for (uint32_t i = 0; i < count; i += 3) {
+        _point(vertices, indices[i], p0);
+        _point(vertices, indices[i + 1], p1);
+        _point(vertices, indices[i + 2], p2);
+        if (gpuPointInTriangle(p, p0, p1, p2)) return true;
+    }
+    return false;
+}
+
+bool gpuPointInEvenOddMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count)
+{
+    uint32_t crossings = 0;
+
+    auto intersects = [&](const Point& p1, const Point& p2) {
+        if ((p1.y < p.y) == (p2.y < p.y)) return;
+        auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
+        if (intersectionX > p.x) ++crossings;
+    };
+
+    Point p0, p1, p2;
+    for (uint32_t i = 0; i < count; i += 3) {
+        _point(vertices, indices[i], p0);
+        _point(vertices, indices[i + 1], p1);
+        _point(vertices, indices[i + 2], p2);
+        intersects(p0, p1);
+        intersects(p1, p2);
+        intersects(p2, p0);
+    }
+    return (crossings % 2) == 1;
 }
 
 }  // namespace tvg

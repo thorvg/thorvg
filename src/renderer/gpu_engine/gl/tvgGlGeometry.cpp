@@ -29,45 +29,6 @@
 /* GlIntersector                                                        */
 /************************************************************************/
 
-// triangle list
-bool GlIntersector::pointInTris(const Point& p, const GlGeometryBuffer& mesh)
-{
-    for (uint32_t i = 0; i < mesh.index.count; i += 3) {
-        auto p0 = Point{mesh.vertex[mesh.index[i + 0] * 2 + 0], mesh.vertex[mesh.index[i + 0] * 2 + 1]};
-        auto p1 = Point{mesh.vertex[mesh.index[i + 1] * 2 + 0], mesh.vertex[mesh.index[i + 1] * 2 + 1]};
-        auto p2 = Point{mesh.vertex[mesh.index[i + 2] * 2 + 0], mesh.vertex[mesh.index[i + 2] * 2 + 1]};
-        if (gpuPointInTriangle(p, p0, p1, p2)) return true;
-    }
-    return false;
-}
-
-// even-odd triangle list
-bool GlIntersector::pointInMesh(const Point& p, const GlGeometryBuffer& mesh)
-{
-    auto vertices = mesh.vertex.data;
-    auto indices = mesh.index.data;
-    uint32_t crossings = 0;
-
-    auto intersects = [&](const Point& p1, const Point& p2) {
-        if ((p1.y < p.y) == (p2.y < p.y)) return;
-        auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
-        if (intersectionX > p.x) ++crossings;
-    };
-
-    for (uint32_t i = 0; i < mesh.index.count; i += 3) {
-        auto i0 = indices[i];
-        auto i1 = indices[i + 1];
-        auto i2 = indices[i + 2];
-        auto p0 = Point{vertices[i0 * 2], vertices[i0 * 2 + 1]};
-        auto p1 = Point{vertices[i1 * 2], vertices[i1 * 2 + 1]};
-        auto p2 = Point{vertices[i2 * 2], vertices[i2 * 2 + 1]};
-        intersects(p0, p1);
-        intersects(p1, p2);
-        intersects(p2, p0);
-    }
-    return (crossings % 2) == 1;
-}
-
 bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Point& pt)
 {
     ARRAY_FOREACH(c, clips) {
@@ -75,10 +36,10 @@ bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Po
         const auto& geometry = clip->geometry;
         if (clip->valid.fill) {
             auto p = geometry.fillWorld ? pt : pt * geometry.itransform();
-            if (!geometry.fillBBox.inside(p) || !pointInMesh(p, geometry.fill)) return false;
+            if (!geometry.fillBBox.inside(p) || !gpuPointInEvenOddMesh(p, geometry.fill.vertex.data, geometry.fill.index.data, geometry.fill.index.count)) return false;
         } else if (clip->valid.stroke) {
             auto p = pt * geometry.itransform();
-            if (!geometry.strokeBBox.inside(p) || !pointInTris(p, geometry.stroke)) return false;
+            if (!geometry.strokeBBox.inside(p) || !gpuPointInAnyMesh(p, geometry.stroke.vertex.data, geometry.stroke.index.data, geometry.stroke.index.count)) return false;
         }
     }
     return true;
@@ -91,8 +52,7 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
     auto validStroke = shape->valid.stroke && !geometry.stroke.index.empty();
     if (!validFill && !validStroke) return false;
 
-    const Matrix* inverse = nullptr;
-    if ((!geometry.fillWorld && validFill) || validStroke) inverse = &geometry.itransform();
+    const auto& itransform = geometry.itransform();
     auto sizeX = region.sw();
     auto sizeY = region.sh();
 
@@ -102,12 +62,12 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
             Point pt{(float)x + region.min.x, (float)py + region.min.y};
             auto hit = false;
             if (validFill) {
-                auto p = geometry.fillWorld ? pt : pt * *inverse;
-                hit = geometry.fillBBox.inside(p) && pointInMesh(p, geometry.fill);
+                auto p = geometry.fillWorld ? pt : pt * itransform;
+                hit = geometry.fillBBox.inside(p) && gpuPointInEvenOddMesh(p, geometry.fill.vertex.data, geometry.fill.index.data, geometry.fill.index.count);
             }
             if (!hit && validStroke) {
-                auto p = pt * *inverse;
-                hit = geometry.strokeBBox.inside(p) && pointInTris(p, geometry.stroke);
+                auto p = pt * itransform;
+                hit = geometry.strokeBBox.inside(p) && gpuPointInAnyMesh(p, geometry.stroke.vertex.data, geometry.stroke.index.data, geometry.stroke.index.count);
             }
             if (hit && intersect(shape->clips, pt)) return true;
         }
@@ -128,17 +88,13 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
         triangle[i] = Point{mesh.vertex[idx], mesh.vertex[idx + 1]};
     }
 
-    auto contains = [&](const Point& p) {
-        return gpuPointInTriangle(p, triangle[0], triangle[1], triangle[2]) || gpuPointInTriangle(p, triangle[3], triangle[4], triangle[5]);
-    };
-
     auto sizeX = region.sw();
     auto sizeY = region.sh();
     for (int32_t y = 0; y < sizeY; y++) {
         auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
         for (int32_t x = 0; x < sizeX; x++) {
             Point pt{(float)x + region.min.x, (float)py + region.min.y};
-            if (contains(pt) && intersect(image->clips, pt)) return true;
+            if (gpuPointInQuad(pt, triangle) && intersect(image->clips, pt)) return true;
         }
     }
     return false;
