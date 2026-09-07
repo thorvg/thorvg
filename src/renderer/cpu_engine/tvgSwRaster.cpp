@@ -967,20 +967,30 @@ static bool _rasterScaledImage(SwSurface* surface, const SwImage& image, const M
             int32_t miny = 0, maxy = 0;
             SCALED_IMAGE_RANGE_Y(y)
             auto dst = surface->buf32 + y * surface->stride + bbox.min.x;
-            if (opacity == 255) {
-                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
-                    SCALED_IMAGE_RANGE_X
-                    auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                    if (image.alphaIgnored) *dst = src;
-                    else *dst = src + ALPHA_BLEND(*dst, IA(src));
+            if (image.alphaIgnored) {
+                if (opacity == 255) {
+                    for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                        SCALED_IMAGE_RANGE_X
+                        *dst = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
+                    }
+                } else {
+                    for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                        SCALED_IMAGE_RANGE_X
+                        auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
+                        *dst = INTERPOLATE(src, *dst, opacity);
+                    }
                 }
             } else {
-                for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
-                    SCALED_IMAGE_RANGE_X
-                    auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
-                    if (image.alphaIgnored) {
-                        *dst = INTERPOLATE(src, *dst, opacity);
-                    } else {
+                if (opacity == 255) {
+                    for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                        SCALED_IMAGE_RANGE_X
+                        auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
+                        *dst = src + ALPHA_BLEND(*dst, IA(src));
+                    }
+                } else {
+                    for (auto x = bbox.min.x; x < bbox.max.x; ++x, ++dst) {
+                        SCALED_IMAGE_RANGE_X
+                        auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
                         src = ALPHA_BLEND(src, opacity);
                         *dst = src + ALPHA_BLEND(*dst, IA(src));
                     }
