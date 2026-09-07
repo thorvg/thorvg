@@ -791,7 +791,6 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
 
     if (!rle) rw.rle = new SwRle;
     else rw.rle = rle;
-    rw.rle->spans.reserve(256);
 
     //Generate RLE
     constexpr auto BAND_SIZE = 40;
