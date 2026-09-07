@@ -837,7 +837,19 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
             }
 
         reduce_bands:
-            /* render pool overflow: we will reduce the render band by half */
+            /* render pool overflow: grow the cell pool first (bounded), then retry the same band.
+               Halving the band instead re-walks the whole outline once per band. */
+            if (cellPool->size < MAX_CELL_POOL_SIZE) {
+                auto newSize = std::min(cellPool->size * 2, uint32_t(MAX_CELL_POOL_SIZE));
+                if (auto newBuffer = tvg::realloc<SwCell>(cellPool->buffer, newSize)) {
+                    cellPool->size = newSize;
+                    cellPool->buffer = newBuffer;
+                    rw.buffer = cellPool->buffer;
+                    rw.bufferSize = cellPool->size;
+                    continue;
+                }
+            }
+            /* pool is at its cap: reduce the render band by half */
             auto bottom = band->min;
             auto top = band->max;
             auto middle = bottom + ((top - bottom) >> 1);
