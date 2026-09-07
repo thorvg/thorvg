@@ -75,14 +75,10 @@ bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Po
         const auto& geometry = clip->geometry;
         if (clip->valid.fill) {
             auto p = geometry.fillWorld ? pt : pt * geometry.itransform();
-            const auto& bbox = geometry.fillBBox;
-            if (p.x < bbox.min.x || p.x > bbox.max.x || p.y < bbox.min.y || p.y > bbox.max.y) return false;
-            if (!pointInMesh(p, geometry.fill)) return false;
+            if (!geometry.fillBBox.inside(p) || !pointInMesh(p, geometry.fill)) return false;
         } else if (clip->valid.stroke) {
             auto p = pt * geometry.itransform();
-            const auto& bbox = geometry.strokeBBox;
-            if (p.x < bbox.min.x || p.x > bbox.max.x || p.y < bbox.min.y || p.y > bbox.max.y) return false;
-            if (!pointInTris(p, geometry.stroke)) return false;
+            if (!geometry.strokeBBox.inside(p) || !pointInTris(p, geometry.stroke)) return false;
         }
     }
     return true;
@@ -105,16 +101,13 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
         for (int32_t x = 0; x < sizeX; x++) {
             Point pt{(float)x + region.min.x, (float)py + region.min.y};
             auto hit = false;
-
             if (validFill) {
                 auto p = geometry.fillWorld ? pt : pt * *inverse;
-                const auto& bbox = geometry.fillBBox;
-                hit = p.x >= bbox.min.x && p.x <= bbox.max.x && p.y >= bbox.min.y && p.y <= bbox.max.y && pointInMesh(p, geometry.fill);
+                hit = geometry.fillBBox.inside(p) && pointInMesh(p, geometry.fill);
             }
             if (!hit && validStroke) {
                 auto p = pt * *inverse;
-                const auto& bbox = geometry.strokeBBox;
-                hit = p.x >= bbox.min.x && p.x <= bbox.max.x && p.y >= bbox.min.y && p.y <= bbox.max.y && pointInTris(p, geometry.stroke);
+                hit = geometry.strokeBBox.inside(p) && pointInTris(p, geometry.stroke);
             }
             if (hit && intersect(shape->clips, pt)) return true;
         }
