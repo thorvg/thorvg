@@ -29,47 +29,12 @@
 
 struct WgIntersector
 {
-    // triangle list
-    bool pointInTris(const Point& p, const WgMeshData& mesh)
-    {
-        for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
-            auto p0 = mesh.vbuffer[mesh.ibuffer[i + 0]];
-            auto p1 = mesh.vbuffer[mesh.ibuffer[i + 1]];
-            auto p2 = mesh.vbuffer[mesh.ibuffer[i + 2]];
-            if (gpuPointInTriangle(p, p0, p1, p2)) return true;
-        }
-        return false;
-    }
-
-    // even-odd triangle list
-    bool pointInMesh(const Point& p, const WgMeshData& mesh)
-    {
-        auto vertices = mesh.vbuffer.data;
-        auto indices = mesh.ibuffer.data;
-        uint32_t crossings = 0;
-
-        auto intersects = [&](const Point& p1, const Point& p2) {
-            if ((p1.y < p.y) == (p2.y < p.y)) return;
-            auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
-            if (intersectionX > p.x) ++crossings;
-        };
-
-        for (uint32_t i = 0; i < mesh.ibuffer.count; i += 3) {
-            auto p0 = vertices[indices[i]];
-            auto p1 = vertices[indices[i + 1]];
-            auto p2 = vertices[indices[i + 2]];
-            intersects(p0, p1);
-            intersects(p1, p2);
-            intersects(p2, p0);
-        }
-        return (crossings % 2) == 1;
-    }
-
     bool intersect(const Array<WgRenderPaint*>& clips, const Point& pt)
     {
         ARRAY_FOREACH(c, clips) {
             auto clip = static_cast<const WgRenderShape*>(*c);
-            if (!clip->shape.bounds.inside(pt) || !pointInMesh(pt, clip->shape.mesh)) return false;
+            const auto& mesh = clip->shape.mesh;
+            if (!clip->shape.bounds.inside(pt) || !gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count)) return false;
         }
         return true;
     }
@@ -80,8 +45,8 @@ struct WgIntersector
         auto validStroke = shape->stroke.setting.valid && !shape->stroke.mesh.ibuffer.empty();
         if (!validFill && !validStroke) return false;
 
-        Matrix inverseModel;
-        if (validStroke && !inverse(&shape->transform, &inverseModel)) validStroke = false;
+        Matrix itransform;
+        if (validStroke && !inverse(&shape->transform, &itransform)) validStroke = false;
         auto sizeX = region.sw();
         auto sizeY = region.sh();
 
@@ -89,10 +54,12 @@ struct WgIntersector
             auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
             for (int32_t x = 0; x < sizeX; x++) {
                 Point pt{(float)x + region.min.x, (float)py + region.min.y};
-                auto hit = validFill ? shape->shape.bounds.inside(pt) && pointInMesh(pt, shape->shape.mesh) : false;
+                const auto& mesh = shape->shape.mesh;
+                auto hit = validFill ? shape->shape.bounds.inside(pt) && gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count) : false;
                 if (!hit && validStroke) {
-                    auto p = pt * inverseModel;
-                    hit = shape->stroke.bounds.inside(p) && pointInTris(p, shape->stroke.mesh);
+                    auto p = pt * itransform;
+                    const auto& mesh = shape->stroke.mesh;
+                    hit = shape->stroke.bounds.inside(p) && gpuPointInAnyMesh(p, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count);
                 }
                 if (hit && intersect(shape->clips, pt)) return true;
             }
@@ -110,17 +77,13 @@ struct WgIntersector
             triangle[i] = mesh.vbuffer[mesh.ibuffer[i]];
         }
 
-        auto contains = [&](const Point& p) {
-            return gpuPointInTriangle(p, triangle[0], triangle[1], triangle[2]) || gpuPointInTriangle(p, triangle[3], triangle[4], triangle[5]);
-        };
-
         auto sizeX = region.sw();
         auto sizeY = region.sh();
         for (int32_t y = 0; y < sizeY; y++) {
             auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
             for (int32_t x = 0; x < sizeX; x++) {
                 Point pt{(float)x + region.min.x, (float)py + region.min.y};
-                if (contains(pt) && intersect(image->clips, pt)) return true;
+                if (gpuPointInQuad(pt, triangle) && intersect(image->clips, pt)) return true;
             }
         }
         return false;

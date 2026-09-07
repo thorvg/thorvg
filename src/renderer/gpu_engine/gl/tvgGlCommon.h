@@ -166,8 +166,6 @@ struct GlImage : GlDrawable
 
 struct GlIntersector
 {
-    bool pointInTris(const Point& p, const GlGeometryBuffer& mesh);
-    bool pointInMesh(const Point& p, const GlGeometryBuffer& mesh);
     bool intersect(const tvg::Array<tvg::RenderData>& clips, const Point& pt);
     bool intersect(const GlShape* shape, const RenderRegion& region);
     bool intersect(const GlImage* image, const RenderRegion& region);
