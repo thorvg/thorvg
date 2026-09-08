@@ -21,19 +21,20 @@
  * SOFTWARE.
  */
 
+#include <cassert>
 #include <algorithm>
-#include <cmath>
 #include "tvgCommon.h"
+#include "tvgMath.h"
 #include "tvgWgTessellator.h"
-#include "tvgWgRenderData.h"
 #include "tvgWgTextureMgr.h"
 #include "tvgWgShaderTypes.h"
+#include "tvgWgRenderData.h"
 
 //***********************************************************************
-// WgImageData
+// WgGradientTexture
 //***********************************************************************
 
-void WgImageData::update(WgContext& context, const Fill* fill)
+void WgGradientTexture::update(WgContext& context, const Fill* fill)
 {
     // compute gradient data
     WgShaderTypeGradientData gradientData;
@@ -55,8 +56,7 @@ void WgImageData::update(WgContext& context, const Fill* fill)
     }
 };
 
-
-void WgImageData::release(WgContext& context)
+void WgGradientTexture::release(WgContext& context)
 {
     context.layouts.releaseBindGroup(bindGroup);
     context.releaseTextureView(textureView);
@@ -92,40 +92,35 @@ void WgRenderSettings::release(WgContext& context)
 };
 
 //***********************************************************************
-// WgRenderPaint
+// WgPaint
 //***********************************************************************
 
-void WgRenderPaint::release(WgContext& context)
-{
-    clips.clear();
-};
-
-void WgRenderPaint::update(const Array<RenderData>& clips)
+void WgPaint::update(const Array<RenderData>& clips)
 {
     this->clips.clear();
-    // RenderData == WgRenderPaint*, just copy it.
-    this->clips = *((Array<WgRenderPaint*>*)&clips);
+    // RenderData == WgPaint*, just copy it.
+    this->clips = *((Array<WgPaint*>*)&clips);
 }
 
 //***********************************************************************
-// WgRenderShape
+// WgShape
 //***********************************************************************
 
-void WgRenderShape::updateBBox(const BBox& bb)
+void WgShape::updateBBox(const BBox& bb)
 {
     bbox.min = tvg::min(bbox.min, bb.min);
     bbox.max = tvg::max(bbox.max, bb.max);
 }
 
-void WgRenderShape::updateVisibility(const RenderShape& rshape, uint8_t opacity)
+void WgShape::updateVisibility(const RenderShape& rshape, uint8_t opacity)
 {
     shape.setting.valid = rshape.fill || (rshape.color.a * opacity > 0);
     stroke.setting.valid = rshape.stroke && (rshape.stroke->fill || (rshape.stroke->color.a * opacity > 0));
 }
 
-void WgRenderShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix)
+void WgShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix)
 {
-    releaseMeshes();  //Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
+    reset();  // Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
 
     convex = false;
     strokeFirst = rshape.strokeFirst();
@@ -217,72 +212,37 @@ void WgRenderShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag fla
     meshBBox.bbox(bbox.min, bbox.max);
 }
 
-void WgRenderShape::releaseMeshes()
+void WgShape::reset()
 {
+    clips.clear();
     stroke.mesh.clear();
     stroke.bbox.clear();
-    stroke.bounds = {};
+    stroke.bounds.init();
     shape.mesh.clear();
     shape.bbox.clear();
-    shape.bounds = {};
+    shape.bounds.init();
     meshBBox.clear();
-    bbox.min = {FLT_MAX, FLT_MAX};
-    bbox.max = {0.0f, 0.0f};
-    aabb = {{0, 0}, {0, 0}};
-    clips.clear();
+    bbox.init();
+    aabb.init();
 }
 
-void WgRenderShape::release(WgContext& context)
+void WgShape::release(WgContext& context)
 {
-    releaseMeshes();
+    reset();
     stroke.setting.release(context);
     shape.setting.release(context);
-    WgRenderPaint::release(context);
 };
 
 //***********************************************************************
-// WgRenderShapePool
+// WgImage
 //***********************************************************************
 
-WgRenderShape* WgRenderShapePool::allocate(WgContext& context)
-{
-    WgRenderShape* rdata{};
-    if (mPool.count > 0) {
-        rdata = mPool.pick();
-    } else {
-        rdata = new WgRenderShape();
-        mList.push(rdata);
-    }
-    return rdata;
-}
-
-void WgRenderShapePool::free(WgContext& context, WgRenderShape* rdata)
-{
-    rdata->releaseMeshes();
-    rdata->clips.clear();
-    mPool.push(rdata);
-}
-
-void WgRenderShapePool::release(WgContext& context)
-{
-    ARRAY_FOREACH(p, mList) {
-        (*p)->release(context);
-        delete(*p);
-    }
-    mPool.clear();
-    mList.clear();
-}
-
-//***********************************************************************
-// WgRenderPicture
-//***********************************************************************
-
-void WgRenderPicture::update(const RenderSurface* surface, const Matrix& transform)
+void WgImage::update(const RenderSurface* surface, const Matrix& transform)
 {
     meshData.imageBox(surface->w, surface->h, transform);
 }
 
-void WgRenderPicture::setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
+void WgImage::setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
 {
     imageTexture = texture;
     imageBindGroup = bindGroup;
@@ -291,13 +251,13 @@ void WgRenderPicture::setImage(WGPUTexture texture, WGPUBindGroup bindGroup, con
     imageStamp = texture ? stamp : 0;
 }
 
-void WgRenderPicture::releaseTexture(WgTextureMgr& textures, WgContext& context)
+void WgImage::release(WgTextureMgr& textures, WgContext& context)
 {
     if (imageTexture && imageStamp == textures.stamp) textures.release(context, imageSource, imageFilter, imageTexture);
-    clearImage();
+    reset();
 }
 
-void WgRenderPicture::clearImage()
+void WgImage::reset()
 {
     imageTexture = nullptr;
     imageBindGroup = nullptr;
@@ -306,43 +266,11 @@ void WgRenderPicture::clearImage()
     imageStamp = 0;
 }
 
-void WgRenderPicture::release(WgContext& context)
+void WgImage::release(WgContext& context)
 {
+    clips.clear();
     renderSettings.release(context);
-    clearImage();
-    WgRenderPaint::release(context);
-}
-
-//***********************************************************************
-// WgRenderPicturePool
-//***********************************************************************
-
-WgRenderPicture* WgRenderPicturePool::allocate(WgContext& context)
-{
-    WgRenderPicture* rdata{};
-    if (mPool.count > 0) {
-        rdata = mPool.pick();
-    } else {
-        rdata = new WgRenderPicture();
-        mList.push(rdata);
-    }
-    return rdata;
-}
-
-void WgRenderPicturePool::free(WgContext& context, WgRenderPicture* rdata)
-{
-    rdata->clips.clear();
-    mPool.push(rdata);
-}
-
-void WgRenderPicturePool::release(WgContext& context)
-{
-    ARRAY_FOREACH(p, mList) {
-        (*p)->release(context);
-        delete(*p);
-    }
-    mPool.clear();
-    mList.clear();
+    reset();
 }
 
 //***********************************************************************
@@ -457,7 +385,7 @@ void WgStageBufferUniformBase::releaseBindGroups(WgContext& context)
     bbuffer.clear();
 }
 
-void WgStageBufferGeometry::append(WgMeshData* meshData)
+void WgStageBufferGeometry::append(WgMesh* meshData)
 {
     assert(meshData);
     uint32_t vsize = meshData->vbuffer.count * sizeof(meshData->vbuffer[0]);
@@ -489,7 +417,7 @@ void WgStageBufferGeometry::append(WgMeshData* meshData)
     }
 }
 
-void WgStageBufferGeometry::append(WgRenderShape* renderShape)
+void WgStageBufferGeometry::append(WgShape* renderShape)
 {
     append(&renderShape->shape.mesh);
     append(&renderShape->shape.bbox);
@@ -498,12 +426,12 @@ void WgStageBufferGeometry::append(WgRenderShape* renderShape)
     append(&renderShape->meshBBox);
 }
 
-void WgStageBufferGeometry::append(WgRenderPicture* renderPicture)
+void WgStageBufferGeometry::append(WgImage* renderPicture)
 {
     append(&renderPicture->meshData);
 }
 
-void WgStageBufferGeometry::appendSolidBatch(const Array<WgRenderShape*>& renderShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range)
+void WgStageBufferGeometry::appendSolidBatch(const Array<WgShape*>& renderShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range)
 {
     appendBatch(renderShapes, range, false);
     if (colors.vbuffer.reserved < colors.vbuffer.count + range.vertexCount)
@@ -516,7 +444,7 @@ void WgStageBufferGeometry::appendSolidBatch(const Array<WgRenderShape*>& render
     }
 }
 
-void WgStageBufferGeometry::appendBatch(const Array<WgRenderShape*>& renderShapes, WgGeometryRange& range, bool cover)
+void WgStageBufferGeometry::appendBatch(const Array<WgShape*>& renderShapes, WgGeometryRange& range, bool cover)
 {
     assert(renderShapes.count > 1);
 
@@ -562,7 +490,7 @@ void WgStageBufferGeometry::appendBatch(const Array<WgRenderShape*>& renderShape
     ibuffer.count += indexBytes;
 }
 
-void WgStageBufferGeometry::appendStencilBatch(const Array<WgRenderShape*>& renderShapes, WgStencilBatchRange& range)
+void WgStageBufferGeometry::appendStencilBatch(const Array<WgShape*>& renderShapes, WgStencilBatchRange& range)
 {
     appendBatch(renderShapes, range.stencil, false);
     appendBatch(renderShapes, range.cover, true);

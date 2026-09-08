@@ -20,9 +20,9 @@
  * SOFTWARE.
  */
 
+#include <cassert>
+#include <algorithm>
 #include "tvgWgCompositor.h"
-#include "tvgWgShaderTypes.h"
-#include <iostream>
 
 void WgCompositor::updateViewMat(WgContext& context, uint32_t width, uint32_t height)
 {
@@ -246,46 +246,48 @@ void WgCompositor::flush(WgContext& context)
     context.submit();
 }
 
-void WgCompositor::requestShape(WgRenderShape* rdata)
+void WgCompositor::requestShape(WgShape* shape)
 {
-    stageBufferGeometry.append(rdata);
+    stageBufferGeometry.append(shape);
 
-    auto& shapeSettings = rdata->shape.setting;
-    auto& shapeSolid = rdata->shape.solid;
+    auto& shapeSettings = shape->shape.setting;
+    auto& shapeSolid = shape->shape.solid;
     if (shapeSettings.fillType == WgRenderSettingsType::Solid) shapeSolid.colorIdx = stageBufferSolidColor.append(shapeSolid.packedColor());
     else shapeSettings.bindGroupIdx = stageBufferPaint.append(shapeSettings.settings);
 
-    if (!rdata->stroke.mesh.vbuffer.empty()) {
+    if (!shape->stroke.mesh.vbuffer.empty()) {
         Matrix viewMatrix{2.0f / width, 0.0f, -1.0f, 0.0f, -2.0f / height, 1.0f, 0.0f, 0.0f, 1.0f};
-        WgShaderTypeMat4x4fBlock strokeViewMat{{viewMatrix * rdata->transform}, {}};
-        rdata->strokeViewMatIdx = stageBufferViewMat.append(strokeViewMat);
+        WgShaderTypeMat4x4fBlock strokeViewMat{{viewMatrix * shape->transform}, {}};
+        shape->strokeViewMatIdx = stageBufferViewMat.append(strokeViewMat);
     }
 
-    if (rdata->stroke.setting.valid && !rdata->stroke.mesh.vbuffer.empty()) {
-        auto& strokeSettings = rdata->stroke.setting;
-        auto& strokeSolid = rdata->stroke.solid;
+    if (shape->stroke.setting.valid && !shape->stroke.mesh.vbuffer.empty()) {
+        auto& strokeSettings = shape->stroke.setting;
+        auto& strokeSolid = shape->stroke.solid;
         if (strokeSettings.fillType == WgRenderSettingsType::Solid) strokeSolid.colorIdx = stageBufferSolidColor.append(strokeSolid.packedColor());
         else strokeSettings.bindGroupIdx = stageBufferPaint.append(strokeSettings.settings);
     }
-    ARRAY_FOREACH(p, rdata->clips)
-        requestShape((WgRenderShape*)(*p));
+    ARRAY_FOREACH(p, shape->clips) {
+        requestShape((WgShape*)(*p));
+    }
 }
 
-void WgCompositor::requestImage(WgRenderPicture* rdata)
+void WgCompositor::requestImage(WgImage* image)
 {
-    stageBufferGeometry.append(rdata);
-    rdata->renderSettings.bindGroupIdx = stageBufferPaint.append(rdata->renderSettings.settings);
-    ARRAY_FOREACH(p, rdata->clips)
-        requestShape((WgRenderShape*)(*p));
+    stageBufferGeometry.append(image);
+    image->renderSettings.bindGroupIdx = stageBufferPaint.append(image->renderSettings.settings);
+    ARRAY_FOREACH(p, image->clips) {
+        requestShape((WgShape*)(*p));
+    }
 }
 
-void WgCompositor::requestSolidBatch(const Array<WgRenderShape*>& renderShapes, WgSolidBatchRange& range)
+void WgCompositor::requestSolidBatch(const Array<WgShape*>& renderShapes, WgSolidBatchRange& range)
 {
     stageBufferGeometry.appendSolidBatch(renderShapes, stageBufferSolidColor, range);
     range.viewport = renderShapes[0]->viewport;
 }
 
-void WgCompositor::requestStencilBatch(const Array<WgRenderShape*>& renderShapes, WgStencilBatchRange& range)
+void WgCompositor::requestStencilBatch(const Array<WgShape*>& renderShapes, WgStencilBatchRange& range)
 {
     stageBufferGeometry.appendStencilBatch(renderShapes, range);
     range.viewport = renderShapes[0]->viewport;
@@ -316,7 +318,7 @@ void WgCompositor::requestStencilBatch(const Array<WgRenderShape*>& renderShapes
     }
 }
 
-void WgCompositor::renderShape(WgContext& context, WgRenderShape* rdata, BlendMethod blendMethod)
+void WgCompositor::renderShape(WgContext& context, WgShape* rdata, BlendMethod blendMethod)
 {
     // apply clip path if necessary
     if (!rdata->clips.empty()) {
@@ -366,7 +368,7 @@ void WgCompositor::renderSolidBatch(const WgSolidBatchRange& range)
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, range.indexCount, 1, 0, 0, 0);
 }
 
-void WgCompositor::renderStencilBatch(const Array<WgRenderShape*>& renderShapes, const WgStencilBatchRange& range)
+void WgCompositor::renderStencilBatch(const Array<WgShape*>& renderShapes, const WgStencilBatchRange& range)
 {
     const uint64_t stencilVertexSize = static_cast<uint64_t>(range.stencil.vertexCount) * sizeof(Point);
     const uint64_t stencilIndexSize = static_cast<uint64_t>(range.stencil.indexCount) * sizeof(uint32_t);
@@ -427,7 +429,7 @@ void WgCompositor::renderStencilBatch(const Array<WgRenderShape*>& renderShapes,
     }
 }
 
-void WgCompositor::renderImage(WgContext& context, WgRenderPicture* rdata, BlendMethod blendMethod)
+void WgCompositor::renderImage(WgContext& context, WgImage* rdata, BlendMethod blendMethod)
 {
     // apply clip path if necessary
     if (rdata->clips.count != 0) {
@@ -489,7 +491,7 @@ void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRender
 }
 
 
-void WgCompositor::drawMesh(WgContext& context, WgMeshData* meshData)
+void WgCompositor::drawMesh(WgContext& context, WgMesh* meshData)
 {
     uint64_t icount = meshData->ibuffer.count;
     uint64_t vsize = meshData->vbuffer.count * sizeof(Point);
@@ -500,7 +502,7 @@ void WgCompositor::drawMesh(WgContext& context, WgMeshData* meshData)
 };
 
 
-void WgCompositor::drawMeshSolid(WgContext& context, WgMeshData* meshData, uint32_t solidColorInd)
+void WgCompositor::drawMeshSolid(WgContext& context, WgMesh* meshData, uint32_t solidColorInd)
 {
     const uint64_t icount = meshData->ibuffer.count;
     const uint64_t vsize = meshData->vbuffer.count * sizeof(Point);
@@ -514,7 +516,7 @@ void WgCompositor::drawMeshSolid(WgContext& context, WgMeshData* meshData, uint3
 }
 
 
-void WgCompositor::drawMeshImage(WgContext& context, WgMeshData* meshData)
+void WgCompositor::drawMeshImage(WgContext& context, WgMesh* meshData)
 {
     uint64_t icount = meshData->ibuffer.count;
     uint64_t vsize = meshData->vbuffer.count * sizeof(Point);
@@ -525,7 +527,7 @@ void WgCompositor::drawMeshImage(WgContext& context, WgMeshData* meshData)
     wgpuRenderPassEncoderDrawIndexed(renderPassEncoder, icount, 1, 0, 0, 0);
 };
 
-void WgCompositor::drawShape(WgContext& context, WgRenderShape* rdata)
+void WgCompositor::drawShape(WgContext& context, WgShape* rdata)
 {
     if (!rdata->shape.setting.valid || rdata->shape.mesh.vbuffer.empty() || rdata->viewport.invalid()) return;
     auto& settings = rdata->shape.setting;
@@ -564,7 +566,7 @@ void WgCompositor::drawShape(WgContext& context, WgRenderShape* rdata)
     }
 }
 
-void WgCompositor::blendShape(WgContext& context, WgRenderShape* rdata, BlendMethod blendMethod)
+void WgCompositor::blendShape(WgContext& context, WgShape* rdata, BlendMethod blendMethod)
 {
     if (!rdata->shape.setting.valid || rdata->shape.mesh.vbuffer.empty() || rdata->viewport.invalid()) return;
     WgRenderSettings& settings = rdata->shape.setting;
@@ -605,7 +607,7 @@ void WgCompositor::blendShape(WgContext& context, WgRenderShape* rdata, BlendMet
     }
 }
 
-void WgCompositor::clipShape(WgContext& context, WgRenderShape* rdata)
+void WgCompositor::clipShape(WgContext& context, WgShape* rdata)
 {
     if (!rdata->shape.setting.valid || rdata->shape.mesh.vbuffer.empty() || rdata->viewport.invalid()) return;
     WgRenderSettings& settings = rdata->shape.setting;
@@ -641,7 +643,7 @@ void WgCompositor::clipShape(WgContext& context, WgRenderShape* rdata)
     }
 }
 
-void WgCompositor::drawStrokes(WgContext& context, WgRenderShape* rdata)
+void WgCompositor::drawStrokes(WgContext& context, WgShape* rdata)
 {
     if (!rdata->stroke.setting.valid || rdata->stroke.mesh.vbuffer.empty() || rdata->viewport.invalid()) return;
     WgRenderSettings& settings = rdata->stroke.setting;
@@ -673,7 +675,7 @@ void WgCompositor::drawStrokes(WgContext& context, WgRenderShape* rdata)
     }
 }
 
-void WgCompositor::blendStrokes(WgContext& context, WgRenderShape* rdata, BlendMethod blendMethod)
+void WgCompositor::blendStrokes(WgContext& context, WgShape* rdata, BlendMethod blendMethod)
 {
     if (!rdata->stroke.setting.valid || rdata->stroke.mesh.vbuffer.empty() || rdata->viewport.invalid()) return;
     WgRenderSettings& settings = rdata->stroke.setting;
@@ -714,7 +716,7 @@ void WgCompositor::blendStrokes(WgContext& context, WgRenderShape* rdata, BlendM
     }
 };
 
-void WgCompositor::clipStrokes(WgContext& context, WgRenderShape* rdata)
+void WgCompositor::clipStrokes(WgContext& context, WgShape* rdata)
 {
     if (!rdata->stroke.setting.valid || rdata->stroke.mesh.vbuffer.empty() || rdata->viewport.invalid()) return;
     WgRenderSettings& settings = rdata->stroke.setting;
@@ -752,7 +754,7 @@ void WgCompositor::clipStrokes(WgContext& context, WgRenderShape* rdata)
     }
 }
 
-void WgCompositor::drawImage(WgContext& context, WgRenderPicture* rdata)
+void WgCompositor::drawImage(WgContext& context, WgImage* rdata)
 {
     if (rdata->viewport.invalid() || !rdata->imageBindGroup) return;
     WgRenderSettings& settings = rdata->renderSettings;
@@ -771,7 +773,7 @@ void WgCompositor::drawImage(WgContext& context, WgRenderPicture* rdata)
     drawMeshImage(context, &rdata->meshData);
 }
 
-void WgCompositor::blendImage(WgContext& context, WgRenderPicture* rdata, BlendMethod blendMethod)
+void WgCompositor::blendImage(WgContext& context, WgImage* rdata, BlendMethod blendMethod)
 {
     if (rdata->viewport.invalid() || !rdata->imageBindGroup) return;
     WgRenderSettings& settings = rdata->renderSettings;
@@ -797,7 +799,7 @@ void WgCompositor::blendImage(WgContext& context, WgRenderPicture* rdata, BlendM
     drawMeshImage(context, &rdata->meshData);
 };
 
-void WgCompositor::clipImage(WgContext& context, WgRenderPicture* rdata)
+void WgCompositor::clipImage(WgContext& context, WgImage* rdata)
 {
     if (rdata->viewport.invalid() || !rdata->imageBindGroup) return;
     WgRenderSettings& settings = rdata->renderSettings;
@@ -854,7 +856,7 @@ void WgCompositor::blendScene(WgContext& context, WgRenderTarget* scene, WgCompo
     drawMeshImage(context, &meshDataBlit);
 }
 
-void WgCompositor::markupClipPath(WgContext& context, WgRenderShape* rdata)
+void WgCompositor::markupClipPath(WgContext& context, WgShape* rdata)
 {
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rdata->viewport.x(), rdata->viewport.y(), rdata->viewport.w(), rdata->viewport.h());
     // markup stencil
@@ -872,11 +874,11 @@ void WgCompositor::markupClipPath(WgContext& context, WgRenderShape* rdata)
     }
 }
 
-void WgCompositor::renderClipPath(WgContext& context, WgRenderPaint* paint)
+void WgCompositor::renderClipPath(WgContext& context, WgPaint* paint)
 {
-    // reset scissor recr to full screen
+    // reset scissor rect to full screen
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, width, height);
-    auto rdata0 = (WgRenderShape*)paint->clips[0];
+    auto rdata0 = (WgShape*)paint->clips[0];
     // markup stencil
     markupClipPath(context, rdata0);
     // copy stencil to depth
@@ -887,7 +889,7 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderPaint* paint)
     drawMesh(context, &rdata0->meshBBox);
     // merge clip paths with AND logic
     for (auto p = paint->clips.begin() + 1; p < paint->clips.end(); ++p) {
-        auto rdata = (WgRenderShape*)(*p);
+        auto rdata = (WgShape*)(*p);
         // markup stencil
         markupClipPath(context, rdata);
         // copy stencil to depth (clear stencil)
@@ -919,13 +921,13 @@ void WgCompositor::renderClipPath(WgContext& context, WgRenderPaint* paint)
     }
 }
 
-void WgCompositor::clearClipPath(WgContext& context, WgRenderPaint* paint)
+void WgCompositor::clearClipPath(WgContext& context, WgPaint* paint)
 {
     // reset scissor recr to full screen
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, width, height);
     // get render data
     ARRAY_FOREACH(p, paint->clips) {
-        WgRenderShape* rdata = (WgRenderShape*)(*p);
+        WgShape* rdata = (WgShape*)(*p);
         // set transformations
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);

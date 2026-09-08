@@ -20,10 +20,11 @@
  * SOFTWARE.
  */
 
+#include <cassert>
 #include "tvgMath.h"
 #include "tvgWgStencilBatch.h"
 
-static bool eligible(const WgRenderShape* rdata, BlendMethod blendMethod, RenderRegion& bounds)
+static bool eligible(const WgShape* rdata, BlendMethod blendMethod, RenderRegion& bounds)
 {
     if (blendMethod != BlendMethod::Normal || !rdata->shape.setting.valid) return false;
 
@@ -74,14 +75,14 @@ static void addBounds(WgStencilBatch& batch, const RenderRegion& bounds)
     batch.bounds[p] = bounds;
 }
 
-static bool appendable(const WgStencilBatch& batch, WgSceneTask* sceneTask, WgRenderShape* rdata, const RenderRegion& bounds, const Array<WgRenderTask*>& renderTaskList)
+static bool appendable(const WgStencilBatch& batch, WgSceneTask* sceneTask, WgShape* rdata, const RenderRegion& bounds, const Array<WgRenderTask*>& renderTaskList)
 {
     if (batch.sceneTask != sceneTask || sceneTask->children.last() != batch.task || renderTaskList.last() != batch.task) return false;
     if (!(batch.viewport == rdata->viewport) || batch.fillRule != rdata->fillRule) return false;
     return !intersects(batch, bounds);
 }
 
-static void emitSingle(WgStencilBatch& batch, WgSceneTask* sceneTask, WgRenderShape* rdata, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
+static void emitSingle(WgStencilBatch& batch, WgSceneTask* sceneTask, WgShape* rdata, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
 {
     auto task = new WgPaintTask(rdata, BlendMethod::Normal);
     sceneTask->children.push(task);
@@ -98,7 +99,7 @@ static void emitSingle(WgStencilBatch& batch, WgSceneTask* sceneTask, WgRenderSh
     addBounds(batch, bounds);
 }
 
-static void promote(WgStencilBatch& batch, WgRenderShape* rdata, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
+static void promote(WgStencilBatch& batch, WgShape* rdata, const RenderRegion& bounds, Array<WgRenderTask*>& renderTaskList)
 {
     assert(batch.sceneTask && batch.first && batch.task);
     assert(batch.sceneTask->children.last() == batch.task && renderTaskList.last() == batch.task);
@@ -113,14 +114,14 @@ static void promote(WgStencilBatch& batch, WgRenderShape* rdata, const RenderReg
     addBounds(batch, bounds);
 }
 
-static void append(WgStencilBatch& batch, WgRenderShape* rdata, const RenderRegion& bounds)
+static void append(WgStencilBatch& batch, WgShape* rdata, const RenderRegion& bounds)
 {
     assert(batch.sceneTask && !batch.first && batch.task);
     static_cast<WgBatchTask*>(batch.task)->shapes.push(rdata);
     addBounds(batch, bounds);
 }
 
-bool WgStencilBatch::draw(WgSceneTask* sceneTask, WgRenderShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
+bool WgStencilBatch::draw(WgSceneTask* sceneTask, WgShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
 {
     RenderRegion bounds;
     if (!eligible(rdata, blendMethod, bounds)) return false;

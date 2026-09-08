@@ -25,7 +25,7 @@
 #include "tvgMath.h"
 
 
-WgStroker::WgStroker(WgMeshData* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit, float qualityScale)
+WgStroker::WgStroker(WgMesh* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit, float qualityScale)
     : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mQualityScale(qualityScale), mCap(cap), mJoin(join)
 {
 }
@@ -409,7 +409,7 @@ void WgStroker::round(const Point& p, const Point& outDir)
     round(c, b, p);
 }
 
-WgBWTessellator::WgBWTessellator(WgMeshData* buffer): mBuffer(buffer)
+WgBWTessellator::WgBWTessellator(WgMesh* buffer): mBuffer(buffer)
 {
 }
 
