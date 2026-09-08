@@ -21,7 +21,7 @@
  */
 
 #include <thorvg.h>
-#include <fstream>
+#include <cstdio>
 #include "config.h"
 #include "testFramework.h"
 
@@ -54,6 +54,7 @@ TEST_CASE("Save a lottie into gif", "[tvgSavers]") {
         REQUIRE(saver->background(bg) == Result::Success);
         REQUIRE(saver->save(animation, TEST_DIR"/test.gif") == Result::Success);
         REQUIRE(saver->sync() == Result::Success);
+        REQUIRE(remove(TEST_DIR"/test.gif") == 0);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
