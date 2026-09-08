@@ -28,11 +28,14 @@
 struct WgSolidBatch
 {
     bool draw(WgSceneTask* sceneTask, WgShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList);
+    bool draw(WgSceneTask* sceneTask, WgImage* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList);
 
     WgSceneTask* sceneTask{};
     WgRenderTask* task{};
-    WgShape* first{};
+    WgPaint* first{};
     RenderRegion viewport{};
+    Type type = Type::Undefined;
+    bool batched{};
 };
 
 #endif  // _TVG_WG_SOLID_BATCH_H_

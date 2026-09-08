@@ -358,8 +358,11 @@ bool WgRenderer::renderShape(RenderData data)
 
 bool WgRenderer::renderImage(RenderData data)
 {
-    WgPaintTask* paintTask = new WgPaintTask((WgPaint*)data, mBlendMethod);
+    auto rdata = (WgImage*)data;
     WgSceneTask* sceneTask = mSceneTaskStack.last();
+    if (mSolidBatch.draw(sceneTask, rdata, mBlendMethod, mRenderTaskList)) return true;
+
+    WgPaintTask* paintTask = new WgPaintTask(rdata, mBlendMethod);
     sceneTask->children.push(paintTask);
     mRenderTaskList.push(paintTask);
     return true;

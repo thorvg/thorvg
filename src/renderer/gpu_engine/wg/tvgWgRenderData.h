@@ -159,6 +159,12 @@ struct WgSolidBatchRange : WgGeometryRange
     RenderRegion viewport;
 };
 
+struct WgImageBatchRange : WgGeometryRange
+{
+    size_t texCoordOffset{};
+    RenderRegion viewport;
+};
+
 struct WgStencilBatchRange
 {
     WgGeometryRange stencil;
@@ -213,6 +219,7 @@ struct WgStageBufferGeometry
     void append(WgShape* renderShape);
     void append(WgImage* renderPicture);
     void appendSolidBatch(const Array<WgShape*>& renderShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range);
+    void appendImageBatch(const Array<WgImage*>& renderImages, WgImageBatchRange& range);
     void appendStencilBatch(const Array<WgShape*>& renderShapes, WgStencilBatchRange& range);
     void initialize(WgContext& context){};
     void release(WgContext& context);

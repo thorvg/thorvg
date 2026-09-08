@@ -427,6 +427,13 @@ void WgPipelines::initialize(WgContext& context)
         layout_image, vertexBufferLayoutsImage, 2,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
         depthStencilStateShape, multisampleState);
+    // render pipeline image (no stencil)
+    image_direct = createRenderPipeline(
+        context.device, "The render pipeline image direct",
+        shader_image, "vs_main", "fs_main",
+        layout_image, vertexBufferLayoutsImage, 2,
+        WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
+        depthStencilStateScene, multisampleState);
     // render pipeline scene
     scene = createRenderPipeline(
         context.device, "The render pipeline scene",
@@ -562,6 +569,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     // pipelines normal blend
     releaseRenderPipeline(scene);
     releaseRenderPipeline(image);
+    releaseRenderPipeline(image_direct);
     releaseRenderPipeline(linear_conv);
     releaseRenderPipeline(radial_conv);
     releaseRenderPipeline(solid_stencil_batch);
