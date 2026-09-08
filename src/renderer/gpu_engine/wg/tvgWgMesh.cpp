@@ -20,13 +20,14 @@
  * SOFTWARE.
  */
 
-#include "tvgWgGeometry.h"
+#include "tvgMath.h"
+#include "tvgWgMesh.h"
 
 //***********************************************************************
-// WgMeshData
+// WgMesh
 //***********************************************************************
 
-void WgMeshData::bbox(const Point pmin, const Point pmax)
+void WgMesh::bbox(const Point pmin, const Point pmax)
 {
     const float vdata[] = {pmin.x, pmin.y, pmax.x, pmin.y, pmax.x, pmax.y, pmin.x, pmax.y};
     const uint32_t idata[] = {0, 1, 2, 0, 2, 3};
@@ -43,7 +44,7 @@ void WgMeshData::bbox(const Point pmin, const Point pmax)
 }
 
 
-void WgMeshData::imageBox(float w, float h, const Matrix& transform)
+void WgMesh::imageBox(float w, float h, const Matrix& transform)
 {
     const Point p0 = Point{0.0f, 0.0f} * transform;
     const Point p1 = Point{w,    0.0f} * transform;
@@ -67,7 +68,7 @@ void WgMeshData::imageBox(float w, float h, const Matrix& transform)
 }
 
 
-void WgMeshData::blitBox()
+void WgMesh::blitBox()
 {
     const float vdata[] = {-1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, -1.0f};
     const float tdata[] = {+0.0f, +0.0f, +1.0f, +0.0f, +1.0f, +1.0f, +0.0f, +1.0f};
@@ -87,7 +88,7 @@ void WgMeshData::blitBox()
 }
 
 
-void WgMeshData::clear()
+void WgMesh::clear()
 {
     vbuffer.clear();
     tbuffer.clear();

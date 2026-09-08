@@ -20,14 +20,13 @@
  * SOFTWARE.
  */
 
-#ifndef _TVG_WG_GEOMETRY_H_
-#define _TVG_WG_GEOMETRY_H_
+#ifndef _TVG_WG_MESH_H_
+#define _TVG_WG_MESH_H_
 
-#include <cassert>
-#include "tvgMath.h"
 #include "tvgArray.h"
 
-struct WgMeshData {
+struct WgMesh
+{
     Array<Point> vbuffer;
     Array<Point> tbuffer;
     Array<uint32_t> ibuffer;
@@ -43,4 +42,4 @@ struct WgMeshData {
     bool invalid() { return vbuffer.empty(); }
 };
 
-#endif // _TVG_WG_GEOMETRY_H_
+#endif // _TVG_WG_MESH_H_

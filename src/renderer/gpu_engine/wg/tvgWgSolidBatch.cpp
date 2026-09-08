@@ -22,7 +22,7 @@
 
 #include "tvgWgSolidBatch.h"
 
-static inline bool eligible(const WgRenderShape* rdata, BlendMethod blendMethod)
+static inline bool eligible(const WgShape* rdata, BlendMethod blendMethod)
 {
     if (blendMethod != BlendMethod::Normal) return false;
     if (!rdata->shape.setting.valid || rdata->shape.setting.fillType != WgRenderSettingsType::Solid) return false;
@@ -32,7 +32,7 @@ static inline bool eligible(const WgRenderShape* rdata, BlendMethod blendMethod)
     return true;
 }
 
-static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTask, const RenderRegion& batchViewport, WgSceneTask* sceneTask, const WgRenderShape* rdata, const Array<WgRenderTask*>& renderTaskList)
+static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTask, const RenderRegion& batchViewport, WgSceneTask* sceneTask, const WgShape* rdata, const Array<WgRenderTask*>& renderTaskList)
 {
     // Any task submitted after the candidate is an implicit batch boundary.
     if (batchSceneTask != sceneTask) return false;
@@ -42,7 +42,7 @@ static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTa
     return true;
 }
 
-static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgRenderShape* rdata, Array<WgRenderTask*>& renderTaskList)
+static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgShape* rdata, Array<WgRenderTask*>& renderTaskList)
 {
     auto task = new WgPaintTask(rdata, BlendMethod::Normal);
     sceneTask->children.push(task);
@@ -50,7 +50,7 @@ static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgRenderShape* rd
     return task;
 }
 
-static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, WgRenderShape* first, WgRenderShape* rdata, Array<WgRenderTask*>& renderTaskList)
+static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, WgShape* first, WgShape* rdata, Array<WgRenderTask*>& renderTaskList)
 {
     // Tasks are staged only after the tree is complete, so replacing its tail is safe.
     auto batchTask = new WgBatchTask(first, rdata, false);
@@ -61,12 +61,12 @@ static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, 
     return batchTask;
 }
 
-static inline void append(WgRenderTask* task, WgRenderShape* rdata)
+static inline void append(WgRenderTask* task, WgShape* rdata)
 {
     static_cast<WgBatchTask*>(task)->shapes.push(rdata);
 }
 
-bool WgSolidBatch::draw(WgSceneTask* sceneTask, WgRenderShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
+bool WgSolidBatch::draw(WgSceneTask* sceneTask, WgShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
 {
     if (!eligible(rdata, blendMethod)) return false;
 
