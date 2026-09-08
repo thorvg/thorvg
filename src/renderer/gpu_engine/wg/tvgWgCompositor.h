@@ -125,11 +125,13 @@ public:
     void requestShape(WgShape* shape);
     void requestImage(WgImage* image);
     void requestSolidBatch(const Array<WgShape*>& renderShapes, WgSolidBatchRange& range);
+    void requestImageBatch(const Array<WgImage*>& renderImages, WgImageBatchRange& range);
     void requestStencilBatch(const Array<WgShape*>& renderShapes, WgStencilBatchRange& range);
 
     // render shapes, images and scenes
     void renderShape(WgContext& context, WgShape* rdata, BlendMethod blendMethod);
     void renderSolidBatch(const WgSolidBatchRange& range);
+    void renderImageBatch(WgImage* image, const WgImageBatchRange& range);
     void renderStencilBatch(const Array<WgShape*>& renderShapes, const WgStencilBatchRange& range);
     void renderImage(WgContext& context, WgImage* rdata, BlendMethod blendMethod);
     void renderScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose);

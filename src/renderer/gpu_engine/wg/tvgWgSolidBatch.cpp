@@ -32,7 +32,15 @@ static inline bool eligible(const WgShape* rdata, BlendMethod blendMethod)
     return true;
 }
 
-static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTask, const RenderRegion& batchViewport, WgSceneTask* sceneTask, const WgShape* rdata, const Array<WgRenderTask*>& renderTaskList)
+static inline bool eligible(const WgImage* rdata, BlendMethod blendMethod)
+{
+    if (blendMethod != BlendMethod::Normal) return false;
+    if (rdata->viewport.invalid() || !rdata->clips.empty() || !rdata->bindGroup) return false;
+    if (rdata->mesh.vbuffer.empty() || rdata->mesh.ibuffer.empty()) return false;
+    return true;
+}
+
+static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTask, const RenderRegion& batchViewport, WgSceneTask* sceneTask, const WgPaint* rdata, const Array<WgRenderTask*>& renderTaskList)
 {
     // Any task submitted after the candidate is an implicit batch boundary.
     if (batchSceneTask != sceneTask) return false;
@@ -42,7 +50,7 @@ static inline bool appendable(WgSceneTask* batchSceneTask, WgRenderTask* batchTa
     return true;
 }
 
-static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgShape* rdata, Array<WgRenderTask*>& renderTaskList)
+static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgPaint* rdata, Array<WgRenderTask*>& renderTaskList)
 {
     auto task = new WgPaintTask(rdata, BlendMethod::Normal);
     sceneTask->children.push(task);
@@ -50,10 +58,9 @@ static inline WgRenderTask* emitSingle(WgSceneTask* sceneTask, WgShape* rdata, A
     return task;
 }
 
-static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, WgShape* first, WgShape* rdata, Array<WgRenderTask*>& renderTaskList)
+static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, WgRenderTask* batchTask, Array<WgRenderTask*>& renderTaskList)
 {
     // Tasks are staged only after the tree is complete, so replacing its tail is safe.
-    auto batchTask = new WgBatchTask(first, rdata, false);
     sceneTask->children.last() = batchTask;
     renderTaskList.last() = batchTask;
     delete task;
@@ -61,26 +68,46 @@ static inline WgRenderTask* promote(WgSceneTask* sceneTask, WgRenderTask* task, 
     return batchTask;
 }
 
-static inline void append(WgRenderTask* task, WgShape* rdata)
-{
-    static_cast<WgBatchTask*>(task)->shapes.push(rdata);
-}
-
 bool WgSolidBatch::draw(WgSceneTask* sceneTask, WgShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
 {
     if (!eligible(rdata, blendMethod)) return false;
 
-    if (!appendable(this->sceneTask, task, viewport, sceneTask, rdata, renderTaskList)) {
+    if (type != Type::Shape || !appendable(this->sceneTask, task, viewport, sceneTask, rdata, renderTaskList)) {
         task = emitSingle(sceneTask, rdata, renderTaskList);
         this->sceneTask = sceneTask;
         first = rdata;
         viewport = rdata->viewport;
+        type = Type::Shape;
+        batched = false;
         return true;
     }
 
-    if (first) {
-        task = promote(this->sceneTask, task, first, rdata, renderTaskList);
-        first = nullptr;
-    } else append(task, rdata);
+    if (!batched) {
+        task = promote(sceneTask, task, new WgBatchTask(static_cast<WgShape*>(first), rdata, false), renderTaskList);
+        batched = true;
+    } else static_cast<WgBatchTask*>(task)->shapes.push(rdata);
+    return true;
+}
+
+bool WgSolidBatch::draw(WgSceneTask* sceneTask, WgImage* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList)
+{
+    if (!eligible(rdata, blendMethod)) return false;
+
+    if (type != Type::Picture || !appendable(this->sceneTask, task, viewport, sceneTask, rdata, renderTaskList) ||
+        static_cast<WgImage*>(first)->bindGroup != rdata->bindGroup ||
+        static_cast<WgImage*>(first)->setting.settings.options.vec[3] != rdata->setting.settings.options.vec[3]) {
+        task = emitSingle(sceneTask, rdata, renderTaskList);
+        this->sceneTask = sceneTask;
+        first = rdata;
+        viewport = rdata->viewport;
+        type = Type::Picture;
+        batched = false;
+        return true;
+    }
+
+    if (!batched) {
+        task = promote(sceneTask, task, new WgImageBatchTask(static_cast<WgImage*>(first), rdata), renderTaskList);
+        batched = true;
+    } else static_cast<WgImageBatchTask*>(task)->images.push(rdata);
     return true;
 }

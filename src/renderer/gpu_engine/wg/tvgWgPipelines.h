@@ -91,6 +91,7 @@ public:
     WGPURenderPipeline radial_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline linear_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline image{};
+    WGPURenderPipeline image_direct{}; // image geometry (no stencil)
     WGPURenderPipeline scene{};
     // pipelines custom blend
     WGPURenderPipeline solid_blend[18]{};

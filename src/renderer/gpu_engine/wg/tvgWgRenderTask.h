@@ -60,6 +60,16 @@ struct WgBatchTask : WgRenderTask
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
 };
 
+struct WgImageBatchTask : WgRenderTask
+{
+    Array<WgImage*> images;
+    WgImageBatchRange range;
+
+    WgImageBatchTask(WgImage* first, WgImage* second);
+    void stage(WgCompositor& compositor) override;
+    void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
+};
+
 // task for scene rendering with blending, composition and effect
 struct WgSceneTask : WgRenderTask
 {
