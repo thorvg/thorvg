@@ -24,17 +24,17 @@
 #define _TVG_GL_SOLID_BATCH_H_
 
 #include "tvgGlCommon.h"
-#include "tvgGlRenderPass.h"
-#include "tvgGlRenderTask.h"
 
-struct GlRenderer;
+struct GlProgram;
+struct GlRenderPass;
 
 struct GlSolidBatch
 {
-    void clear() { *this = {}; }
-    void draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
-    void draw(GlRenderer& renderer, GlImage& image, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
+    void clear() { task = nullptr; }
+    void draw(GlRenderPass& pass, GlStageBuffer& gpuBuffer, GlProgram* program, GlShape& shape, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
+    void draw(GlRenderPass& pass, GlStageBuffer& gpuBuffer, GlProgram* program, GlImage& image, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
 
+private:
     struct DrawData
     {
         const GlGeometry* geometry;
@@ -46,12 +46,10 @@ struct GlSolidBatch
         uint32_t vertexSize;
     };
 
-    void draw(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
-    bool appendable(const GlRenderPass* pass, const DrawData& data, const RenderRegion& viewBounds) const;
-    void emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount, uint32_t indexCount);
-    void promote(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
-    void append(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
-    void appendGeometry(GlRenderer& renderer, const DrawData& data);
+    void draw(GlRenderPass& pass, GlStageBuffer& gpuBuffer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
+    bool appendable(const GlRenderPass& pass, const DrawData& data, const RenderRegion& viewBounds) const;
+    void emit(GlRenderPass& pass, GlStageBuffer& gpuBuffer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount);
+    void appendGeometry(GlStageBuffer& gpuBuffer, const DrawData& data);
     void commit(int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
     static void buildColors(tvg::RGBA* out, uint32_t count, const RenderColor& color);
     static void buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint32_t baseVertex);

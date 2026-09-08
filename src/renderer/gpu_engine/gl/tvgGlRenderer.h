@@ -193,7 +193,6 @@ struct GlRenderer : RenderMethod
 
 private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient };
-    friend struct GlSolidBatch;
 
     GlRenderer(); 
     ~GlRenderer();

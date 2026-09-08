@@ -21,6 +21,8 @@
  */
 
 #include "tvgGlStencilCoverBatch.h"
+#include "tvgGlGpuBuffer.h"
+#include "tvgGlRenderPass.h"
 
 // WebGL uses smaller batch caps to limit wasm memory. Native GL keeps larger caps
 // for fewer render tasks. BATCH_REGION_RESET_THRESHOLD only releases cached bounds.
@@ -77,7 +79,7 @@ static uint32_t* drawStencilGeometry(GlRenderTask* task, GlStageBuffer* gpuBuffe
 
     uint32_t* indices = nullptr;
     auto indexOffset = gpuBuffer->reserveIndex(buffer->index.count * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
-    if (buffer->index.count > 0) memcpy(indices, buffer->index.data, buffer->index.count * sizeof(uint32_t));
+    memcpy(indices, buffer->index.data, buffer->index.count * sizeof(uint32_t));
 
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
     task->setDrawRange(indexOffset, buffer->index.count);
@@ -89,77 +91,55 @@ static void buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint32_t ba
     for (uint32_t i = 0; i < src->index.count; ++i) out[i] = src->index[i] + baseVertex;
 }
 
-static bool solidCoverLayout(const Array<GlVertexLayout>& layouts)
-{
-    if (layouts.count != 2) return false;
-
-    const auto& position = layouts[0];
-    const auto& color = layouts[1];
-    if (position.index != 0 || position.size != 2 || position.type != GL_FLOAT || position.normalized != GL_FALSE) return false;
-    if (color.index != 1 || color.size != 4 || color.type != GL_UNSIGNED_BYTE || color.normalized != GL_TRUE) return false;
-    if (position.stride != color.stride) return false;
-    if (position.arrayBufferId == 0 || position.arrayBufferId != color.arrayBufferId) return false;
-    if (color.offset != position.offset + 2 * sizeof(float)) return false;
-
-    return true;
-}
-
 void GlStencilCoverBatch::clear()
 {
-    pass = nullptr;
     task = nullptr;
-    stencilTask = nullptr;
-    mode = GlStencilMode::None;
     if (bounds.reserved > BATCH_REGION_RESET_THRESHOLD) bounds.reset();
     else bounds.clear();
-    stencilViewBounds = {};
-    coverViewBounds = {};
-    vertexCount = 0;
-    indexOffset = 0;
-    indexCount = 0;
-    clipped = false;
-    ySorted = false;
-    open = false;
 }
 
-GlRenderTask* GlStencilCoverBatch::prepare(GlProgram* stencilProgram, GlRenderPass* pass, GlRenderTask* coverTask,
-                                           const GlGeometry& geometry, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag,
-                                           GlStencilMode stencilMode, bool clipped, int32_t depth, const Matrix& viewMatrix,
-                                           const RenderRegion& passViewport, const RenderColor* color,
-                                           const RenderRegion& viewBounds, RenderRegion& geometryBounds,
-                                           const GlGeometryBuffer*& stencilBuffer, uint32_t*& stencilIndices,
-                                           bool& merge)
+void GlStencilCoverBatch::draw(GlRenderPass& pass, GlStageBuffer& gpuBuffer, GlProgram* program, GlRenderTask* cover,
+                              const GlShape& shape, RenderUpdateFlag flag, GlStencilMode mode,
+                              const RenderRegion& viewBounds, const RenderColor* color)
 {
+    const auto& geometry = shape.geometry;
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
     auto bbox = stroke ? geometry.strokeBBox : geometry.fillBBox;
-    geometryBounds = stroke ? gpuTransformBounds(bbox, geometry.matrix) : bbox;
+    auto geometryBounds = stroke ? gpuTransformBounds(bbox, geometry.matrix) : bbox;
     geometryBounds.intersect(viewBounds);
+    const auto& buffer = stroke ? geometry.stroke : geometry.fill;
+    auto clipped = !shape.clips.empty();
+    auto append = appendable(pass, mode, clipped, geometryBounds, buffer);
 
-    auto x = geometryBounds.sx() - passViewport.sx();
-    auto y = geometryBounds.sy() - passViewport.sy();
-    auto w = geometryBounds.sw();
-    auto h = geometryBounds.sh();
-    auto yGl = passViewport.sh() - y - h;
-    auto stencilViewport = RenderRegion{{x, yGl}, {x + w, yGl + h}};
-    coverTask->setViewport(stencilViewport);
+    if (color) addStencilCoverSolidLayout(cover, &gpuBuffer, bbox, *color);
+    else addStencilCoverPositionLayout(cover, &gpuBuffer, bbox);
+    cover->useDrawArrays = true;
+    cover->indexCnt = COVER_VERTEX_COUNT;
 
-    if (color) addStencilCoverSolidLayout(coverTask, gpuBuffer, bbox, *color);
-    else addStencilCoverPositionLayout(coverTask, gpuBuffer, bbox);
-    coverTask->useDrawArrays = true;
-    coverTask->arrayMode = GL_TRIANGLES;
-    coverTask->arrayOffset = 0;
-    coverTask->indexCnt = COVER_VERTEX_COUNT;
-    stencilBuffer = stroke ? &geometry.stroke : &geometry.fill;
-    // Cache this before writing stencil indices; the batch needs the
-    // pre-mutation answer to keep the index stream mergeable.
-    merge = mergeable(pass, stencilMode, clipped, geometryBounds, stencilBuffer);
+    auto stencil = new GlRenderTask(program);
+    stencil->setViewMatrix(cover->viewMatrix);
+    stencil->drawDepth = cover->drawDepth;
+    auto indices = drawStencilGeometry(stencil, &gpuBuffer, &buffer);
+    stencil->setViewport(cover->viewport);
 
-    auto stencilTask = new GlRenderTask(stencilProgram);
-    stencilTask->setViewMatrix(viewMatrix);
-    stencilTask->setDrawDepth(depth);
-    stencilIndices = drawStencilGeometry(stencilTask, gpuBuffer, stencilBuffer);
-    stencilTask->setViewport(stencilViewport);
-    return stencilTask;
+    if (append) {
+        if (!mergeCover(cover, viewBounds)) task->coverTasks.push(cover);
+        if (!merge(stencil, viewBounds, buffer, indices)) {
+            task->stencilTasks.push(stencil);
+            setStencilMergeTarget(stencil, buffer);
+        }
+    } else {
+        clear();
+        task = new GlStencilCoverTask(stencil, cover, mode);
+        pass.addRenderTask(task);
+        this->pass = &pass;
+        this->clipped = clipped;
+        const auto& viewport = pass.getViewport();
+        ySorted = viewport.sh() > viewport.sw();
+        setStencilMergeTarget(stencil, buffer);
+    }
+    this->viewBounds = viewBounds;
+    addBounds(geometryBounds);
 }
 
 bool GlStencilCoverBatch::intersects(const RenderRegion& bounds) const
@@ -189,106 +169,39 @@ void GlStencilCoverBatch::addBounds(const RenderRegion& bounds)
     ++this->bounds.count;
 }
 
-bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const
+bool GlStencilCoverBatch::appendable(const GlRenderPass& pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer& buffer) const
 {
-    if (!open) return false;
-    // A new current pass is a hard batch boundary; fail before touching the old pass/task pair.
-    if (this->pass != pass) return false;
-    if (pass->lastTask() != task) return false;
-    if (this->mode != mode) return false;
-    // drawClip() clears the batch for every clipped paint, so different clip
-    // chains cannot continue the same batch. Only clipped vs unclipped needs
-    // an extra merge guard here.
-    if (this->clipped != clipped) return false;
-    if (bounds.invalid()) return false;
+    if (!task || this->pass != &pass || pass.lastTask() != task) return false;
+    if (task->stencilMode != mode || this->clipped != clipped) return false;
     if (this->bounds.count >= BATCH_REGION_MAX_COUNT) return false;
-    auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
-    auto incomingIndexCount = stencilBuffer ? stencilBuffer->index.count : 0;
+    auto incomingVertexCount = buffer.vertex.count / 2;
+    auto incomingIndexCount = buffer.index.count;
     if (incomingVertexCount > BATCH_VERTEX_MAX_COUNT || vertexCount > BATCH_VERTEX_MAX_COUNT - incomingVertexCount) return false;
-    if (incomingIndexCount > BATCH_INDEX_MAX_COUNT || indexCount > BATCH_INDEX_MAX_COUNT - incomingIndexCount) return false;
+    if (incomingIndexCount > BATCH_INDEX_MAX_COUNT || stencilTask->indexCnt > BATCH_INDEX_MAX_COUNT - incomingIndexCount) return false;
     return !intersects(bounds);
 }
 
-void GlStencilCoverBatch::draw(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, bool merge, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices)
-{
-    if (!stencil || !cover) {
-        delete stencil;
-        delete cover;
-        return;
-    }
-
-    if (merge) this->append(stencil, cover, bounds, viewBounds, stencilBuffer, stencilIndices);
-    else emitSingle(pass, stencil, cover, mode, clipped, bounds, viewBounds, stencilBuffer);
-}
-
-void GlStencilCoverBatch::emitSingle(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer)
-{
-    auto task = new GlStencilCoverTask(stencil, cover, mode);
-    pass->addRenderTask(task);
-
-    this->pass = pass;
-    this->task = task;
-    this->mode = mode;
-    this->clipped = clipped;
-    ySorted = pass->getViewport().sh() > pass->getViewport().sw();
-    coverViewBounds = viewBounds;
-    if (this->bounds.reserved > BATCH_REGION_RESET_THRESHOLD) this->bounds.reset();
-    else this->bounds.clear();
-    setStencilMergeTarget(stencil, viewBounds, stencilBuffer);
-    open = bounds.valid();
-    if (open) addBounds(bounds);
-}
-
-void GlStencilCoverBatch::append(GlRenderTask* stencil, GlRenderTask* cover, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices)
-{
-    if (!mergeCover(cover, viewBounds)) {
-        task->coverTasks.push(cover);
-        coverViewBounds = viewBounds;
-    }
-    if (!merge(stencil, viewBounds, stencilBuffer, stencilIndices)) {
-        task->stencilTasks.push(stencil);
-        setStencilMergeTarget(stencil, viewBounds, stencilBuffer);
-    }
-    addBounds(bounds);
-}
-
-void GlStencilCoverBatch::setStencilMergeTarget(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer)
+void GlStencilCoverBatch::setStencilMergeTarget(GlRenderTask* stencil, const GlGeometryBuffer& buffer)
 {
     stencilTask = stencil;
-    stencilViewBounds = viewBounds;
-    vertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
-    indexOffset = stencil->indexOffset;
-    indexCount = stencil->indexCnt;
+    vertexCount = buffer.vertex.count / 2;
 }
 
-bool GlStencilCoverBatch::merge(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices)
+bool GlStencilCoverBatch::merge(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer& buffer, uint32_t* indices)
 {
-    auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
-    if (!stencilTask || vertexCount == 0 || incomingVertexCount == 0) return false;
-    if (!(stencilViewBounds == viewBounds)) return false;
-    if (!stencilIndices) return false;
+    if (!(this->viewBounds == viewBounds)) return false;
     if (stencilTask->program != stencil->program) return false;
-    if (stencilTask->useViewMatrix != stencil->useViewMatrix) return false;
-    if (stencilTask->useViewMatrix && !(stencilTask->viewMatrix == stencil->viewMatrix)) return false;
+    if (!(stencilTask->viewMatrix == stencil->viewMatrix)) return false;
 
-    const auto& layouts = stencilTask->vertexLayout;
-    const auto& appendLayouts = stencil->vertexLayout;
-    if (layouts.count != 1 || appendLayouts.count != 1) return false;
-
-    const auto& layout = layouts[0];
-    const auto& appendLayout = appendLayouts[0];
-    if (layout.index != appendLayout.index || layout.size != appendLayout.size || layout.stride != appendLayout.stride) return false;
-    if (layout.offset + vertexCount * layout.stride != appendLayout.offset || layout.type != appendLayout.type || layout.normalized != appendLayout.normalized) return false;
-    if (layout.arrayBufferId != appendLayout.arrayBufferId) return false;
-
-    auto expectedIndexOffset = indexOffset + indexCount * sizeof(uint32_t);
+    const auto& layout = stencilTask->vertexLayout[0];
+    const auto& appendLayout = stencil->vertexLayout[0];
+    if (layout.offset + vertexCount * layout.stride != appendLayout.offset) return false;
+    auto expectedIndexOffset = stencilTask->indexOffset + stencilTask->indexCnt * sizeof(uint32_t);
     if (stencil->indexOffset != expectedIndexOffset) return false;
 
-    buildIndices(stencilIndices, stencilBuffer, vertexCount);
-    indexCount += stencil->indexCnt;
-    vertexCount += incomingVertexCount;
-    stencilTask->indexOffset = indexOffset;
-    stencilTask->indexCnt = indexCount;
+    buildIndices(indices, &buffer, vertexCount);
+    vertexCount += buffer.vertex.count / 2;
+    stencilTask->indexCnt += stencil->indexCnt;
     stencilTask->drawDepth = stencil->drawDepth;
     stencilTask->viewport.add(stencil->viewport);
 
@@ -298,35 +211,14 @@ bool GlStencilCoverBatch::merge(GlRenderTask* stencil, const RenderRegion& viewB
 
 bool GlStencilCoverBatch::mergeCover(GlRenderTask* cover, const RenderRegion& viewBounds)
 {
-    if (task->coverTasks.empty()) return false;
-    if (!(coverViewBounds == viewBounds)) return false;
+    if (!(this->viewBounds == viewBounds)) return false;
 
     auto dst = task->coverTasks.last();
     if (dst->program != cover->program) return false;
     if (!dst->bindResources.empty() || !cover->bindResources.empty()) return false;
-    if (!dst->useDrawArrays || !cover->useDrawArrays) return false;
-    if (dst->arrayMode != GL_TRIANGLES || cover->arrayMode != GL_TRIANGLES) return false;
-    if (dst->useVertexColor || cover->useVertexColor) return false;
-    if (dst->useViewMatrix != cover->useViewMatrix) return false;
-    if (dst->useViewMatrix && !(dst->viewMatrix == cover->viewMatrix)) return false;
-
-    const auto& layouts = dst->vertexLayout;
-    const auto& coverLayouts = cover->vertexLayout;
-    if (!solidCoverLayout(layouts) || !solidCoverLayout(coverLayouts)) return false;
-
-    const auto& position = layouts[0];
-    const auto& coverPosition = coverLayouts[0];
-    const auto& color = layouts[1];
-    const auto& coverColor = coverLayouts[1];
-    if (position.stride != coverPosition.stride || position.arrayBufferId != coverPosition.arrayBufferId) return false;
-    if (color.stride != coverColor.stride || color.arrayBufferId != coverColor.arrayBufferId) return false;
-
-    auto dstEnd = position.offset + (static_cast<size_t>(dst->arrayOffset) + dst->indexCnt) * position.stride;
-    auto coverStart = coverPosition.offset + static_cast<size_t>(cover->arrayOffset) * coverPosition.stride;
-    auto colorEnd = color.offset + (static_cast<size_t>(dst->arrayOffset) + dst->indexCnt) * color.stride;
-    auto coverColorStart = coverColor.offset + static_cast<size_t>(cover->arrayOffset) * coverColor.stride;
-    assert(dstEnd == coverStart && colorEnd == coverColorStart);
-    if (dstEnd != coverStart || colorEnd != coverColorStart) return false;
+    if (!(dst->viewMatrix == cover->viewMatrix)) return false;
+    auto dstEnd = dst->vertexLayout[0].offset + dst->indexCnt * sizeof(StencilCoverVertex);
+    if (dstEnd != cover->vertexLayout[0].offset) return false;
 
     dst->indexCnt += cover->indexCnt;
     dst->viewport.add(cover->viewport);

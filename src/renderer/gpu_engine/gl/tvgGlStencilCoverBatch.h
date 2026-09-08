@@ -24,30 +24,23 @@
 #define _TVG_GL_STENCIL_COVER_BATCH_H_
 
 #include "tvgGlCommon.h"
-#include "tvgGlGpuBuffer.h"
-#include "tvgGlProgram.h"
-#include "tvgGlRenderTask.h"
-#include "tvgGlRenderPass.h"
+
+struct GlProgram;
+struct GlRenderPass;
+struct GlStencilCoverTask;
 
 struct GlStencilCoverBatch
 {
     void clear();
-    // TODO: too many parameters. bad smell...
-    GlRenderTask* prepare(GlProgram* stencilProgram, GlRenderPass* pass, GlRenderTask* coverTask,
-                          const GlGeometry& geometry, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag,
-                          GlStencilMode stencilMode, bool clipped, int32_t depth, const Matrix& viewMatrix,
-                          const RenderRegion& passViewport, const RenderColor* color,
-                          const RenderRegion& viewBounds, RenderRegion& geometryBounds,
-                          const GlGeometryBuffer*& stencilBuffer, uint32_t*& stencilIndices,
-                          bool& merge);
-    bool mergeable(const GlRenderPass* pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer* stencilBuffer) const;
-    void draw(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, bool merge, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
+    // The renderer supplies the cover's bindings, view matrix, depth and viewport.
+    void draw(GlRenderPass& pass, GlStageBuffer& gpuBuffer, GlProgram* program, GlRenderTask* cover,
+              const GlShape& shape, RenderUpdateFlag flag, GlStencilMode mode,
+              const RenderRegion& viewBounds, const RenderColor* color = nullptr);
 
 private:
-    void emitSingle(GlRenderPass* pass, GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer);
-    void append(GlRenderTask* stencil, GlRenderTask* cover, const RenderRegion& bounds, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
-    void setStencilMergeTarget(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer);
-    bool merge(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices);
+    bool appendable(const GlRenderPass& pass, GlStencilMode mode, bool clipped, const RenderRegion& bounds, const GlGeometryBuffer& buffer) const;
+    void setStencilMergeTarget(GlRenderTask* stencil, const GlGeometryBuffer& buffer);
+    bool merge(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer& buffer, uint32_t* indices);
     bool mergeCover(GlRenderTask* cover, const RenderRegion& viewBounds);
     bool intersects(const RenderRegion& bounds) const;
     void addBounds(const RenderRegion& bounds);
@@ -55,16 +48,11 @@ private:
     GlRenderPass* pass = nullptr;
     GlStencilCoverTask* task = nullptr;
     GlRenderTask* stencilTask = nullptr;
-    GlStencilMode mode = GlStencilMode::None;
     Array<RenderRegion> bounds = {};
-    RenderRegion stencilViewBounds = {};
-    RenderRegion coverViewBounds = {};
+    RenderRegion viewBounds = {};
     uint32_t vertexCount = 0;
-    uint32_t indexOffset = 0;
-    uint32_t indexCount = 0;
     bool clipped = false;
     bool ySorted = false;
-    bool open = false;
 };
 
 #endif /* _TVG_GL_STENCIL_COVER_BATCH_H_ */
