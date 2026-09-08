@@ -254,9 +254,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (!data) flags = RenderUpdateFlag::All;
 
     // update geometry
-    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) {
-        shape->updateMeshes(rshape, flags, transform);
-    }
+    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->update(rshape, transform, flags);
 
     // update transform
     if (flags & RenderUpdateFlag::Transform) {
@@ -265,28 +263,21 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     // update paint settings
-    shape->shape.solid.opacity = shape->shape.setting.update(mTargetSurface.cs, opacity);
-    shape->stroke.solid.opacity = shape->stroke.setting.update(mTargetSurface.cs, opacity);
-    shape->fillRule = rshape.rule;
+    shape->update(rshape, vport, shape->shape.setting.update(mTargetSurface.cs, opacity), shape->stroke.setting.update(mTargetSurface.cs, opacity), opacity);
 
-    // setup fill settings
-    shape->viewport = vport;
-    shape->updateVisibility(rshape, opacity);
-    // update shape render settings
+    // shape
     if (shape->shape.setting.valid) {
         if (rshape.fill && (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))) {
-            auto updateColorRamp = ((flags & RenderUpdateFlag::Gradient) != RenderUpdateFlag::None);
-            shape->shape.setting.update(mContext, rshape.fill, &transform, updateColorRamp);
+            shape->shape.setting.update(mContext, rshape.fill, &transform, (flags & RenderUpdateFlag::Gradient));
         } else if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient)) {
             shape->shape.solid.color = rshape.color;
             shape->shape.setting.fillType = WgRenderSettingsType::Solid;
         }
     }
-    // update strokes render settings
+    // stroke
     if (shape->stroke.setting.valid) {
         if (rshape.stroke->fill && flags & (RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)) {
-            auto updateColorRamp = ((flags & RenderUpdateFlag::GradientStroke) != RenderUpdateFlag::None);
-            shape->stroke.setting.update(mContext, rshape.stroke->fill, nullptr, updateColorRamp);
+            shape->stroke.setting.update(mContext, rshape.stroke->fill, nullptr, (flags & RenderUpdateFlag::GradientStroke));
         } else if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) {
             shape->stroke.solid.color = rshape.stroke->color;
             shape->stroke.setting.fillType = WgRenderSettingsType::Solid;
@@ -308,17 +299,16 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     image->transform = transform;
     image->renderSettings.update(surface->cs, opacity);
 
-    auto updateSurface = (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Image));
-    if (updateSurface) image->update(surface, transform);
+    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Image)) image->update(surface, transform);
 
     // reload texture
-    auto cacheStale = image->imageTexture && (image->imageStamp != mTextures.stamp);
-    auto refreshTexture = ((flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Image)) != RenderUpdateFlag::None);
-    auto needsImage = !image->imageTexture || (image->imageSource != surface) || (image->imageFilter != filter) || refreshTexture || cacheStale;
-    if (needsImage) {
+    auto cacheStale = !image->imageTexture || (image->imageStamp != mTextures.stamp);
+    auto refreshTex = (flags & RenderUpdateFlag::Image);
+    auto update = cacheStale ||  refreshTex || (image->imageSource != surface) || (image->imageFilter != filter);
+    if (update) {
         image->release(mTextures, mContext);
-        auto* entry = mTextures.retain(mContext, surface, filter, refreshTexture);
-        image->setImage(entry->texture, entry->bindGroup, surface, filter, mTextures.stamp);
+        auto* entry = mTextures.retain(mContext, surface, filter, refreshTex);
+        image->setup(entry->texture, entry->bindGroup, surface, filter, mTextures.stamp);
     }
 
     if (flags & RenderUpdateFlag::Clip) image->update(clips);

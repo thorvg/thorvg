@@ -66,7 +66,7 @@ struct WgRenderSettings
     bool valid = false;
 
     uint8_t update(tvg::ColorSpace cs, uint8_t opacity);
-    void update(WgContext& context, const Fill* fill, const Matrix* modelTransform, bool updateColorRamp);
+    void update(WgContext& context, const Fill* fill, const Matrix* transform, bool updateColorRamp);
     void release(WgContext& context);
 };
 
@@ -86,6 +86,8 @@ struct WgPaint
 
 struct WgShape : WgPaint
 {
+    using WgPaint::update;
+
     struct
     {
         WgRenderSettings setting;
@@ -113,8 +115,8 @@ struct WgShape : WgPaint
 
     void updateBBox(const BBox& bb);
     void updateAABB() { aabb = bbox; }
-    void updateVisibility(const RenderShape& rshape, uint8_t opacity);
-    void updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix);
+    void update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity);
+    void update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag);
     void reset();
     void release(WgContext& context) override;
     Type type() override { return Type::Shape; };
@@ -133,7 +135,7 @@ struct WgImage : WgPaint
     WgMesh meshData;
 
     void update(const RenderSurface* surface, const Matrix& transform);
-    void setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp);
+    void setup(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp);
     void release(WgTextureMgr& textures, WgContext& context);
     void reset();
     void release(WgContext& context) override;

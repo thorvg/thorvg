@@ -74,10 +74,9 @@ uint8_t WgRenderSettings::update(tvg::ColorSpace cs, uint8_t opacity)
     return effectiveOpacity;
 }
 
-void WgRenderSettings::update(WgContext& context, const Fill* fill, const Matrix* modelTransform, bool updateColorRamp)
+void WgRenderSettings::update(WgContext& context, const Fill* fill, const Matrix* transform, bool updateColorRamp)
 {
-    assert(fill);
-    settings.gradient.update(fill, modelTransform);
+    settings.gradient.update(fill, transform);
     if (updateColorRamp) gradientData.update(context, fill);
     if (fill->type() == Type::LinearGradient)
         fillType = WgRenderSettingsType::Linear;
@@ -112,13 +111,19 @@ void WgShape::updateBBox(const BBox& bb)
     bbox.max = tvg::max(bbox.max, bb.max);
 }
 
-void WgShape::updateVisibility(const RenderShape& rshape, uint8_t opacity)
+void WgShape::update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity)
 {
     shape.setting.valid = rshape.fill || (rshape.color.a * opacity > 0);
     stroke.setting.valid = rshape.stroke && (rshape.stroke->fill || (rshape.stroke->color.a * opacity > 0));
+
+    shape.solid.opacity = shapeOpacity;
+    stroke.solid.opacity = strokeOpacity;
+
+    fillRule = rshape.rule;
+    viewport = vport;
 }
 
-void WgShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix)
+void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag)
 {
     reset();  // Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
 
@@ -138,14 +143,14 @@ void WgShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, con
         auto& trimmed = RenderPath::scratch();
         if (rshape.stroke->trim.trim(rshape.path, trimmed)) {
             GpuOptimizeResult result{&optPath, localOut};
-            gpuOptimize(trimmed, result, matrix);
+            gpuOptimize(trimmed, result, transform);
             optPathThin = result.thin;
             optPathSkipFill = result.skipFill;
         }
         else optPath.clear();
     } else {
         GpuOptimizeResult result{&optPath, localOut};
-        gpuOptimize(rshape.path, result, matrix);
+        gpuOptimize(rshape.path, result, transform);
         optPathThin = result.thin;
         optPathSkipFill = result.skipFill;
     }
@@ -182,7 +187,7 @@ void WgShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, con
     }
     // update strokes shapes
     if (rshape.stroke && (updatePath || (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)))) {
-        auto qualityScale = scaling(matrix);
+        auto qualityScale = scaling(transform);
         auto strokeWidthWorld = strokeWidth * qualityScale;
         if (!std::isfinite(strokeWidthWorld)) strokeWidthWorld = strokeWidth;
         if (!std::isfinite(strokeWidthWorld)) strokeWidthWorld = 0.0f;
@@ -201,7 +206,7 @@ void WgShape::updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, con
                 auto bbox = stroker.getBBox();
                 stroke.bounds = bbox;
                 stroke.bbox.bbox(bbox.min, bbox.max);
-                auto strokeBounds = gpuTransformBounds(stroker.bounds(), matrix);
+                auto strokeBounds = gpuTransformBounds(stroker.bounds(), transform);
                 updateBBox({{(float)strokeBounds.min.x, (float)strokeBounds.min.y}, {(float)strokeBounds.max.x, (float)strokeBounds.max.y}});
             }
         }
@@ -242,7 +247,7 @@ void WgImage::update(const RenderSurface* surface, const Matrix& transform)
     meshData.imageBox(surface->w, surface->h, transform);
 }
 
-void WgImage::setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
+void WgImage::setup(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
 {
     imageTexture = texture;
     imageBindGroup = bindGroup;
