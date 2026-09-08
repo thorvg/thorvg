@@ -28,6 +28,20 @@
 #include "tvgWgStencilBatch.h"
 #include "tvgWgTextureMgr.h"
 
+struct WgPaintPool
+{
+    Array<WgPaint*> list;    // full list of created paints
+    Array<WgShape*> shapes;  // reuse list
+    Array<WgImage*> images;  // reuse list
+
+    void recycle(WgShape* shape);
+    void recycle(WgImage* image);
+    void release(WgContext& context);
+
+    WgShape* shape();
+    WgImage* image();
+};
+
 struct WgRenderer : RenderMethod
 {
     //main features
@@ -78,7 +92,6 @@ private:
     void clearTargets();
     void surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height, ColorSpace cs);
 
-    // render tree stacks
     WgRenderTarget mRenderTargetRoot;
     Array<WgCompose*> mCompositorList;
     Array<WgRenderTarget*> mRenderTargetStack;
@@ -86,32 +99,23 @@ private:
     Array<WgRenderTask*> mRenderTaskList;
     WgSolidBatch mSolidBatch;
     WgStencilBatch mStencilBatch;
-
-    // render target pool
     WgRenderTargetPool mRenderTargetPool;
-
-    // render data paint pools
-    WgRenderShapePool mRenderDataShapePool;
-    WgRenderPicturePool mRenderDataPicturePool;
-    WgRenderEffectParamsPool mRenderDataEffectParamsPool;
+    WgPaintPool mPaintPool;
+    WgRenderEffectParamsPool mEffectParamsPool;
     WgTextureMgr mTextures;
-
-    // rendering context
     WgContext mContext;
     WgCompositor mCompositor;
-
-    // rendering states
     RenderSurface mTargetSurface;
-    BlendMethod mBlendMethod{};
+    BlendMethod mBlendMethod = BlendMethod::Normal;
 
     // disposable data list
-    Array<RenderData> mDisposeRenderDatas{};
+    Array<RenderData> mDisposedPaints;
     Key mDisposeKey{};
 
     // gpu handles
-    WGPUTexture targetTexture{}; // external handle
+    WGPUTexture targetTexture{};
     WGPUSurfaceTexture surfaceTexture{};
-    WGPUSurface surface{};  // external handle
+    WGPUSurface surface{};
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */

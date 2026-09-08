@@ -116,20 +116,22 @@ void WgShaderTypeVec4f::update(const RenderRegion& r)
 // WgShaderTypeGradSettings
 //************************************************************************
 
-void WgShaderTypeGradSettings::update(const Fill* fill, const Matrix* modelTransform)
+void WgShaderTypeGradSettings::update(const Fill* fill, const Matrix* transform)
 {
-    assert(fill);
     // update transform matrix
-    Matrix invTransform;
-    if (inverse(&fill->transform(), &invTransform)) {
-        Matrix invModel;
-        if (modelTransform && inverse(modelTransform, &invModel)) invTransform = invTransform * invModel;
-        transform.update(invTransform);
-    } else transform.identity();
+    Matrix result;
+    if (inverse(&fill->transform(), &result)) {
+        Matrix itransform;
+        if (transform && inverse(transform, &itransform)) result *= itransform;
+        this->transform.update(result);
+    } else {
+        this->transform.identity();
+    }
+
     // update gradient base points
-    if (fill->type() == Type::LinearGradient)
+    if (fill->type() == Type::LinearGradient) {
         ((LinearGradient*)fill)->linear(&coords.vec[0], &coords.vec[1], &coords.vec[2], &coords.vec[3]);
-    else if (fill->type() == Type::RadialGradient) {
+    } else if (fill->type() == Type::RadialGradient) {
         ((RadialGradient*)fill)->radial(&coords.vec[0], &coords.vec[1], &coords.vec[2], &focal.vec[0], &focal.vec[1], &focal.vec[2]);
         CONST_RADIAL(fill)->correct(focal.vec[0], focal.vec[1], focal.vec[2]);
     }

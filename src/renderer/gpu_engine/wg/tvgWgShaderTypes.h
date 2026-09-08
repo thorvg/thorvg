@@ -70,7 +70,7 @@ struct WgShaderTypeGradSettings
     // radial: [0] - fx, [1] - fy, [2] - fr
     WgShaderTypeVec4f focal;
     
-    void update(const Fill* fill, const Matrix* modelTransform);
+    void update(const Fill* fill, const Matrix* transform);
 };
 
 // WGSL: struct PaintSettings { options: vec4f, gradient: GradSettings };

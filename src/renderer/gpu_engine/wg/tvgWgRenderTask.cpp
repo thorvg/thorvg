@@ -27,7 +27,7 @@
 // WgBatchTask
 //***********************************************************************
 
-WgBatchTask::WgBatchTask(WgRenderShape* first, WgRenderShape* second, bool stencilBatch) :
+WgBatchTask::WgBatchTask(WgShape* first, WgShape* second, bool stencilBatch) :
     shapes{2}, stencilBatch(stencilBatch)
 {
     shapes.push(first);
@@ -52,14 +52,14 @@ void WgBatchTask::run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder)
 
 void WgPaintTask::stage(WgCompositor& compositor)
 {
-    if (renderPaint->type() == tvg::Type::Shape) compositor.requestShape((WgRenderShape*)renderPaint);
-    if (renderPaint->type() == tvg::Type::Picture) compositor.requestImage((WgRenderPicture*)renderPaint);
+    if (renderPaint->type() == tvg::Type::Shape) compositor.requestShape((WgShape*)renderPaint);
+    if (renderPaint->type() == tvg::Type::Picture) compositor.requestImage((WgImage*)renderPaint);
 }
 
 void WgPaintTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {
-    if (renderPaint->type() == tvg::Type::Shape) compositor.renderShape(context, (WgRenderShape*)renderPaint, blendMethod);
-    if (renderPaint->type() == tvg::Type::Picture) compositor.renderImage(context, (WgRenderPicture*)renderPaint, blendMethod);
+    if (renderPaint->type() == tvg::Type::Shape) compositor.renderShape(context, (WgShape*)renderPaint, blendMethod);
+    if (renderPaint->type() == tvg::Type::Picture) compositor.renderImage(context, (WgImage*)renderPaint, blendMethod);
 }
 
 //***********************************************************************

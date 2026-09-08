@@ -27,11 +27,11 @@
 
 struct WgStencilBatch
 {
-    bool draw(WgSceneTask* sceneTask, WgRenderShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList);
+    bool draw(WgSceneTask* sceneTask, WgShape* rdata, BlendMethod blendMethod, Array<WgRenderTask*>& renderTaskList);
 
     WgSceneTask* sceneTask{};
     WgRenderTask* task{};
-    WgRenderShape* first{};
+    WgShape* first{};
     Array<RenderRegion> bounds;
     RenderRegion viewport{};
     FillRule fillRule{};
