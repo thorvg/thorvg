@@ -24,13 +24,13 @@
 #define _TVG_WG_RENDER_DATA_H_
 
 #include "tvgWgPipelines.h"
-#include "tvgWgGeometry.h"
+#include "tvgWgMesh.h"
 #include "tvgWgShaderTypes.h"
 
 struct WgTextureMgr;
 struct WgStageBufferSolidColor;
 
-struct WgImageData
+struct WgGradientTexture
 {
     WGPUTexture texture{};
     WGPUTextureView textureView{};
@@ -44,11 +44,11 @@ enum class WgRenderSettingsType { None = 0, Solid = 1, Linear = 2, Radial = 3 };
 
 static_assert(sizeof(RenderColor) == 4, "Solid color vertex data must remain tightly packed RGBA8");
 
-struct WgSolidData
+struct WgSolidFill
 {
-    uint32_t colorIdx{};
-    RenderColor color{};
-    uint8_t opacity = 255;
+    uint32_t colorIdx;
+    RenderColor color;
+    uint8_t opacity;
 
     RenderColor packedColor() const
     {
@@ -58,53 +58,55 @@ struct WgSolidData
 
 struct WgRenderSettings
 {
-    uint32_t bindGroupIdx{};
+    uint32_t bindGroupIdx;
     WgShaderTypePaintSettings settings;
-    WgImageData gradientData;
+    WgGradientTexture gradientData;
     WgRenderSettingsType fillType{};
     float opacityMultiplier = 1.0f;
     bool valid = false;
 
     uint8_t update(tvg::ColorSpace cs, uint8_t opacity);
-    void update(WgContext& context, const Fill* fill, const Matrix* modelTransform, bool updateColorRamp);
+    void update(WgContext& context, const Fill* fill, const Matrix* transform, bool updateColorRamp);
     void release(WgContext& context);
 };
 
-struct WgRenderPaint
+struct WgPaint
 {
-    BBox aabb{{},{}};
-    RenderRegion viewport{};
-    Array<WgRenderPaint*> clips;
+    BBox aabb{};
+    RenderRegion viewport;
+    Array<WgPaint*> clips;
     Matrix transform;
 
-    virtual ~WgRenderPaint(){};
-    virtual void release(WgContext& context);
+    virtual ~WgPaint(){};
+    virtual void release(WgContext& context) = 0;
     virtual Type type() { return Type::Undefined; };
 
     void update(const Array<RenderData>& clips);
 };
 
-struct WgRenderShape : WgRenderPaint
+struct WgShape : WgPaint
 {
+    using WgPaint::update;
+
     struct
     {
         WgRenderSettings setting;
-        WgSolidData solid;
-        WgMeshData mesh;
-        WgMeshData bbox;
+        WgSolidFill solid;
+        WgMesh mesh;
+        WgMesh bbox;
         BBox bounds;
     } shape;
 
     struct
     {
         WgRenderSettings setting;
-        WgSolidData solid;
-        WgMeshData mesh;
-        WgMeshData bbox;
+        WgSolidFill solid;
+        WgMesh mesh;
+        WgMesh bbox;
         BBox bounds;
     } stroke;
 
-    WgMeshData meshBBox;
+    WgMesh meshBBox;
     FillRule fillRule;
     BBox bbox;
     uint32_t strokeViewMatIdx;
@@ -113,75 +115,55 @@ struct WgRenderShape : WgRenderPaint
 
     void updateBBox(const BBox& bb);
     void updateAABB() { aabb = bbox; }
-    void updateVisibility(const RenderShape& rshape, uint8_t opacity);
-    void updateMeshes(const RenderShape& rshape, RenderUpdateFlag flag, const Matrix& matrix);
-    void releaseMeshes();
+    void update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity);
+    void update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag);
+    void reset();
     void release(WgContext& context) override;
     Type type() override { return Type::Shape; };
 };
 
-struct WgRenderShapePool
+struct WgImage : WgPaint
 {
-    Array<WgRenderShape*> mPool;
-    Array<WgRenderShape*> mList;
+    using WgPaint::update;
 
-    WgRenderShape* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderShape* rdata);
-    void release(WgContext& context);
-};
-
-struct WgRenderPicture : WgRenderPaint
-{
-    using WgRenderPaint::update;
-
-    WgRenderSettings renderSettings{};
+    WgRenderSettings renderSettings;
     WGPUTexture imageTexture{};
     WGPUBindGroup imageBindGroup{};
     const RenderSurface* imageSource = nullptr;
     FilterMethod imageFilter = FilterMethod::Bilinear;
     uint16_t imageStamp = 0;
-    WgMeshData meshData{};
+    WgMesh meshData;
 
     void update(const RenderSurface* surface, const Matrix& transform);
-    void setImage(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp);
-    void releaseTexture(WgTextureMgr& textures, WgContext& context);
-    void clearImage();
+    void setup(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp);
+    void release(WgTextureMgr& textures, WgContext& context);
+    void reset();
     void release(WgContext& context) override;
     Type type() override { return Type::Picture; };
 };
 
-struct WgRenderPicturePool
-{
-    Array<WgRenderPicture*> mPool;
-    Array<WgRenderPicture*> mList;
-
-    WgRenderPicture* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderPicture* dataPicture);
-    void release(WgContext& context);
-};
-
 struct WgGeometryRange
 {
-    size_t vertexOffset{};
-    size_t indexOffset{};
-    uint32_t vertexCount{};
-    uint32_t indexCount{};
+    size_t vertexOffset;
+    size_t indexOffset;
+    uint32_t vertexCount;
+    uint32_t indexCount;
 };
 
 struct WgSolidBatchRange : WgGeometryRange
 {
     size_t colorOffset{};
-    RenderRegion viewport{};
+    RenderRegion viewport;
 };
 
 struct WgStencilBatchRange
 {
-    WgGeometryRange stencil{};
-    WgGeometryRange cover{};
+    WgGeometryRange stencil;
+    WgGeometryRange cover;
     size_t colorOffset{};
-    RenderRegion viewport{};
-    FillRule fillRule = FillRule::NonZero;
-    bool solidOnly{};
+    RenderRegion viewport;
+    FillRule fillRule;
+    bool solidOnly;
 };
 
 // gaussian blur, drop shadow, fill, tint, tritone
@@ -219,16 +201,16 @@ struct WgStageBufferGeometry
 {
     Array<uint8_t> vbuffer;
     Array<uint8_t> ibuffer;
-    void appendBatch(const Array<WgRenderShape*>& renderShapes, WgGeometryRange& range, bool cover);
+    void appendBatch(const Array<WgShape*>& renderShapes, WgGeometryRange& range, bool cover);
 
     WGPUBuffer vbuffer_gpu{};
     WGPUBuffer ibuffer_gpu{};
 
-    void append(WgMeshData* meshData);
-    void append(WgRenderShape* renderShape);
-    void append(WgRenderPicture* renderPicture);
-    void appendSolidBatch(const Array<WgRenderShape*>& renderShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range);
-    void appendStencilBatch(const Array<WgRenderShape*>& renderShapes, WgStencilBatchRange& range);
+    void append(WgMesh* meshData);
+    void append(WgShape* renderShape);
+    void append(WgImage* renderPicture);
+    void appendSolidBatch(const Array<WgShape*>& renderShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range);
+    void appendStencilBatch(const Array<WgShape*>& renderShapes, WgStencilBatchRange& range);
     void initialize(WgContext& context){};
     void release(WgContext& context);
     void clear();

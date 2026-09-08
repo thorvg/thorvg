@@ -24,8 +24,8 @@
 #define _TVG_WG_TEXTURE_MGR_H_
 
 #include "tvgArray.h"
-#include "tvgWgCommon.h"
 #include "tvgInlist.h"
+#include "tvgWgCommon.h"
 
 enum WgTexPrep : uint8_t
 {
