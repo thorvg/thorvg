@@ -47,6 +47,26 @@ void WgBatchTask::run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder)
 }
 
 //***********************************************************************
+// WgImageBatchTask
+//***********************************************************************
+
+WgImageBatchTask::WgImageBatchTask(WgImage* first, WgImage* second) : images{2}
+{
+    images.push(first);
+    images.push(second);
+}
+
+void WgImageBatchTask::stage(WgCompositor& compositor)
+{
+    compositor.requestImageBatch(images, range);
+}
+
+void WgImageBatchTask::run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder)
+{
+    compositor.renderImageBatch(images[0], range);
+}
+
+//***********************************************************************
 // WgPaintTask
 //***********************************************************************
 

@@ -493,6 +493,57 @@ void WgStageBufferGeometry::appendStencilBatch(const Array<WgShape*>& renderShap
     appendBatch(renderShapes, range.cover, true);
 }
 
+void WgStageBufferGeometry::appendImageBatch(const Array<WgImage*>& renderImages, WgImageBatchRange& range)
+{
+    assert(renderImages.count > 1);
+
+    uint32_t vertexCount = 0;
+    uint32_t indexCount = 0;
+    ARRAY_FOREACH(p, renderImages) {
+        const auto& mesh = (*p)->mesh;
+        assert(mesh.vbuffer.count == mesh.tbuffer.count);
+        vertexCount += mesh.vbuffer.count;
+        indexCount += mesh.ibuffer.count;
+    }
+
+    const uint32_t vertexBytes = vertexCount * sizeof(Point);
+    const uint32_t indexBytes = indexCount * sizeof(uint32_t);
+
+    if (vbuffer.reserved < vbuffer.count + vertexBytes * 2)
+        vbuffer.grow(std::max(vertexBytes * 2, vbuffer.reserved));
+    if (ibuffer.reserved < ibuffer.count + indexBytes)
+        ibuffer.grow(std::max(indexBytes, ibuffer.reserved));
+
+    range.vertexOffset = vbuffer.count;
+    range.texCoordOffset = vbuffer.count + vertexBytes;
+    range.indexOffset = ibuffer.count;
+    range.vertexCount = vertexCount;
+    range.indexCount = indexCount;
+
+    uint32_t baseVertex = 0;
+    auto vertexDst = vbuffer.data + range.vertexOffset;
+    auto texCoordDst = vbuffer.data + range.texCoordOffset;
+    auto indexDst = ibuffer.data + range.indexOffset;
+    ARRAY_FOREACH(p, renderImages) {
+        const auto& mesh = (*p)->mesh;
+        const uint32_t meshVertexBytes = mesh.vbuffer.count * sizeof(Point);
+        memcpy(vertexDst, mesh.vbuffer.data, meshVertexBytes);
+        memcpy(texCoordDst, mesh.tbuffer.data, meshVertexBytes);
+        vertexDst += meshVertexBytes;
+        texCoordDst += meshVertexBytes;
+
+        for (uint32_t i = 0; i < mesh.ibuffer.count; ++i) {
+            const auto index = mesh.ibuffer[i] + baseVertex;
+            memcpy(indexDst, &index, sizeof(index));
+            indexDst += sizeof(index);
+        }
+
+        baseVertex += mesh.vbuffer.count;
+    }
+    vbuffer.count += vertexBytes * 2;
+    ibuffer.count += indexBytes;
+}
+
 void WgStageBufferGeometry::release(WgContext& context)
 {
     context.releaseBuffer(vbuffer_gpu);
