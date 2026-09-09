@@ -297,6 +297,14 @@ struct SceneImpl : Scene
         return scene;
     }
 
+    // insert()/mask()/clip() aim a clipper and mask target at this scene without ref-ing or listing
+    // them, so only this scene can clear a parent it is about to invalidate.
+    void detachBorrowed(Paint::Impl* paint)
+    {
+        if (paint->clipper && PAINT(paint->clipper)->parent == this) PAINT(paint->clipper)->parent = nullptr;
+        if (paint->maskData && PAINT(paint->maskData->target)->parent == this) PAINT(paint->maskData->target)->parent = nullptr;
+    }
+
     Result clearPaints()
     {
         if (paints.empty()) return Result::Success;
@@ -310,6 +318,7 @@ struct SceneImpl : Scene
             auto paint = PAINT((*itr));
             //when the paint is destroyed damage will be triggered
             if (paint->refCnt > 1 && partialDmg) paint->damage();
+            detachBorrowed(paint);
             paint->unref();
             paints.erase(itr++);
         }
@@ -322,10 +331,38 @@ struct SceneImpl : Scene
     Result remove(Paint* paint)
     {
         if (PAINT(paint)->parent != this) return Result::InsufficientCondition;
+
+        auto impl = PAINT(paint);
+        Paint* borrowed[] = {impl->clipper, impl->maskData ? impl->maskData->target : nullptr};
+        bool shared[] = {false, false};
+        auto itr = paints.end();
+
+        if (!borrowed[0] && !borrowed[1]) itr = find(paints.begin(), paints.end(), paint);
+        else {
+            // a borrowed paint may only be detached once nothing left in the list points at it:
+            // clip()/mask() admit a second holder, and a clipper can be pushed as a child too
+            for (auto p = paints.begin(); p != paints.end(); ++p) {
+                if (*p == paint) {
+                    itr = p;
+                    continue;
+                }
+                auto sibling = PAINT((*p));
+                for (int i = 0; i < 2; ++i) {
+                    if (!borrowed[i]) continue;
+                    if (*p == borrowed[i] || sibling->clipper == borrowed[i] || (sibling->maskData && sibling->maskData->target == borrowed[i])) shared[i] = true;
+                }
+            }
+        }
+        // parent alone does not prove ownership: a borrowed clipper or mask target points here too
+        if (itr == paints.end()) return Result::InsufficientCondition;
+
         //when the paint is destroyed damage will be triggered
-        if (PAINT(paint)->refCnt > 1) PAINT(paint)->damage();
-        PAINT(paint)->unref();
-        paints.remove(paint);
+        if (impl->refCnt > 1) impl->damage();
+        for (int i = 0; i < 2; ++i) {
+            if (borrowed[i] && !shared[i] && PAINT(borrowed[i])->parent == this) PAINT(borrowed[i])->parent = nullptr;
+        }
+        impl->unref();
+        paints.erase(itr);
         return Result::Success;
     }
 

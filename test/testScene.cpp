@@ -125,6 +125,36 @@ TEST_CASE("Scene Clear And Reuse Shape", "[tvgScene]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Scene Clear And Reuse Mask Target", "[tvgScene]")
+{
+    auto scene = Scene::gen();
+    REQUIRE(scene);
+
+    auto source = Shape::gen();
+    REQUIRE(source);
+    REQUIRE(source->ref() == 1);
+
+    auto target = Shape::gen();
+    REQUIRE(target);
+    REQUIRE(target->ref() == 1);
+
+    REQUIRE(source->mask(target, MaskMethod::Alpha) == Result::Success);
+    REQUIRE(scene->add(source) == Result::Success);
+
+    // No deallocate source. The scene aims a parent at the mask target without ref-ing it.
+    REQUIRE(scene->remove() == Result::Success);
+
+    // Reuse the mask target.
+    auto other = Scene::gen();
+    REQUIRE(other);
+    REQUIRE(other->add(target) == Result::Success);
+
+    Paint::rel(other);
+    REQUIRE(source->unref() == 0);
+    REQUIRE(target->unref() == 0);
+    Paint::rel(scene);
+}
+
 TEST_CASE("Scene Effects", "[tvgScene]")
 {
     REQUIRE(Initializer::init() == Result::Success);
