@@ -743,6 +743,12 @@ TVG_API Tvg_Gradient tvg_radial_gradient_new()
 }
 
 
+TVG_API Tvg_Gradient tvg_conic_gradient_new()
+{
+    return (Tvg_Gradient)ConicGradient::gen();
+}
+
+
 TVG_API Tvg_Gradient tvg_gradient_duplicate(Tvg_Gradient grad)
 {
     if (grad) return (Tvg_Gradient) reinterpret_cast<Fill*>(grad)->duplicate();
@@ -784,6 +790,20 @@ TVG_API Tvg_Result tvg_radial_gradient_set(Tvg_Gradient grad, float cx, float cy
 TVG_API Tvg_Result tvg_radial_gradient_get(Tvg_Gradient grad, float* cx, float* cy, float* r, float* fx, float* fy, float* fr)
 {
     if (grad) return (Tvg_Result) reinterpret_cast<RadialGradient*>(grad)->radial(cx, cy, r, fx, fy, fr);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_conic_gradient_set(Tvg_Gradient grad, float cx, float cy, float angle)
+{
+    if (grad) return (Tvg_Result) reinterpret_cast<ConicGradient*>(grad)->conic(cx, cy, angle);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_conic_gradient_get(Tvg_Gradient grad, float* cx, float* cy, float* angle)
+{
+    if (grad) return (Tvg_Result) reinterpret_cast<ConicGradient*>(grad)->conic(cx, cy, angle);
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 

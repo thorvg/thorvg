@@ -87,6 +87,35 @@ struct FillRadial
     }
 };
 
+struct FillConic
+{
+    void operator()(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask op, uint8_t a)
+    {
+        fillConic(fill, dst, y, x, len, op, a);
+    }
+
+    void operator()(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask op, uint8_t a)
+    {
+        fillConic(fill, dst, y, x, len, cmp, op, a);
+    }
+
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
+    {
+        fillConic(fill, dst, y, x, len, op, a);
+    }
+
+    void operator()(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+    {
+        fillConic(fill, dst, y, x, len, cmp, alpha, csize, opacity);
+    }
+
+    void operator()(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+    {
+        fillConic(surface, fill, dst, y, x, len, op, op2, a);
+    }
+};
+
+
 static inline uint8_t _alpha(uint8_t* a)
 {
     return *a;
@@ -1577,9 +1606,11 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, const RenderRegion&
     if (shape->fastTrack) {
         if (type == Type::LinearGradient) return _rasterGradientRect<FillLinear>(surface, bbox, shape->fill);
         else if (type == Type::RadialGradient) return _rasterGradientRect<FillRadial>(surface, bbox, shape->fill);
+        else if (type == Type::ConicGradient) return _rasterGradientRect<FillConic>(surface, bbox, shape->fill);
     } else if (shape->rle && shape->rle->valid()) {
         if (type == Type::LinearGradient) return _rasterGradientRle<FillLinear>(surface, shape->rle, shape->fill);
         else if (type == Type::RadialGradient) return _rasterGradientRle<FillRadial>(surface, shape->rle, shape->fill);
+        else if (type == Type::ConicGradient) return _rasterGradientRle<FillConic>(surface, shape->rle, shape->fill);
     } return false;
 }
 
@@ -1596,6 +1627,7 @@ bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const RenderRegion
     auto type = fdata->type();
     if (type == Type::LinearGradient) return _rasterGradientRle<FillLinear>(surface, shape->strokeRle, shape->stroke->fill);
     else if (type == Type::RadialGradient) return _rasterGradientRle<FillRadial>(surface, shape->strokeRle, shape->stroke->fill);
+    else if (type == Type::ConicGradient) return _rasterGradientRle<FillConic>(surface, shape->strokeRle, shape->stroke->fill);
     return false;
 }
 
