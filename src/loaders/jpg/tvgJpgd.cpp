@@ -1015,6 +1015,10 @@ bool jpeg_decoder::read_sos_marker()
 
         if (ci >= m_comps_in_frame) return stop_decoding(JPGD_BAD_SOS_COMP_ID);
 
+        for (auto j = 0; j < i; ++j) {
+            if (m_comp_list[j] == ci) return stop_decoding(JPGD_BAD_SOS_COMP_ID);
+        }
+
         m_comp_list[i]    = ci;
         m_comp_dc_tab[ci] = (c >> 4) & 15;
         m_comp_ac_tab[ci] = (c & 15) + (JPGD_MAX_HUFF_TABLES >> 1);
