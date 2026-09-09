@@ -292,7 +292,6 @@ void WgRenderEffectParams::update(WgContext& context, WgShaderTypeEffectParams& 
 
 void WgRenderEffectParams::update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
-    assert(gaussian);
     WgShaderTypeEffectParams effectParams;
     if (!effectParams.update(gaussian, transform)) return;
     update(context, effectParams);
@@ -301,7 +300,6 @@ void WgRenderEffectParams::update(WgContext& context, RenderEffectGaussianBlur* 
 
 void WgRenderEffectParams::update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
-    assert(dropShadow);
     WgShaderTypeEffectParams effectParams;
     if (!effectParams.update(dropShadow, transform)) return;
     update(context, effectParams);

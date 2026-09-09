@@ -159,16 +159,10 @@ void effectGaussianBlurUpdate(RenderEffectGaussianBlur* params, const Matrix& tr
     auto rd = static_cast<SwGaussianBlur*>(params->rd);
 
     //compute box kernel sizes
-    auto scale = sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    rd->extends = _gaussianInit(rd, std::pow(params->sigma * scale, 2), params->quality);
+    auto scaleSquared = transform.e11 * transform.e11 + transform.e12 * transform.e12;
+    rd->extends = _gaussianInit(rd, params->sigma * params->sigma * scaleSquared, params->quality);
 
-    //invalid
-    if (rd->extends == 0) {
-        params->valid = false;
-        return;
-    }
-
-    params->valid = true;
+    params->valid = (rd->extends > 0);
 }
 
 
@@ -375,24 +369,17 @@ bool effectDropShadowRegion(RenderEffectDropShadow* params)
 
 void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transform)
 {
+    Point offset;
+    if (!params->update(transform, offset)) return;
+
     if (!params->rd) params->rd = tvg::malloc<SwDropShadow>(sizeof(SwDropShadow));
     auto rd = static_cast<SwDropShadow*>(params->rd);
 
-    //compute box kernel sizes
-    auto scale = sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    rd->extends = _gaussianInit(rd, std::pow(params->sigma * scale, 2), params->quality);
+    // The sum of the box radii covers the full blur support.
+    auto scaleSquared = transform.e11 * transform.e11 + transform.e12 * transform.e12;
+    rd->extends = _gaussianInit(rd, params->sigma * params->sigma * scaleSquared, params->quality);
 
-    //invalid
-    if (params->color[3] == 0) {
-        params->valid = false;
-        return;
-    }
-
-    //offset
-    auto radian = tvg::deg2rad(90.0f - params->angle) - tvg::radian(transform);
-    rd->offset = {(int32_t)((params->distance * scale) * cosf(radian)), (int32_t)(-1.0f * (params->distance * scale) * sinf(radian))};
-
-    params->valid = true;
+    rd->offset = {(int32_t)offset.x, (int32_t)offset.y};
 }
 
 

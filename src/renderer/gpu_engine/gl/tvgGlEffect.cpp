@@ -34,15 +34,15 @@
 
 struct GlGaussianBlur
 {
-    float sigma{};
-    float scale{};
-    float extend{};
-    float quality{};
+    float sigma;
+    float scale;
+    float extend;
+    float quality;
 };
 
 static float _blurQuality(uint8_t quality, float extend)
 {
-    float step = 1.0f;
+    auto step = 1.0f;
     if (quality <= 33) step = 3.0f;
     else if (quality <= 66) step = 2.0f;
     return std::min(step, float(std::max(int(extend), 1)));
@@ -65,14 +65,18 @@ bool GlEffect::region(RenderEffectGaussianBlur* effect)
 
 void GlEffect::update(RenderEffectGaussianBlur* effect, const Matrix& transform)
 {
-    GlGaussianBlur* blur = (GlGaussianBlur*)effect->rd;
+    const auto scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
+    const auto extend = 2 * effect->sigma * scale;
+    effect->valid = !tvg::zero(extend);
+    if (!effect->valid) return;
+
+    auto blur = (GlGaussianBlur*)effect->rd;
     if (!blur) blur = tvg::malloc<GlGaussianBlur>(sizeof(GlGaussianBlur));
     blur->sigma = effect->sigma;
-    blur->scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    blur->extend = 2 * blur->sigma * blur->scale;
+    blur->scale = scale;
+    blur->extend = extend;
     blur->quality = _blurQuality(effect->quality, blur->extend);
     effect->rd = blur;
-    effect->valid = (blur->extend > 0);
 }
 
 
@@ -135,25 +139,28 @@ bool GlEffect::region(RenderEffectDropShadow* effect)
 
 void GlEffect::update(RenderEffectDropShadow* effect, const Matrix& transform)
 {
+    Point offset;
+    if (!effect->update(transform, offset)) return;
+
     GlDropShadow* dropShadow = (GlDropShadow*)effect->rd;
     if (!dropShadow) dropShadow = tvg::malloc<GlDropShadow>(sizeof(GlDropShadow));
     const auto scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const auto radian = tvg::deg2rad(90.0f - effect->angle) - tvg::radian(transform);
-    const Point offset = {-effect->distance * cosf(radian) * scale, -effect->distance * sinf(radian) * scale};
 
     dropShadow->sigma = effect->sigma;
     dropShadow->scale = scale;
-    dropShadow->color[3] = effect->color[3] / 255.0f;
+
     //Drop shadow effect applies blending in the shader (GL_BLEND disabled), so the color should be premultiplied:
+    dropShadow->color[3] = effect->color[3] / 255.0f;
     dropShadow->color[0] = effect->color[0] / 255.0f * dropShadow->color[3];
     dropShadow->color[1] = effect->color[1] / 255.0f * dropShadow->color[3];
     dropShadow->color[2] = effect->color[2] / 255.0f * dropShadow->color[3];
-    dropShadow->offset[0] = offset.x;
+
+    dropShadow->offset[0] = -offset.x;
     dropShadow->offset[1] = offset.y;
     dropShadow->extend = 2 * std::max(effect->sigma * scale + std::abs(offset.x), effect->sigma * scale + std::abs(offset.y));
     dropShadow->quality = _blurQuality(effect->quality, dropShadow->extend);
+
     effect->rd = dropShadow;
-    effect->valid = (dropShadow->extend >= 0);
 }
 
 

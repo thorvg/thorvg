@@ -197,38 +197,35 @@ void WgShaderTypeGradientData::update(const Fill* fill)
 
 bool WgShaderTypeEffectParams::update(RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
-    assert(gaussian);
     params[0] = gaussian->sigma;
     params[1] = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    params[2] = 2 * gaussian->sigma * params[1];
-    extend = params[2] * 2; // kernel
-    gaussian->valid = (extend > 0);
+    params[2] = 2.0f * gaussian->sigma * params[1];
+    extend = params[2] * 2.0f; // kernel
+    gaussian->valid = !tvg::zero(extend);
     return gaussian->valid;
 }
 
 
 bool WgShaderTypeEffectParams::update(RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
-    assert(dropShadow);
+    if (!dropShadow->update(transform, offset)) return false;
+
     const auto scale = std::sqrt(transform.e11 * transform.e11 + transform.e12 * transform.e12);
-    const auto kernel = 2 * dropShadow->sigma * scale;
-    const auto radian = tvg::deg2rad(90.0f - dropShadow->angle) - tvg::radian(transform);
-    const Point offset = {dropShadow->distance * cosf(radian) * scale, -dropShadow->distance * sinf(radian) * scale};
+    extend = 2 * std::max(dropShadow->sigma * scale + std::abs(offset.x), dropShadow->sigma * scale + std::abs(offset.y));
+
     params[0] = dropShadow->sigma;
     params[1] = scale;
-    params[2] = kernel;
+    params[2] = 2 * dropShadow->sigma * scale;
     params[3] = 0.0f;
     params[7] = dropShadow->color[3] / 255.0f; // alpha
+
     //Color is premultiplied to avoid multiplication in the fragment shader:
     params[4] = dropShadow->color[0] / 255.0f * params[7]; // red
     params[5] = dropShadow->color[1] / 255.0f * params[7]; // green
     params[6] = dropShadow->color[2] / 255.0f * params[7]; // blue
     params[8] = offset.x;
     params[9] = offset.y;
-    extend = 2 * std::max(dropShadow->sigma * scale + std::abs(offset.x), dropShadow->sigma * scale + std::abs(offset.y));
-
-    dropShadow->valid = (extend >= 0);
-    return dropShadow->valid;
+    return true;
 }
 
 
