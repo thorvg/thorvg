@@ -23,7 +23,6 @@
 #ifndef _TVG_WG_RENDER_DATA_H_
 #define _TVG_WG_RENDER_DATA_H_
 
-#include "tvgWgPipelines.h"
 #include "tvgWgMesh.h"
 #include "tvgWgShaderTypes.h"
 
@@ -72,29 +71,25 @@ struct WgRenderSettings
 
 struct WgPaint
 {
-    BBox aabb{};
     RenderRegion viewport;
     Array<WgPaint*> clips;
     Matrix transform;
 
     virtual ~WgPaint(){};
     virtual void release(WgContext& context) = 0;
+    virtual RenderRegion region() = 0;
     virtual Type type() { return Type::Undefined; };
-
-    void update(const Array<RenderData>& clips);
+    void assign(const Array<RenderData>& clips);
 };
 
 struct WgShape : WgPaint
 {
-    using WgPaint::update;
-
     struct
     {
         WgRenderSettings setting;
         WgSolidFill solid;
         WgMesh mesh;
-        WgMesh bbox;
-        BBox bounds;
+        BBox bbox;
     } shape;
 
     struct
@@ -102,43 +97,51 @@ struct WgShape : WgPaint
         WgRenderSettings setting;
         WgSolidFill solid;
         WgMesh mesh;
-        WgMesh bbox;
-        BBox bounds;
+        WgMesh bboxMesh;
+        BBox bbox;
     } stroke;
 
-    WgMesh meshBBox;
-    FillRule fillRule;
+    WgMesh bboxMesh;
     BBox bbox;
     uint32_t strokeViewMatIdx;
+    FillRule fillRule;
     bool convex;
     bool strokeFirst;
 
-    void updateBBox(const BBox& bb);
-    void updateAABB() { aabb = bbox; }
+    void expand(const BBox& bb);
     void update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity);
     void update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag);
     void reset();
     void release(WgContext& context) override;
+
+    RenderRegion region() override
+    {
+        auto& min = bbox.min;
+        auto& max = bbox.max;
+        return {{int32_t(nearbyint(min.x)), int32_t(nearbyint(min.y))}, {int32_t(nearbyint(max.x)), int32_t(nearbyint(max.y))}};
+    }
+
     Type type() override { return Type::Shape; };
 };
 
 struct WgImage : WgPaint
 {
-    using WgPaint::update;
-
-    WgRenderSettings renderSettings;
-    WGPUTexture imageTexture{};
-    WGPUBindGroup imageBindGroup{};
-    const RenderSurface* imageSource = nullptr;
-    FilterMethod imageFilter = FilterMethod::Bilinear;
-    uint16_t imageStamp = 0;
-    WgMesh meshData;
+    const RenderSurface* surface{};
+    WgRenderSettings setting;
+    WGPUTexture texture{};
+    WGPUBindGroup bindGroup{};
+    WgMesh mesh;
+    uint16_t stamp = 0;
+    FilterMethod filter = FilterMethod::Bilinear;
 
     void update(const RenderSurface* surface, const Matrix& transform);
     void setup(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp);
     void release(WgTextureMgr& textures, WgContext& context);
     void reset();
     void release(WgContext& context) override;
+
+    // TODO: return an elaborate bbox
+    RenderRegion region() override { return viewport; }
     Type type() override { return Type::Picture; };
 };
 

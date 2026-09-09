@@ -78,7 +78,7 @@ struct WgIntersector
         ARRAY_FOREACH(c, clips) {
             auto clip = static_cast<const WgShape*>(*c);
             const auto& mesh = clip->shape.mesh;
-            if (!clip->shape.bounds.inside(pt) || !gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count)) return false;
+            if (!clip->shape.bbox.inside(pt) || !gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count)) return false;
         }
         return true;
     }
@@ -99,11 +99,11 @@ struct WgIntersector
             for (int32_t x = 0; x < sizeX; x++) {
                 Point pt{(float)x + region.min.x, (float)py + region.min.y};
                 const auto& mesh = shape->shape.mesh;
-                auto hit = validFill ? shape->shape.bounds.inside(pt) && gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count) : false;
+                auto hit = validFill ? shape->shape.bbox.inside(pt) && gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count) : false;
                 if (!hit && validStroke) {
                     auto p = pt * itransform;
                     const auto& mesh = shape->stroke.mesh;
-                    hit = shape->stroke.bounds.inside(p) && gpuPointInAnyMesh(p, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count);
+                    hit = shape->stroke.bbox.inside(p) && gpuPointInAnyMesh(p, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count);
                 }
                 if (hit && intersect(shape->clips, pt)) return true;
             }
@@ -113,9 +113,9 @@ struct WgIntersector
 
     bool intersect(const WgImage* image, const RenderRegion& region)
     {
-        if (image->meshData.ibuffer.count < 6) return false;
+        if (image->mesh.ibuffer.count < 6) return false;
 
-        const auto& mesh = image->meshData;
+        const auto& mesh = image->mesh;
         Point triangle[6];
         for (uint32_t i = 0; i < 6; ++i) {
             triangle[i] = mesh.vbuffer[mesh.ibuffer[i]];
@@ -257,10 +257,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->update(rshape, transform, flags);
 
     // update transform
-    if (flags & RenderUpdateFlag::Transform) {
-        shape->transform = transform;
-        shape->updateAABB();
-    }
+    if (flags & RenderUpdateFlag::Transform) shape->transform = transform;
 
     // update paint settings
     shape->update(rshape, vport, shape->shape.setting.update(mTargetSurface.cs, opacity), shape->stroke.setting.update(mTargetSurface.cs, opacity), opacity);
@@ -284,7 +281,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
         }
     }
 
-    if (flags & RenderUpdateFlag::Clip) shape->update(clips);
+    if (flags & RenderUpdateFlag::Clip) shape->assign(clips);
 
     return shape;
 }
@@ -297,21 +294,21 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     // update paint settings
     image->viewport = vport;
     image->transform = transform;
-    image->renderSettings.update(surface->cs, opacity);
+    image->setting.update(surface->cs, opacity);
 
     if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Image)) image->update(surface, transform);
 
     // reload texture
-    auto cacheStale = !image->imageTexture || (image->imageStamp != mTextures.stamp);
+    auto cacheStale = !image->texture || (image->stamp != mTextures.stamp);
     auto refreshTex = (flags & RenderUpdateFlag::Image);
-    auto update = cacheStale ||  refreshTex || (image->imageSource != surface) || (image->imageFilter != filter);
+    auto update = cacheStale || refreshTex || (image->surface != surface) || (image->filter != filter);
     if (update) {
         image->release(mTextures, mContext);
         auto* entry = mTextures.retain(mContext, surface, filter, refreshTex);
         image->setup(entry->texture, entry->bindGroup, surface, filter, mTextures.stamp);
     }
 
-    if (flags & RenderUpdateFlag::Clip) image->update(clips);
+    if (flags & RenderUpdateFlag::Clip) image->assign(clips);
 
     return image;
 }
@@ -408,26 +405,21 @@ void WgRenderer::dispose(RenderData data) {
 bool WgRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 {
     if (data) {
-        auto rdataPaint = (WgPaint*)data;
-        if (rdataPaint->type() == Type::Shape) {
-            auto rdata = (WgShape*)data;
-            if (rdata->stroke.setting.valid) {
-                tvg::BBox bbox;
-                bbox.init();
-                auto& vertexes = rdata->stroke.mesh.vbuffer;
-
-                for (uint32_t i = 0; i < vertexes.count; i++) {
-                    Point vert = vertexes[i] * m;
-                    bbox.min = min(bbox.min, vert);
-                    bbox.max = max(bbox.max, vert);
-                }
-
-                pt4[0] = bbox.min;
-                pt4[1] = {bbox.max.x, bbox.min.y};
-                pt4[2] = bbox.max;
-                pt4[3] = {bbox.min.x, bbox.max.y};
-                return true;
+        auto shape = static_cast<WgShape*>(data);
+        if (shape->stroke.setting.valid) {
+            tvg::BBox bbox;
+            bbox.init();
+            auto& vertexes = shape->stroke.mesh.vbuffer;
+            for (uint32_t i = 0; i < vertexes.count; i++) {
+                auto pt = vertexes[i] * m;
+                bbox.min = min(bbox.min, pt);
+                bbox.max = max(bbox.max, pt);
             }
+            pt4[0] = bbox.min;
+            pt4[1] = {bbox.max.x, bbox.min.y};
+            pt4[2] = bbox.max;
+            pt4[3] = {bbox.min.x, bbox.max.y};
+            return true;
         }
     }
     return false;
@@ -435,21 +427,12 @@ bool WgRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 
 RenderRegion WgRenderer::region(RenderData data)
 {
-    if (!data) return {};
-    auto rdata = (WgPaint*)data;
-    if (rdata->type() == Type::Shape) {
-        auto& v1 = rdata->aabb.min;
-        auto& v2 = rdata->aabb.max;
-        return {{int32_t(nearbyint(v1.x)), int32_t(nearbyint(v1.y))}, {int32_t(nearbyint(v2.x)), int32_t(nearbyint(v2.y))}};
-    }
-    return {{0, 0}, {(int32_t)mTargetSurface.w, (int32_t)mTargetSurface.h}};
+    return data ? static_cast<WgPaint*>(data)->region() : RenderRegion{};
 }
-
 
 bool WgRenderer::blend(BlendMethod method)
 {
     mBlendMethod = (method == BlendMethod::Composition ? BlendMethod::Normal : method);
-
     return true;
 }
 
@@ -736,9 +719,8 @@ bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
     if (!data) return false;
     auto shape = (WgShape*)data;
     RenderRegion bbox = {
-        {(int32_t)shape->aabb.min.x, (int32_t)shape->aabb.min.y},
-        {(int32_t)shape->aabb.max.x, (int32_t)shape->aabb.max.y}
-    };
+        {(int32_t)shape->bbox.min.x, (int32_t)shape->bbox.min.y},
+        {(int32_t)shape->bbox.max.x, (int32_t)shape->bbox.max.y}};
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
         WgIntersector intersector;
