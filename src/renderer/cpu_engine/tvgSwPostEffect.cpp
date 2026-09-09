@@ -33,6 +33,8 @@ struct SwGaussianBlur
     int level;
     int kernel[MAX_LEVEL];
     int extends;
+    int downsample;
+    int reducedKernel[MAX_LEVEL];
 };
 
 
@@ -160,9 +162,78 @@ void effectGaussianBlurUpdate(RenderEffectGaussianBlur* params, const Matrix& tr
 
     //compute box kernel sizes
     auto scaleSquared = transform.e11 * transform.e11 + transform.e12 * transform.e12;
-    rd->extends = _gaussianInit(rd, params->sigma * params->sigma * scaleSquared, params->quality);
+    auto variance = params->sigma * params->sigma * scaleSquared;
+    rd->extends = _gaussianInit(rd, variance, params->quality);
+    rd->downsample = 1;
+    if (params->direction == 0 && variance >= 256.0f) {
+        rd->downsample = (variance >= 1024.0f) ? 4 : 2;
+        SwGaussianBlur reduced;
+        auto extra = _gaussianInit(&reduced, variance / (rd->downsample * rd->downsample), params->quality);
+        for (int i = 0; i < rd->level; ++i) rd->reducedKernel[i] = reduced.kernel[i];
+        //Include the resampling footprint as well as the reduced box support.
+        rd->extends = std::max(rd->extends, (extra + 1) * rd->downsample);
+    }
 
     params->valid = (rd->extends > 0);
+}
+
+
+template<int sample>
+static void _gaussianDownsample(uint32_t* dst, const uint32_t* src, int stride, int w, int h, int reducedStride)
+{
+    auto rw = (w + sample - 1) / sample;
+    auto rh = (h + sample - 1) / sample;
+    for (int y = 0; y < rh; ++y) {
+        for (int x = 0; x < rw; ++x) {
+            uint32_t acc[4] = {};
+            for (int yy = 0; yy < sample; ++yy) {
+                auto row = src + std::min(y * sample + yy, h - 1) * stride;
+                for (int xx = 0; xx < sample; ++xx) {
+                    auto pixel = row[std::min(x * sample + xx, w - 1)];
+                    for (int c = 0; c < 4; ++c) acc[c] += (pixel >> (c * 8)) & 255;
+                }
+            }
+            uint32_t pixel = 0;
+            auto count = sample * sample;
+            for (int c = 0; c < 4; ++c) pixel |= ((acc[c] + count / 2) / count) << (c * 8);
+            dst[y * reducedStride + x] = pixel;
+        }
+    }
+}
+
+
+template<int sample>
+static void _gaussianUpsample(uint32_t* dst, const uint32_t* src, int stride, int w, int h, int reducedStride)
+{
+    auto rw = (w + sample - 1) / sample;
+    auto rh = (h + sample - 1) / sample;
+    auto unit = 2 * sample;
+    auto divisor = unit * unit;
+    for (int y = 0; y < h; ++y) {
+        //Map pixel centers to the uniform, edge-extended downsampling grid.
+        auto sy = std::max(0, 2 * y + 1 - sample);
+        auto y0 = std::min(sy / unit, rh - 1);
+        auto y1 = std::min(y0 + 1, rh - 1);
+        auto fy = sy % unit;
+        for (int x = 0; x < w; ++x) {
+            auto sx = std::max(0, 2 * x + 1 - sample);
+            auto x0 = std::min(sx / unit, rw - 1);
+            auto x1 = std::min(x0 + 1, rw - 1);
+            auto fx = sx % unit;
+            auto a = src[y0 * reducedStride + x0];
+            auto b = src[y0 * reducedStride + x1];
+            auto c = src[y1 * reducedStride + x0];
+            auto d = src[y1 * reducedStride + x1];
+            uint32_t pixel = 0;
+            for (int channel = 0; channel < 4; ++channel) {
+                auto shift = channel * 8;
+                auto top = ((a >> shift) & 255) * (unit - fx) + ((b >> shift) & 255) * fx;
+                auto bottom = ((c >> shift) & 255) * (unit - fx) + ((d >> shift) & 255) * fx;
+                pixel |= ((top * (unit - fy) + bottom * fy + divisor / 2) / divisor) << shift;
+            }
+            dst[y * stride + x] = pixel;
+        }
+    }
 }
 
 
@@ -177,6 +248,37 @@ bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffec
     auto front = cmp->image.buf32;
     auto back = buffer.buf32;
     auto swapped = false;
+
+    if (data->downsample > 1 && w >= 4 && h >= 4) {
+        auto sample = data->downsample;
+        auto rw = (w + sample - 1) / sample;
+        auto rh = (h + sample - 1) / sample;
+        auto reducedStride = std::max(rw, rh);
+        auto size = size_t(reducedStride) * reducedStride;
+        //Keep both reduced ping-pong images in the existing scratch surface.
+        if (2 * size <= size_t(buffer.stride) * buffer.h) {
+            auto a = back;
+            auto b = back + size;
+            auto origin = front + bbox.min.y * stride + bbox.min.x;
+            RenderRegion reduced = {{0, 0}, {rw, rh}};
+            if (sample == 2) _gaussianDownsample<2>(a, origin, stride, w, h, reducedStride);
+            else _gaussianDownsample<4>(a, origin, stride, w, h, reducedStride);
+            for (int i = 0; i < data->level; ++i) {
+                _gaussianFilter(reinterpret_cast<uint8_t*>(b), reinterpret_cast<uint8_t*>(a), reducedStride, rw, rh, reduced, data->reducedKernel[i], false);
+                std::swap(a, b);
+            }
+            rasterXYFlip(a, b, reducedStride, rw, rh, reduced, false);
+            std::swap(a, b);
+            for (int i = 0; i < data->level; ++i) {
+                _gaussianFilter(reinterpret_cast<uint8_t*>(b), reinterpret_cast<uint8_t*>(a), reducedStride, rh, rw, reduced, data->reducedKernel[i], true);
+                std::swap(a, b);
+            }
+            rasterXYFlip(a, b, reducedStride, rh, rw, reduced, true);
+            if (sample == 2) _gaussianUpsample<2>(origin, b, stride, w, h, reducedStride);
+            else _gaussianUpsample<4>(origin, b, stride, w, h, reducedStride);
+            return true;
+        }
+    }
 
     TVGLOG("SW_ENGINE", "GaussianFilter region(%d, %d, %d, %d) params(%f %d %d), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->sigma, params->direction, params->border, data->level);
 
