@@ -1490,6 +1490,12 @@ static bool _boolean(MaskMethod method)
 }
 
 
+static bool _foldable(LottieMask* mask, MaskMethod method, uint8_t opacity)
+{
+    return _boolean(method) && opacity == 255 && mask->opacity.frameCnt() == 1;
+}
+
+
 static void _assign(RenderPath& out, RenderPath& in)
 {
     out.clear();
@@ -1511,6 +1517,7 @@ static void _combine(RenderPath& acc, RenderPath& rhs, PathOp op)
 
     RenderPath out;
     if (tvg::pathop(acc, rhs, out, op)) _assign(acc, out);
+
     //a union of two non-empty paths is never empty, the operation just gave up
     else if (op == PathOp::Union) {
         acc.cmds.push(rhs.cmds);
@@ -1564,7 +1571,6 @@ void LottieBuilder::updateMasks(LottieComposition* comp, LottieLayer* layer, flo
 
     RenderPath acc, cur, plane;
     Shape* pShape = nullptr;
-    uint8_t pOpacity = 0;
     auto folding = false;
     auto seeded = false;
 
@@ -1576,9 +1582,10 @@ void LottieBuilder::updateMasks(LottieComposition* comp, LottieLayer* layer, flo
         auto opacity = mask->opacity(frameNo);
         auto expand = mask->expand(frameNo);
         auto lead = !pShape;
+        auto foldable = _foldable(mask, method, opacity);
 
-        //a run of masks sharing the opacity folds into a single path, the rest keeps chaining
-        if (lead || pOpacity != opacity || !folding || !_boolean(method)) {
+        //a run of foldable masks collapses into a single path, the rest keeps chaining
+        if (lead || !folding || !foldable) {
             _flush(pShape, acc);
             auto shape = layer->pooling();
             to<ShapeImpl>(shape)->reset();
@@ -1594,8 +1601,7 @@ void LottieBuilder::updateMasks(LottieComposition* comp, LottieLayer* layer, flo
                 pShape->mask(shape, method);
             }
             pShape = shape;
-            pOpacity = opacity;
-            folding = _boolean(method);
+            folding = foldable;
             seeded = false;
         }
 

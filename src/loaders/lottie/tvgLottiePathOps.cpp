@@ -139,6 +139,7 @@ struct Intersection
     Intersection* pair;
 
     Bezier prevCurve, nextCurve;
+    Point at;
     float t;
     bool inside;
     bool crossing = true;   //the two paths actually swap sides here, rather than only touching
@@ -216,6 +217,14 @@ struct Hit
 };
 
 
+//a split the other path's vertex asks for, carrying the vertex it must land on
+struct Cut
+{
+    float t;
+    Point at;
+};
+
+
 struct Workspace
 {
     Pool<Contour, 16> contours;
@@ -223,7 +232,7 @@ struct Workspace
     Pool<Intersection, 128> intersections;
     Array<Root> roots, merged;
     Array<Hit> pending;
-    Array<float> ts;
+    Array<Cut> cuts;
 
     void reset()
     {
@@ -265,6 +274,13 @@ static int32_t _overlapped(const Bezier& lhs, const Bezier& rhs)
     auto same = [](const Point& lhs, const Point& rhs) {
         return length2(lhs - rhs) < PATHOP_TOLERANCE * PATHOP_TOLERANCE;
     };
+    //a line is the same run whatever control points were written for it
+    if (_straight(lhs) && _straight(rhs)) {
+        if (same(lhs.start, rhs.start) && same(lhs.end, rhs.end)) return 1;
+        if (same(lhs.start, rhs.end) && same(lhs.end, rhs.start)) return -1;
+        return 0;
+    }
+
     if (same(lhs.start, rhs.start) && same(lhs.ctrl1, rhs.ctrl1) && same(lhs.ctrl2, rhs.ctrl2) && same(lhs.end, rhs.end)) return 1;
     if (same(lhs.start, rhs.end) && same(lhs.ctrl1, rhs.ctrl2) && same(lhs.ctrl2, rhs.ctrl1) && same(lhs.end, rhs.start)) return -1;
     return 0;
@@ -446,6 +462,9 @@ void Segment::split()
         auto to = cur->next ? cur->next->t : 1.0f;
         cur->prevCurve = curve.sub(from, cur->t);
         cur->nextCurve = curve.sub(cur->t, to);
+        cur->prevCurve.start = cur->prev ? cur->prev->at : curve.start;
+        cur->prevCurve.end = cur->nextCurve.start = cur->at;
+        cur->nextCurve.end = cur->next ? cur->next->at : curve.end;
     }
 }
 
@@ -731,17 +750,19 @@ static void _orient(List<Contour>& path)
 /* Intersection                                                         */
 /************************************************************************/
 
-static void _pair(Workspace& ws, Segment* lhs, float lt, Segment* rhs, float rt)
+static void _pair(Workspace& ws, Segment* lhs, float lt, Segment* rhs, float rt, const Point& at)
 {
     auto a = ws.intersections.alloc();
     auto b = ws.intersections.alloc();
 
     a->segment = lhs;
     a->pair = b;
+    a->at = at;
     a->t = lt;
 
     b->segment = rhs;
     b->pair = a;
+    b->at = at;
     b->t = rt;
 
     lhs->intersections.back(a);
@@ -780,30 +801,36 @@ static float _site(Segment* segment, Segment* other)
 }
 
 
-static void _cut(Workspace& ws, Segment* segment, const Array<float>& ts)
+static void _cut(Workspace& ws, Segment* segment, const Array<Cut>& cuts)
 {
     auto& list = segment->parent->segments;
     auto from = 0.0f;
+    const Point* prev = nullptr;
 
-    ARRAY_FOREACH(t, ts) {
+    ARRAY_FOREACH(cut, cuts) {
         auto piece = ws.segments.alloc();
-        piece->curve = segment->curve.sub(from, *t);
+        piece->curve = segment->curve.sub(from, cut->t);
+        //the split only exists to share the other path's vertex, so land on it exactly
+        if (prev) piece->curve.start = *prev;
+        piece->curve.end = cut->at;
         piece->parent = segment->parent;
         list.insert(piece, segment);
-        from = *t;
+        from = cut->t;
+        prev = &cut->at;
     }
     segment->curve = segment->curve.sub(from, 1.0f);
+    if (prev) segment->curve.start = *prev;
 }
 
 
 //puts a vertex on this path wherever the other one has a corner sitting on it
 static void _slice(Workspace& ws, List<Contour>& path, const List<Contour>& other)
 {
-    auto& ts = ws.ts;
+    auto& cuts = ws.cuts;
 
     INLIST_FOREACH(path, contour) {
         INLIST_FOREACH(contour->segments, segment) {
-            ts.clear();
+            cuts.clear();
 
             INLIST_FOREACH(other, oc) {
                 INLIST_FOREACH(oc->segments, os) {
@@ -813,21 +840,21 @@ static void _slice(Workspace& ws, List<Contour>& path, const List<Contour>& othe
                     //kept sorted and free of repeats, the cut walks them in order
                     uint32_t at = 0;
                     auto seen = false;
-                    for (; at < ts.count; ++at) {
-                        if (fabsf(ts[at] - t) < PATHOP_EPSILON) { seen = true; break; }
-                        if (ts[at] > t) break;
+                    for (; at < cuts.count; ++at) {
+                        if (fabsf(cuts[at].t - t) < PATHOP_EPSILON) { seen = true; break; }
+                        if (cuts[at].t > t) break;
                     }
                     if (seen) continue;
 
-                    ts.push(t);
-                    for (auto i = ts.count - 1; i > at; --i) {
-                        auto swap = ts[i];
-                        ts[i] = ts[i - 1];
-                        ts[i - 1] = swap;
+                    cuts.push({t, os->curve.start});
+                    for (auto i = cuts.count - 1; i > at; --i) {
+                        auto swap = cuts[i];
+                        cuts[i] = cuts[i - 1];
+                        cuts[i - 1] = swap;
                     }
                 }
             }
-            if (!ts.empty()) _cut(ws, segment, ts);
+            if (!cuts.empty()) _cut(ws, segment, cuts);
         }
     }
 }
@@ -917,7 +944,7 @@ static uint32_t _intersect(Workspace& ws, List<Contour>& lhs, List<Contour>& rhs
 
     ARRAY_FOREACH(hit, pending) {
         if (hit->lhs->coincident || hit->rhs->coincident) continue;
-        _pair(ws, hit->lhs, hit->t, hit->rhs, hit->u);
+        _pair(ws, hit->lhs, hit->t, hit->rhs, hit->u, (hit->lhs->curve.at(hit->t) + hit->rhs->curve.at(hit->u)) * 0.5f);
         ++cnt;
     }
 
@@ -976,7 +1003,7 @@ static uint32_t _bridge(Workspace& ws, List<Contour>& lhs)
 
                 if (!ours || !theirs) continue;
                 if (_noded(ours) || _noded(theirs)) continue;
-                _pair(ws, ours, ourT, theirs, theirT);
+                _pair(ws, ours, ourT, theirs, theirT, at);
                 ++cnt;
             }
         }
@@ -991,7 +1018,7 @@ static Point _ahead(const Intersection* hit)
     auto cur = hit;
 
     do {
-        auto& piece = cur->nextCurve;
+        auto piece = cur->segment->curve.sub(cur->t, cur->next ? cur->next->t : 1.0f);
         if (length2(piece.end - piece.start) > PATHOP_TOLERANCE * PATHOP_TOLERANCE) return piece.at(0.5f);
 
         auto next = cur->next;
@@ -1003,7 +1030,7 @@ static Point _ahead(const Intersection* hit)
         cur = next;
     } while (cur != hit);
 
-    return cur->nextCurve.at(0.5f);
+    return cur->segment->curve.sub(cur->t, cur->next ? cur->next->t : 1.0f).at(0.5f);
 }
 
 
@@ -1141,7 +1168,7 @@ static void _merge(List<Contour>& lhs, List<Contour>& rhs, PathOp op, RenderPath
                 INLIST_FOREACH(segment->intersections, head) {
                     if (head->visited || head->inside != entry) continue;
 
-                    out.moveTo(head->segment->curve.at(head->t));
+                    out.moveTo(head->at);
 
                     auto cur = head;
                     auto forward = true;
