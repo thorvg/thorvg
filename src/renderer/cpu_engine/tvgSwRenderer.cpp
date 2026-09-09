@@ -554,8 +554,7 @@ bool SwRenderer::blend(BlendMethod method)
 
 RenderRegion SwRenderer::region(RenderData data)
 {
-    if (data) return static_cast<SwTask*>(data)->bounds();
-    return {};
+    return data ? static_cast<SwTask*>(data)->bounds() : RenderRegion{};
 }
 
 

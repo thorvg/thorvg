@@ -32,17 +32,17 @@ static bool eligible(const WgShape* rdata, BlendMethod blendMethod, RenderRegion
     if (fillType != WgRenderSettingsType::Solid && fillType != WgRenderSettingsType::Linear && fillType != WgRenderSettingsType::Radial) return false;
 
     if (rdata->convex || rdata->viewport.invalid() || !rdata->clips.empty()) return false;
-    if (rdata->shape.mesh.vbuffer.empty() || rdata->shape.mesh.ibuffer.empty() || rdata->meshBBox.vbuffer.empty() || rdata->meshBBox.ibuffer.empty()) return false;
+    if (rdata->shape.mesh.vbuffer.empty() || rdata->shape.mesh.ibuffer.empty() || rdata->bboxMesh.vbuffer.empty() || rdata->bboxMesh.ibuffer.empty()) return false;
     if (rdata->stroke.setting.valid && !rdata->stroke.mesh.ibuffer.empty()) return false;
 
     // Clip finite geometry bounds to the viewport before rounding to the integer overlap region.
-    const auto& aabb = rdata->aabb;
-    if (!std::isfinite(aabb.min.x) || !std::isfinite(aabb.min.y) || !std::isfinite(aabb.max.x) || !std::isfinite(aabb.max.y)) return false;
+    const auto& bbox = rdata->bbox;
+    if (!std::isfinite(bbox.min.x) || !std::isfinite(bbox.min.y) || !std::isfinite(bbox.max.x) || !std::isfinite(bbox.max.y)) return false;
 
-    const auto minX = tvg::clamp(static_cast<double>(aabb.min.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
-    const auto minY = tvg::clamp(static_cast<double>(aabb.min.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
-    const auto maxX = tvg::clamp(static_cast<double>(aabb.max.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
-    const auto maxY = tvg::clamp(static_cast<double>(aabb.max.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
+    const auto minX = tvg::clamp(static_cast<double>(bbox.min.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
+    const auto minY = tvg::clamp(static_cast<double>(bbox.min.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
+    const auto maxX = tvg::clamp(static_cast<double>(bbox.max.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
+    const auto maxY = tvg::clamp(static_cast<double>(bbox.max.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
     if (maxX <= minX || maxY <= minY) return false;
 
     bounds = {{static_cast<int32_t>(std::floor(minX)), static_cast<int32_t>(std::floor(minY))}, {static_cast<int32_t>(std::ceil(maxX)), static_cast<int32_t>(std::ceil(maxY))}};

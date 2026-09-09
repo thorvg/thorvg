@@ -94,10 +94,9 @@ void WgRenderSettings::release(WgContext& context)
 // WgPaint
 //***********************************************************************
 
-void WgPaint::update(const Array<RenderData>& clips)
+void WgPaint::assign(const Array<RenderData>& clips)
 {
-    this->clips.clear();
-    // RenderData == WgPaint*, just copy it.
+    // trick: RenderData == WgPaint*, just copy it.
     this->clips = *((Array<WgPaint*>*)&clips);
 }
 
@@ -105,10 +104,10 @@ void WgPaint::update(const Array<RenderData>& clips)
 // WgShape
 //***********************************************************************
 
-void WgShape::updateBBox(const BBox& bb)
+void WgShape::expand(const BBox& bbox)
 {
-    bbox.min = tvg::min(bbox.min, bb.min);
-    bbox.max = tvg::max(bbox.max, bb.max);
+    this->bbox.min = tvg::min(this->bbox.min, bbox.min);
+    this->bbox.max = tvg::max(this->bbox.max, bbox.max);
 }
 
 void WgShape::update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity)
@@ -179,9 +178,8 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
             if (shape.mesh.ibuffer.empty()) {
                 shape.mesh.clear();
             } else {
-                shape.bounds = bbox;
-                shape.bbox.bbox(bbox.min, bbox.max);
-                updateBBox(bbox);
+                shape.bbox = bbox;
+                expand(bbox);
             }
         }
     }
@@ -204,31 +202,28 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
                 stroke.mesh.clear();
             } else {
                 auto bbox = stroker.getBBox();
-                stroke.bounds = bbox;
-                stroke.bbox.bbox(bbox.min, bbox.max);
+                stroke.bbox = bbox;
+                stroke.bboxMesh.bbox(bbox.min, bbox.max);
                 auto strokeBounds = gpuTransformBounds(stroker.bounds(), transform);
-                updateBBox({{(float)strokeBounds.min.x, (float)strokeBounds.min.y}, {(float)strokeBounds.max.x, (float)strokeBounds.max.y}});
+                expand({{(float)strokeBounds.min.x, (float)strokeBounds.min.y}, {(float)strokeBounds.max.x, (float)strokeBounds.max.y}});
             }
         }
     }
     // update shapes bbox (with empty path handling)
-    if (!shape.mesh.vbuffer.empty() || !stroke.mesh.vbuffer.empty()) updateAABB();
-    else bbox = aabb = {{0, 0}, {0, 0}};
-    meshBBox.bbox(bbox.min, bbox.max);
+    if (shape.mesh.vbuffer.empty() && stroke.mesh.vbuffer.empty()) bbox = {{0, 0}, {0, 0}};
+    bboxMesh.bbox(bbox.min, bbox.max);
 }
 
 void WgShape::reset()
 {
     clips.clear();
     stroke.mesh.clear();
-    stroke.bbox.clear();
-    stroke.bounds.init();
+    stroke.bboxMesh.clear();
+    stroke.bbox.init();
     shape.mesh.clear();
-    shape.bbox.clear();
-    shape.bounds.init();
-    meshBBox.clear();
+    shape.bbox.init();
+    bboxMesh.clear();
     bbox.init();
-    aabb.init();
 }
 
 void WgShape::release(WgContext& context)
@@ -244,37 +239,37 @@ void WgShape::release(WgContext& context)
 
 void WgImage::update(const RenderSurface* surface, const Matrix& transform)
 {
-    meshData.imageBox(surface->w, surface->h, transform);
+    mesh.imageBox(surface->w, surface->h, transform);
 }
 
 void WgImage::setup(WGPUTexture texture, WGPUBindGroup bindGroup, const RenderSurface* surface, FilterMethod filter, uint16_t stamp)
 {
-    imageTexture = texture;
-    imageBindGroup = bindGroup;
-    imageSource = texture ? surface : nullptr;
-    imageFilter = filter;
-    imageStamp = texture ? stamp : 0;
+    this->texture = texture;
+    this->bindGroup = bindGroup;
+    this->surface = texture ? surface : nullptr;
+    this->filter = filter;
+    this->stamp = texture ? stamp : 0;
 }
 
 void WgImage::release(WgTextureMgr& textures, WgContext& context)
 {
-    if (imageTexture && imageStamp == textures.stamp) textures.release(context, imageSource, imageFilter, imageTexture);
+    if (texture && stamp == textures.stamp) textures.release(context, surface, filter, texture);
     reset();
 }
 
 void WgImage::reset()
 {
-    imageTexture = nullptr;
-    imageBindGroup = nullptr;
-    imageSource = nullptr;
-    imageFilter = FilterMethod::Bilinear;
-    imageStamp = 0;
+    this->texture = nullptr;
+    this->bindGroup = nullptr;
+    this->surface = nullptr;
+    this->filter = FilterMethod::Bilinear;
+    this->stamp = 0;
 }
 
 void WgImage::release(WgContext& context)
 {
     clips.clear();
-    renderSettings.release(context);
+    setting.release(context);
     reset();
 }
 
@@ -423,15 +418,14 @@ void WgStageBufferGeometry::append(WgMesh* meshData)
 void WgStageBufferGeometry::append(WgShape* renderShape)
 {
     append(&renderShape->shape.mesh);
-    append(&renderShape->shape.bbox);
     append(&renderShape->stroke.mesh);
-    append(&renderShape->stroke.bbox);
-    append(&renderShape->meshBBox);
+    append(&renderShape->stroke.bboxMesh);
+    append(&renderShape->bboxMesh);
 }
 
 void WgStageBufferGeometry::append(WgImage* renderPicture)
 {
-    append(&renderPicture->meshData);
+    append(&renderPicture->mesh);
 }
 
 void WgStageBufferGeometry::appendSolidBatch(const Array<WgShape*>& renderShapes, WgStageBufferSolidColor& colors, WgSolidBatchRange& range)
@@ -454,7 +448,7 @@ void WgStageBufferGeometry::appendBatch(const Array<WgShape*>& renderShapes, WgG
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
     ARRAY_FOREACH(p, renderShapes) {
-        const auto& mesh = cover ? (*p)->meshBBox : (*p)->shape.mesh;
+        const auto& mesh = cover ? (*p)->bboxMesh : (*p)->shape.mesh;
         vertexCount += mesh.vbuffer.count;
         indexCount += mesh.ibuffer.count;
     }
@@ -476,7 +470,7 @@ void WgStageBufferGeometry::appendBatch(const Array<WgShape*>& renderShapes, WgG
     auto vertexDst = vbuffer.data + vbuffer.count;
     auto indexDst = ibuffer.data + ibuffer.count;
     ARRAY_FOREACH(p, renderShapes) {
-        const auto& mesh = cover ? (*p)->meshBBox : (*p)->shape.mesh;
+        const auto& mesh = cover ? (*p)->bboxMesh : (*p)->shape.mesh;
         const uint32_t meshVertexBytes = mesh.vbuffer.count * sizeof(Point);
         memcpy(vertexDst, mesh.vbuffer.data, meshVertexBytes);
         vertexDst += meshVertexBytes;

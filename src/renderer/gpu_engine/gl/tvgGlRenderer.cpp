@@ -1064,9 +1064,7 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 
 RenderRegion GlRenderer::region(RenderData data)
 {
-    if (!data) return {};
-    auto paint = static_cast<GlDrawable*>(data);
-    return paint->geometry.bounds();
+    return data ? static_cast<GlDrawable*>(data)->geometry.bounds() : RenderRegion{};
 }
 
 
