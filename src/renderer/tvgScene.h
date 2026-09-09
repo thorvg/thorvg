@@ -179,18 +179,17 @@ struct SceneImpl : Scene
         }
 
         //Extends the render region if post effects require
-        RenderRegion eRegion{};
         if (effects) {
+            RenderRegion eRegion{};
             ARRAY_FOREACH(p, *effects) {
                 auto effect = *p;
                 if (effect->valid && impl.renderer->region(effect)) eRegion.add(effect->extend);
             }
+            pRegion.min.x += eRegion.min.x;
+            pRegion.min.y += eRegion.min.y;
+            pRegion.max.x += eRegion.max.x;
+            pRegion.max.y += eRegion.max.y;
         }
-
-        pRegion.min.x += eRegion.min.x;
-        pRegion.min.y += eRegion.min.y;
-        pRegion.max.x += eRegion.max.x;
-        pRegion.max.y += eRegion.max.y;
 
         vport = RenderRegion::intersect(vport, pRegion);
         return vport;
