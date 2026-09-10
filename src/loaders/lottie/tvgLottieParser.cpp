@@ -100,34 +100,17 @@ MaskMethod LottieParser::getMaskMethod(bool inversed)
     }
 }
 
-
+// expected: #rrggbb or #rrggbbaa
+// lottie spec does not define an alpha channel, but we handle it defensively.
 RGB32 LottieParser::getColor(const char *str)
 {
-    RGB32 color = {0, 0, 0};
-
-    if (!str) return color;
-
+    if (!str) return {};
     auto len = strlen(str);
-
-    // some resource has empty color string, return a default color for those cases.
-    if (len != 7 || str[0] != '#') return color;
-
-    char tmp[3] = {'\0', '\0', '\0'};
-    tmp[0] = str[1];
-    tmp[1] = str[2];
-    color.r = uint8_t(strtol(tmp, nullptr, 16));
-
-    tmp[0] = str[3];
-    tmp[1] = str[4];
-    color.g = uint8_t(strtol(tmp, nullptr, 16));
-
-    tmp[0] = str[5];
-    tmp[1] = str[6];
-    color.b = uint8_t(strtol(tmp, nullptr, 16));
-
-    return color;
+    if (str[0] == '#') ++str;
+    auto hex = strtoul(str, nullptr, 16);
+    if (len > 7) hex >>= 8;  // ignore the alpha channel
+    return {int32_t((hex >> 16) & 0xff), int32_t((hex >> 8) & 0xff), int32_t(hex & 0xff)};
 }
-
 
 bool LottieParser::getValue(TextDocument& doc)
 {
