@@ -67,4 +67,4 @@ tests = executable('tvgUnitTests',
     cpp_args : test_compiler_flags,
     dependencies : test_dep)
 
-test('Unit Tests', tests, args : ['--success'])
+test('Unit Tests', tests)
