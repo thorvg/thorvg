@@ -21,6 +21,42 @@
  */
 
 
+static inline uint32_t cInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
+{
+    size_t c[4] = {0, 0, 0, 0};
+
+    auto minx = static_cast<int32_t>(sx) - n;
+    if (minx < 0) minx = 0;
+
+    auto maxx = static_cast<int32_t>(sx) + n;
+    if (maxx >= static_cast<int32_t>(w)) maxx = w;
+
+    auto inc = (n / 2) + 1;
+    n = 0;
+
+    auto src = img + minx + miny * stride;
+
+    for (auto y = miny; y < maxy; y += inc) {
+        auto p = src;
+        for (auto x = minx; x < maxx; x += inc, p += inc) {
+            c[0] += A(*p);
+            c[1] += C1(*p);
+            c[2] += C2(*p);
+            c[3] += C3(*p);
+            ++n;
+        }
+        src += (stride * inc);
+    }
+
+    c[0] /= n;
+    c[1] /= n;
+    c[2] /= n;
+    c[3] /= n;
+
+    return (c[0] << 24) | (c[1] << 16) | (c[2] << 8) | c[3];
+}
+
+
 template<typename PIXEL_T>
 static void inline cRasterTranslucentPixels(PIXEL_T* dst, PIXEL_T* src, uint32_t len, uint32_t opacity)
 {
