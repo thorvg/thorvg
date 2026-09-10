@@ -16,9 +16,6 @@ if host_machine.system() == 'windows'
 endif
 
 if cc.get_id() == 'clang-cl'
-    if simd_type == 'avx'
-        compiler_flags += ['/clang:-mavx']
-    endif
     if simd_type == 'neon-arm'
         compiler_flags += ['/clang:-mfpu=neon']
     endif
@@ -35,9 +32,6 @@ if cc.get_id() == 'clang-cl'
                            '/clang:-fno-asynchronous-unwind-tables']
     endif
 elif (cc.get_id() != 'msvc')
-    if simd_type == 'avx'
-        compiler_flags += ['-mavx']
-    endif
     if simd_type == 'neon-arm'
         compiler_flags += ['-mfpu=neon']
     endif
