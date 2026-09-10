@@ -357,6 +357,89 @@ TEST_CASE("Load indexed-color PNG file with transparency", "[tvgPicture]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Reject PNG data with a truncated header", "[tvgPicture]")
+{
+    ifstream file(TEST_DIR "/test.png", ios::in | ios::binary);
+    REQUIRE(file.is_open());
+
+    char header[33];
+    file.read(header, sizeof(header));
+    REQUIRE(file.gcount() == sizeof(header));
+
+    // Incomplete signature, signature only, and the final IHDR CRC byte missing.
+    for (auto size : {7u, 8u, 32u}) {
+        INFO("PNG input size: " << size);
+        vector<char> data(header, header + size);
+        auto picture = Picture::gen();
+        REQUIRE(picture);
+
+        auto result = picture->load(data.data(), size, "png", "", true);
+        Paint::rel(picture);
+        REQUIRE(result == Result::InvalidArguments);
+    }
+}
+
+TEST_CASE("Reject PNG data with invalid headers", "[tvgPicture]")
+{
+    ifstream file(TEST_DIR "/test_png_palette_1bit_trns.png", ios::in | ios::binary | ios::ate);
+    REQUIRE(file.is_open());
+
+    auto size = file.tellg();
+    REQUIRE(size >= 33);
+    vector<char> original(static_cast<size_t>(size));
+    file.seekg(0, ios::beg);
+    file.read(original.data(), size);
+    REQUIRE(file.gcount() == size);
+
+    // Verify the complete source image before changing one header field at a time.
+    auto picture = Picture::gen();
+    REQUIRE(picture);
+    auto result = picture->load(original.data(), original.size(), "png", "", true);
+    Paint::rel(picture);
+    REQUIRE(result == Result::Success);
+
+    struct
+    {
+        const char* name;
+        uint32_t offset;
+        char value;
+    } cases[] = {
+        {"Invalid signature", 0, 0},
+        {"Invalid IHDR length", 11, 12},
+        {"Missing IHDR", 12, 'J'},
+        {"Zero width", 19, 0},
+        {"Zero height", 23, 0},
+        {"Invalid bit depth", 24, 3},
+        {"Invalid color type", 25, 1},
+        {"Invalid compression method", 26, 1},
+        {"Invalid filter method", 27, 1},
+        {"Invalid interlace method", 28, 2}};
+
+    for (auto& test : cases) {
+        INFO(test.name);
+        auto data = original;
+        data[test.offset] = test.value;
+
+        // Keep the IHDR CRC valid so rejection tests the header, not its checksum.
+        uint32_t crc = 0xffffffff;
+        for (uint32_t i = 12; i < 29; ++i) {
+            crc ^= static_cast<uint8_t>(data[i]);
+            for (uint32_t bit = 0; bit < 8; ++bit) {
+                crc = (crc >> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+            }
+        }
+        crc ^= 0xffffffff;
+        for (uint32_t i = 0; i < 4; ++i)
+            data[29 + i] = static_cast<char>(crc >> (24 - 8 * i));
+
+        picture = Picture::gen();
+        REQUIRE(picture);
+        result = picture->load(data.data(), data.size(), "png", "", true);
+        Paint::rel(picture);
+        REQUIRE(result == Result::InvalidArguments);
+    }
+}
+
 #endif
 
 #ifdef THORVG_JPG_LOADER_SUPPORT
