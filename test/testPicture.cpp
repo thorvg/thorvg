@@ -320,6 +320,43 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Load indexed-color PNG file with transparency", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+
+        uint32_t buffer[3 * 2] = {};
+        REQUIRE(canvas->target(buffer, 3, 3, 2, ColorSpace::ARGB8888) == Result::Success);
+
+        auto picture = Picture::gen();
+        REQUIRE(picture);
+
+        REQUIRE(picture->load(TEST_DIR "/test_png_palette_1bit_trns.png") == Result::Success);
+
+        float w, h;
+        REQUIRE(picture->size(&w, &h) == Result::Success);
+        REQUIRE(w == 3);
+        REQUIRE(h == 2);
+
+        REQUIRE(canvas->add(picture) == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        // First row: blue, transparent, blue
+        REQUIRE(buffer[0] == 0xFF0000FF);
+        REQUIRE(buffer[1] == 0x00000000);
+        REQUIRE(buffer[2] == 0xFF0000FF);
+
+        // Second row: transparent, blue, transparent
+        REQUIRE(buffer[3] == 0x00000000);
+        REQUIRE(buffer[4] == 0xFF0000FF);
+        REQUIRE(buffer[5] == 0x00000000);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
 
 #ifdef THORVG_JPG_LOADER_SUPPORT
