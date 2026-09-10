@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - 2026 ThorVG project. All rights reserved.
+ * Copyright (c) 2026 ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,11 +20,8 @@
  * SOFTWARE.
  */
 
+#include "config.h"
+
 #ifdef THORVG_AVX_VECTOR_SUPPORT
-
-void avxRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len);
-void avxRasterPixel32(uint32_t* dst, uint32_t val, uint32_t offset, int32_t len);
-bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c);
-bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c);
-
+bool avxUsable();
 #endif

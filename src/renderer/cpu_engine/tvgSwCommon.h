@@ -510,6 +510,7 @@ void mpoolInit(uint32_t threads);
 void mpoolTerm();
 SwMpool* mpoolReq();
 
+void rasterInit();
 Result rasterCompositor(SwSurface* surface);
 bool rasterShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, RenderColor& c);
 bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity);
