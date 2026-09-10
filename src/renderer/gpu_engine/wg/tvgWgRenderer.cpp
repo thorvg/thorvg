@@ -465,20 +465,22 @@ bool WgRenderer::sync()
     disposeObjects();
 
     // if texture buffer used
-    WGPUTexture dstTexture = targetTexture;
+    auto dstTexture = targetTexture;
     if (surface) {
         releaseSurfaceTexture();
         wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
         dstTexture = surfaceTexture.texture;
     }
 
-    if (!dstTexture) return false;
+    if (!dstTexture) {
+        TVGERR("WG_ENGINE", "Failed to acquire destination texture.");
+        return false;
+    }
 
     // insure that surface and offscreen target have the same size
-    if ((wgpuTextureGetWidth(dstTexture) == mRenderTargetRoot.width) && 
-        (wgpuTextureGetHeight(dstTexture) == mRenderTargetRoot.height)) {
-        WGPUTextureView dstTextureView = mContext.createTextureView(dstTexture);
-        WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
+    if ((wgpuTextureGetWidth(dstTexture) == mRenderTargetRoot.width) && (wgpuTextureGetHeight(dstTexture) == mRenderTargetRoot.height)) {
+        auto dstTextureView = mContext.createTextureView(dstTexture);
+        auto commandEncoder = mContext.createCommandEncoder();
         // show root offscreen buffer
         mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView, mTargetSurface.premultiplied);
         mContext.submitCommandEncoder(commandEncoder);
