@@ -465,6 +465,7 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
 </p>
 
 ### Other Projects
+- [Aestra](https://www.aestra.studio/), A creative music workstation powered by ThorVG for portable SVG rendering across UI system.
 - [ArcBrush](https://arcbrush.com/) is a free, node-based image editor that leverages ThorVG for high-performance SVG rasterization.
 - [Crank Software](https://www.cranksoftware.com/) integrates ThorVG into Storyboard Engine for SVG rendering in embedded and industrial HMIs.
 - [Evergine](https://evergine.com/) integrates ThorVG through its own ThorVG.Net, bringing vector graphics to its cross-platform graphics engine.
@@ -479,6 +480,7 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
 - [Paragraphic](https://paragraphic.design/), a cross-platform parametric graphic design application using ThorVG for realtime vector graphics rendering.
 - [TinyPiXOS](https://www.tinypixos.com/en/) is a lightweight, open-source Linux OS leveraging ThorVG for GUI rendering.
 - [Vagabond](https://store.steampowered.com/app/1673090/Vagabond/) uses ThorVG for vector graphics rendering in its procedurally generated 2D sandbox RPG.
+- [Wamsoft](https://www.wamsoft.jp/) integrates ThorVG as the vector rendering engine for path-based graphics in its Kirikiri Layer plugin.
 
 Would you like us to showcase your project with ThorVG? Feel free to [open an issue](https://github.com/thorvg/thorvg/issues) or submit a pull request!
 
