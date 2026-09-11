@@ -272,7 +272,7 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto step = (endAngle - startAngle) / (count - 1);
 
-    for (uint32_t i = 1; i < static_cast<uint32_t>(count); i++) {
+    for (uint32_t i = 1; i + 1 < count; i++) {
         auto angle = startAngle + step * i;
         Point out = {center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
         auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
@@ -286,6 +286,10 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
         mRightBottom.x = std::max(mRightBottom.x, out.x);
         mRightBottom.y = std::max(mRightBottom.y, out.y);
     }
+
+    // Keep the shared edge exact so adjacent arcs and segments do not overlap.
+    auto oi = _pushVertex(mBuffer->vertex, curr.x, curr.y);
+    _pushTriangle(mBuffer->index, c, pi, oi);
 }
 
 

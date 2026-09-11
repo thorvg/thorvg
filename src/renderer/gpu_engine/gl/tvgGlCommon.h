@@ -127,6 +127,7 @@ struct GlGeometry
     bool optPathThin : 1;
     bool optPathSkipFill : 1;
     bool convex : 1;
+    bool strokeDirect = false;
 };
 
 struct GlDrawable
