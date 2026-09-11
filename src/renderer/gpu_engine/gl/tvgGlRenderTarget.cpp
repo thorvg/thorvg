@@ -30,28 +30,35 @@ GlRenderTarget::~GlRenderTarget()
     reset();
 }
 
-void GlRenderTarget::init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId)
+void GlRenderTarget::init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId, bool external)
 {
     if (width == 0 || height == 0) return;
 
     this->state = &state;
     this->width = width;
     this->height = height;
+    this->external = external;
+    this->valid = true;
 
-    //TODO: fbo is used. maybe we can consider the direct rendering with resolveId as well.
+    if (external) {
+        fbo = static_cast<GLuint>(resolveId);
+        colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
+        return;
+    }
+
     GL_CHECK(glGenFramebuffers(1, &fbo));
 
     state.bindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     GL_CHECK(glGenRenderbuffers(1, &colorBuffer));
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer));
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, width, height));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, GL_MSAA_SAMPLES, GL_RGBA8, width, height));
 
     GL_CHECK(glGenRenderbuffers(1, &depthStencilBuffer));
 
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, depthStencilBuffer));
 
-    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height));
+    GL_CHECK(glRenderbufferStorageMultisample(GL_RENDERBUFFER, GL_MSAA_SAMPLES, GL_DEPTH24_STENCIL8, width, height));
 
     GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
 
@@ -80,16 +87,22 @@ void GlRenderTarget::init(GlStateCache& state, uint32_t width, uint32_t height, 
 
 void GlRenderTarget::reset()
 {
-    if (fbo == 0) return;
+    if (!valid) return;
 
-    state->bindFramebuffer(GL_FRAMEBUFFER, 0);
-    GL_CHECK(glDeleteFramebuffers(1, &fbo));
-    GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
-    GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
-    GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
-    GL_CHECK(glDeleteTextures(1, &colorTex));
+    if (!external) {
+        state->bindFramebuffer(GL_FRAMEBUFFER, 0);
+        GL_CHECK(glDeleteFramebuffers(1, &fbo));
+        GL_CHECK(glDeleteRenderbuffers(1, &colorBuffer));
+        GL_CHECK(glDeleteRenderbuffers(1, &depthStencilBuffer));
+        GL_CHECK(glDeleteFramebuffers(1, &resolvedFbo));
+        GL_CHECK(glDeleteTextures(1, &colorTex));
+    }
 
     fbo = colorBuffer = depthStencilBuffer = resolvedFbo = colorTex = 0;
+    width = height = 0;
+    viewport = {};
+    valid = false;
+    external = false;
 }
 
 GlRenderTargetPool::GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, GlStateCache& state) :
