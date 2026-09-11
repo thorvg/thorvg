@@ -465,6 +465,7 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
 </p>
 
 ### Other Projects
+- [Aestra](https://www.aestra.studio/), A creative music workstation powered by ThorVG for portable SVG rendering across UI system.
 - [ArcBrush](https://arcbrush.com/) is a free, node-based image editor that leverages ThorVG for high-performance SVG rasterization.
 - [Crank Software](https://www.cranksoftware.com/) integrates ThorVG into Storyboard Engine for SVG rendering in embedded and industrial HMIs.
 - [Evergine](https://evergine.com/) integrates ThorVG through its own ThorVG.Net, bringing vector graphics to its cross-platform graphics engine.
