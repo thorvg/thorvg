@@ -163,6 +163,7 @@ private:
         //global objects, attributes, and methods per local thread instance
         jerry_value_t global;
         jerry_value_t comp;
+        jerry_value_t posterizeTime;
         jerry_value_t thisComp;
         jerry_value_t thisLayer;
         jerry_value_t thisProperty;

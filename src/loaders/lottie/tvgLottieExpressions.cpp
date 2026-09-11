@@ -711,6 +711,41 @@ static jerry_value_t _clamp(const jerry_call_info_t* info, const jerry_value_t a
 }
 
 
+static jerry_value_t _posterizeTime(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
+{
+    auto exp = static_cast<LottieExpression*>(jerry_object_get_native_ptr(info->function, nullptr));
+    auto fps = jerry_value_as_number(args[0]);
+
+    auto global = jerry_current_realm();
+    auto time_val = jerry_object_get_sz(global, EXP_TIME);
+    auto time = jerry_value_as_number(time_val);
+    jerry_value_free(time_val);
+
+    //quantize to fps intervals
+    auto posterized_time = fps ? floor(time * fps) / fps : 0.0f;
+
+    //update time in global context
+    auto new_time = jerry_number(posterized_time);
+    jerry_object_set_sz(global, EXP_TIME, new_time);
+
+    auto thisProperty = jerry_object_get_sz(global, "thisProperty");
+    auto property = static_cast<LottieProperty*>(jerry_object_get_native_ptr(thisProperty, nullptr));
+
+    if (property && exp && exp->comp) {
+        auto frameNo = exp->comp->frameAtTime(posterized_time);
+        auto new_value = _buildValue(frameNo, property);
+        jerry_object_set_sz(global, EXP_VALUE, new_value);
+        jerry_value_free(new_value);
+    }
+
+    jerry_value_free(thisProperty);
+    jerry_value_free(new_time);
+    jerry_value_free(global);
+
+    return jerry_undefined();
+}
+
+
 static jerry_value_t _dot(const jerry_call_info_t* info, const jerry_value_t args[], const jerry_length_t argsCnt)
 {
     return jerry_number(tvg::dot(_point2d(args[0]), _point2d(args[1])));
@@ -1494,6 +1529,10 @@ jerry_value_t LottieExpressions::buildGlobal(Context& context)
     context.comp = jerry_function_external(_comp);
     jerry_object_set_sz(context.global, "comp", context.comp);
 
+    //posterizeTime(fps)
+    context.posterizeTime = jerry_function_external(_posterizeTime);
+    jerry_object_set_sz(context.global, "posterizeTime", context.posterizeTime);
+
     //footage(name)
 
     context.thisComp = jerry_object();
@@ -1507,7 +1546,6 @@ jerry_value_t LottieExpressions::buildGlobal(Context& context)
 
     //fromCompToSurface
     //createPath
-    //posterizeTime(framesPerSecond)
     //value
 
     return context.global;
@@ -1529,6 +1567,9 @@ jerry_value_t LottieExpressions::evaluate(float frameNo, LottieExpression* exp)
 
     //update global context values
     _buildProperty(frameNo, context.global, exp);
+
+    //update posterizeTime
+    jerry_object_set_native_ptr(context.posterizeTime, nullptr, exp);
 
     //this layer
     jerry_object_set_native_ptr(context.thisLayer, nullptr, exp->layer);
@@ -1628,6 +1669,7 @@ void LottieExpressions::clear(Context& context)
     jerry_value_free(context.thisLayer);
     jerry_value_free(context.thisComp);
     jerry_value_free(context.comp);
+    jerry_value_free(context.posterizeTime);
     jerry_value_free(context.global);
     jerry_cleanup();
 }
