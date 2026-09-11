@@ -261,39 +261,13 @@ static uint32_t _interpUpScaler(const uint32_t *img, uint32_t stride, uint32_t w
 
 //2n x 2n Mean Kernel
 //OPTIMIZE_ME: Skip the function pointer access
-static uint32_t _interpDownScaler(const uint32_t *img, uint32_t stride, uint32_t w, uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
+static uint32_t _interpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, int32_t miny, int32_t maxy, int32_t n)
 {
-    size_t c[4] = {0, 0, 0, 0};
-
-    int32_t minx = (int32_t)sx - n;
-    if (minx < 0) minx = 0;
-
-    int32_t maxx = (int32_t)sx + n;
-    if (maxx >= (int32_t)w) maxx = w;
-
-    int32_t inc = (n / 2) + 1;
-    n = 0;
-
-    auto src = img + minx + miny * stride;
-
-    for (auto y = miny; y < maxy; y += inc) {
-        auto p = src;
-        for (auto x = minx; x < maxx; x += inc, p += inc) {
-            c[0] += A(*p);
-            c[1] += C1(*p);
-            c[2] += C2(*p);
-            c[3] += C3(*p);
-            ++n;
-        }
-        src += (stride * inc);
-    }
-
-    c[0] /= n;
-    c[1] /= n;
-    c[2] /= n;
-    c[3] /= n;
-
-    return (c[0] << 24) | (c[1] << 16) | (c[2] << 8) | c[3];
+#ifdef THORVG_NEON_VECTOR_SUPPORT
+    return neonInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
+#else
+    return cInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
+#endif
 }
 
 using ImageScaleFilter = uint32_t (*)(const uint32_t* img, uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, int32_t miny, int32_t maxy, int32_t n);

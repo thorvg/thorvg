@@ -33,6 +33,44 @@
 #endif
 
 
+static inline uint32_t neonInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
+{
+    //Each clipped span is at most 2*n; stepping by floor(n/2)+1 takes at most 4 samples per axis.
+    //At most 4*4 pixels contribute, so each channel sum is <= 16*255=4080 and fits in uint16_t.
+    //vaddw_u8 widens and accumulates 8-bit channels into uint16x8_t in one instruction.
+    uint16x8_t sum = vdupq_n_u16(0);
+
+    auto minx = static_cast<int32_t>(sx) - n;
+    if (minx < 0) minx = 0;
+
+    auto maxx = static_cast<int32_t>(sx) + n;
+    if (maxx >= static_cast<int32_t>(w)) maxx = w;
+
+    auto inc = (n / 2) + 1;
+    n = 0;
+
+    auto src = img + minx + miny * stride;
+
+    for (auto y = miny; y < maxy; y += inc) {
+        auto p = src;
+        for (auto x = minx; x < maxx; x += inc, p += inc) {
+            sum = vaddw_u8(sum, vreinterpret_u8_u32(vdup_n_u32(*p)));
+            ++n;
+        }
+        src += (stride * inc);
+    }
+
+    uint32_t c[4];
+    vst1q_u32(c, vmovl_u16(vrev64_u16(vget_low_u16(sum))));
+    c[0] /= n;
+    c[1] /= n;
+    c[2] /= n;
+    c[3] /= n;
+
+    return (c[0] << 24) | (c[1] << 16) | (c[2] << 8) | c[3];
+}
+
+
 static inline uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 {
     uint16x8_t t = vmull_u8(c, a);
