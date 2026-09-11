@@ -306,9 +306,23 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     auto viewRegion = viewportRegion(vp, bbox);
     auto stencilMode = shape.geometry.stencilMode(flag);
 
-    if (!blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
+    if (!blendShape && stencilMode == GlStencilMode::None && shape.clips.empty() && shape.multiplier == 1.0f) {
         mSolidBatch.draw(*this, shape, c, depth, viewRegion, viewportRegion(vp, viewBounds));
         return;
+    }
+
+    auto a = MULTIPLY(c.a, shape.opacity);
+    if (flag & RenderUpdateFlag::Stroke) {
+        auto strokeWidth = shape.geometry.strokeRenderWidth;
+        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
+            auto alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
+        }
+    }
+    RenderColor color = {c.r, c.g, c.b, a};
+
+    if (!blendShape && shape.clips.empty() && (flag & RenderUpdateFlag::Stroke) && (a == 255 || shape.geometry.strokeDirect)) {
+        stencilMode = GlStencilMode::None;
     }
 
     if (!shape.clips.empty()) mSolidBatch.clear();
@@ -320,15 +334,6 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     task->setViewMatrix(viewMatrix);
     task->setDrawDepth(depth);
 
-    auto a = MULTIPLY(c.a, shape.opacity);
-    if (flag & RenderUpdateFlag::Stroke) {
-        auto strokeWidth = shape.geometry.strokeRenderWidth;
-        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
-            auto alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
-            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
-        }
-    }
-    RenderColor color = {c.r, c.g, c.b, a};
     if (stencilMode == GlStencilMode::None) task->setVertexColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     task->setViewport(viewRegion);
 
