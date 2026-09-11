@@ -25,6 +25,13 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
 
+static bool directLine(const RenderPath& path)
+{
+    return path.cmds.count == 2 && path.pts.count == 2 &&
+           path.cmds[0] == PathCommand::MoveTo && path.cmds[1] == PathCommand::LineTo &&
+           path.pts[0] != path.pts[1];
+}
+
 /************************************************************************/
 /* GlIntersector                                                        */
 /************************************************************************/
@@ -150,6 +157,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
         if (tesselateThinFill(optPath)) {
             multiplier = MIN_GL_STROKE_ALPHA;
             fillRule = rshape.rule;
+            convex = directLine(optPath);
             return true;
         }
         return false;
@@ -189,6 +197,7 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     stroke.clear();
     strokeBBox = {};
     strokeRenderWidth = 0.0f;
+    strokeDirect = false;
 
     auto strokeWidth = rshape.strokeWidth();
     if (!std::isfinite(strokeWidth)) return false;
@@ -206,6 +215,7 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     if (gpuStrokeDash(rshape, dashed, nullptr)) stroker.run(dashed);
     else stroker.run(optStrokePath);
     strokeBBox = stroker.bounds();
+    strokeDirect = rshape.strokeDash(nullptr, nullptr) == 0 && directLine(optStrokePath);
     return true;
 }
 
