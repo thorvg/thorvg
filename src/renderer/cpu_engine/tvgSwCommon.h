@@ -320,6 +320,7 @@ struct SwCompositor : RenderCompositor
 struct SwCellPool
 {
     #define DEFAULT_POOL_SIZE 16368
+    #define MAX_CELL_POOL_SIZE (DEFAULT_POOL_SIZE * 64)   //1 MB per thread, reached only by very complex outlines
 
     uint32_t size;
     SwCell* buffer;
