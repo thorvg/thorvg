@@ -339,8 +339,8 @@ struct SvgSymbolNode
 
 struct SvgUseNode
 {
-    float x, y, w, h;
     SvgNode* symbol;
+    float x, y, w, h;
     bool isWidthSet;
     bool isHeightSet;
 };
@@ -515,14 +515,14 @@ struct SvgStyleFill
 
 struct SvgStyleStroke
 {
-    SvgStrokeFlags flags;
     SvgPaint paint;
+    SvgDash dash;
     int opacity;
     float scale;
     float width;
     float centered;
     float miterlimit;
-    SvgDash dash;
+    SvgStrokeFlags flags;
     StrokeCap cap;
     StrokeJoin join;
 };
@@ -569,28 +569,27 @@ struct SvgStyleProperty
     SvgComposite clipPath;
     SvgComposite mask;
     SvgFilter filter;
-    int opacity;
-    tvg::RGBA color;
     char* cssClass;
+    tvg::RGBA color;
+    int opacity;
     float textAnchor;  // 0=start, 0.5=middle, 1=end
-    SvgBaseline alignmentBaseline;
-    SvgBaseline dominantBaseline;
-    SvgFontWeight fontWeight;
     float letterSpacing;
     float wordSpacing;
     SvgStyleFlags flags;
     SvgStyleFlags flagsImportance; //indicates the importance of the flag - if set, higher priority is applied (https://drafts.csswg.org/css-cascade-4/#importance)
+    SvgFontWeight fontWeight;
+    SvgBaseline alignmentBaseline;
+    SvgBaseline dominantBaseline;
+    BlendMethod blendMode;
     bool curColorSet;
     bool paintOrder; //true if default (fill, stroke), false otherwise
     bool display;
     bool letterSpacingRelative;
     bool wordSpacingRelative;
-    BlendMethod blendMode;
 };
 
 struct SvgNode
 {
-    SvgNodeType type;
     SvgNode* parent;
     Array<SvgNode*> child;
     char *id;
@@ -618,6 +617,7 @@ struct SvgNode
         SvgGaussianBlurNode gaussianBlur;
         SvgPatternNode pattern;
     } node;
+    SvgNodeType type;
     SvgXmlSpace xmlSpace = SvgXmlSpace::None;
     ~SvgNode();
 };
