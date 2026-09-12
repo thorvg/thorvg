@@ -260,7 +260,7 @@ struct TVG_API LottieAnimation final : Animation
      */
     static LottieAnimation* gen() noexcept;
 
-    _TVG_DECLARE_PRIVATE(LottieAnimation);
+    _TVG_PROTECTED_CTOR(LottieAnimation);
 };
 
 } //namespace
