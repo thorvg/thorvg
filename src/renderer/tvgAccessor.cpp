@@ -31,6 +31,7 @@
 #define IMPL static_cast<AccessorImpl*>(this)
 
 Accessor::Accessor() = default;
+Accessor::~Accessor() = default;
 
 struct AccessorImpl : Accessor
 {
@@ -107,10 +108,6 @@ const char* Accessor::name(uint32_t id) noexcept
 uint32_t Accessor::id(const char* name) noexcept
 {
     return djb2Encode(name);
-}
-
-Accessor::~Accessor()
-{
 }
 
 Accessor* Accessor::gen() noexcept
