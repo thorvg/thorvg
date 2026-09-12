@@ -219,10 +219,29 @@ static bool _compositeMaskImage(SwSurface* surface, const SwImage& image, const 
     return true;
 }
 
+#include "tvgSwCpuInfo.h"
 #include "tvgSwRasterTexmap.h"
 #include "tvgSwRasterC.h"
 #include "tvgSwRasterAvx.h"
 #include "tvgSwRasterNeon.h"
+
+//the fastest implementation the running cpu allows, chosen once by rasterInit().
+static bool (*_translucentRect)(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c) = nullptr;
+static bool (*_translucentRle)(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c) = nullptr;
+static void (*_grayscale8)(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len) = nullptr;
+static void (*_pixel32)(uint32_t* dst, uint32_t val, uint32_t offset, int32_t len) = nullptr;
+
+//cRasterPixels() is a template, it needs a concrete function to take the address of.
+static void _cRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len)
+{
+    cRasterPixels(dst, val, offset, len);
+}
+
+//cRasterPixels() is a template, it needs a concrete function to take the address of.
+static void _cRasterPixel32(uint32_t* dst, uint32_t val, uint32_t offset, int32_t len)
+{
+    cRasterPixels(dst, val, offset, len);
+}
 
 static inline uint32_t _sampleSize(float scale)
 {
@@ -409,13 +428,7 @@ static bool _rasterBlendingRect(SwSurface* surface, const RenderRegion& bbox, co
 
 static bool _rasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c)
 {
-#if defined(THORVG_AVX_VECTOR_SUPPORT)
-    return avxRasterTranslucentRect(surface, bbox, c);
-#elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    return neonRasterTranslucentRect(surface, bbox, c);
-#else
-    return cRasterTranslucentRect(surface, bbox, c);
-#endif
+    return _translucentRect(surface, bbox, c);
 }
 
 static bool _rasterSolidRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c)
@@ -580,13 +593,7 @@ static bool _rasterBlendingRle(SwSurface* surface, const SwRle* rle, const Rende
 
 static bool _rasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
 {
-#if defined(THORVG_AVX_VECTOR_SUPPORT)
-    return avxRasterTranslucentRle(surface, rle, bbox, c);
-#elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    return neonRasterTranslucentRle(surface, rle, bbox, c);
-#else
-    return cRasterTranslucentRle(surface, rle, bbox, c);
-#endif
+    return _translucentRle(surface, rle, bbox, c);
 }
 
 static bool _rasterSolidRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
@@ -1401,23 +1408,33 @@ void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
 
 void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len)
 {
-#if defined(THORVG_AVX_VECTOR_SUPPORT)
-    avxRasterGrayscale8(dst, val, offset, len);
-#elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    neonRasterGrayscale8(dst, val, offset, len);
-#else
-    cRasterPixels(dst, val, offset, len);
-#endif
+    _grayscale8(dst, val, offset, len);
 }
 
 void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
+    _pixel32(dst, val, offset, len);
+}
+
+void rasterInit()
+{
+    _translucentRect = cRasterTranslucentRect;
+    _translucentRle = cRasterTranslucentRle;
+    _grayscale8 = _cRasterGrayscale8;
+    _pixel32 = _cRasterPixel32;
+
 #if defined(THORVG_AVX_VECTOR_SUPPORT)
-    avxRasterPixel32(dst, val, offset, len);
+    if (avxUsable()) {
+        _translucentRect = avxRasterTranslucentRect;
+        _translucentRle = avxRasterTranslucentRle;
+        _grayscale8 = avxRasterGrayscale8;
+        _pixel32 = avxRasterPixel32;
+    }
 #elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    neonRasterPixel32(dst, val, offset, len);
-#else
-    cRasterPixels(dst, val, offset, len);
+    _translucentRect = neonRasterTranslucentRect;
+    _translucentRle = neonRasterTranslucentRle;
+    _grayscale8 = neonRasterGrayscale8;
+    _pixel32 = neonRasterPixel32;
 #endif
 }
 

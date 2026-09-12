@@ -909,6 +909,7 @@ SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
         omp_set_num_threads(threads);
 #endif
         mpoolInit(threads);
+        rasterInit();
         _rendererCnt = 0;
     }
     ++_rendererCnt;
