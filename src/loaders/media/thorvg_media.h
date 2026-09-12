@@ -165,7 +165,7 @@ struct TVG_API Video final
      */
     static Video* gen() noexcept;
 
-    _TVG_DECLARE_PRIVATE_BASE(Video);
+    _TVG_PROTECTED_CTOR_PIMPL(Video);
 };
 
 }  // namespace tvg

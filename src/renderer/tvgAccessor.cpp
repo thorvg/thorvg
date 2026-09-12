@@ -109,10 +109,6 @@ uint32_t Accessor::id(const char* name) noexcept
     return djb2Encode(name);
 }
 
-Accessor::~Accessor()
-{
-}
-
 Accessor* Accessor::gen() noexcept
 {
     return new AccessorImpl;
