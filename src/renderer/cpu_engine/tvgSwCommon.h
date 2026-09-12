@@ -29,9 +29,8 @@
 #include "tvgColor.h"
 #include "tvgRender.h"
 
-#define SW_CURVE_TYPE_POINT 0
-#define SW_CURVE_TYPE_CUBIC 1
 #define SW_COLOR_TABLE 1024
+constexpr auto SW_PIXEL_BITS = 8;   //must be at least 6 bits!
 
 struct SwCompositor;
 struct SwSurface;
@@ -100,11 +99,9 @@ struct SwSize
 
 struct SwOutline
 {
-    Array<Point> in;        // the outlines' points in float-point form
-    Array<SwPoint> out;     // the outline's points in fixed-point form
-    Array<uint32_t> cntrs;  // the contour end points
-    Array<uint8_t> types;   // curve type
-    Array<bool> closed;     // opened or closed path?
+    RenderPath synth;  //locally generated path; stroke borders only use cmds
+    Array<SwPoint> out;  //transformed path in RLE fixed-point form
+    const RenderPath* path = nullptr;
     FillRule fillRule;
 };
 
@@ -228,7 +225,7 @@ struct SwStroke
 
 struct SwDashStroke
 {
-    SwOutline* outline = nullptr;
+    RenderPath* path = nullptr;
     float curLen = 0;
     int32_t curIdx = 0;
     Point ptStart = {0, 0};
@@ -359,11 +356,9 @@ struct SwMpool
 
     SwOutline* outline(unsigned idx)
     {
-        outlines[idx].in.clear();
+        outlines[idx].synth.clear();
         outlines[idx].out.clear();
-        outlines[idx].cntrs.clear();
-        outlines[idx].types.clear();
-        outlines[idx].closed.clear();
+        outlines[idx].path = nullptr;
 
         return &outlines[idx];
     }
@@ -455,7 +450,16 @@ static inline uint32_t opBlendSrcOver(uint32_t s, TVG_UNUSED uint32_t d, TVG_UNU
     return s;
 }
 
-void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox);
+void utilExport(const Point* pts, uint32_t count, const Matrix& transform, SwPoint* out, BBox& bbox);
+inline void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox)
+{
+    auto path = outline->path;
+    auto count = path->pts.count;
+    bbox = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
+    outline->out.reserve(count);
+    utilExport(path->pts.data, count, transform, outline->out.data, bbox);
+    outline->out.count = count;
+}
 bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& renderBox, bool fastTrack);
 
 void shapeReset(SwShape& shape);
@@ -471,8 +475,8 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
 void shapeDelFill(SwShape& shape);
 
 void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform, SwMpool* mpool, unsigned tid);
-bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpool, unsigned tid);
-SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
+bool strokeParsePath(SwStroke* stroke, const RenderPath& path);
+SwOutline* strokeExportOutline(SwStroke* stroke, const Matrix& transform, BBox& bbox, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
 bool imagePrepare(SwImage& image, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);

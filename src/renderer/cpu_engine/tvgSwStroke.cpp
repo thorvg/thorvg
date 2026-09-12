@@ -696,23 +696,42 @@ static void _endSubPath(SwStroke& stroke)
     }
 }
 
-
-static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uint32_t side)
+static void _exportBorderPath(const SwStrokeBorder* border, SwOutline* outline, const Matrix& transform, BBox& bbox)
 {
-    auto border = stroke.borders[side];
-    if (border->pts.empty()) return;
-
-    auto src = border->tags;
-    auto idx = outline->in.count;
-
-    ARRAY_FOREACH(pts, border->pts) {
-        if (*src & SW_STROKE_TAG_POINT) outline->types.push(SW_CURVE_TYPE_POINT);
-        else if (*src & SW_STROKE_TAG_CUBIC) outline->types.push(SW_CURVE_TYPE_CUBIC);
-        if (*src & SW_STROKE_TAG_END) outline->cntrs.push(idx);
-        ++src;
-        ++idx;
+    auto& cmds = outline->synth.cmds;
+    uint32_t start = 0;
+    uint32_t first = 0;
+    for (uint32_t i = 0; i < border->pts.count; ++i) {
+        auto tag = border->tags[i];
+        auto cmd = PathCommand::LineTo;
+        if (tag & SW_STROKE_TAG_BEGIN) {
+            start = outline->out.count + i - first;
+            cmd = PathCommand::MoveTo;
+        } else if (tag & SW_STROKE_TAG_CUBIC) {
+            cmd = PathCommand::CubicTo;
+            // A closing cubic stores only its controls; the endpoint is the contour start
+            if (border->tags[i + 1] & SW_STROKE_TAG_END) {
+                ++i;
+                auto count = i + 1 - first;
+                outline->out.grow(count);
+                utilExport(border->pts.data + first, count, transform, outline->out.data + outline->out.count, bbox);
+                outline->out.count += count;
+                outline->out.push(outline->out[start]);
+                first = i + 1;
+            } else {
+                i += 2;
+            }
+            tag = border->tags[i];
+        }
+        cmds.push(cmd);
+        if (tag & SW_STROKE_TAG_END) cmds.push(PathCommand::Close);
     }
-    outline->in.push(border->pts);
+    if (first < border->pts.count) {
+        auto count = border->pts.count - first;
+        outline->out.grow(count);
+        utilExport(border->pts.data + first, count, transform, outline->out.data + outline->out.count, bbox);
+        outline->out.count += count;
+    }
 }
 
 
@@ -742,69 +761,93 @@ void strokeReset(SwStroke* stroke, const RenderShape* rshape, const Matrix& tran
     stroke->borders[1] = mpool->strokeRBorder(tid);
 }
 
-
-bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpool, unsigned tid)
+static bool _closed(const PathCommand* cmd, const PathCommand* end)
 {
-    uint32_t first = 0;
-    uint32_t i = 0;
+    while (cmd < end) {
+        if (*cmd == PathCommand::Close) return true;
+        if (*cmd == PathCommand::MoveTo) return false;
+        ++cmd;
+    }
+    return false;
+}
 
-    ARRAY_FOREACH(p, outline.cntrs) {
-        auto last = *p;           //index of last point in contour
-        auto limit = outline.in.data + last;
-        ++i;
+bool strokeParsePath(SwStroke* stroke, const RenderPath& path)
+{
+    auto pts = path.pts.data;
+    auto end = path.cmds.end();
+    Point start{};
+    auto begun = false;
+    auto active = false;
+    auto closed = false;
 
-        //Skip empty points
-        if (last <= first) {
-            first = last + 1;
-            continue;
-        }
-
-        auto start = outline.in[first];
-        auto pt = outline.in.data + first;
-        auto types = outline.types.data + first;
-        auto type = types[0];
-
-        //A contour cannot start with a cubic control point
-        if (type == SW_CURVE_TYPE_CUBIC) return false;
-        ++types;
-
-        auto closed =  outline.closed.data ? outline.closed.data[i - 1]: false;
-
-        _beginSubPath(*stroke, start, closed);
-
-        while (pt < limit) {
-            //emit a single line_to
-            if (types[0] == SW_CURVE_TYPE_POINT) {
-                ++pt;
-                ++types;
-                _lineTo(*stroke, *pt);
-            //types cubic
-            } else {
-                pt += 3;
-                types += 3;
-                if (pt <= limit) _cubicTo(*stroke, pt[-2], pt[-1], pt[0]);
-                else if (pt - 1 == limit) _cubicTo(*stroke, pt[-2], pt[-1], start);
-                else goto close;
+    for (auto cmd = path.cmds.begin(); cmd < end; ++cmd) {
+        switch (*cmd) {
+            case PathCommand::MoveTo: {
+                if (active && !stroke->firstPt) _endSubPath(*stroke);
+                start = *pts++;
+                begun = true;
+                active = closed = false;
+                break;
+            }
+            case PathCommand::LineTo: {
+                if (!begun) {
+                    start = *pts++;
+                    begun = true;
+                    active = closed = false;
+                    break;
+                }
+                if (!active) {
+                    _beginSubPath(*stroke, start, _closed(cmd + 1, end));
+                    active = true;
+                }
+                do {
+                    _lineTo(*stroke, *pts++);
+                } while (++cmd < end && *cmd == PathCommand::LineTo);
+                --cmd;
+                closed = false;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                if (!begun) return false;
+                if (!active) {
+                    _beginSubPath(*stroke, start, _closed(cmd + 1, end));
+                    active = true;
+                }
+                _cubicTo(*stroke, pts[0], pts[1], pts[2]);
+                pts += 3;
+                closed = false;
+                break;
+            }
+            case PathCommand::Close: {
+                if (closed || !begun) break;
+                if (!active) {
+                    _beginSubPath(*stroke, start, true);
+                    _lineTo(*stroke, start);
+                }
+                if (!stroke->firstPt) _endSubPath(*stroke);
+                active = false;
+                closed = true;
+                break;
             }
         }
-    close:
-        if (!stroke->firstPt) _endSubPath(*stroke);
-        first = last + 1;
     }
+
+    if (active && !stroke->firstPt) _endSubPath(*stroke);
     return true;
 }
 
-
-SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid)
+SwOutline* strokeExportOutline(SwStroke* stroke, const Matrix& transform, BBox& bbox, SwMpool* mpool, unsigned tid)
 {
     auto reserve = stroke->borders[0]->pts.count + stroke->borders[1]->pts.count;
     auto outline = mpool->outline(tid);
-    outline->in.reserve(reserve);
-    outline->types.reserve(reserve);
+    outline->synth.cmds.reserve(reserve);
+    outline->out.reserve(reserve);
     outline->fillRule = FillRule::NonZero;
+    bbox = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
 
-    _exportBorderOutline(*stroke, outline, 0);  //left
-    _exportBorderOutline(*stroke, outline, 1);  //right
+    _exportBorderPath(stroke->borders[0], outline, transform, bbox);
+    _exportBorderPath(stroke->borders[1], outline, transform, bbox);
+    outline->path = &outline->synth;
 
     return outline;
 }
