@@ -3400,7 +3400,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_volume(Tvg_Animation animation, floa
  *
  * @see tvg_lottie_animation_set_volume()
  */
-TVG_API float tvg_lottie_animation_get_volume(Tvg_Animation animation);
+TVG_API float tvg_lottie_animation_get_volume(const Tvg_Animation animation);
 
 /** \} */   // end addtogroup ThorVGCapi_LottieAnimation
 
