@@ -1182,23 +1182,6 @@ static bool _rasterGradientMattedRect(SwSurface* surface, const RenderRegion& bb
 }
 
 template<typename fillMethod>
-static bool _rasterBlendingGradientRect(SwSurface* surface, const RenderRegion& bbox, const SwFill* fill)
-{
-    auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
-
-    if (fill->translucent) {
-        for (uint32_t y = 0; y < bbox.h(); ++y) {
-            fillMethod()(surface, fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendPreNormal, surface->blender, 255);
-        }
-    } else {
-        for (uint32_t y = 0; y < bbox.h(); ++y) {
-            fillMethod()(surface, fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendSrcOver, surface->blender, 255);
-        }
-    }
-    return true;
-}
-
-template<typename fillMethod>
 static bool _rasterTranslucentGradientRect(SwSurface* surface, const RenderRegion& bbox, const SwFill* fill)
 {
     //32 bits
@@ -1235,6 +1218,29 @@ static bool _rasterSolidGradientRect(SwSurface* surface, const RenderRegion& bbo
         for (uint32_t y = 0; y < bbox.h(); ++y) {
             fillMethod()(fill, buffer, bbox.min.y + y, bbox.min.x, bbox.w(), _opMaskNone, 255);
             buffer += surface->stride;
+        }
+    }
+    return true;
+}
+
+template<typename fillMethod>
+static bool _rasterBlendingGradientRect(SwSurface* surface, const RenderRegion& bbox, const SwFill* fill)
+{
+    // blending doesn't work for grayscale
+    if (surface->channelSize == sizeof(uint8_t)) {
+        if (fill->translucent) return _rasterTranslucentGradientRect<fillMethod>(surface, bbox, fill);
+        return _rasterSolidGradientRect<fillMethod>(surface, bbox, fill);
+    }
+
+    auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
+
+    if (fill->translucent) {
+        for (uint32_t y = 0; y < bbox.h(); ++y) {
+            fillMethod()(surface, fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendPreNormal, surface->blender, 255);
+        }
+    } else {
+        for (uint32_t y = 0; y < bbox.h(); ++y) {
+            fillMethod()(surface, fill, buffer + y * surface->stride, bbox.min.y + y, bbox.min.x, bbox.w(), opBlendSrcOver, surface->blender, 255);
         }
     }
     return true;
@@ -1314,18 +1320,6 @@ static bool _rasterGradientMattedRle(SwSurface* surface, const SwRle* rle, const
 }
 
 template<typename fillMethod>
-static bool _rasterBlendingGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
-{
-    auto span = rle->data();
-
-    for (uint32_t i = 0; i < rle->size(); ++i, ++span) {
-        auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        fillMethod()(surface, fill, dst, span->y, span->x, span->len, opBlendPreNormal, surface->blender, span->coverage);
-    }
-    return true;
-}
-
-template<typename fillMethod>
 static bool _rasterTranslucentGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
 {
     auto span = rle->data();
@@ -1368,6 +1362,24 @@ static bool _rasterSolidGradientRle(SwSurface* surface, const SwRle* rle, const 
         }
     }
 
+    return true;
+}
+
+template<typename fillMethod>
+static bool _rasterBlendingGradientRle(SwSurface* surface, const SwRle* rle, const SwFill* fill)
+{
+    // blending doesn't work for grayscale
+    if (surface->channelSize == sizeof(uint8_t)) {
+        if (fill->translucent) return _rasterTranslucentGradientRle<fillMethod>(surface, rle, fill);
+        return _rasterSolidGradientRle<fillMethod>(surface, rle, fill);
+    }
+
+    auto span = rle->data();
+
+    for (uint32_t i = 0; i < rle->size(); ++i, ++span) {
+        auto dst = &surface->buf32[span->y * surface->stride + span->x];
+        fillMethod()(surface, fill, dst, span->y, span->x, span->len, opBlendPreNormal, surface->blender, span->coverage);
+    }
     return true;
 }
 
