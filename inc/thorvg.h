@@ -853,7 +853,7 @@ struct TVG_API Fill
      *
      * @return The number of colors used in the gradient. This value corresponds to the length of the @p colorStops array.
      */
-    uint32_t colorStops(const ColorStop** colorStops) const noexcept;
+    uint32_t colorStops(const ColorStop** colorStops = nullptr) const noexcept;
 
     /**
      * @brief Gets the FillSpread value of the fill.
