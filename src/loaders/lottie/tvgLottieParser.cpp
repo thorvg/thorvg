@@ -617,6 +617,7 @@ LottieSolidFill* LottieParser::parseSolidFill()
         else if (KEY_AS("o")) parseProperty(fill->opacity, fill);
         else if (KEY_AS("fillEnabled")) fill->hidden |= !getBool();
         else if (KEY_AS("r")) fill->rule = (getInt() == 1) ? FillRule::NonZero : FillRule::EvenOdd;
+        else if (KEY_AS("bm")) fill->blendMethod = (BlendMethod) getInt();
         else skip();
     }
     return fill;
@@ -767,6 +768,7 @@ LottieGradientFill* LottieParser::parseGradientFill()
     while (auto key = nextObjectKey()) {
         if (parseCommon(fill, key)) continue;
         else if (KEY_AS("r")) fill->rule = (getInt() == 1) ? FillRule::NonZero : FillRule::EvenOdd;
+        else if (KEY_AS("bm")) fill->blendMethod = (BlendMethod) getInt();
         else parseGradient(fill, key);
     }
 
