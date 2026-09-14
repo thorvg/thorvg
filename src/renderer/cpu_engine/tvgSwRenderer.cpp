@@ -147,7 +147,7 @@ struct SwShapeTask : SwTask
         }
         //Fill
         if (updateFill) {
-            if (!shapeGenFillColors(shape.fill, rshape->fill, transform, renderer->surface, opacity, (flags[0] & RenderUpdateFlag::Gradient))) goto dismiss;
+            if (!fillPrepare(shape.fill, rshape->fill, transform, renderer->surface, opacity, (flags[0] & RenderUpdateFlag::Gradient))) goto dismiss;
         }
         //Stroke
         if (strokeWidth > 0.0f) {
@@ -155,7 +155,7 @@ struct SwShapeTask : SwTask
             if (updateStroke && !shapeGenStrokeRle(shape, rshape, transform, clipBox, curBox, renderer->mpool, tid, renderer->antiAlias)) goto dismiss;
             auto ctable = flags[0] & RenderUpdateFlag::GradientStroke;
             if (ctable || flags[0] & RenderUpdateFlag::Transform) {
-                if (!shapeGenFillColors(shape.stroke->fill, rshape->strokeFill(), transform, renderer->surface, opacity, ctable)) goto dismiss;
+                if (!fillPrepare(shape.stroke->fill, rshape->strokeFill(), transform, renderer->surface, opacity, ctable)) goto dismiss;
             }
         } else {
             shapeDelStroke(shape);

@@ -722,11 +722,7 @@ static void _exportBorderOutline(const SwStroke& stroke, SwOutline* outline, uin
 
 void strokeFree(SwStroke* stroke)
 {
-    if (!stroke) return;
-
-    fillFree(stroke->fill);
-    stroke->fill = nullptr;
-
+    if (stroke && stroke->fill) tvg::free(stroke->fill);
     tvg::free(stroke);
 }
 
