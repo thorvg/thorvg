@@ -458,7 +458,10 @@ void shapeFree(SwShape& shape)
     rleFree(shape.rle);
     shape.rle = nullptr;
 
-    shapeDelFill(shape);
+    if (shape.fill) {
+        tvg::free(shape.fill);
+        shape.fill = nullptr;
+    }
 
     if (shape.stroke) {
         rleFree(shape.strokeRle);
@@ -508,39 +511,6 @@ bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& 
 
     shape.strokeRle = rleRender(shape.strokeRle, outline, renderBox, mpool, tid, antiAlias);
     return shape.strokeRle ? true : false;
-}
-
-bool shapeGenFillColors(SwFill*& out, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
-{
-    if (!fill) return true;  // a normal case
-
-    if (!out) {
-        out = tvg::calloc<SwFill>(1, sizeof(SwFill));
-        ctable = true;
-    } else if (ctable) {
-        fillReset(out);
-    }
-
-    // single color stop is treated as solid
-    if (fill->colorStops(nullptr) == 1) {
-        out->solid = true;
-        return true;
-    }
-
-    return fillGenColorTable(out, fill, transform, surface, opacity, ctable);
-}
-
-void shapeResetFill(SwShape& shape)
-{
-    if (!shape.fill) shape.fill = tvg::calloc<SwFill>(1, sizeof(SwFill));
-    fillReset(shape.fill);
-}
-
-void shapeDelFill(SwShape& shape)
-{
-    if (!shape.fill) return;
-    fillFree(shape.fill);
-    shape.fill = nullptr;
 }
 
 bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool)

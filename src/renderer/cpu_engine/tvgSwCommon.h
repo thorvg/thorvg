@@ -465,10 +465,7 @@ void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& t
 bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool antiAlias);
 void shapeFree(SwShape& shape);
 void shapeDelStroke(SwShape& shape);
-bool shapeGenFillColors(SwFill*& out, const Fill* fill, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
-void shapeResetFill(SwShape& shape);
 bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool);
-void shapeDelFill(SwShape& shape);
 
 void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform, SwMpool* mpool, unsigned tid);
 bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpool, unsigned tid);
@@ -480,10 +477,9 @@ bool imageGenRle(SwImage& image, const RenderRegion& bbox, SwMpool* mpool, unsig
 void imageReset(SwImage& image);
 void imageFree(SwImage& image);
 
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
+bool fillPrepare(SwFill*& fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable);
 const Fill::ColorStop* fillFetchSolid(const SwFill* fill, const Fill* fdata);
 void fillReset(SwFill* fill);
-void fillFree(SwFill* fill);
 
 // OPTIMIZE_ME: Skip the function pointer access
 void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t opacity);                                      // composite masking ver.

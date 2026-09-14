@@ -805,9 +805,23 @@ void fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uin
     }
 }
 
-
-bool fillGenColorTable(SwFill* fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
+bool fillPrepare(SwFill*& fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
+    if (!fdata) return true;  // a normal case
+
+    if (!fill) {
+        fill = tvg::calloc<SwFill>(1, sizeof(SwFill));
+        ctable = true;
+    } else if (ctable) {
+        fillReset(fill);
+    }
+
+    // single color stop is treated as solid
+    if (fdata->colorStops(nullptr) == 1) {
+        fill->solid = true;
+        return true;
+    }
+
     auto extentChanged = false;
 
     fill->spread = fdata->spread();
@@ -840,10 +854,4 @@ void fillReset(SwFill* fill)
 {
     fill->translucent = false;
     fill->solid = false;
-}
-
-
-void fillFree(SwFill* fill)
-{
-    if (fill) tvg::free(fill);
 }
