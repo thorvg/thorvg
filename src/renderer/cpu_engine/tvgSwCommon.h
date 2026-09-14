@@ -29,8 +29,6 @@
 #include "tvgColor.h"
 #include "tvgRender.h"
 
-#define SW_CURVE_TYPE_POINT 0
-#define SW_CURVE_TYPE_CUBIC 1
 #define SW_COLOR_TABLE 1024
 
 struct SwCompositor;
@@ -100,11 +98,18 @@ struct SwSize
 
 struct SwOutline
 {
-    Array<Point> in;        // the outlines' points in float-point form
-    Array<SwPoint> out;     // the outline's points in fixed-point form
-    Array<uint32_t> cntrs;  // the contour end points
-    Array<uint8_t> types;   // curve type
-    Array<bool> closed;     // opened or closed path?
+    /**
+     * A shape refers to the renderer's path as is.
+     * trim, dash, stroke and image build theirs in the per-thread pool path (SwMpool::paths).
+     */
+    const RenderPath* path;
+
+    /**
+     * path->pts transformed into fixed-point form by utilExport().
+     * rle walks path->cmds and reads the coordinates from here.
+     */
+    Array<SwPoint> out;
+
     FillRule fillRule;
 };
 
@@ -228,7 +233,7 @@ struct SwStroke
 
 struct SwDashStroke
 {
-    SwOutline* outline = nullptr;
+    RenderPath* path = nullptr;
     float curLen = 0;
     int32_t curIdx = 0;
     Point ptStart = {0, 0};
@@ -331,6 +336,7 @@ struct SwCellPool
 struct SwMpool
 {
     SwOutline* outlines;
+    RenderPath* paths;
     SwStrokeBorder* lBorders;
     SwStrokeBorder* rBorders;
     SwCellPool* cellPools;
@@ -339,6 +345,7 @@ struct SwMpool
     {
         auto allocSize = threads + 1;
         outlines = new SwOutline[allocSize];
+        paths = new RenderPath[allocSize];
         lBorders = new SwStrokeBorder[allocSize];
         rBorders = new SwStrokeBorder[allocSize];
         cellPools = new SwCellPool[allocSize];
@@ -347,6 +354,7 @@ struct SwMpool
     ~SwMpool()
     {
         delete[] (outlines);
+        delete[] (paths);
         delete[] (lBorders);
         delete[] (rBorders);
         delete[] (cellPools);
@@ -359,11 +367,9 @@ struct SwMpool
 
     SwOutline* outline(unsigned idx)
     {
-        outlines[idx].in.clear();
+        paths[idx].clear();
+        outlines[idx].path = &paths[idx];
         outlines[idx].out.clear();
-        outlines[idx].cntrs.clear();
-        outlines[idx].types.clear();
-        outlines[idx].closed.clear();
 
         return &outlines[idx];
     }
@@ -468,7 +474,7 @@ void shapeDelStroke(SwShape& shape);
 bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, const Matrix& m, SwMpool* mpool);
 
 void strokeReset(SwStroke* stroke, const RenderShape* shape, const Matrix& transform, SwMpool* mpool, unsigned tid);
-bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline, SwMpool* mpool, unsigned tid);
+bool strokeParseOutline(SwStroke* stroke, const SwOutline& outline);
 SwOutline* strokeExportOutline(SwStroke* stroke, SwMpool* mpool, unsigned tid);
 void strokeFree(SwStroke* stroke);
 
