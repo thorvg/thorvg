@@ -1413,12 +1413,12 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 }
 
 
-bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* scene, LottieLayer* layer)
+bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, LottieLayer* layer)
 {
     auto target = layer->matteTarget;
     if (!target || target->type == LottieLayer::Null) return true;
 
-    updateLayer(comp, scene, target, frameNo);
+    updateLayer(comp, nullptr, target, frameNo);
 
     if (target->scene) {
         layer->scene->mask(target->scene, layer->matteType);
@@ -1568,7 +1568,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     layer->scene->transform(layer->cache.matrix);
 
-    if (!layer->matteSrc && !updateMatte(comp, frameNo, scene, layer)) return;
+    if (!updateMatte(comp, frameNo, layer)) return;
 
     layer->scene->blend(layer->blendMethod);
 
@@ -1605,7 +1605,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     updateEffect(layer, frameNo, comp->quality);
 
-    if (!layer->matteSrc) scene->add(layer->scene);
+    if (scene) scene->add(layer->scene);
 }
 
 
@@ -1700,7 +1700,6 @@ static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
         }
 
         if (child->matteTarget) {
-            child->matteTarget->matteSrc = true;
             //parenting
             _buildHierarchy(parent, child->matteTarget);
             //precomp referencing
