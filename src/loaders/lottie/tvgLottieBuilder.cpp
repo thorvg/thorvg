@@ -348,7 +348,7 @@ bool LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, f
     auto opacity = fill->opacity(frameNo, tween, exps);
 
     //interrupted by fully opaque, stop the current rendering
-    if (ctx->fragment == RenderFragment::ByFill && opacity == 255) return true;
+    if (ctx->fragment == RenderFragment::ByFill && opacity == 255 && fill->blendMethod == BlendMethod::Normal) return true;
     if (opacity == 0) return false;
 
     if (fragmented(parent, child, contexts, ctx, RenderFragment::ByFill)) return false;
@@ -357,6 +357,7 @@ bool LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, f
     auto color = fill->color(frameNo, tween, exps);
     ctx->propagator->fill(color.r, color.g, color.b, opacity);
     ctx->propagator->fillRule(fill->rule);
+    ctx->propagator->blend(fill->blendMethod);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
 
@@ -370,7 +371,7 @@ bool LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child
     auto opacity = fill->opacity(frameNo, tween, exps);
 
     //interrupted by fully opaque, stop the current rendering
-    if (ctx->fragment == RenderFragment::ByFill && fill->opaque && opacity == 255) return true;
+    if (ctx->fragment == RenderFragment::ByFill && fill->opaque && opacity == 255 && fill->blendMethod == BlendMethod::Normal) return true;
 
     if (fragmented(parent, child, contexts, ctx, RenderFragment::ByFill)) return false;
 
@@ -378,6 +379,7 @@ bool LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child
 
     if (auto val = fill->fill(frameNo, opacity, tween, exps)) ctx->propagator->fill(val);
     ctx->propagator->fillRule(fill->rule);
+    ctx->propagator->blend(fill->blendMethod);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
 
