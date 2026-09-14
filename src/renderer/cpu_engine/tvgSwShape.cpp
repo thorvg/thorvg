@@ -520,6 +520,13 @@ bool shapeGenFillColors(SwFill*& out, const Fill* fill, const Matrix& transform,
     } else if (ctable) {
         fillReset(out);
     }
+
+    // single color stop is treated as solid
+    if (fill->colorStops(nullptr) == 1) {
+        out->solid = true;
+        return true;
+    }
+
     return fillGenColorTable(out, fill, transform, surface, opacity, ctable);
 }
 
