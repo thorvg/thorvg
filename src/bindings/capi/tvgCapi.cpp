@@ -1356,7 +1356,6 @@ TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animati
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
-
 TVG_API Tvg_Result tvg_lottie_animation_set_volume(Tvg_Animation animation, float volume)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
@@ -1366,8 +1365,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_volume(Tvg_Animation animation, floa
     return TVG_RESULT_NOT_SUPPORTED;
 }
 
-
-TVG_API float tvg_lottie_animation_get_volume(Tvg_Animation animation)
+TVG_API float tvg_lottie_animation_get_volume(const Tvg_Animation animation)
 {
 #ifdef THORVG_LOTTIE_LOADER_SUPPORT
     if (animation) return reinterpret_cast<LottieAnimation*>(animation)->volume();
