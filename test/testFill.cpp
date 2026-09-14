@@ -55,7 +55,7 @@ TEST_CASE("Common Filling", "[tvgFill]")
 
     //ColorStops
     const Fill::ColorStop* cs = nullptr;
-    REQUIRE(fill->colorStops(nullptr) == 0);
+    REQUIRE(fill->colorStops() == 0);
     REQUIRE(fill->colorStops(&cs) == 0);
     REQUIRE(cs == nullptr);
 
