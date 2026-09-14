@@ -229,7 +229,7 @@ struct RleWorker
     SwPoint lineStack[LINE_STACK_SIZE];
     int levStack[32];
 
-    SwOutline* outline;
+    const SwOutline* outline;
 
     int bandSize;
     int bandShoot;
@@ -692,42 +692,40 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
 static bool _decomposeOutline(RleWorker& rw)
 {
     auto outline = rw.outline;
-    auto first = 0;  //index of first point in contour
+    auto pts = outline->out.data;
+    auto start = UPSCALE(*pts);
+    auto open = false;
 
-    ARRAY_FOREACH(p, outline->cntrs) {
-        auto last = *p;
-        auto limit = outline->out.data + last;
-        auto start = UPSCALE(outline->out[first]);
-        auto pt = outline->out.data + first;
-        auto types = outline->types.data + first;
-        ++types;
-
-        if (!_moveTo(rw, UPSCALE(outline->out[first]))) return false;
-
-        while (pt < limit) {
-            //emit a single line_to
-            if (types[0] == SW_CURVE_TYPE_POINT) {
-                ++pt;
-                ++types;
-                if (!_lineTo(rw, UPSCALE(*pt))) return false;
-            //types cubic
-            } else {
-                pt += 3;
-                types += 3;
-                if (pt <= limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), UPSCALE(pt[0]))) return false;
-                } else if (pt - 1 == limit) {
-                    if (!_cubicTo(rw, UPSCALE(pt[-2]), UPSCALE(pt[-1]), start)) return false;
-                }
-                else goto close;
+    for (auto cmd : outline->path->cmds) {
+        switch (cmd) {
+            case PathCommand::MoveTo: {
+                if (open && !_lineTo(rw, start)) return false;
+                start = UPSCALE(*pts++);
+                if (!_moveTo(rw, start)) return false;
+                open = true;
+                break;
+            }
+            case PathCommand::LineTo: {
+                if (!open && !_moveTo(rw, start)) return false;
+                if (!_lineTo(rw, UPSCALE(*pts++))) return false;
+                open = true;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                if (!open && !_moveTo(rw, start)) return false;
+                if (!_cubicTo(rw, UPSCALE(pts[0]), UPSCALE(pts[1]), UPSCALE(pts[2]))) return false;
+                pts += 3;
+                open = true;
+                break;
+            }
+            case PathCommand::Close: {
+                if (open && !_lineTo(rw, start)) return false;
+                open = false;
+                break;
             }
         }
-    close:
-        if (!_lineTo(rw, start)) return false;
-        first = last + 1;
     }
-
-    return true;
+    return !open || _lineTo(rw, start);
 }
 
 
@@ -772,7 +770,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     rw.cellMax = {bbox.max.x, bbox.max.y};
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
-    rw.outline = const_cast<SwOutline*>(outline);
+    rw.outline = outline;
     rw.bandSize = rw.bufferSize / (sizeof(SwCell) * 2);
     rw.bandShoot = 0;
     rw.antiAlias = antiAlias;
