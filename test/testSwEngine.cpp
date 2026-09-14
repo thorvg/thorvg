@@ -22,6 +22,7 @@
 
 #include <thorvg.h>
 #include <fstream>
+#include <vector>
 #include "config.h"
 #include "testFramework.h"
 
@@ -406,5 +407,76 @@ TEST_CASE("Intersection", "[tvgSwEngine]")
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
+
+#ifdef THORVG_PARTIAL_RENDER_SUPPORT
+
+static Scene* buildDriftScene(uint8_t moverFill, Shape** moverOut)
+{
+    auto root = Scene::gen();
+
+    auto group = Scene::gen();
+    auto first = Shape::gen();
+    first->appendRect(30, 30, 100, 140);
+    first->fill(120, 40, 200);
+    group->add(first);
+
+    auto second = Shape::gen();
+    second->appendRect(150, 30, 100, 140);
+    second->fill(120, 40, 200);
+    group->add(second);
+    group->opacity(128);
+    root->add(group);
+
+    auto mover = Shape::gen();
+    mover->appendRect(330, 30, 40, 40);
+    mover->fill(moverFill, 200, 40);
+    root->add(mover);
+    if (moverOut) *moverOut = mover;
+
+    return root;
+}
+
+TEST_CASE("Partial rendering keeps a still composited scene intact", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        constexpr uint32_t VW = 400, VH = 200, FRAMES = 4;
+
+        vector<uint32_t> incremental(VW * VH, 0);
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas);
+            REQUIRE(canvas->target(incremental.data(), VW, VW, VH, ColorSpace::ARGB8888S) == Result::Success);
+            Shape* mover = nullptr;
+            REQUIRE(canvas->add(buildDriftScene(20, &mover)) == Result::Success);
+            for (uint32_t f = 0; f <= FRAMES; ++f) {
+                if (f > 0) REQUIRE(mover->fill(uint8_t(20 + f), 200, 40) == Result::Success);
+                REQUIRE(canvas->update() == Result::Success);
+                REQUIRE(canvas->draw() == Result::Success);
+                REQUIRE(canvas->sync() == Result::Success);
+            }
+        }
+
+        vector<uint32_t> fresh(VW * VH, 0);
+        {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas);
+            REQUIRE(canvas->target(fresh.data(), VW, VW, VH, ColorSpace::ARGB8888S) == Result::Success);
+            REQUIRE(canvas->add(buildDriftScene(20 + FRAMES, nullptr)) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        }
+
+        // the still, semi-transparent group must be pixel-identical in both
+        uint32_t differences = 0;
+        for (uint32_t i = 0; i < VW * VH; ++i) {
+            if (incremental[i] != fresh[i]) ++differences;
+        }
+        REQUIRE(differences == 0);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+#endif
 
 #endif

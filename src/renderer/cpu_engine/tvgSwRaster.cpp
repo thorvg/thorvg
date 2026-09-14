@@ -1485,19 +1485,29 @@ uint32_t rasterUnpremultiply(uint32_t data)
 }
 
 // TODO: +SIMD
-void rasterUnpremultiply(RenderSurface* surface)
+void rasterUnpremultiply(RenderSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
     if (surface->channelSize != sizeof(uint32_t)) return;
+    if (x >= surface->w || y >= surface->h) return;
 
-    TVGLOG("SW_ENGINE", "Unpremultiply [Size: %d x %d]", surface->w, surface->h);
+    w = std::min(w, surface->w - x);
+    h = std::min(h, surface->h - y);
+    if (w == 0 || h == 0) return;
 
-    #pragma omp parallel for
-    for (int32_t y = 0; y < (int32_t)surface->h; y++) {
-        auto buffer = surface->buf32 + surface->stride * uint32_t(y);
-        for (uint32_t x = 0; x < surface->w; ++x) {
-            buffer[x] = rasterUnpremultiply(buffer[x]);
+    TVGLOG("SW_ENGINE", "Unpremultiply [Region: %d %d %d x %d]", x, y, w, h);
+
+#pragma omp parallel for
+    for (int32_t i = 0; i < (int32_t)h; ++i) {
+        auto buffer = surface->buf32 + surface->stride * (y + uint32_t(i)) + x;
+        for (uint32_t j = 0; j < w; ++j) {
+            buffer[j] = rasterUnpremultiply(buffer[j]);
         }
     }
+}
+
+void rasterUnpremultiply(RenderSurface* surface)
+{
+    rasterUnpremultiply(surface, 0, 0, surface->w, surface->h);
     surface->premultiplied = false;
 }
 
