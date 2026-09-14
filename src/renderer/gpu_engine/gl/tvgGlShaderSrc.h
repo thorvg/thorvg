@@ -57,6 +57,8 @@ extern const char* BLEND_SCENE_FRAG_HEADER;
 extern const char* BLEND_SHAPE_SOLID_FRAG_HEADER;
 extern const char* BLEND_SHAPE_LINEAR_FRAG_HEADER;
 extern const char* BLEND_SHAPE_RADIAL_FRAG_HEADER;
+extern const char* BLEND_DEFAULT_FRAG_HELPER;
+extern const char* BLEND_GRADIENT_FRAG_HELPER;
 
 extern const char* BLEND_FRAG_LUM_HELPER;
 extern const char* BLEND_FRAG_SAT_HELPER;

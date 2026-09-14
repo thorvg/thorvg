@@ -300,7 +300,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 }
 
 struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
-fn getFragData(in: VertexOutput) -> FragData {
+fn getMultiplyFragData(in: VertexOutput) -> FragData {
     // get source data
     let pos = in.vGradCoord.xy;
     let st = uPaintSettings.gradient.coords.xy;
@@ -316,12 +316,8 @@ fn getFragData(in: VertexOutput) -> FragData {
     data.So = uPaintSettings.options.a;
     data.Dc = colorDst.rgb;
     data.Da = colorDst.a;
-    data.Sc = mix(data.Dc, data.Sc, data.Sa * data.So);
-    data.Sa = mix(data.Da,     1.0, data.Sa * data.So);
     return data;
 };
-
-fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 )";
 
 const char* cShaderSrc_Radial_Blend = R"(
@@ -348,7 +344,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 }
 
 struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
-fn getFragData(in: VertexOutput) -> FragData {
+fn getMultiplyFragData(in: VertexOutput) -> FragData {
     let d0 = in.vGradCoord.xy - uPaintSettings.gradient.coords.xy;
     let d1 = uPaintSettings.gradient.coords.xy - uPaintSettings.gradient.focal.xy;
     let r0 = uPaintSettings.gradient.coords.z;
@@ -369,12 +365,8 @@ fn getFragData(in: VertexOutput) -> FragData {
     data.So = uPaintSettings.options.a;
     data.Dc = colorDst.rgb;
     data.Da = colorDst.a;
-    data.Sc = mix(data.Dc, data.Sc, data.Sa * data.So);
-    data.Sa = mix(data.Da,     1.0, data.Sa * data.So);
     return data;
 };
-
-fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 )";
 
 const char* cShaderSrc_Image_Blend = R"(
@@ -454,6 +446,25 @@ fn getFragData(in: VertexOutput) -> FragData {
 fn postProcess(d: FragData, R: vec4f) -> vec4f { return mix(vec4(d.Dc, d.Da), R, d.Sa * So); };
 )";
 
+// Solids, images and scenes use the same source convention for every blend mode.
+const char* cShaderSrc_Default_Blend = R"(fn getMultiplyFragData(in: VertexOutput) -> FragData { return getFragData(in); };
+fn multiplyPostProcess(d: FragData, R: vec4f) -> vec4f { return postProcess(d, R); };
+)";
+
+// Gradients precompose only for non-Multiply modes.
+const char* cShaderSrc_Gradient_Blend = R"(
+fn getFragData(in: VertexOutput) -> FragData {
+    var data = getMultiplyFragData(in);
+    let srcOpacity = data.Sa * data.So;
+    data.Sc = mix(data.Dc, data.Sc, srcOpacity);
+    data.Sa = mix(data.Da,     1.0, srcOpacity);
+    return data;
+};
+
+fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
+fn multiplyPostProcess(d: FragData, R: vec4f) -> vec4f { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); };
+)";
+
 const char* cShaderSrc_BlendFuncs = R"(
 const One = vec3f(1.0, 1.0, 1.0);
 
@@ -506,13 +517,13 @@ fn fs_main_Normal(in: VertexOutput) -> @location(0) vec4f {
 
 @fragment
 fn fs_main_Multiply(in: VertexOutput) -> @location(0) vec4f {
-    let d: FragData = getFragData(in);
+    let d: FragData = getMultiplyFragData(in);
     var Rc = d.Sc;
     if (d.Da > 0.0) {
         Rc = d.Sc * min(One, d.Dc / d.Da);
         Rc = mix(d.Sc, Rc, d.Da);
     };
-    return postProcess(d, vec4f(Rc, 1.0));
+    return multiplyPostProcess(d, vec4f(Rc, 1.0));
 }
 
 
