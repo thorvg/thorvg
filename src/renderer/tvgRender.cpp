@@ -624,8 +624,10 @@ static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* in
     auto trimEnd = end * totalLength;
 
     if (begin >= end) {
+        auto cnt = out.cmds.count;
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, totalLength, out);
-        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimEnd, out, connect);
+        //nothing to connect to when the first part is empty
+        _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, 0.0f, trimEnd, out, connect && out.cmds.count > cnt);
     } else {
         _trimPath(inCmds, inCmdsCnt, inPts, inPtsCnt, trimStart, trimEnd, out);
     }
