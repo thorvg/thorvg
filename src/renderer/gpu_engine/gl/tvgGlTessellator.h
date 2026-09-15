@@ -30,15 +30,16 @@ namespace tvg
 
 struct Stroker
 {
-    struct State
+    struct Vertex
     {
-        Point firstPt;
-        Point firstPtDir;
-        Point prevPt;
-        Point prevPtDir;
+        Point pt;
+        Point dir;       // outgoing segment
+        Point inner;
+        float length;
+        int8_t side;     // accepted inner join: left (1), right (-1), or none (0)
     };
 
-    Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join, float miterLimit = 4.0f, float qualityScale = 1.0f);
+    Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join, float miterLimit = 4.0f, float qualityScale = 1.0f, bool trimJoin = true);
     void run(const RenderPath& path);
     RenderRegion bounds() const;
 
@@ -48,10 +49,13 @@ private:
     void lineTo(const Point& curr);
     void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end);
     void close();
-    void join(const Point& dir);
-    void round(const Point& prev, const Point& curr, const Point& center);
-    void miter(const Point& prev, const Point& curr, const Point& center);
-    void bevel(const Point& prev, const Point& curr, const Point& center);
+    void tessellate(bool closed);
+    void prepareJoin(const Vertex& prev, Vertex& curr);
+    void segment(const Vertex& prev, const Vertex& curr, const Vertex& startJoin);
+    void join(const Vertex& prev, const Vertex& curr);
+    void round(const Point& prev, const Point& curr, const Point& center, const Point& apex);
+    void miter(const Point& prev, const Point& curr, const Point& center, const Point& apex);
+    void bevel(const Point& prev, const Point& curr, const Point& apex);
     void square(const Point& p, const Point& outDir);
     void squarePoint(const Point& p);
     void round(const Point& p, const Point& outDir);
@@ -63,7 +67,8 @@ private:
     float mQualityScale = 1.0f;
     StrokeCap mCap = StrokeCap::Square;
     StrokeJoin mJoin = StrokeJoin::Bevel;
-    State mState = {};
+    bool mTrimJoin = true;
+    Array<Vertex> mContour;
     Point mLeftTop = {0.0f, 0.0f};
     Point mRightBottom = {0.0f, 0.0f};
 };
