@@ -379,6 +379,11 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
         // Too thin for fallback: keep the path for strokes, but skip the fill.
         result.thin = false;
         result.skipFill = true;
+    } else if (result.thin && !localOut) {
+        // Thin fill fallback uses one straight segment across the tracked span.
+        out.clear();
+        out.moveTo(thinTracker.axisStart + thinTracker.axisVec * thinTracker.minT);
+        out.lineTo(thinTracker.axisStart + thinTracker.axisVec * thinTracker.maxT);
     }
 }
 

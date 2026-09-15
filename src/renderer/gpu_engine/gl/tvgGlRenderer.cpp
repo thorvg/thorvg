@@ -329,7 +329,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
         }
     }
     RenderColor color = {c.r, c.g, c.b, a};
-    if (!blendShape && shape.clips.empty() && (flag & RenderUpdateFlag::Stroke) && (a == 255 || shape.geometry.strokeDirect)) {
+    if (!blendShape && shape.clips.empty() && (flag & RenderUpdateFlag::Stroke) && a == 255) {
         stencilMode = GlStencilMode::None;
     }
 

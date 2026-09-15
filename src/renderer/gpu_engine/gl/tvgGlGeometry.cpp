@@ -25,13 +25,6 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
 
-static bool directLine(const RenderPath& path)
-{
-    return path.cmds.count == 2 && path.pts.count == 2 &&
-           path.cmds[0] == PathCommand::MoveTo && path.cmds[1] == PathCommand::LineTo &&
-           path.pts[0] != path.pts[1];
-}
-
 /************************************************************************/
 /* GlIntersector                                                        */
 /************************************************************************/
@@ -157,7 +150,7 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
         if (tesselateThinFill(optPath)) {
             multiplier = MIN_GL_STROKE_ALPHA;
             fillRule = rshape.rule;
-            convex = directLine(optPath);
+            convex = true;
             return true;
         }
         return false;
@@ -182,7 +175,7 @@ bool GlGeometry::tesselateThinFill(const RenderPath& path)
 
     // Thin fills borrow stroke tessellation, but the generated stroke buffer is
     // temporary. It must be moved into fill before this function returns.
-    Stroker stroker(&stroke, MIN_GL_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
+    Stroker stroker(&stroke, MIN_GL_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel, 4.0f, 1.0f, false);
     stroker.run(path); // path is already in world space.
     stroke.index.move(fill.index);
     stroke.vertex.move(fill.vertex);
@@ -197,7 +190,6 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     stroke.clear();
     strokeBBox = {};
     strokeRenderWidth = 0.0f;
-    strokeDirect = false;
 
     auto strokeWidth = rshape.strokeWidth();
     if (!std::isfinite(strokeWidth)) return false;
@@ -210,12 +202,11 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     if (!std::isfinite(strokeRenderWidth)) return false; // Invalid stroke render width when width and quality scale are finite but their product is not finite.
 
     // Keep stroke vertices local; GL applies model later through uViewMatrix.
-    Stroker stroker(&stroke, strokeWidth, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit(), qualityScale);
+    Stroker stroker(&stroke, strokeWidth, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit(), qualityScale, rshape.strokeDash(nullptr, nullptr) == 0);
     auto& dashed = RenderPath::scratch();
     if (gpuStrokeDash(rshape, dashed, nullptr)) stroker.run(dashed);
     else stroker.run(optStrokePath);
     strokeBBox = stroker.bounds();
-    strokeDirect = rshape.strokeDash(nullptr, nullptr) == 0 && directLine(optStrokePath);
     return true;
 }
 
