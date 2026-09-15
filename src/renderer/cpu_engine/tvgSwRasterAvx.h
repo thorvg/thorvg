@@ -27,6 +27,39 @@
 #define N_32BITS_IN_128REG 4
 #define N_32BITS_IN_256REG 8
 
+static inline uint32_t avxInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
+{
+    // At most 4*4 pixels contribute, so each channel sum fits in uint16_t.
+    auto sum = _mm_setzero_si128();
+
+    auto minx = static_cast<int32_t>(sx) - n;
+    if (minx < 0) minx = 0;
+
+    auto maxx = static_cast<int32_t>(sx) + n;
+    if (maxx >= static_cast<int32_t>(w)) maxx = w;
+
+    auto inc = (n / 2) + 1;
+    n = 0;
+
+    auto src = img + minx + miny * stride;
+
+    for (auto y = miny; y < maxy; y += inc) {
+        auto p = src;
+        for (auto x = minx; x < maxx; x += inc, p += inc) {
+            sum = _mm_add_epi16(sum, _mm_cvtepu8_epi16(_mm_cvtsi32_si128(*p)));
+            ++n;
+        }
+        src += (stride * inc);
+    }
+
+    auto c0 = _mm_extract_epi16(sum, 0) / n;
+    auto c1 = _mm_extract_epi16(sum, 1) / n;
+    auto c2 = _mm_extract_epi16(sum, 2) / n;
+    auto c3 = static_cast<uint32_t>(_mm_extract_epi16(sum, 3)) / n;
+
+    return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
+}
+
 static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
 {
     //1. set the masks for the A/G and R/B channels
