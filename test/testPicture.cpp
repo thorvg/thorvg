@@ -249,6 +249,110 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     Paint::rel(picture);
 }
 
+TEST_CASE("SVG Color and URL Decoding", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        // 1. SVG Color Specification (HSL, RGB, Hex, Alpha)
+        struct ColorTestCase {
+            const char* desc;
+            const char* color;
+            uint8_t expR, expG, expB, expA;
+        };
+
+        static const ColorTestCase cases[] = {
+            // HSL Hue sectors (0..5)
+            {"HSL Sector 0 (Red-Yellow)",    "hsl(30, 100%, 50%)",     255, 128,   0, 255},
+            {"HSL Sector 1 (Yellow-Green)",  "hsl(90, 100%, 50%)",     128, 255,   0, 255},
+            {"HSL Sector 2 (Green-Cyan)",    "hsl(150, 100%, 50%)",      0, 255, 128, 255},
+            {"HSL Sector 3 (Cyan-Blue)",     "hsl(210, 100%, 50%)",      0, 128, 255, 255},
+            {"HSL Sector 4 (Blue-Magenta)",  "hsl(270, 100%, 50%)",    128,   0, 255, 255},
+            {"HSL Sector 5 (Magenta-Red)",   "hsl(330, 100%, 50%)",    255,   0, 128, 255},
+
+            // HSL Boundary & Precision checks
+            {"HSL Zero Saturation (Gray)",   "hsl(0, 0%, 50%)",        128, 128, 128, 255},
+            {"HSL Hue 360",                  "hsl(360, 100%, 50%)",    255,   0,   0, 255},
+            {"HSL Negative Hue",             "hsl(-60, 100%, 50%)",    255,   0, 255, 255},
+            {"HSL Hue > 360",                "hsl(420, 100%, 50%)",    255, 255,   0, 255},
+            {"HSL Lightness <= 0.5",         "hsl(0, 100%, 25%)",      128,   0,   0, 255},
+            {"HSL Lightness > 0.5",          "hsl(0, 100%, 75%)",      255, 128, 128, 255},
+            {"HSL Zero Lightness (Black)",   "hsl(0, 100%, 0%)",         0,   0,   0, 255},
+            {"HSL Precision Default Branch", "hsl(-0.00001, 100%, 50%)",   0,   0,   0, 255},
+
+            // RGB Percentage, RGBA with Alpha, Hex Colors
+            {"RGB Percentage",               "rgb(100%, 50%, 0%)",     255, 128,   0, 255},
+            {"RGBA Alpha",                   "rgba(255, 0, 0, 0.5)",   255,   0,   0, 128},
+            {"Short Hex",                    "#f00",                   255,   0,   0, 255},
+        };
+
+        for (const auto& tc : cases) {
+            CAPTURE(tc.desc);
+            CAPTURE(tc.color);
+
+            char svg[256];
+            snprintf(svg, sizeof(svg),
+                     "<svg viewBox=\"0 0 10 10\" xmlns=\"http://www.w3.org/2000/svg\">"
+                     "<rect id=\"target\" fill=\"%s\" width=\"10\" height=\"10\"/>"
+                     "</svg>",
+                     tc.color);
+
+            auto picture = Picture::gen();
+            REQUIRE(picture);
+            picture->accessible = true;
+            REQUIRE(picture->load(svg, strlen(svg), "svg") == Result::Success);
+
+            auto shape = static_cast<const Shape*>(picture->paint(Accessor::id("target")));
+            REQUIRE(shape);
+
+            uint8_t r = 0, g = 0, b = 0, a = 0;
+            REQUIRE(shape->fill(&r, &g, &b, &a) == Result::Success);
+            CHECK(r == tc.expR);
+            CHECK(g == tc.expG);
+            CHECK(b == tc.expB);
+            CHECK(a == tc.expA);
+
+            Paint::rel(picture);
+        }
+
+        // 2. SVG Data URI URL Decoding (+ for space, uppercase hex %3C, %3E, %2F)
+        struct UrlTestCase {
+            const char* desc;
+            const char* href;
+            bool valid;
+        };
+
+        static const UrlTestCase urlCases[] = {
+            {"Empty Data URI", "data:image/svg+xml,", false},
+            {"URL-encoded SVG with '+' for space", "data:image/svg+xml,%3Csvg+viewBox%3D%220%200%2010%2010%22%3E%3Crect+fill%3D%22%23F00%22+width%3D%2210%22+height%3D%2210%22%2F%3E%3C%2Fsvg%3E", true},
+        };
+
+        for (const auto& tc : urlCases) {
+            CAPTURE(tc.desc);
+            CAPTURE(tc.href);
+
+            char svg[512];
+            snprintf(svg, sizeof(svg),
+                     "<svg viewBox=\"0 0 10 10\" xmlns=\"http://www.w3.org/2000/svg\">"
+                     "<image id=\"target_img\" href=\"%s\" width=\"10\" height=\"10\"/>"
+                     "</svg>",
+                     tc.href);
+
+            auto picture = Picture::gen();
+            REQUIRE(picture);
+            picture->accessible = true;
+            REQUIRE(picture->load(svg, strlen(svg), "svg") == Result::Success);
+
+            auto img = picture->paint(Accessor::id("target_img"));
+            if (tc.valid) {
+                CHECK(img != nullptr);
+            }
+
+            Paint::rel(picture);
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
 
 #ifdef THORVG_PNG_LOADER_SUPPORT
