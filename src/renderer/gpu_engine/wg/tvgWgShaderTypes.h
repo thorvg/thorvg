@@ -78,7 +78,7 @@ struct WgShaderTypePaintSettings
 {
     // [0] - color space, [3] - opacity
     WgShaderTypeVec4f options;
-    // gradient settings (linear/radial)
+    // gradient settings (linear/radial/conic)
     WgShaderTypeGradSettings gradient;
     // align to 256 bytes (see webgpu spec: minUniformBufferOffsetAlignment)
     uint8_t _padding[256 - sizeof(options) - sizeof(gradient)];

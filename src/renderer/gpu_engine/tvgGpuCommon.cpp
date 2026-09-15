@@ -38,6 +38,17 @@ constexpr uint32_t SW_AA_COVERAGE_BITS = 8;
 constexpr auto AA_COVERAGE_QUANTUM = 1.0f / static_cast<float>(1u << SW_AA_COVERAGE_BITS);
 constexpr auto MAX_PIXEL_SPAN = 1.41421356237f;
 
+Matrix gpuConicTransform(const Point& center, float angle)
+{
+    // Align to 12 o'clock.
+    auto radian = tvg::deg2rad(angle - 90.0f);
+    auto c = cosf(radian);
+    auto s = sinf(radian);
+    return {c, s, -(c * center.x + s * center.y),
+           -s, c, s * center.x - c * center.y,
+           0.0f, 0.0f, 1.0f};
+}
+
 uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius)
 {
     if (pixelRadius < FLOAT_EPSILON) return 2;

@@ -323,7 +323,8 @@ enum struct Type : uint8_t
     Picture,               ///< Picture class
     Text,                  ///< Text class
     LinearGradient = 10,   ///< LinearGradient class
-    RadialGradient         ///< RadialGradient class
+    RadialGradient,        ///< RadialGradient class
+    ConicGradient          ///< ConicGradient class
 };
 
 
@@ -1181,6 +1182,66 @@ struct TVG_API RadialGradient : Fill
     Type type() const noexcept override;
 
     _TVG_PROTECTED_CTOR(RadialGradient);
+};
+
+
+/**
+ * @class ConicGradient
+ *
+ * @brief A class representing the conic gradient fill of the Shape object.
+ *
+ * The gradient color transitions by the angle measured around a center point,
+ * completing a full clockwise turn from the start angle.
+ *
+ * @warning This class is not designed for inheritance.
+ *
+ * @note FillSpread options are ignored because the gradient always sweeps a full turn.
+ * @note Experimental API
+ */
+struct TVG_API ConicGradient : Fill
+{
+    /**
+     * @brief Sets the conic gradient attributes.
+     *
+     * The gradient sweeps a full turn clockwise around the center (@p cx, @p cy), beginning at @p angle.
+     * Color stop offsets from 0% to 100% map clockwise over one full turn from @p angle.
+     *
+     * @param[in] cx The horizontal coordinate of the center of the gradient.
+     * @param[in] cy The vertical coordinate of the center of the gradient.
+     * @param[in] angle The initial angle in degrees, measured clockwise from the 12 o'clock direction. The default is 0.0f.
+     *
+     * @see ConicGradient::conic(float* cx, float* cy, float* angle)
+     */
+    Result conic(float cx, float cy, float angle = 0.0f) noexcept;
+
+    /**
+     * @brief Gets the conic gradient attributes.
+     *
+     * @param[out] cx The horizontal coordinate of the center of the gradient.
+     * @param[out] cy The vertical coordinate of the center of the gradient.
+     * @param[out] angle The start angle in degrees.
+     *
+     * @see ConicGradient::conic(float cx, float cy, float angle)
+     */
+    Result conic(float* cx, float* cy, float* angle = nullptr) const noexcept;
+
+    /**
+     * @brief Creates a new ConicGradient object.
+     *
+     * @return A new ConicGradient object.
+     */
+    static ConicGradient* gen() noexcept;
+
+    /**
+     * @brief Returns the ID value of this class.
+     *
+     * This method can be used to check the current concrete instance type.
+     *
+     * @return The class type ID of the ConicGradient instance.
+     */
+    Type type() const noexcept override;
+
+    _TVG_PROTECTED_CTOR(ConicGradient);
 };
 
 
