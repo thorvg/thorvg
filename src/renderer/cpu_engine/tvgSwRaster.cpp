@@ -258,7 +258,9 @@ static uint32_t _interpUpScaler(const uint32_t *img, uint32_t stride, uint32_t w
 //OPTIMIZE_ME: Skip the function pointer access
 static uint32_t _interpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, uint32_t h, float sx, float sy, int32_t miny, int32_t maxy, int32_t n)
 {
-#ifdef THORVG_NEON_VECTOR_SUPPORT
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+    return avxInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
     return neonInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
 #else
     return cInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
