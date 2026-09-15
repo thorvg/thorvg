@@ -354,7 +354,18 @@ bool SwRenderer::postRender()
 {
     //Unmultiply alpha if needed
     if (surface->cs == ColorSpace::ABGR8888S || surface->cs == ColorSpace::ARGB8888S) {
-        rasterUnpremultiply(surface);
+        // partial rendering redrew the dirty regions only; the rest of the surface is
+        // already unpremultiplied from the previous frame, so dividing it by its alpha
+        // a second time would brighten it frame after frame.
+        if (fulldraw || dirtyRegion.deactivated()) rasterUnpremultiply(surface);
+        else {
+            for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
+                ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
+                    rasterUnpremultiply(surface, p->x(), p->y(), p->w(), p->h());
+                }
+            }
+            surface->premultiplied = false;
+        }
     }
 
     dirtyRegion.clear();
