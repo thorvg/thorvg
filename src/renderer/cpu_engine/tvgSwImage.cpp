@@ -30,27 +30,18 @@
 static SwOutline* _genOutline(SwImage& image, SwMpool* mpool, unsigned tid)
 {
     auto outline = mpool->outline(tid);
-    outline->in.reserve(5);
-    outline->types.reserve(5);
-    outline->cntrs.reserve(1);
-    outline->closed.reserve(1);
+    auto& path = *const_cast<RenderPath*>(outline->path);
+    path.pts.reserve(4);
+    path.cmds.reserve(5);
 
     auto w = static_cast<float>(image.w);
     auto h = static_cast<float>(image.h);
 
-    outline->in.push({0.0f, 0.0f});
-    outline->in.push({w, 0.0f});
-    outline->in.push({w, h});
-    outline->in.push({0.0f, h});
-    outline->in.push({0.0f, 0.0f});
-
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->types.push(SW_CURVE_TYPE_POINT);
-    outline->cntrs.push(outline->in.count - 1);
-    outline->closed.push(true);
+    path.moveTo({0.0f, 0.0f});
+    path.lineTo({w, 0.0f});
+    path.lineTo({w, h});
+    path.lineTo({0.0f, h});
+    path.close();
 
     outline->fillRule = FillRule::NonZero;
 
