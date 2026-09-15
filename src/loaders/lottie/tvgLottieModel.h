@@ -758,6 +758,7 @@ struct LottieSolid : LottieObject
 {
     LottieSolid(LottieObject::Type type) : LottieObject(type) {}
 
+    BlendMethod blendMethod = BlendMethod::Normal;
     LottieColor color = RGB32{255, 255, 255};
     LottieOpacity opacity = 255;
 
@@ -857,6 +858,7 @@ struct LottieGradient : LottieObject
     LottieFloat angle = 0.0f;
     LottieOpacity opacity = 255;
     LottieColorStop colorStops;
+    BlendMethod blendMethod = BlendMethod::Normal;
     uint8_t id = 0; //1: linear, 2: radial
     bool opaque = true; //fully opaque or not
 };

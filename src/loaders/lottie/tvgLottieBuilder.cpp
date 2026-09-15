@@ -348,7 +348,7 @@ bool LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, f
     auto opacity = fill->opacity(frameNo, tween, exps);
 
     //interrupted by fully opaque, stop the current rendering
-    if (ctx->fragment == RenderFragment::ByFill && opacity == 255) return true;
+    if (ctx->fragment == RenderFragment::ByFill && opacity == 255 && fill->blendMethod == BlendMethod::Normal) return true;
     if (opacity == 0) return false;
 
     if (fragmented(parent, child, contexts, ctx, RenderFragment::ByFill)) return false;
@@ -357,6 +357,7 @@ bool LottieBuilder::updateSolidFill(LottieGroup* parent, LottieObject** child, f
     auto color = fill->color(frameNo, tween, exps);
     ctx->propagator->fill(color.r, color.g, color.b, opacity);
     ctx->propagator->fillRule(fill->rule);
+    ctx->propagator->blend(fill->blendMethod);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
 
@@ -370,7 +371,7 @@ bool LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child
     auto opacity = fill->opacity(frameNo, tween, exps);
 
     //interrupted by fully opaque, stop the current rendering
-    if (ctx->fragment == RenderFragment::ByFill && fill->opaque && opacity == 255) return true;
+    if (ctx->fragment == RenderFragment::ByFill && fill->opaque && opacity == 255 && fill->blendMethod == BlendMethod::Normal) return true;
 
     if (fragmented(parent, child, contexts, ctx, RenderFragment::ByFill)) return false;
 
@@ -378,6 +379,7 @@ bool LottieBuilder::updateGradientFill(LottieGroup* parent, LottieObject** child
 
     if (auto val = fill->fill(frameNo, opacity, tween, exps)) ctx->propagator->fill(val);
     ctx->propagator->fillRule(fill->rule);
+    ctx->propagator->blend(fill->blendMethod);
 
     if (ctx->propagator->strokeWidth() > 0) ctx->propagator->order(true);
 
@@ -1411,12 +1413,12 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
 }
 
 
-bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, Scene* scene, LottieLayer* layer)
+bool LottieBuilder::updateMatte(LottieComposition* comp, float frameNo, LottieLayer* layer)
 {
     auto target = layer->matteTarget;
     if (!target || target->type == LottieLayer::Null) return true;
 
-    updateLayer(comp, scene, target, frameNo);
+    updateLayer(comp, nullptr, target, frameNo);
 
     if (target->scene) {
         layer->scene->mask(target->scene, layer->matteType);
@@ -1566,7 +1568,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     layer->scene->transform(layer->cache.matrix);
 
-    if (!layer->matteSrc && !updateMatte(comp, frameNo, scene, layer)) return;
+    if (!updateMatte(comp, frameNo, layer)) return;
 
     layer->scene->blend(layer->blendMethod);
 
@@ -1603,7 +1605,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
 
     updateEffect(layer, frameNo, comp->quality);
 
-    if (!layer->matteSrc) scene->add(layer->scene);
+    if (scene) scene->add(layer->scene);
 }
 
 
@@ -1698,7 +1700,6 @@ static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
         }
 
         if (child->matteTarget) {
-            child->matteTarget->matteSrc = true;
             //parenting
             _buildHierarchy(parent, child->matteTarget);
             //precomp referencing
