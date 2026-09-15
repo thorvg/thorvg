@@ -273,11 +273,11 @@ void WgPipelines::initialize(WgContext& context)
     shader_image  = createShaderModule(context.device, "The shader image",  cShaderSrc_Image);
     shader_scene  = createShaderModule(context.device, "The shader scene",  cShaderSrc_Scene);
     // shader custom blend
-    shader_solid_blend  = createShaderModule(context.device, "The shader blend solid",  strcat(strcpy(shaderSourceBuff, cShaderSrc_Solid_Blend), cShaderSrc_BlendFuncs));
-    shader_linear_blend = createShaderModule(context.device, "The shader blend linear", strcat(strcpy(shaderSourceBuff, cShaderSrc_Linear_Blend), cShaderSrc_BlendFuncs));
-    shader_radial_blend = createShaderModule(context.device, "The shader blend radial", strcat(strcpy(shaderSourceBuff, cShaderSrc_Radial_Blend), cShaderSrc_BlendFuncs));
-    shader_image_blend  = createShaderModule(context.device, "The shader blend image",  strcat(strcpy(shaderSourceBuff, cShaderSrc_Image_Blend), cShaderSrc_BlendFuncs));
-    shader_scene_blend  = createShaderModule(context.device, "The shader blend scene",  strcat(strcpy(shaderSourceBuff, cShaderSrc_Scene_Blend), cShaderSrc_BlendFuncs));
+    shader_solid_blend  = createShaderModule(context.device, "The shader blend solid",  strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Solid_Blend), cShaderSrc_Default_Blend), cShaderSrc_BlendFuncs));
+    shader_linear_blend = createShaderModule(context.device, "The shader blend linear", strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Linear_Blend), cShaderSrc_Gradient_Blend), cShaderSrc_BlendFuncs));
+    shader_radial_blend = createShaderModule(context.device, "The shader blend radial", strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Radial_Blend), cShaderSrc_Gradient_Blend), cShaderSrc_BlendFuncs));
+    shader_image_blend  = createShaderModule(context.device, "The shader blend image",  strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Image_Blend), cShaderSrc_Default_Blend), cShaderSrc_BlendFuncs));
+    shader_scene_blend  = createShaderModule(context.device, "The shader blend scene",  strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Scene_Blend), cShaderSrc_Default_Blend), cShaderSrc_BlendFuncs));
     // shader compose
     shader_scene_compose = createShaderModule(context.device, "The shader scene composition", cShaderSrc_Scene_Compose);
     // shader blit

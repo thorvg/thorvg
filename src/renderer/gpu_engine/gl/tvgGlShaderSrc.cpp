@@ -567,13 +567,12 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
     }
 );
 
-// SW parity map for blend sources:
-// - Solid shape: SW calls blender(srcPremul, dst) directly.
-//   Keep premultiplied source and bypass postProcess.
-// - Gradient shape: SW first does src-over (opBlendPreNormal), then blender(tmp, dst).
-//   Build equivalent tmp in getFragData() by pre-mixing with dst, then bypass postProcess.
-// - Image/Scene: SW uses blender(unpremul(src), dst), then interpolates by src alpha/opacity.
-//   Keep unpremultiplied source + postProcess mix for these headers.
+// Blend source conventions:
+// - Solid shapes keep premultiplied source and bypass postProcess.
+// - Gradients preserve the existing precomposited source convention, except
+//   Multiply, which blends the raw source before source-over compositing.
+// - Images and scenes blend unpremultiplied source colors, then composite with
+//   the destination in postProcess.
 const char* BLEND_SHAPE_SOLID_FRAG_HEADER = R"(
 layout(std140) uniform BlendRegion {
     vec4 region;
@@ -615,7 +614,7 @@ vec3 One = vec3(1.0, 1.0, 1.0);
 struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
-void getFragData() {
+void getMultiplyFragData() {
     vec4 colorSrc = linearGradientColor(vPos);
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
     vec4 colorDst = texture(uDstTexture, uv);
@@ -626,12 +625,7 @@ void getFragData() {
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
     if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
-    float srcOpacity = d.Sa * d.So;
-    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
-    d.Sa = mix(d.Da, 1.0, srcOpacity);
 }
-
-vec4 postProcess(vec4 R) { return R; }
 )";
 
 const char* BLEND_SHAPE_RADIAL_FRAG_HEADER = R"(
@@ -647,7 +641,7 @@ vec3 One = vec3(1.0, 1.0, 1.0);
 struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
 FragData d;
 
-void getFragData() {
+void getMultiplyFragData() {
     vec4 colorSrc = radialGradientColor(vPos);
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
     vec4 colorDst = texture(uDstTexture, uv);
@@ -658,12 +652,7 @@ void getFragData() {
     d.Dc = colorDst.rgb;
     d.Da = colorDst.a;
     if (d.Sa > 0.0) { d.Sc = d.Sc / d.Sa; }
-    float srcOpacity = d.Sa * d.So;
-    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
-    d.Sa = mix(d.Da, 1.0, srcOpacity);
 }
-
-vec4 postProcess(vec4 R) { return R; }
 )";
 
 // GL keeps a viewport-sized dst copy, so src/dst can share vUV.
@@ -797,6 +786,24 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 #endif
 
+// Solids, images and scenes use the same source convention for every blend mode.
+const char* BLEND_DEFAULT_FRAG_HELPER = R"(void getMultiplyFragData() { getFragData(); }
+vec4 multiplyPostProcess(vec4 R) { return postProcess(R); }
+)";
+
+// Gradients precompose only for non-Multiply modes.
+const char* BLEND_GRADIENT_FRAG_HELPER = R"(
+void getFragData() {
+    getMultiplyFragData();
+    float srcOpacity = d.Sa * d.So;
+    d.Sc = mix(d.Dc, d.Sc, srcOpacity);
+    d.Sa = mix(d.Da, 1.0, srcOpacity);
+}
+
+vec4 postProcess(vec4 R) { return R; }
+vec4 multiplyPostProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
+)";
+
 const char* BLEND_FRAG_LUM_HELPER = R"(
 const vec3 LUM_W = vec3(0.3, 0.59, 0.11);
 
@@ -848,13 +855,13 @@ void main()
 const char* MULTIPLY_BLEND_FRAG = R"(
 void main()
 {
-    getFragData();
+    getMultiplyFragData();
     vec3 Rc = d.Sc;
     if (d.Da > 0.0) {
         Rc = d.Sc * min(One, d.Dc / d.Da);
         Rc = mix(d.Sc, Rc, d.Da);
     }
-    FragColor = postProcess(vec4(Rc, 1.0));
+    FragColor = multiplyPostProcess(vec4(Rc, 1.0));
 }
 )";
 

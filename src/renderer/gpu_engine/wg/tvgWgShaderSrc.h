@@ -38,6 +38,8 @@ extern const char* cShaderSrc_Linear_Blend;
 extern const char* cShaderSrc_Radial_Blend;
 extern const char* cShaderSrc_Image_Blend;
 extern const char* cShaderSrc_Scene_Blend;
+extern const char* cShaderSrc_Default_Blend;
+extern const char* cShaderSrc_Gradient_Blend;
 extern const char* cShaderSrc_BlendFuncs;
 // shaders scene compose
 extern const char* cShaderSrc_Scene_Compose;
