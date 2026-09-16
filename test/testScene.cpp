@@ -190,3 +190,47 @@ TEST_CASE("Scene Effects", "[tvgScene]")
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
+
+TEST_CASE("Parents Update", "[tvgScene]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto parent = Scene::gen();
+        REQUIRE(parent);
+
+        auto child = Shape::gen();
+        REQUIRE(child);
+        REQUIRE(child->ref() == 1);
+
+        auto maskA = Shape::gen();
+        REQUIRE(maskA);
+        REQUIRE(maskA->ref() == 1);
+
+        auto maskB = Shape::gen();
+        REQUIRE(maskB);
+
+        auto clip = Shape::gen();
+        REQUIRE(clip);
+
+        REQUIRE(maskA->mask(maskB, MaskMethod::Alpha) == Result::Success);
+        REQUIRE(child->mask(maskA, MaskMethod::Alpha) == Result::Success);
+        REQUIRE(child->clip(clip) == Result::Success);
+        REQUIRE(parent->add(child) == Result::Success);
+
+        REQUIRE(maskB->parent() == parent);
+        REQUIRE(maskA->parent() == parent);
+        REQUIRE(clip->parent() == parent);
+        REQUIRE(child->parent() == parent);
+
+        Paint::rel(parent);
+
+        REQUIRE(maskB->parent() == nullptr);
+        REQUIRE(maskA->parent() == nullptr);
+        REQUIRE(clip->parent() == nullptr);
+        REQUIRE(child->parent() == nullptr);
+
+        REQUIRE(maskA->unref() == 1);
+        REQUIRE(child->unref() == 0);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
