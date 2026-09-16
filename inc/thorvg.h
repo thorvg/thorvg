@@ -1244,7 +1244,7 @@ struct TVG_API Shape : Paint
      * @param[in] x The horizontal coordinate of the end-point of the curve.
      * @param[in] y The vertical coordinate of the end-point of the curve.
      *
-     * @note In case this is the first command in the path, no data from the path are rendered.
+     * @warning cubicTo must not be the first command in the path. Otherwise, rendering is not guaranteed.
      */
     Result cubicTo(float cx1, float cy1, float cx2, float cy2, float x, float y) noexcept;
 
