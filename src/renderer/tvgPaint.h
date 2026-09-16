@@ -105,9 +105,16 @@ struct Paint::Impl
         return ++refCnt;
     }
 
+    void attachTo(Paint* parent)
+    {
+        this->parent = parent;
+        if (clipper) PAINT(clipper)->attachTo(parent);
+        if (maskData) PAINT(maskData->target)->attachTo(parent);
+    }
+
     uint16_t unref(bool free = true)
     {
-        parent = nullptr;
+        attachTo(nullptr);
         return unrefx(free);
     }
 
@@ -187,7 +194,7 @@ struct Paint::Impl
         clipper = clp;
         if (clp) {
             clp->ref();
-            PAINT(clp)->parent = parent;
+            PAINT(clp)->attachTo(parent);
         }
         return Result::Success;
     }
@@ -207,7 +214,7 @@ struct Paint::Impl
         maskData = tvg::malloc<Mask>(sizeof(Mask));
         target->ref();
         maskData->target = target;
-        PAINT(target)->parent = parent;
+        PAINT(target)->attachTo(parent);
         maskData->source = paint;
         maskData->method = method;
         return Result::Success;
