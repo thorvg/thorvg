@@ -352,9 +352,7 @@ struct SceneImpl : Scene
             if (itr == paints.end()) return Result::InvalidArguments;
             paints.insert(itr, target);
         }
-        timpl->parent = this;
-        if (timpl->clipper) PAINT(timpl->clipper)->parent = this;
-        if (timpl->maskData) PAINT(timpl->maskData->target)->parent = this;
+        timpl->attachTo(this);
         return Result::Success;
     }
 
