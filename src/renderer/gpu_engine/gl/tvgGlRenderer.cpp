@@ -105,6 +105,7 @@ void GlRenderer::flush()
     clearDisposes();
 
     mRootTarget.reset();
+    mDirectTarget = false;
 
     ARRAY_FOREACH(p, mComposePool) delete(*p);
     mComposePool.clear();
@@ -976,12 +977,51 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
     // Cached values belong to the previous context. Numeric object ids can be
     // reused by the new context, so do not carry any binding assumptions over.
     mStateCache.invalidate();
+    if (!ret) return Result::InsufficientCondition;
 
+#if defined(__APPLE__) || defined(__MACH__)
+    // Direct rendering was slower or showed no benefit on tested Apple
+    mDirectTarget = false;
+#else
+    mDirectTarget = (mTargetFboId == 0);
+    if (mDirectTarget) {
+        GLint stencilSize = 0;
+        GLint depthSize = 0;
+        GLint sampleBuffers = 0;
+        GLint samples = 0;
+
+        mStateCache.bindFramebuffer(GL_FRAMEBUFFER, 0);
+
+#if defined(THORVG_GL_TARGET_GLES)
+        // GLES exposes default framebuffer bit depths through glGetIntegerv,
+        // avoiding another GL entry point in GLES and WebAssembly binaries.
+        GL_CHECK(glGetIntegerv(GL_STENCIL_BITS, &stencilSize));
+        GL_CHECK(glGetIntegerv(GL_DEPTH_BITS, &depthSize));
+#elif defined(THORVG_GL_DESKTOP_ATTACHMENT_QUERY)
+        // GL_DEPTH_BITS and GL_STENCIL_BITS are unavailable in desktop core
+        // GL, so query the default framebuffer attachments instead.
+        GL_CHECK(glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &stencilSize));
+        GL_CHECK(glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_DEPTH, GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE, &depthSize));
+#else
+    #error Unsupported GL target
+#endif
+
+        GL_CHECK(glGetIntegerv(GL_SAMPLE_BUFFERS, &sampleBuffers));
+        GL_CHECK(glGetIntegerv(GL_SAMPLES, &samples));
+
+        mDirectTarget = (stencilSize > 0 && depthSize > 0 && sampleBuffers > 0 && samples >= GL_MSAA_SAMPLES);
+#if defined(THORVG_GL_TARGET_GL)
+        if (mDirectTarget) GL_CHECK(glEnable(GL_MULTISAMPLE));
+#endif
+        TVGLOG("GL_ENGINE", "Default framebuffer stencil/depth/sample buffers/samples: %d/%d/%d/%d, rendering: %s",
+               stencilSize, depthSize, sampleBuffers, samples, mDirectTarget ? "direct" : "offscreen");
+    }
+#endif
     mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
-    mRootTarget.init(mStateCache, this->surface.w, this->surface.h, mTargetFboId);
+    mRootTarget.init(mStateCache, this->surface.w, this->surface.h, mTargetFboId, mDirectTarget);
     mStateCache.invalidate();
 
-    return ret ? Result::Success : Result::InsufficientCondition;
+    return Result::Success;
 }
 
 
@@ -1010,12 +1050,18 @@ bool GlRenderer::sync()
     mStateCache.enable(GL_DEPTH_TEST);
     mStateCache.depthFunc(GL_GREATER);
 
-    auto task = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
-
-    prepareBlitTask(task);
-
-    task->clearBuffer = mClearBuffer;
-    task->targetViewport = {{0, 0}, {int32_t(surface.w), int32_t(surface.h)}};
+    GlRenderTask* task = nullptr;
+    if (mDirectTarget) {
+        auto composeTask = mRenderPassStack.first()->endRenderPass<GlComposeTask>(nullptr, mTargetFboId);
+        composeTask->clearBuffer = mClearBuffer;
+        task = composeTask;
+    } else {
+        auto blitTask = mRenderPassStack.first()->endRenderPass<GlBlitTask>(mPrograms[RT_Blit], mTargetFboId);
+        prepareBlitTask(blitTask);
+        blitTask->clearBuffer = mClearBuffer;
+        blitTask->targetViewport = {{0, 0}, {int32_t(surface.w), int32_t(surface.h)}};
+        task = blitTask;
+    }
 
     if (mGpuBuffer.flushToGPU(mStateCache)) {
         mGpuBuffer.bind(mStateCache);
