@@ -63,24 +63,29 @@ void GlImage::destroy(GlRenderer& renderer)
         renderer.disposeTexture(renderer.textures.release(surface, filter, texId));
 }
 
-template<typename GradientBlock>
-static void _packGradientBlock(GradientBlock& block, const Fill::ColorStop* stops, uint32_t stopCnt, FillSpread spread, float alpha)
+static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopColors, const Fill::ColorStop* stops, uint32_t stopCnt, FillSpread spread, float alpha)
 {
-    block.nStops[1] = NOISE_LEVEL;
-    block.nStops[2] = static_cast<int32_t>(spread);
+    stopInfo[1] = NOISE_LEVEL;
+    stopInfo[2] = static_cast<int32_t>(spread);
 
+    auto opaque = alpha == 1.0f;
     uint32_t nStops = 0;
     for (uint32_t i = 0; i < stopCnt; ++i) {
-        if (nStops > 0 && block.stopPoints[nStops - 1] > stops[i].offset) continue;
+        if (nStops > 0 && stopPoints[nStops - 1] > stops[i].offset) {
+            opaque = false;
+            continue;
+        }
 
         auto index = nStops++;
-        block.stopPoints[index] = stops[i].offset;
-        block.stopColors[index * 4 + 0] = stops[i].r / 255.f;
-        block.stopColors[index * 4 + 1] = stops[i].g / 255.f;
-        block.stopColors[index * 4 + 2] = stops[i].b / 255.f;
-        block.stopColors[index * 4 + 3] = stops[i].a / 255.f * alpha;
+        stopPoints[index] = stops[i].offset;
+        stopColors[index * 4 + 0] = stops[i].r / 255.f;
+        stopColors[index * 4 + 1] = stops[i].g / 255.f;
+        stopColors[index * 4 + 2] = stops[i].b / 255.f;
+        stopColors[index * 4 + 3] = stops[i].a / 255.f * alpha;
+        opaque &= stops[i].a == 255;
     }
-    block.nStops[0] = nStops;
+    stopInfo[0] = nStops;
+    return opaque;
 }
 
 static bool _skipRender(const Array<RenderData>& clips)
@@ -338,7 +343,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     auto viewRegion = viewportRegion(vp, bbox);
     auto stencilMode = shape.geometry.stencilMode(flag);
 
-    if (!blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
+    if (!stroke && !blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
         mSolidBatch.draw(*this, shape, c, depth, viewRegion, viewportRegion(vp, viewBounds));
         return;
     }
@@ -361,6 +366,11 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
         }
     }
     RenderColor color = {c.r, c.g, c.b, a};
+
+    if (stroke && (blendShape || a == 255)) {
+        stencilMode = GlStencilMode::None;
+    }
+
     if (stencilMode == GlStencilMode::None) task->setVertexColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     task->setViewport(viewRegion);
 
@@ -440,15 +450,6 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 
     task->setViewport(viewRegion);
 
-    GlStencilMode stencilMode = shape.geometry.stencilMode(flag);
-    RenderRegion stencilBounds{};
-    const GlGeometryBuffer* stencilBuffer = nullptr;
-    uint32_t* stencilIndices = nullptr;
-    bool merge = false;
-    auto pass = currentPass();
-    auto clipped = !shape.clips.empty();
-    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, shape.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, clipped, depth, viewMatrix, vp, nullptr, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
-
     // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
     Matrix inv;
@@ -486,12 +487,13 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 
     // gradient block
     GlBindingResource gradientBinding{};
+    bool opaque;
 
     if (type == Type::LinearGradient) {
         auto linearFill = static_cast<const LinearGradient*>(fill);
 
         GlLinearGradientBlock gradientBlock;
-        _packGradientBlock(gradientBlock, stops, stopCnt, fill->spread(), alpha);
+        opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, fill->spread(), alpha);
 
         float x1, x2, y1, y2;
         linearFill->linear(&x1, &y1, &x2, &y2);
@@ -510,7 +512,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
         };
     } else if (radial) {
         GlRadialGradientBlock gradientBlock;
-        _packGradientBlock(gradientBlock, stops, stopCnt, fill->spread(), alpha);
+        opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, fill->spread(), alpha);
 
         gradientBlock.centerPos[0] = fx;
         gradientBlock.centerPos[1] = fy;
@@ -528,7 +530,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
         };
     } else {
         GlConicGradientBlock gradientBlock;
-        _packGradientBlock(gradientBlock, stops, stopCnt, FillSpread::Pad, alpha);
+        opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, FillSpread::Pad, alpha);
 
         gradientBinding = GlBindingResource{
             2,
@@ -543,6 +545,16 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 
     // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
+
+    auto stencilMode = shape.geometry.stencilMode(flag);
+    if (stroke && (mBlendMethod != BlendMethod::Normal || opaque)) stencilMode = GlStencilMode::None;
+    RenderRegion stencilBounds{};
+    const GlGeometryBuffer* stencilBuffer = nullptr;
+    uint32_t* stencilIndices = nullptr;
+    bool merge = false;
+    auto pass = currentPass();
+    auto clipped = !shape.clips.empty();
+    auto stencilTask = drawPrimitiveGeometry(mPrograms[RT_Stencil], task, shape.geometry, mStencilCoverBatch, pass, &mGpuBuffer, flag, stencilMode, clipped, depth, viewMatrix, vp, nullptr, viewBounds, stencilBounds, stencilBuffer, stencilIndices, merge);
 
     if (stencilTask) mStencilCoverBatch.draw(pass, stencilTask, task, merge, stencilMode, clipped, stencilBounds, viewBounds, stencilBuffer, stencilIndices);
     else pass->addRenderTask(task);
