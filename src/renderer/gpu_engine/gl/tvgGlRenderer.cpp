@@ -329,6 +329,10 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
         }
     }
     RenderColor color = {c.r, c.g, c.b, a};
+    if (!blendShape && shape.clips.empty() && (flag & RenderUpdateFlag::Stroke) && a == 255) {
+        stencilMode = GlStencilMode::None;
+    }
+
     if (stencilMode == GlStencilMode::None) task->setVertexColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     task->setViewport(viewRegion);
 
