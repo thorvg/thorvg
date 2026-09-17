@@ -6,6 +6,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  checks: write
 
 jobs:
   format:
@@ -31,9 +32,11 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -o pipefail
           git diff -U0 ${{ github.event.pull_request.base.sha }} \
           | clang-format-diff -p1 \
           | reviewdog -f=diff \
+                      -f.diff.strip=0 \
                       -reporter=github-pr-check \
                       -filter-mode=added \
                       -fail-level=error
