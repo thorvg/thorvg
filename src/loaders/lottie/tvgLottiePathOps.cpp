@@ -122,7 +122,7 @@ struct Normalizer
         offset = {(box.min.x + box.max.x) * 0.5f, (box.min.y + box.max.y) * 0.5f};
         auto span = fmaxf(box.max.x - box.min.x, box.max.y - box.min.y);
         if (!(span > 0.0f) || !std::isfinite(span)) return;
-        auto exp = fmaxf(-60.0f, fminf(60.0f, ceilf(log2f(span))));
+        auto exp = fmaxf(-126.0f, fminf(126.0f, ceilf(log2f(span))));
         scale = exp2f(-exp);
     }
 
@@ -702,12 +702,15 @@ static constexpr float PROBES[] = {0.317f, 0.641f};
 template<typename T>
 static bool _within(const T& other, const Contour* contour)
 {
+    auto votes = contour->segments.count * uint32_t(sizeof(PROBES) / sizeof(PROBES[0]));
     uint32_t in = 0, out = 0;
 
     INLIST_FOREACH(contour->segments, segment) {
         for (auto t : PROBES) {
             if (_winding(other, segment->curve.at(t)) != 0) ++in;
             else ++out;
+            if (in * 2 > votes) return true;
+            if (out * 2 >= votes) return false;
         }
     }
     return in > out;
@@ -742,6 +745,47 @@ static void _orient(List<Contour>& path)
 
     INLIST_FOREACH(path, contour) {
         if (contour->turn) _reverse(contour);
+    }
+}
+
+
+static bool _repeats(const Contour* lhs, const Contour* rhs)
+{
+    if (lhs->segments.count != rhs->segments.count) return false;
+
+    auto theirs = rhs->segments.head;
+    INLIST_FOREACH(lhs->segments, ours) {
+        auto& a = ours->curve;
+        auto& b = theirs->curve;
+        if (a.start != b.start || a.ctrl1 != b.ctrl1 || a.ctrl2 != b.ctrl2 || a.end != b.end) return false;
+        theirs = theirs->next;
+    }
+    return true;
+}
+
+
+static void _prune(List<Contour>& path)
+{
+    if (path.count < 2) return;
+
+    INLIST_SAFE_FOREACH(path, contour) {
+        int32_t around = 0;
+        auto holds = false;
+
+        INLIST_FOREACH(path, other) {
+            if (other == contour) continue;
+            if (_repeats(contour, other) || _within(other, contour)) around += _area(other) < 0.0f ? -1 : 1;
+            else if (_within(contour, other)) {
+                holds = true;
+                break;
+            }
+        }
+        if (holds) continue;
+
+        auto mine = _area(contour) < 0.0f ? -1 : 1;
+        if ((around != 0) != ((around + mine) != 0)) continue;
+
+        path.remove(contour);
     }
 }
 
@@ -1334,6 +1378,8 @@ static bool _op(const RenderPath& lhs, const RenderPath& rhs, RenderPath& out, P
     //align the directions
     _orient(a);
     _orient(b);
+    _prune(a);
+    _prune(b);
 
     _slice(ws, a, b);
     _slice(ws, b, a);
