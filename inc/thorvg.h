@@ -1249,6 +1249,160 @@ struct TVG_API ConicGradient : Fill
 
 
 /**
+ * @class Path
+ *
+ * @brief A class representing path data composed of commands and points.
+ *
+ * A Path retains outline data from a Shape's path, and supports boolean operations between paths.
+ * The operations interpret the operands under the non-zero fill rule.
+ *
+ * @warning This class is not designed for inheritance.
+ *
+ * @note The boolean operations regard an open sub-path as a closed one.
+ * @note Experimental API
+ */
+struct TVG_API Path
+{
+    /**
+     * @brief Appends the given path data to this path.
+     *
+     * For each command in the @p cmds array, the required number of points must be given in the @p pts array:
+     * one for PathCommand::MoveTo and PathCommand::LineTo, three for PathCommand::CubicTo and none for PathCommand::Close.
+     *
+     * @param[in] cmds The array of the commands to append.
+     * @param[in] cmdCnt The number of the commands in the @p cmds array.
+     * @param[in] pts The array of the two-dimensional points to append.
+     * @param[in] ptsCnt The number of the points in the @p pts array.
+     *
+     * @retval Result::InvalidArguments In case @c nullptr or zero count is passed.
+     *
+     * @warning The consistency between @p cmds and @p pts is not verified. Mismatched data results in undefined behavior.
+     *
+     * @see Path::add(const Path&)
+     */
+    Result add(const PathCommand* cmds, uint32_t cmdCnt, const Point* pts, uint32_t ptsCnt) noexcept;
+
+    /**
+     * @brief Retrieves the current path data.
+     *
+     * @param[out] cmds The pointer to the internal array of the commands.
+     * @param[out] cmdsCnt The number of the commands in the @p cmds array. Can be @c nullptr if not needed.
+     * @param[out] pts The pointer to the internal array of the two-dimensional points.
+     * @param[out] ptsCnt The number of the points in the @p pts array. Can be @c nullptr if not needed.
+     *
+     * @warning The returned arrays are owned by the path. They are invalidated once the path is modified or deleted.
+     */
+    Result get(const PathCommand*& cmds, uint32_t* cmdsCnt, const Point*& pts, uint32_t* ptsCnt) const noexcept;
+
+    /**
+     * @brief Resets the path data.
+     *
+     * @note The memory where the path data is stored is not deallocated at this stage to allow for caching.
+     */
+    void reset() noexcept;
+
+    /**
+     * @brief Replaces this path with the union of this path and @p rhs.
+     *
+     * @param[in] rhs The path to unite with. It can be this path itself.
+     *
+     * @retval Result::InvalidArguments In case path is invalid. This path is unchanged.
+     *
+     * @see Path::add(const Path&, const Path&, Path&)
+     */
+    Result add(const Path& rhs) noexcept;
+
+    /**
+     * @brief Replaces this path with the area of this path excluding @p rhs.
+     *
+     * @param[in] rhs The path to subtract. It can be this path itself.
+     *
+     * @retval Result::InvalidArguments In case path is invalid. This path is unchanged.
+     *
+     * @see Path::subtract(const Path&, const Path&, Path&)
+     */
+    Result subtract(const Path& rhs) noexcept;
+
+    /**
+     * @brief Replaces this path with the intersection of this path and @p rhs.
+     *
+     * @param[in] rhs The path to intersect with. It can be this path itself.
+     *
+     * @retval Result::InvalidArguments In case path is invalid. This path is unchanged.
+     *
+     * @see Path::intersect(const Path&, const Path&, Path&)
+     */
+    Result intersect(const Path& rhs) noexcept;
+
+    /**
+     * @brief Replaces this path with the exclusion (XOR) of this path and @p rhs.
+     *
+     * @param[in] rhs The path to exclude with. It can be this path itself.
+     *
+     * @retval Result::InvalidArguments In case path is invalid. This path is unchanged.
+     *
+     * @see Path::difference(const Path&, const Path&, Path&)
+     */
+    Result difference(const Path& rhs) noexcept;
+
+    /**
+     * @brief Computes the union of @p lhs and @p rhs: the area covered by either of them.
+     *
+     * @param[in] lhs The left hand operand.
+     * @param[in] rhs The right hand operand.
+     * @param[out] out The path replaced with the result. It can be the same instance as @p lhs or @p rhs.
+     *
+     * @retval Result::InvalidArguments In case either operand is invalid. @p out is unchanged.
+     */
+    static Result add(const Path& lhs, const Path& rhs, Path& out) noexcept;
+
+    /**
+     * @brief Computes the subtraction of @p rhs from @p lhs: the area covered by @p lhs but not by @p rhs.
+     *
+     * @param[in] lhs The left hand operand.
+     * @param[in] rhs The right hand operand.
+     * @param[out] out The path replaced with the result. It can be the same instance as @p lhs or @p rhs.
+     *
+     * @retval Result::InvalidArguments In case either operand is invalid. @p out is unchanged.
+     */
+    static Result subtract(const Path& lhs, const Path& rhs, Path& out) noexcept;
+
+    /**
+     * @brief Computes the intersection of @p lhs and @p rhs: the area covered by both of them.
+     *
+     * @param[in] lhs The left hand operand.
+     * @param[in] rhs The right hand operand.
+     * @param[out] out The path replaced with the result. It can be the same instance as @p lhs or @p rhs.
+     *
+     * @retval Result::InvalidArguments In case either operand is invalid. @p out is unchanged.
+     */
+    static Result intersect(const Path& lhs, const Path& rhs, Path& out) noexcept;
+
+    /**
+     * @brief Computes the exclusion (XOR) of @p lhs and @p rhs: the area covered by exactly one of them.
+     *
+     * @param[in] lhs The left hand operand.
+     * @param[in] rhs The right hand operand.
+     * @param[out] out The path replaced with the result. It can be the same instance as @p lhs or @p rhs.
+     *
+     * @retval Result::InvalidArguments In case either operand is invalid. @p out is unchanged.
+     *
+     * @note This is the symmetric difference, not the subtraction. See Path::subtract() for the latter.
+     */
+    static Result difference(const Path& lhs, const Path& rhs, Path& out) noexcept;
+
+    /**
+     * @brief Creates a new Path object.
+     *
+     * @return A pointer to the newly created Path object.
+     */
+    static Path* gen() noexcept;
+
+    _TVG_PUBLIC_DTOR(Path);
+};
+
+
+/**
  * @class Shape
  *
  * @brief A class representing two-dimensional figures and their properties.
