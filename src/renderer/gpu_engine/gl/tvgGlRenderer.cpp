@@ -306,7 +306,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     auto viewRegion = viewportRegion(vp, bbox);
     auto stencilMode = shape.geometry.stencilMode(flag);
 
-    if (!blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
+    if (!blendShape && stencilMode == GlStencilMode::None && shape.clips.empty() && shape.multiplier == 1.0f) {
         mSolidBatch.draw(*this, shape, c, depth, viewRegion, viewportRegion(vp, viewBounds));
         return;
     }
@@ -329,6 +329,10 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
         }
     }
     RenderColor color = {c.r, c.g, c.b, a};
+    if (!blendShape && shape.clips.empty() && (flag & RenderUpdateFlag::Stroke) && a == 255) {
+        stencilMode = GlStencilMode::None;
+    }
+
     if (stencilMode == GlStencilMode::None) task->setVertexColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
     task->setViewport(viewRegion);
 

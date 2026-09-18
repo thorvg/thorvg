@@ -42,7 +42,7 @@ static void _pushTriangle(Array<uint32_t>& array, uint32_t a, uint32_t b, uint32
     array.data[array.count++] = c;
 }
 
-Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit, float qualityScale) : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mQualityScale(qualityScale), mCap(cap), mJoin(join)
+Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoin join, float miterLimit, float qualityScale, bool trimJoin) : mBuffer(buffer), mWidth(width), mMiterLimit(miterLimit), mQualityScale(qualityScale), mCap(cap), mJoin(join), mTrimJoin(trimJoin)
 {
 }
 
@@ -55,6 +55,7 @@ RenderRegion Stroker::bounds() const
 
 void Stroker::run(const RenderPath& path)
 {
+    mContour.reserve(path.pts.count);
     mBuffer->vertex.reserve(path.pts.count * 8 + 16);
     mBuffer->index.reserve(path.pts.count * 6);
 
@@ -64,21 +65,14 @@ void Stroker::run(const RenderPath& path)
     ARRAY_FOREACH(cmd, path.cmds) {
         switch (*cmd) {
             case PathCommand::MoveTo: {
-                if (validStrokeCap) { // check this, so we can skip if path only contains move instruction
-                    cap();
-                    validStrokeCap = false;
-                }
-                mState.firstPt = *pts;
-                mState.firstPtDir = {0.0f, 0.0f};
-                mState.prevPt = *pts;
-                mState.prevPtDir = {0.0f, 0.0f};
-                pts++;
+                if (validStrokeCap) tessellate(false);
+                mContour.clear();
+                mContour.push({*pts++});
                 validStrokeCap = false;
             } break;
             case PathCommand::LineTo: {
                 validStrokeCap = true;
-                lineTo(*pts);
-                pts++;
+                lineTo(*pts++);
             } break;
             case PathCommand::CubicTo: {
                 validStrokeCap = true;
@@ -93,7 +87,7 @@ void Stroker::run(const RenderPath& path)
                 break;
         }
     }
-    if (validStrokeCap) cap();
+    if (validStrokeCap) tessellate(false);
 }
 
 
@@ -101,17 +95,19 @@ void Stroker::cap()
 {
     if (mCap == StrokeCap::Butt) return;
 
-    if (mCap == StrokeCap::Square) {
-        if (mState.firstPt == mState.prevPt) squarePoint(mState.firstPt);
-        else {
-            square(mState.firstPt, {-mState.firstPtDir.x, -mState.firstPtDir.y});
-            square(mState.prevPt, mState.prevPtDir);
-        }
-    } else if (mCap == StrokeCap::Round) {
-        if (mState.firstPt == mState.prevPt) roundPoint(mState.firstPt);
-        else {
-            round(mState.firstPt, {-mState.firstPtDir.x, -mState.firstPtDir.y});
-            round(mState.prevPt, mState.prevPtDir);
+    auto& first = mContour.first();
+    auto& last = mContour.last();
+    if (first.pt == last.pt) {
+        if (mCap == StrokeCap::Square) squarePoint(first.pt);
+        else roundPoint(first.pt);
+    } else {
+        auto& lastDir = mContour[mContour.count - 2].dir;
+        if (mCap == StrokeCap::Square) {
+            square(first.pt, -first.dir);
+            square(last.pt, lastDir);
+        } else {
+            round(first.pt, -first.dir);
+            round(last.pt, lastDir);
         }
     }
 }
@@ -119,75 +115,16 @@ void Stroker::cap()
 
 void Stroker::lineTo(const Point& curr)
 {
-    auto dir = (curr - mState.prevPt);
-    normalize(dir);
-
-    if (dir.x == 0.f && dir.y == 0.f) return;  //same point
-
-    auto normal = Point{-dir.y, dir.x};
-    auto a = mState.prevPt + normal * radius();
-    auto b = mState.prevPt - normal * radius();
-    auto c = curr + normal * radius();
-    auto d = curr - normal * radius();
-
-    auto ia = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto ib = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ic = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto id = _pushVertex(mBuffer->vertex, d.x, d.y);
-
-    /**
-     *   a --------- c
-     *   |           |
-     *   |           |
-     *   b-----------d
-     */
-
-    _pushTriangle(mBuffer->index, ia, ib, ic);
-    _pushTriangle(mBuffer->index, ib, id, ic);
-
-    if (mState.prevPt == mState.firstPt) {
-        // first point after moveTo
-        mState.prevPt = curr;
-        mState.prevPtDir = dir;
-        mState.firstPtDir = dir;
-    } else {
-        join(dir);
-        mState.prevPtDir = dir;
-        mState.prevPt = curr;
-    }
-
-    if (ia == 0) {
-        mRightBottom.x = mLeftTop.x = curr.x;
-        mRightBottom.y = mLeftTop.y = curr.y;
-    }
-
-    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
-    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
-    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
-    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
+    if (tvg::zero(curr - mContour.last().pt)) return;
+    mContour.push({curr});
 }
 
 
 void Stroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 {
-    Bezier curve{ mState.prevPt, cnt1, cnt2, end };
-
+    Bezier curve{mContour.last().pt, cnt1, cnt2, end};
     auto count = curve.segments(mQualityScale);
-    // Each segment emits a quad (8 floats, 6 indices). Reserve the fixed join
-    // costs as well; round joins stay dynamic because their arc count varies.
-    auto joinCount = count - ((mState.prevPt == mState.firstPt) ? 1u : 0u);
-    auto vertexCount = count * 8u;
-    auto indexCount = count * 6u;
-    if (mJoin == StrokeJoin::Bevel) {
-        vertexCount += joinCount * 6u;
-        indexCount += joinCount * 3u;
-    } else if (mJoin == StrokeJoin::Miter) {
-        vertexCount += joinCount * 8u;
-        indexCount += joinCount * 6u;
-    }
-    mBuffer->vertex.grow(vertexCount);
-    mBuffer->index.grow(indexCount);
-
+    mContour.grow(count);
     auto step = 1.f / count;
 
     for (uint32_t i = 1; i <= count; ++i) {
@@ -198,58 +135,153 @@ void Stroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
 
 void Stroker::close()
 {
+    if (mContour.count < 2) return;
 
-    // if (length(mState.prevPt - mState.firstPt) > 0.015625f)
-    auto delta = mState.prevPt - mState.firstPt;
-    if (dot(delta, delta) > 0.015625f * 0.015625f) {
-        lineTo(mState.firstPt);
-    }
+    auto first = mContour.first().pt;
+    auto delta = mContour.last().pt - first;
+    if (dot(delta, delta) > 0.015625f * 0.015625f) lineTo(first);
+    tessellate(true);
 
-    // join firstPt with prevPt
-    join(mState.firstPtDir);
+    mContour.clear();
+    mContour.push({first});
 }
 
 
-void Stroker::join(const Point& dir)
+void Stroker::tessellate(bool closed)
 {
-    auto orient = orientation(mState.prevPt - mState.prevPtDir, mState.prevPt, mState.prevPt + dir);
+    auto end = mContour.count - 1;
+    if (end == 0) {
+        if (!closed) cap();
+        return;
+    }
 
-    if (orient == Orientation::Linear) {
-        if (mState.prevPtDir == dir) return;      // check is same direction
-        if (mJoin != StrokeJoin::Round) return;   // opposite direction
-
-        auto normal = Point{-dir.y, dir.x};
-        auto p1 = mState.prevPt + normal * radius();
-        auto p2 = mState.prevPt - normal * radius();
-        auto oc = mState.prevPt + dir * radius();
-
-        round(p1, oc, mState.prevPt);
-        round(oc, p2, mState.prevPt);
-
-    } else {
-        auto normal = Point{-dir.y, dir.x};
-        auto prevNormal = Point{-mState.prevPtDir.y, mState.prevPtDir.x};
-        Point prevJoin, currJoin;
-
-        if (orient == Orientation::CounterClockwise) {
-            prevJoin = mState.prevPt + prevNormal * radius();
-            currJoin = mState.prevPt + normal * radius();
-        } else {
-            prevJoin = mState.prevPt - prevNormal * radius();
-            currJoin = mState.prevPt - normal * radius();
+    // Prepare the complete contour before emitting any triangles.
+    for (uint32_t i = 0; i < end; ++i) {
+        auto& vertex = mContour[i];
+        vertex.dir = mContour[i + 1].pt - vertex.pt;
+        vertex.length = length(vertex.dir);
+        vertex.dir *= 1.0f / vertex.length;
+        vertex.inner = vertex.pt;
+        vertex.side = 0;
+    }
+    auto& last = mContour[end];
+    last.inner = last.pt;
+    last.side = 0;
+    if (closed) {
+        last.dir = mContour[0].dir;
+        last.length = mContour[0].length;
+    }
+    // A skipped near-closing edge does not share an exact endpoint.
+    auto connected = closed && last.pt.x == mContour[0].pt.x && last.pt.y == mContour[0].pt.y;
+    auto joinCount = closed ? end : end - 1;
+    if (mTrimJoin) {
+        for (uint32_t i = 1; i <= joinCount; ++i) {
+            if (i == end && !connected) continue;
+            prepareJoin(mContour[i - 1], mContour[i]);
         }
+    }
 
-        if (mJoin == StrokeJoin::Miter) miter(prevJoin, currJoin, mState.prevPt);
-        else if (mJoin == StrokeJoin::Bevel) bevel(prevJoin, currJoin, mState.prevPt);
-        else round(prevJoin, currJoin, mState.prevPt);
+    auto vertexCount = end * 8u;
+    auto indexCount = end * 6u;
+    if (mJoin == StrokeJoin::Bevel) {
+        vertexCount += joinCount * 6u;
+        indexCount += joinCount * 3u;
+    } else if (mJoin == StrokeJoin::Miter) {
+        vertexCount += joinCount * 8u;
+        indexCount += joinCount * 6u;
+    }
+    mBuffer->vertex.grow(vertexCount);
+    mBuffer->index.grow(indexCount);
+
+    // Each segment reads both prepared joins; no emitted vertex is revised.
+    for (uint32_t i = 0; i < end; ++i) {
+        auto& startJoin = (i == 0 && connected) ? last : mContour[i];
+        segment(mContour[i], mContour[i + 1], startJoin);
+        if (i < joinCount) join(mContour[i], mContour[i + 1]);
+    }
+    if (!closed) cap();
+}
+
+
+void Stroker::prepareJoin(const Vertex& prev, Vertex& curr)
+{
+    auto turn = cross(prev.dir, curr.dir);
+    auto denom = 1.0f + dot(prev.dir, curr.dir);
+    if (tvg::zero(turn) || denom <= FLOAT_EPSILON) return;
+
+    auto setback = radius() * fabsf(turn) / denom;
+    auto scale = std::max(std::max(fabsf(curr.pt.x), fabsf(curr.pt.y)), std::max(prev.length, curr.length));
+    // Confine each cut to its half-segment, independently of neighboring joins.
+    if (!(2.0f * setback + FLOAT_EPSILON * scale < std::min(prev.length, curr.length))) return;
+
+    auto normal = Point{-prev.dir.y - curr.dir.y, prev.dir.x + curr.dir.x};
+    auto inner = curr.pt + normal * ((turn > 0.0f ? radius() : -radius()) / denom);
+    if (!std::isfinite(inner.x) || !std::isfinite(inner.y)) return;
+    curr.inner = inner;
+    curr.side = turn > 0.0f ? 1 : -1;
+}
+
+
+void Stroker::segment(const Vertex& prev, const Vertex& curr, const Vertex& startJoin)
+{
+    auto normal = Point{-prev.dir.y, prev.dir.x} * radius();
+    auto a = startJoin.side > 0 ? startJoin.inner : prev.pt + normal;
+    auto b = startJoin.side < 0 ? startJoin.inner : prev.pt - normal;
+    auto c = curr.side > 0 ? curr.inner : curr.pt + normal;
+    auto d = curr.side < 0 ? curr.inner : curr.pt - normal;
+
+    auto ia = _pushVertex(mBuffer->vertex, a.x, a.y);
+    auto ib = _pushVertex(mBuffer->vertex, b.x, b.y);
+    auto ic = _pushVertex(mBuffer->vertex, c.x, c.y);
+    auto id = _pushVertex(mBuffer->vertex, d.x, d.y);
+
+    _pushTriangle(mBuffer->index, ia, ib, ic);
+    _pushTriangle(mBuffer->index, ib, id, ic);
+
+    if (ia == 0) {
+        mRightBottom = mLeftTop = prev.pt;
+    }
+    mLeftTop.x = std::min(mLeftTop.x, std::min(std::min(a.x, b.x), std::min(c.x, d.x)));
+    mLeftTop.y = std::min(mLeftTop.y, std::min(std::min(a.y, b.y), std::min(c.y, d.y)));
+    mRightBottom.x = std::max(mRightBottom.x, std::max(std::max(a.x, b.x), std::max(c.x, d.x)));
+    mRightBottom.y = std::max(mRightBottom.y, std::max(std::max(a.y, b.y), std::max(c.y, d.y)));
+}
+
+
+void Stroker::join(const Vertex& prev, const Vertex& curr)
+{
+    auto turn = cross(prev.dir, curr.dir);
+
+    if (tvg::zero(turn)) {
+        if (prev.dir == curr.dir) return;       // same direction
+        if (mJoin != StrokeJoin::Round) return; // opposite direction
+
+        auto normal = Point{-curr.dir.y, curr.dir.x} * radius();
+        auto p1 = curr.pt + normal;
+        auto p2 = curr.pt - normal;
+        auto oc = curr.pt + curr.dir * radius();
+
+        round(p1, oc, curr.pt, curr.pt);
+        round(oc, p2, curr.pt, curr.pt);
+    } else {
+        auto normal = Point{-curr.dir.y, curr.dir.x};
+        auto prevNormal = Point{-prev.dir.y, prev.dir.x};
+        auto offset = turn < 0.0f ? radius() : -radius();
+        auto prevJoin = curr.pt + prevNormal * offset;
+        auto currJoin = curr.pt + normal * offset;
+
+        if (mJoin == StrokeJoin::Miter) miter(prevJoin, currJoin, curr.pt, curr.inner);
+        else if (mJoin == StrokeJoin::Bevel) bevel(prevJoin, currJoin, curr.inner);
+        else round(prevJoin, currJoin, curr.pt, curr.inner);
     }
 }
 
 
-void Stroker::round(const Point &prev, const Point& curr, const Point& center)
+void Stroker::round(const Point &prev, const Point& curr, const Point& center, const Point& apex)
 {
-    auto orient = orientation(prev, center, curr);
-    if (orient == Orientation::Linear) return;
+    auto turn = cross(center - prev, curr - prev);
+    // The cross product scales with radius squared; small arcs still need a fan.
+    if (turn == 0.0f) return;
 
     mLeftTop.x = std::min(mLeftTop.x, std::min(center.x, std::min(prev.x, curr.x)));
     mLeftTop.y = std::min(mLeftTop.y, std::min(center.y, std::min(prev.y, curr.y)));
@@ -259,7 +291,7 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     auto startAngle = tvg::atan(prev - center);
     auto endAngle = tvg::atan(curr - center);
 
-    if (orient == Orientation::Clockwise) {
+    if (turn > 0.0f) {
         if (endAngle > startAngle) endAngle -= 2 * MATH_PI;
     } else {
         if (endAngle < startAngle) endAngle += 2 * MATH_PI;
@@ -268,11 +300,11 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
     auto arcAngle = endAngle - startAngle;
     auto count = gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale);
 
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
+    auto c = _pushVertex(mBuffer->vertex, apex.x, apex.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto step = (endAngle - startAngle) / (count - 1);
 
-    for (uint32_t i = 1; i < static_cast<uint32_t>(count); i++) {
+    for (uint32_t i = 1; i + 1 < count; i++) {
         auto angle = startAngle + step * i;
         Point out = {center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
         auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
@@ -286,6 +318,10 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center)
         mRightBottom.x = std::max(mRightBottom.x, out.x);
         mRightBottom.y = std::max(mRightBottom.y, out.y);
     }
+
+    // Keep the shared edge exact so adjacent arcs and segments do not overlap.
+    auto oi = _pushVertex(mBuffer->vertex, curr.x, curr.y);
+    _pushTriangle(mBuffer->index, c, pi, oi);
 }
 
 
@@ -313,7 +349,7 @@ void Stroker::roundPoint(const Point &p)
 }
 
 
-void Stroker::miter(const Point& prev, const Point& curr, const Point& center)
+void Stroker::miter(const Point& prev, const Point& curr, const Point& center, const Point& apex)
 {
     auto pp1 = prev - center;
     auto pp2 = curr - center;
@@ -324,12 +360,12 @@ void Stroker::miter(const Point& prev, const Point& curr, const Point& center)
     // if (length(pe) >= mMiterLimit * radius())
     auto limit = mMiterLimit * radius();
     if (dot(pe, pe) >= limit * limit) {
-        bevel(prev, curr, center);
+        bevel(prev, curr, apex);
         return;
     }
 
     auto join = center + pe;
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
+    auto c = _pushVertex(mBuffer->vertex, apex.x, apex.y);
     auto cp1 = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto cp2 = _pushVertex(mBuffer->vertex, curr.x, curr.y);
     auto e = _pushVertex(mBuffer->vertex, join.x, join.y);
@@ -345,11 +381,11 @@ void Stroker::miter(const Point& prev, const Point& curr, const Point& center)
 }
 
 
-void Stroker::bevel(const Point& prev, const Point& curr, const Point& center)
+void Stroker::bevel(const Point& prev, const Point& curr, const Point& apex)
 {
     auto a = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto b = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    auto c = _pushVertex(mBuffer->vertex, center.x, center.y);
+    auto c = _pushVertex(mBuffer->vertex, apex.x, apex.y);
 
     _pushTriangle(mBuffer->index, a, b, c);
 }
@@ -411,8 +447,8 @@ void Stroker::round(const Point& p, const Point& outDir)
     auto b = p - normal * radius();
     auto c = p + outDir * radius();
 
-    round(a, c, p);
-    round(c, b, p);
+    round(a, c, p, p);
+    round(c, b, p, p);
 }
 
 
