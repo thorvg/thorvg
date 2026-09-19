@@ -1361,14 +1361,24 @@ static bool _rasterGradientRle(SwSurface* surface, const SwRle* rle, const SwFil
 
 void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
 {
-    //TODO: Support SIMD accelerations
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+    avxRasterTranslucentPixels(dst, src, len, opacity);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+    neonRasterTranslucentPixels(dst, src, len, opacity);
+#else
     cRasterTranslucentPixels(dst, src, len, opacity);
+#endif
 }
 
 void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
 {
-    //TODO: Support SIMD accelerations
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+    avxRasterPixels(dst, src, len, opacity);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+    neonRasterPixels(dst, src, len, opacity);
+#else
     cRasterPixels(dst, src, len, opacity);
+#endif
 }
 
 void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len)
@@ -1456,7 +1466,6 @@ uint32_t rasterUnpremultiply(uint32_t data)
     return JOIN(a, r, g, b);
 }
 
-// TODO: +SIMD
 void rasterUnpremultiply(RenderSurface* surface)
 {
     if (surface->channelSize != sizeof(uint32_t)) return;
@@ -1466,14 +1475,17 @@ void rasterUnpremultiply(RenderSurface* surface)
     #pragma omp parallel for
     for (int32_t y = 0; y < (int32_t)surface->h; y++) {
         auto buffer = surface->buf32 + surface->stride * uint32_t(y);
-        for (uint32_t x = 0; x < surface->w; ++x) {
-            buffer[x] = rasterUnpremultiply(buffer[x]);
-        }
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+        avxRasterUnpremultiply(buffer, surface->w);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+        neonRasterUnpremultiply(buffer, surface->w);
+#else
+        cRasterUnpremultiply(buffer, surface->w);
+#endif
     }
     surface->premultiplied = false;
 }
 
-// TODO: +SIMD
 void rasterPremultiply(RenderSurface* surface)
 {
     ScopedLock lock(surface->key);
@@ -1485,11 +1497,13 @@ void rasterPremultiply(RenderSurface* surface)
     #pragma omp parallel for
     for (int32_t y = 0; y < (int32_t)surface->h; ++y) {
         auto dst = surface->buf32 + surface->stride * uint32_t(y);
-        for (uint32_t x = 0; x < surface->w; ++x, ++dst) {
-            auto c = *dst;
-            if (A(c) == 255) continue;
-            *dst = PREMULTIPLY(c, A(c));
-        }
+#if defined(THORVG_AVX_VECTOR_SUPPORT)
+        avxRasterPremultiply(dst, surface->w);
+#elif defined(THORVG_NEON_VECTOR_SUPPORT)
+        neonRasterPremultiply(dst, surface->w);
+#else
+        cRasterPremultiply(dst, surface->w);
+#endif
     }
 }
 
@@ -1610,39 +1624,4 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
         return cRasterARGBtoABGR(surface);
     }
     return false;
-}
-
-//TODO: SIMD OPTIMIZATION?
-void rasterXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, bool flipped)
-{
-    constexpr int32_t BLOCK = 8;  //experimental decision
-
-    if (flipped) {
-        src += ((bbox.min.x * stride) + bbox.min.y);
-        dst += ((bbox.min.y * stride) + bbox.min.x);
-    } else {
-        src += ((bbox.min.y * stride) + bbox.min.x);
-        dst += ((bbox.min.x * stride) + bbox.min.y);
-    }
-
-    #pragma omp parallel for
-    for (int32_t x = 0; x < w; x += BLOCK) {
-        auto bx = std::min(w, x + BLOCK) - x;
-        auto in = &src[x];
-        auto out = &dst[x * stride];
-        for (int32_t y = 0; y < h; y += BLOCK) {
-            auto p = &in[y * stride];
-            auto q = &out[y];
-            auto by = std::min(h, y + BLOCK) - y;
-            for (int32_t xx = 0; xx < bx; ++xx) {
-                for (int32_t yy = 0; yy < by; ++yy) {
-                    *q = *p;
-                    p += stride;
-                    ++q;
-                }
-                p += 1 - by * stride;
-                q += stride - by;
-            }
-        }
-    }
 }

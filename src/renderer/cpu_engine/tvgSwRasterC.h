@@ -20,6 +20,21 @@
  * SOFTWARE.
  */
 
+static inline void cRasterUnpremultiply(uint32_t* buffer, uint32_t width)
+{
+    for (uint32_t x = 0; x < width; ++x) {
+        buffer[x] = rasterUnpremultiply(buffer[x]);
+    }
+}
+
+static void cRasterPremultiply(uint32_t* buffer, uint32_t width)
+{
+    for (uint32_t x = 0; x < width; ++x) {
+        auto c = buffer[x];
+        if (A(c) != 255) buffer[x] = PREMULTIPLY(c, A(c));
+    }
+}
+
 static inline uint32_t cInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
 {
     size_t c[4] = {0, 0, 0, 0};
@@ -56,7 +71,7 @@ static inline uint32_t cInterpDownScaler(const uint32_t* img, uint32_t stride, u
 }
 
 template<typename PIXEL_T>
-static void inline cRasterTranslucentPixels(PIXEL_T* dst, PIXEL_T* src, uint32_t len, uint32_t opacity)
+static void cRasterTranslucentPixels(PIXEL_T* dst, PIXEL_T* src, uint32_t len, uint32_t opacity)
 {
     //TODO: 64bits faster?
     if (opacity == 255) {
@@ -71,9 +86,8 @@ static void inline cRasterTranslucentPixels(PIXEL_T* dst, PIXEL_T* src, uint32_t
     }
 }
 
-
 template<typename PIXEL_T>
-static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T* src, uint32_t len, uint32_t opacity)
+static void cRasterPixels(PIXEL_T* dst, PIXEL_T* src, uint32_t len, uint32_t opacity)
 {
     //TODO: 64bits faster?
     if (opacity == 255) {
@@ -85,9 +99,8 @@ static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T* src, uint32_t len, uint3
     }
 }
 
-
 template<typename PIXEL_T>
-static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int32_t len)
+static void cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int32_t len)
 {
     dst += offset;
 
@@ -125,8 +138,7 @@ static void inline cRasterPixels(PIXEL_T* dst, PIXEL_T val, uint32_t offset, int
     while (len--) *dst++ = val;
 }
 
-
-static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
+static inline bool cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
 {
     const SwSpan* end;
     int32_t x, len;
@@ -162,8 +174,7 @@ static bool inline cRasterTranslucentRle(SwSurface* surface, const SwRle* rle, c
     return true;
 }
 
-
-static bool inline cRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c)
+static inline bool cRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c)
 {
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
@@ -190,8 +201,7 @@ static bool inline cRasterTranslucentRect(SwSurface* surface, const RenderRegion
     return true;
 }
 
-
-static bool inline cRasterABGRtoARGB(RenderSurface* surface)
+static bool cRasterABGRtoARGB(RenderSurface* surface)
 {
     TVGLOG("SW_ENGINE", "Convert ColorSpace ABGR - ARGB [Size: %d x %d]", surface->w, surface->h);
 
@@ -223,8 +233,7 @@ static bool inline cRasterABGRtoARGB(RenderSurface* surface)
     return true;
 }
 
-
-static bool inline cRasterARGBtoABGR(RenderSurface* surface)
+static bool cRasterARGBtoABGR(RenderSurface* surface)
 {
     //exactly same with ABGRtoARGB
     return cRasterABGRtoARGB(surface);
