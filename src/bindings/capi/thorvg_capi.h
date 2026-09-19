@@ -76,6 +76,13 @@ typedef struct _Tvg_Paint* Tvg_Paint;
 typedef struct _Tvg_Gradient* Tvg_Gradient;
 
 /**
+ * @brief A structure representing a standalone vector path object.
+ *
+ * @note Experimental API
+ */
+typedef struct _Tvg_Path* Tvg_Path;
+
+/**
  * @brief A structure representing an object that enables to save a Tvg_Paint object into a file.
  */
 typedef struct _Tvg_Saver* Tvg_Saver;
@@ -1969,6 +1976,147 @@ TVG_API Tvg_Gradient tvg_gradient_duplicate(Tvg_Gradient grad);
 TVG_API Tvg_Result tvg_gradient_del(Tvg_Gradient grad);
 
 /** \} */   // end defgroup ThorVGCapi_Gradient
+
+/**
+ * @defgroup ThorVGCapi_Path Path
+ *
+ * @brief A module for managing path data composed of commands and points.
+ *
+ * A path retains outline data from a shape's path, and supports boolean operations between paths.
+ * The operations interpret the operands under the non-zero fill rule.
+ *
+ * @note The boolean operations regard an open sub-path as a closed one.
+ *
+ * \{
+ */
+
+/************************************************************************/
+/* Path API                                                             */
+/************************************************************************/
+/**
+ * @brief Creates a new path object.
+ *
+ * @return A pointer to the newly created path object.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Path tvg_path_new(void);
+
+/**
+ * @brief Deletes the given path object.
+ *
+ * @param[in] path The path object to be deleted.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_path_del(Tvg_Path path);
+
+/**
+ * @brief Appends the given path data to the path.
+ *
+ * For each command in the @p cmds array, the required number of points must be given in the @p pts array:
+ * one for TVG_PATH_COMMAND_MOVE_TO and TVG_PATH_COMMAND_LINE_TO, three for TVG_PATH_COMMAND_CUBIC_TO and none for TVG_PATH_COMMAND_CLOSE.
+ *
+ * @param[in] path A Tvg_Path pointer to the path object.
+ * @param[in] cmds The array of the commands to append.
+ * @param[in] cmdCnt The number of the commands in the @p cmds array.
+ * @param[in] pts The array of the two-dimensional points to append.
+ * @param[in] ptsCnt The number of the points in the @p pts array.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer, or @c nullptr or zero count is passed.
+ *
+ * @warning The consistency between @p cmds and @p pts is not verified. Mismatched data results in undefined behavior.
+ *
+ * @note Experimental API
+ * @see tvg_path_add()
+ */
+TVG_API Tvg_Result tvg_path_append(Tvg_Path path, const Tvg_Path_Command* cmds, uint32_t cmdCnt, const Tvg_Point* pts, uint32_t ptsCnt);
+
+/**
+ * @brief Retrieves the current path data.
+ *
+ * @param[in] path A Tvg_Path pointer to the path object.
+ * @param[out] cmds The pointer to the internal array of the commands.
+ * @param[out] cmdsCnt The number of the commands in the @p cmds array. Can be @c nullptr if not needed.
+ * @param[out] pts The pointer to the internal array of the two-dimensional points.
+ * @param[out] ptsCnt The number of the points in the @p pts array. Can be @c nullptr if not needed.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer, or @c nullptr passed as the @p cmds or @p pts argument.
+ *
+ * @warning The returned arrays are owned by the path. They are invalidated once the path is modified or deleted.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_path_get(const Tvg_Path path, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt);
+
+/**
+ * @brief Resets the path data.
+ *
+ * @param[in] path A Tvg_Path pointer to the path object.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer.
+ *
+ * @note The memory where the path data is stored is not deallocated at this stage to allow for caching.
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_path_reset(Tvg_Path path);
+
+/**
+ * @brief Computes the union of @p lhs and @p rhs: the area covered by either of them.
+ *
+ * @param[in] lhs The left hand operand.
+ * @param[in] rhs The right hand operand.
+ * @param[out] out The path replaced with the result. It can be the same object as @p lhs or @p rhs.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer, or either operand is invalid. @p out is unchanged.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_path_add(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out);
+
+/**
+ * @brief Computes the subtraction of @p rhs from @p lhs: the area covered by @p lhs but not by @p rhs.
+ *
+ * @param[in] lhs The left hand operand.
+ * @param[in] rhs The right hand operand.
+ * @param[out] out The path replaced with the result. It can be the same object as @p lhs or @p rhs.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer, or either operand is invalid. @p out is unchanged.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_path_subtract(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out);
+
+/**
+ * @brief Computes the intersection of @p lhs and @p rhs: the area covered by both of them.
+ *
+ * @param[in] lhs The left hand operand.
+ * @param[in] rhs The right hand operand.
+ * @param[out] out The path replaced with the result. It can be the same object as @p lhs or @p rhs.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer, or either operand is invalid. @p out is unchanged.
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_path_intersect(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out);
+
+/**
+ * @brief Computes the exclusion (XOR) of @p lhs and @p rhs: the area covered by exactly one of them.
+ *
+ * @param[in] lhs The left hand operand.
+ * @param[in] rhs The right hand operand.
+ * @param[out] out The path replaced with the result. It can be the same object as @p lhs or @p rhs.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT An invalid Tvg_Path pointer, or either operand is invalid. @p out is unchanged.
+ *
+ * @note This is the symmetric difference, not the subtraction. See tvg_path_subtract() for the latter.
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_path_difference(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out);
+
+/** \} */   // end defgroup ThorVGCapi_Path
 
 /**
  * @defgroup ThorVGCapi_Picture Picture

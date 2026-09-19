@@ -850,6 +850,78 @@ TVG_API Tvg_Result tvg_gradient_get_type(const Tvg_Gradient grad, Tvg_Type* type
 
 
 /************************************************************************/
+/* Path API                                                             */
+/************************************************************************/
+
+TVG_API Tvg_Path tvg_path_new()
+{
+    return (Tvg_Path) Path::gen();
+}
+
+
+TVG_API Tvg_Result tvg_path_del(Tvg_Path path)
+{
+    if (path) {
+        delete(reinterpret_cast<Path*>(path));
+        return TVG_RESULT_SUCCESS;
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_path_append(Tvg_Path path, const Tvg_Path_Command* cmds, uint32_t cmdCnt, const Tvg_Point* pts, uint32_t ptsCnt)
+{
+    if (path) return (Tvg_Result) reinterpret_cast<Path*>(path)->add((const PathCommand*)cmds, cmdCnt, (const Point*)pts, ptsCnt);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_path_get(const Tvg_Path path, const Tvg_Path_Command** cmds, uint32_t* cmdsCnt, const Tvg_Point** pts, uint32_t* ptsCnt)
+{
+    if (path && cmds && pts) return (Tvg_Result) reinterpret_cast<const Path*>(path)->get(*(const PathCommand**)cmds, cmdsCnt, *(const Point**)pts, ptsCnt);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_path_reset(Tvg_Path path)
+{
+    if (path) {
+        reinterpret_cast<Path*>(path)->reset();
+        return TVG_RESULT_SUCCESS;
+    }
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_path_add(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out)
+{
+    if (lhs && rhs && out) return (Tvg_Result) Path::add(*reinterpret_cast<const Path*>(lhs), *reinterpret_cast<const Path*>(rhs), *reinterpret_cast<Path*>(out));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_path_subtract(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out)
+{
+    if (lhs && rhs && out) return (Tvg_Result) Path::subtract(*reinterpret_cast<const Path*>(lhs), *reinterpret_cast<const Path*>(rhs), *reinterpret_cast<Path*>(out));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_path_intersect(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out)
+{
+    if (lhs && rhs && out) return (Tvg_Result) Path::intersect(*reinterpret_cast<const Path*>(lhs), *reinterpret_cast<const Path*>(rhs), *reinterpret_cast<Path*>(out));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+TVG_API Tvg_Result tvg_path_difference(const Tvg_Path lhs, const Tvg_Path rhs, Tvg_Path out)
+{
+    if (lhs && rhs && out) return (Tvg_Result) Path::difference(*reinterpret_cast<const Path*>(lhs), *reinterpret_cast<const Path*>(rhs), *reinterpret_cast<Path*>(out));
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
+
+
+/************************************************************************/
 /* Scene API                                                            */
 /************************************************************************/
 
