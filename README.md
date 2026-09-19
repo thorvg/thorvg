@@ -488,7 +488,8 @@ Would you like us to showcase your project with ThorVG? Feel free to [open an is
 <br />
 <br />
 ## ThorVG Demo
-Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS! [Give it a try!](https://thorvg-janitor.vercel.app/)
+### Thor Janitor
+[Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS! [Give it a try!](https://thorvg-janitor.vercel.app/)
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/user-attachments/assets/8a4bd16a-bb72-4b41-b007-eadc2220d1eb"/>
@@ -496,6 +497,17 @@ Check out [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interacti
 
 <p align="center">
   <strong><a href="https://youtu.be/jdnnzmtHy9k">Watch the full video!</a></strong>
+</p>
+
+### Thor Pirates
+Check out [Thor Pirates](https://github.com/thorvg/thorvg.pirates). Every visual is rendered as real-time vector graphics, featuring physics-based cannon battles, dynamic water, ship debris, and interactive environmental effects. The entire game was built with AI-generated code using [Codex](https://chatgpt.com/codex/?utm_source=google&utm_medium=paid_search&c_id=24184441561&c_agid=203310201807&c_crid=822144559839&c_kwid=kwd-111182835&c_ims=&c_pms=9197166&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=24184441561&gbraid=0AAAAA-I0E5f01DRDjTP8rQ_p9rY5vklen&gclid=Cj0KCQjw5bjVBhCiARIsAJzMVnQf5XBIme-UebEIZUoYXOpv0NfPBbLdpAymExeO3H3gMSpog_nohNYaAl4sEALw_wcB), showcasing how naturally ThorVG’s retained structural APIs work with AI.
+
+<p align="center">
+  <img width="700" height="auto" alt="thorvg" src="https://github.com/user-attachments/assets/cda8e26e-acbc-44fb-9b16-4c50b3b991f6" />
+</p>
+
+<p align="center">
+  <strong><a href="https://youtu.be/eBvL9oUaQ3A?si=AKmsjYn25uMLLoFB">Watch the full video!</a></strong>
 </p>
 
 [Back to contents](#contents)
