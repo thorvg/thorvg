@@ -27,7 +27,7 @@
 #define N_32BITS_IN_128REG 4
 #define N_32BITS_IN_256REG 8
 
-static inline uint32_t avxInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
+static uint32_t avxInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
 {
     // At most 4*4 pixels contribute, so each channel sum fits in uint16_t.
     auto sum = _mm_setzero_si128();
@@ -60,7 +60,7 @@ static inline uint32_t avxInterpDownScaler(const uint32_t* img, uint32_t stride,
     return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
 }
 
-static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
+static __m128i ALPHA_BLEND(__m128i c, __m128i a)
 {
     //1. set the masks for the A/G and R/B channels
     auto AG = _mm_set1_epi32(0xff00ff00);
@@ -94,6 +94,49 @@ static inline __m128i ALPHA_BLEND(__m128i c, __m128i a)
     return _mm_or_si128(odd, even);
 }
 
+static __m128i avxScalePixels(__m128i pixels, __m128i factors)
+{
+    const auto zero = _mm_setzero_si128();
+    auto packed = _mm_packs_epi32(factors, factors);
+    auto doubled = _mm_unpacklo_epi16(packed, packed);
+    auto factorsLo = _mm_shuffle_epi32(doubled, _MM_SHUFFLE(1, 1, 0, 0));
+    auto factorsHi = _mm_shuffle_epi32(doubled, _MM_SHUFFLE(3, 3, 2, 2));
+    auto lo = _mm_mullo_epi16(_mm_unpacklo_epi8(pixels, zero), factorsLo);
+    auto hi = _mm_mullo_epi16(_mm_unpackhi_epi8(pixels, zero), factorsHi);
+    return _mm_packus_epi16(_mm_srli_epi16(lo, 8), _mm_srli_epi16(hi, 8));
+}
+
+static void avxRasterTranslucentPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
+{
+    const auto opacityVec = _mm_set1_epi32(opacity + 1);
+    const auto fullAlpha = _mm_set1_epi32(255);
+    uint32_t i = 0;
+    for (; len - i >= 4; i += 4) {
+        auto source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src + i));
+        if (opacity != 255) source = avxScalePixels(source, opacityVec);
+        auto inverse = _mm_sub_epi32(fullAlpha, _mm_srli_epi32(source, 24));
+        inverse = _mm_add_epi32(inverse, _mm_set1_epi32(1));
+        auto target = _mm_loadu_si128(reinterpret_cast<const __m128i*>(dst + i));
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dst + i),
+                         _mm_add_epi32(source, avxScalePixels(target, inverse)));
+    }
+    cRasterTranslucentPixels(dst + i, src + i, len - i, opacity);
+}
+
+static void avxRasterPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
+{
+    if (opacity != 255) {
+        avxRasterTranslucentPixels(dst, src, len, opacity);
+        return;
+    }
+
+    uint32_t i = 0;
+    for (; len - i >= 8; i += 8) {
+        auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src + i));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), pixels);
+    }
+    for (; i < len; ++i) dst[i] = src[i];
+}
 
 static void avxRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len) 
 {
@@ -110,7 +153,6 @@ static void avxRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int3
         dst[i] = val;
     }
 }
-
 
 static void avxRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
@@ -130,7 +172,6 @@ static void avxRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32
     int32_t leftovers = len - avxFilled;
     while (leftovers--) *dst++ = val;
 }
-
 
 static bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c)
 {
@@ -189,7 +230,6 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbo
     }
     return true;
 }
-
 
 static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
 {
@@ -259,5 +299,48 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
     return true;
 }
 
+static void avxRasterUnpremultiply(uint32_t* buffer, uint32_t width)
+{
+    const auto mask = _mm_set1_epi32(0xff);
+    const auto full = _mm_set1_epi32(255);
+    const auto one = _mm_set1_epi32(1);
+    uint32_t x = 0;
+    for (; x + 4 <= width; x += 4) {
+        auto pixels = _mm_loadu_si128(reinterpret_cast<const __m128i*>(buffer + x));
+        auto alpha = _mm_srli_epi32(pixels, 24);
+        auto unchanged = _mm_or_si128(_mm_cmpeq_epi32(alpha, full), _mm_cmpeq_epi32(alpha, _mm_setzero_si128()));
+        auto divisor = _mm_cvtepi32_ps(_mm_max_epi32(alpha, one));
+        auto result = _mm_slli_epi32(alpha, 24);
+        for (int shift = 0; shift < 24; shift += 8) {
+            auto bits = _mm_cvtsi32_si128(shift);
+            auto channel = _mm_and_si128(_mm_srl_epi32(pixels, bits), mask);
+            auto scaled = _mm_mullo_epi32(channel, full);
+            auto quotient = _mm_cvttps_epi32(_mm_div_ps(_mm_cvtepi32_ps(scaled), divisor));
+            result = _mm_or_si128(result, _mm_sll_epi32(_mm_min_epi32(quotient, full), bits));
+        }
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(buffer + x), _mm_blendv_epi8(result, pixels, unchanged));
+    }
+    for (; x < width; ++x) buffer[x] = rasterUnpremultiply(buffer[x]);
+}
+
+static void avxRasterPremultiply(uint32_t* buffer, uint32_t width)
+{
+    const auto mask = _mm_set1_epi32(255);
+    uint32_t x = 0;
+    for (; x + 4 <= width; x += 4) {
+        auto pixels = _mm_loadu_si128(reinterpret_cast<const __m128i*>(buffer + x));
+        auto alpha = _mm_srli_epi32(pixels, 24);
+        auto result = _mm_slli_epi32(alpha, 24);
+        for (int shift = 0; shift < 24; shift += 8) {
+            auto bits = _mm_cvtsi32_si128(shift);
+            auto channel = _mm_and_si128(_mm_srl_epi32(pixels, bits), mask);
+            auto scaled = _mm_srli_epi32(_mm_mullo_epi32(channel, alpha), 8);
+            result = _mm_or_si128(result, _mm_sll_epi32(scaled, bits));
+        }
+        auto opaque = _mm_cmpeq_epi32(alpha, mask);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(buffer + x), _mm_blendv_epi8(result, pixels, opaque));
+    }
+    cRasterPremultiply(buffer + x, width - x);
+}
 
 #endif

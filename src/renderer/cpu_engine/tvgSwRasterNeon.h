@@ -25,14 +25,64 @@
 #include <arm_neon.h>
 
 //TODO : need to support windows ARM
- 
 #if defined(__ARM_64BIT_STATE) || defined(_M_ARM64)
-#define TVG_AARCH64 1
+    #define TVG_AARCH64 1
 #else
-#define TVG_AARCH64 0
+    #define TVG_AARCH64 0
 #endif
 
-static inline uint32_t neonInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
+static void neonRasterUnpremultiply(uint32_t* buffer, uint32_t width)
+{
+    const auto mask = vdupq_n_u32(255);
+    const auto one = vdupq_n_u32(1);
+    uint32_t x = 0;
+    for (; x + 4 <= width; x += 4) {
+        auto pixels = vld1q_u32(buffer + x);
+        auto alpha = vshrq_n_u32(pixels, 24);
+        auto divisor = vmaxq_u32(alpha, one);
+        auto divisorFloat = vcvtq_f32_u32(divisor);
+        auto reciprocal = vrecpeq_f32(divisorFloat);
+        reciprocal = vmulq_f32(reciprocal, vrecpsq_f32(divisorFloat, reciprocal));
+        reciprocal = vmulq_f32(reciprocal, vrecpsq_f32(divisorFloat, reciprocal));
+        auto result = vshlq_n_u32(alpha, 24);
+        for (int shift = 0; shift < 24; shift += 8) {
+            auto bits = vdupq_n_s32(shift);
+            auto channel = vandq_u32(vshlq_u32(pixels, vnegq_s32(bits)), mask);
+            auto numerator = vmulq_u32(channel, mask);
+            auto quotient = vcvtq_u32_f32(vmulq_f32(vcvtq_f32_u32(numerator), reciprocal));
+            auto product = vmulq_u32(quotient, divisor);
+            quotient = vsubq_u32(quotient, vandq_u32(vcgtq_u32(product, numerator), one));
+            product = vmulq_u32(quotient, divisor);
+            quotient = vaddq_u32(quotient, vandq_u32(vcgeq_u32(numerator, vaddq_u32(product, divisor)), one));
+            result = vorrq_u32(result, vshlq_u32(vminq_u32(quotient, mask), bits));
+        }
+        auto unchanged = vorrq_u32(vceqq_u32(alpha, mask), vceqq_u32(alpha, vdupq_n_u32(0)));
+        vst1q_u32(buffer + x, vbslq_u32(unchanged, pixels, result));
+    }
+    for (; x < width; ++x) buffer[x] = rasterUnpremultiply(buffer[x]);
+}
+
+static void neonRasterPremultiply(uint32_t* buffer, uint32_t width)
+{
+    const auto mask = vdupq_n_u32(255);
+    uint32_t x = 0;
+    for (; x + 4 <= width; x += 4) {
+        auto pixels = vld1q_u32(buffer + x);
+        auto alpha = vshrq_n_u32(pixels, 24);
+        auto result = vshlq_n_u32(alpha, 24);
+        for (int shift = 0; shift < 24; shift += 8) {
+            auto bits = vdupq_n_s32(shift);
+            auto channel = vandq_u32(vshlq_u32(pixels, vnegq_s32(bits)), mask);
+            auto scaled = vshrq_n_u32(vmulq_u32(channel, alpha), 8);
+            result = vorrq_u32(result, vshlq_u32(scaled, bits));
+        }
+        auto opaque = vceqq_u32(alpha, mask);
+        vst1q_u32(buffer + x, vbslq_u32(opaque, pixels, result));
+    }
+    cRasterPremultiply(buffer + x, width - x);
+}
+
+static uint32_t neonInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
 {
     // Each clipped span is at most 2*n; stepping by floor(n/2)+1 takes at most 4 samples per axis.
     // At most 4*4 pixels contribute, so each channel sum is <= 16*255=4080 and fits in uint16_t.
@@ -69,12 +119,45 @@ static inline uint32_t neonInterpDownScaler(const uint32_t* img, uint32_t stride
     return (c[0] << 24) | (c[1] << 16) | (c[2] << 8) | c[3];
 }
 
-static inline uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
+static uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 {
-    uint16x8_t t = vmull_u8(c, a);
-    return vshrn_n_u16(t, 8);
+    return vshrn_n_u16(vmull_u8(c, a), 8);
 }
 
+static uint8x8_t neonScalePixels(uint8x8_t pixels, uint32x2_t factors)
+{
+    auto expanded = vcombine_u16(vdup_n_u16(static_cast<uint16_t>(vget_lane_u32(factors, 0))),
+                                 vdup_n_u16(static_cast<uint16_t>(vget_lane_u32(factors, 1))));
+    return vmovn_u16(vshrq_n_u16(vmulq_u16(vmovl_u8(pixels), expanded), 8));
+}
+
+static void neonRasterTranslucentPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
+{
+    const auto opacityVec = vdup_n_u32(opacity + 1);
+    uint32_t i = 0;
+    for (; len - i >= 2; i += 2) {
+        auto source = vld1_u8(reinterpret_cast<const uint8_t*>(src + i));
+        if (opacity != 255) source = neonScalePixels(source, opacityVec);
+        auto inverse = vsub_u32(vdup_n_u32(256), vshr_n_u32(vreinterpret_u32_u8(source), 24));
+        auto target = vld1_u8(reinterpret_cast<const uint8_t*>(dst + i));
+        vst1_u8(reinterpret_cast<uint8_t*>(dst + i), vadd_u8(source, neonScalePixels(target, inverse)));
+    }
+    cRasterTranslucentPixels(dst + i, src + i, len - i, opacity);
+}
+
+static void neonRasterPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
+{
+    if (opacity != 255) {
+        neonRasterTranslucentPixels(dst, src, len, opacity);
+        return;
+    }
+
+    uint32_t i = 0;
+    for (; len - i >= 4; i += 4) {
+        vst1q_u32(dst + i, vld1q_u32(src + i));
+    }
+    for (; i < len; ++i) dst[i] = src[i];
+}
 
 static void neonRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len)
 {
@@ -97,33 +180,29 @@ static void neonRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int
     }
 }
 
-
 static void neonRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
     dst += offset;
 
-    uint32x4_t vectorVal = vdupq_n_u32(val);
+    uint32x4_t vecVal = vdupq_n_u32(val);
 
 #if TVG_AARCH64
     uint32_t iterations = len / 16;
     uint32_t neonFilled = iterations * 16;
-    uint32x4x4_t valQuad = {vectorVal, vectorVal, vectorVal, vectorVal};
-    for (uint32_t i = 0; i < iterations; ++i) {
+    uint32x4x4_t valQuad = {vecVal, vecVal, vecVal, vecVal};
+    for (uint32_t i = 0; i < iterations; ++i, dst += 16) {
         vst4q_u32(dst, valQuad);
-        dst += 16;
     }
 #else
     uint32_t iterations = len / 4;
     uint32_t neonFilled = iterations * 4;
-    for (uint32_t i = 0; i < iterations; ++i) {
-        vst1q_u32(dst, vectorVal);
-        dst += 4;
+    for (uint32_t i = 0; i < iterations; ++i, dst +=4) {
+        vst1q_u32(dst, vecVal);
     }
 #endif
-    int32_t leftovers = len - neonFilled;
+    auto leftovers = len - neonFilled;
     while (leftovers--) *dst++ = val;
 }
-
 
 static bool neonRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c)
 {
@@ -181,7 +260,6 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const
     }
     return true;
 }
-
 
 static bool neonRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c)
 {
