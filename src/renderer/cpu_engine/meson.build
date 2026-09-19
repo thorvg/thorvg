@@ -1,3 +1,49 @@
+# CPU vectorization
+cpp = meson.get_compiler('cpp')
+cpu_family = host_machine.cpu_family()
+if cpu_family == 'x86' or cpu_family == 'x86_64'
+    if cpp.get_id() == 'msvc'
+        candidate_flags = ['/arch:AVX']
+    elif cpp.get_id() == 'clang-cl'
+        candidate_flags = ['/clang:-mavx']
+    else
+        candidate_flags = ['-mavx']
+    endif
+    if cpp.compiles('''
+        #include <immintrin.h>
+        int main() {
+            __m128i a = _mm_set1_epi32(1);
+            __m128i b = _mm_mullo_epi32(a, a);
+            __m256 c = _mm256_set1_ps(1.0f);
+            return _mm_cvtsi128_si32(b) + _mm256_movemask_ps(c);
+        }
+    ''', args: candidate_flags, name: 'AVX raster support')
+        simd_flags = candidate_flags
+        simd_type = 'avx'
+        config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
+    endif
+elif cpu_family == 'arm' or cpu_family == 'aarch64'
+    candidate_flags = []
+    if cpu_family == 'arm'
+        if cpp.get_id() == 'clang-cl'
+            candidate_flags = ['/clang:-mfpu=neon']
+        elif cpp.get_id() != 'msvc'
+            candidate_flags = ['-mfpu=neon']
+        endif
+    endif
+    if cpp.compiles('''
+        #include <arm_neon.h>
+        int main() {
+            uint32x4_t a = vdupq_n_u32(1);
+            return vgetq_lane_u32(vmulq_u32(a, a), 0);
+        }
+    ''', args: candidate_flags, name: 'NEON raster support')
+        simd_flags = candidate_flags
+        simd_type = 'neon'
+        config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
+    endif
+endif
+
 source_file = [
    'tvgSwCommon.h',
    'tvgSwRasterC.h',

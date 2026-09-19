@@ -105,21 +105,8 @@ if gif_saver
     config_h.set10('THORVG_GIF_SAVER_SUPPORT', true)
 endif
 
-# Vectorization
 simd_type = 'none'
-
-if get_option('simd')
-  if host_machine.cpu_family().startswith('x86')
-    config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
-    simd_type = 'avx'
-  elif host_machine.cpu_family().startswith('arm')
-    config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
-    simd_type = 'neon-arm'
-  elif host_machine.cpu_family().startswith('aarch64')
-    config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
-    simd_type = 'neon-aarch'
-  endif
-endif
+simd_flags = []
 
 # Bindings
 if get_option('bindings').contains('capi')
@@ -165,15 +152,15 @@ endif
 # Miscellaneous
 config_h.set10('WIN32_LEAN_AND_MEAN', true)
 
-configure_file(
-    output: 'config.h',
-    configuration: config_h
-)
-
 headers = [include_directories('inc'), include_directories('.')]
 
 subdir('inc')
 subdir('src')
+
+configure_file(
+    output: 'config.h',
+    configuration: config_h
+)
 
 if get_option('tests')
    subdir('test')
