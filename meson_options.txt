@@ -29,7 +29,7 @@ option('threads',
 option('simd',
    type: 'boolean',
    value: false,
-   description: 'Enable CPU Vectorization(SIMD) in thorvg')
+   description: 'Enable CPU vectorization (AVX2 on x86, NEON on ARM)')
 
 option('bindings',
    type: 'array',
