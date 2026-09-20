@@ -443,13 +443,9 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion
     auto src = simg->buf32 + (bbox.min.y * sstride + bbox.min.x);
     auto dst = dimg->buf32 + (bbox.min.y * dstride + bbox.min.x);
 
-    // TODO: simd & openmp optimization?
+    // TODO: openmp optimization?
     for (auto y = 0; y < (bbox.max.y - bbox.min.y); ++y) {
-        auto s = src;
-        auto d = dst;
-        for (int x = 0; x < (bbox.max.x - bbox.min.x); ++x, ++d, ++s) {
-            *d = *s + ALPHA_BLEND(*d, IA(*s));
-        }
+        rasterTranslucentPixel32(dst, src, bbox.max.x - bbox.min.x, 255);
         src += sstride;
         dst += dstride;
     }
