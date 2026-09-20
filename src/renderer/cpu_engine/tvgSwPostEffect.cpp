@@ -263,7 +263,6 @@ static int _gaussianInit(SwGaussianBlur* data, float sigma, int quality)
     return extends;
 }
 
-
 bool effectGaussianBlurRegion(RenderEffectGaussianBlur* params)
 {
     //region expansion for feathering
@@ -282,7 +281,6 @@ bool effectGaussianBlurRegion(RenderEffectGaussianBlur* params)
     return true;
 }
 
-
 void effectGaussianBlurUpdate(RenderEffectGaussianBlur* params, const Matrix& transform)
 {
     if (!params->rd) params->rd = tvg::malloc<SwGaussianBlur>(sizeof(SwGaussianBlur));
@@ -294,7 +292,6 @@ void effectGaussianBlurUpdate(RenderEffectGaussianBlur* params, const Matrix& tr
 
     params->valid = (rd->extends > 0);
 }
-
 
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params)
 {
@@ -351,7 +348,6 @@ struct SwDropShadow : SwGaussianBlur
 {
     SwPoint offset;
 };
-
 
 //TODO: SIMD OPTIMIZATION?
 static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, int h, const RenderRegion& bbox, int32_t dimension, uint32_t color, bool flipped)
@@ -413,7 +409,7 @@ static void _shift(uint32_t** dst, uint32_t** src, int dstride, int sstride, int
     }
 }
 
-
+// TODO: simd & openmp optimization?
 static void _dropShadowNoFilter(uint32_t* dst, uint32_t* src, int dstride, int sstride, int dw, int dh, const RenderRegion& bbox, const SwPoint& offset, uint32_t color, uint8_t opacity, bool direct)
 {
     src += (bbox.min.y * sstride + bbox.min.x);
@@ -435,7 +431,6 @@ static void _dropShadowNoFilter(uint32_t* dst, uint32_t* src, int dstride, int s
     }
 }
 
-
 static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion& bbox, const SwPoint& offset, uint32_t color)
 {
     int dstride = dimg->stride;
@@ -448,6 +443,7 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion
     auto src = simg->buf32 + (bbox.min.y * sstride + bbox.min.x);
     auto dst = dimg->buf32 + (bbox.min.y * dstride + bbox.min.x);
 
+    // TODO: simd & openmp optimization?
     for (auto y = 0; y < (bbox.max.y - bbox.min.y); ++y) {
         auto s = src;
         auto d = dst;
@@ -459,7 +455,6 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion
     }
 }
 
-
 static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, int dw, int dh, const RenderRegion& bbox, const SwPoint& offset, uint8_t opacity, bool direct)
 {
     src += (bbox.min.y * sstride + bbox.min.x);
@@ -468,6 +463,7 @@ static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstr
     SwSize size;
     _shift(&dst, &src, dstride, sstride, dw, dh, bbox, offset, size);
 
+    // TODO: openmp optimization?
     for (auto y = 0; y < size.h; ++y) {
         if (direct) rasterTranslucentPixel32(dst, src, size.w, opacity);
         else rasterPixel32(dst, src, size.w, opacity);
@@ -475,7 +471,6 @@ static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstr
         dst += dstride;
     }
 }
-
 
 bool effectDropShadowRegion(RenderEffectDropShadow* params)
 {
@@ -496,7 +491,6 @@ bool effectDropShadowRegion(RenderEffectDropShadow* params)
     return true;
 }
 
-
 void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transform)
 {
     Point offset;
@@ -511,7 +505,6 @@ void effectDropShadowUpdate(RenderEffectDropShadow* params, const Matrix& transf
 
     rd->offset = {(int32_t)offset.x, (int32_t)offset.y};
 }
-
 
 //A quite same integration with effectGaussianBlur(). See it for detailed comments.
 //surface[0]: the original image, to overlay it into the filtered image.
@@ -588,6 +581,7 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
     auto s = buffer[0]->buf32 + (bbox.min.y * buffer[0]->stride + bbox.min.x);
     auto d = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
 
+    // TODO: openmp optimization?
     for (auto y = 0; y < h; ++y) {
         rasterTranslucentPixel32(d, s, w, 255);
         s += buffer[0]->stride;
@@ -596,7 +590,6 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
 
     return true;
 }
-
 
 /************************************************************************/
 /* Fill Implementation                                                  */
@@ -607,7 +600,7 @@ void effectFillUpdate(RenderEffectFill* params)
     params->valid = true;
 }
 
-
+// TODO: simd & openmp optimization?
 bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
 {
     auto opacity = direct ? MULTIPLY(params->color[3], cmp->opacity) : params->color[3];
@@ -647,7 +640,6 @@ bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
     return true;
 }
 
-
 /************************************************************************/
 /* Tint Implementation                                                  */
 /************************************************************************/
@@ -657,7 +649,7 @@ void effectTintUpdate(RenderEffectTint* params)
     params->valid = (params->intensity > 0);
 }
 
-
+// TODO: simd & openmp optimization?
 bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
 {
     auto& bbox = cmp->bbox;
@@ -701,7 +693,6 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
     return true;
 }
 
-
 /************************************************************************/
 /* Tritone Implementation                                              */
 /************************************************************************/
@@ -717,13 +708,12 @@ static uint32_t _trintone(uint32_t s, uint32_t m, uint32_t h, int l)
     }
 }
 
-
 void effectTritoneUpdate(RenderEffectTritone* params)
 {
     params->valid = (params->blender < 255);
 }
 
-
+// TODO: simd & openmp optimization?
 bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool direct)
 {
     auto& bbox = cmp->bbox;
