@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#ifdef THORVG_AVX_VECTOR_SUPPORT
+#ifdef THORVG_AVX_SUPPORT
 
 #include <immintrin.h>
 

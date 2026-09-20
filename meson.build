@@ -110,13 +110,13 @@ simd_type = 'none'
 
 if get_option('simd')
   if host_machine.cpu_family().startswith('x86')
-    config_h.set10('THORVG_AVX_VECTOR_SUPPORT', true)
+    config_h.set10('THORVG_AVX_SUPPORT', true)
     simd_type = 'avx2'
   elif host_machine.cpu_family().startswith('arm')
-    config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
+    config_h.set10('THORVG_NEON_SUPPORT', true)
     simd_type = 'neon-arm'
   elif host_machine.cpu_family().startswith('aarch64')
-    config_h.set10('THORVG_NEON_VECTOR_SUPPORT', true)
+    config_h.set10('THORVG_NEON_SUPPORT', true)
     simd_type = 'neon-aarch'
   endif
 endif
