@@ -142,6 +142,7 @@ jobs:
         build_thorvg() {
           local src_dir="$1" build_dir="$2"
           local meson_args=(
+            --buildtype=release
             -Dloaders="all"
             -Dengines="$ENGINES"
             -Dsavers="all"
