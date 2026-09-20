@@ -66,4 +66,3 @@
 - DaHee Chae @chae-dahee
 - Sunyong Jeong @jeongsunyong
 - Park Sung Jun @J-unStiN
-
