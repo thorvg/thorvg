@@ -76,3 +76,4 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Yoonseok Kang @DaengDo
 - Ralf Preininger @rpreininger
 - Daniel Brát @LonerDan
+- Mao Shengrong @suda-morris

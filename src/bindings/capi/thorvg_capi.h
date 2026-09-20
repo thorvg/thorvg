@@ -2163,7 +2163,7 @@ TVG_API Tvg_Result tvg_picture_get_origin(const Tvg_Paint picture, float* x, flo
  * @see tvg_accessor_generate_id()
  * @since 1.0
  */
-TVG_API const Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
+TVG_API Tvg_Paint tvg_picture_get_paint(Tvg_Paint picture, uint32_t id);
 
 /**
  * @brief Sets the image filtering method for rendering this picture.
@@ -3295,7 +3295,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_quality(Tvg_Animation animation, uin
  *
  * @note Experimental API
  */
-TVG_API bool tvg_lottie_animation_expressions_supported();
+TVG_API bool tvg_lottie_animation_expressions_supported(void);
 
 /**
  * @brief Describes the current state of a Lottie audio layer.
