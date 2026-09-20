@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#ifdef THORVG_NEON_VECTOR_SUPPORT
+#ifdef THORVG_NEON_SUPPORT
 
 #include <arm_neon.h>
 
