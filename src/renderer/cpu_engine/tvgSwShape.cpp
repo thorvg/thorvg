@@ -84,7 +84,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point& to, bool validPoint)
             }
             dash.path->lineTo(cur.pt2);
         }
-        if (dash.curLen < 1.0f && !tvg::zero(len)) {
+        if (dash.curLen < DASH_PATTERN_THRESHOLD && !tvg::zero(len)) {
             //move to next dash
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
@@ -145,7 +145,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point& ctrl1, const Point& ct
             }
             dash.path->cubicTo(cur.ctrl1, cur.ctrl2, cur.end);
         }
-        if (dash.curLen < 0.1f && !tvg::zero(len)) {
+        if (dash.curLen < DASH_PATTERN_THRESHOLD && !tvg::zero(len)) {
             //move to next dash
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
