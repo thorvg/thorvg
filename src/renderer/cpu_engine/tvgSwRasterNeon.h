@@ -121,7 +121,8 @@ static uint32_t neonInterpDownScaler(const uint32_t* img, uint32_t stride, uint3
 
 static uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 {
-    return vshrn_n_u16(vmull_u8(c, a), 8);
+    // c * (a + 1) / 256 = (c * a + c) / 256
+    return vshrn_n_u16(vaddw_u8(vmull_u8(c, a), c), 8);
 }
 
 static uint8x8_t neonScalePixels(uint8x8_t pixels, uint32x2_t factors)
