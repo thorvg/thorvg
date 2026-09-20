@@ -90,7 +90,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
             auto id = (_gaussianRemap<border>(end, x) + p) * 4;
             uint32_t pixel;
             memcpy(&pixel, src + id, sizeof(pixel));
-            acc = _mm_add_epi32(acc, _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_cvtsi32_si128(pixel), zero), zero));
+            acc = _mm_add_epi32(acc, _mm_cvtepu8_epi32(_mm_cvtsi32_si128(pixel)));
         }
 
         for (int x = 0; x < w; ++x, ++r, ++l) {
@@ -99,8 +99,8 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
             uint32_t right, left;
             memcpy(&right, src + rid, sizeof(right));
             memcpy(&left, src + lid, sizeof(left));
-            auto added = _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_cvtsi32_si128(right), zero), zero);
-            auto removed = _mm_unpacklo_epi16(_mm_unpacklo_epi8(_mm_cvtsi32_si128(left), zero), zero);
+            auto added = _mm_cvtepu8_epi32(_mm_cvtsi32_si128(right));
+            auto removed = _mm_cvtepu8_epi32(_mm_cvtsi32_si128(left));
             acc = _mm_add_epi32(acc, _mm_sub_epi32(added, removed));
             auto values = _mm_cvttps_epi32(_mm_mul_ps(_mm_cvtepi32_ps(acc), scale));
             auto packed = _mm_packus_epi16(_mm_packs_epi32(values, zero), zero);

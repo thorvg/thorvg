@@ -24,7 +24,6 @@
 
 #include <immintrin.h>
 
-#define N_32BITS_IN_128REG 4
 #define N_32BITS_IN_256REG 8
 
 static uint32_t avxInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
@@ -60,65 +59,29 @@ static uint32_t avxInterpDownScaler(const uint32_t* img, uint32_t stride, uint32
     return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
 }
 
-static __m128i ALPHA_BLEND(__m128i c, __m128i a)
+static __m256i avxScalePixels(__m256i pixels, __m256i factors)
 {
-    //1. set the masks for the A/G and R/B channels
-    auto AG = _mm_set1_epi32(0xff00ff00);
-    auto RB = _mm_set1_epi32(0x00ff00ff);
-
-    //2. mask the alpha vector - originally quartet [a, a, a, a]
-    auto aAG = _mm_and_si128(a, AG);
-    auto aRB = _mm_and_si128(a, RB);
-
-    //3. calculate the alpha blending of the 2nd and 4th channel
-    //- mask the color vector
-    //- multiply it by the masked alpha vector
-    //- add the correction to compensate bit shifting used instead of dividing by 255
-    //- shift bits - corresponding to division by 256
-    auto even = _mm_and_si128(c, RB);
-    even = _mm_mullo_epi16(even, aRB);
-    even =_mm_add_epi16(even, RB);
-    even = _mm_srli_epi16(even, 8);
-
-    //4. calculate the alpha blending of the 1st and 3rd channel:
-    //- mask the color vector
-    //- multiply it by the corresponding masked alpha vector and store the high bits of the result
-    //- add the correction to compensate division by 256 instead of by 255 (next step)
-    //- remove the low 8 bits to mimic the division by 256
-    auto odd = _mm_and_si128(c, AG);
-    odd = _mm_mulhi_epu16(odd, aAG);
-    odd = _mm_add_epi16(odd, RB);
-    odd = _mm_and_si128(odd, AG);
-
-    //5. the final result
-    return _mm_or_si128(odd, even);
-}
-
-static __m128i avxScalePixels(__m128i pixels, __m128i factors)
-{
-    const auto zero = _mm_setzero_si128();
-    auto packed = _mm_packs_epi32(factors, factors);
-    auto doubled = _mm_unpacklo_epi16(packed, packed);
-    auto factorsLo = _mm_shuffle_epi32(doubled, _MM_SHUFFLE(1, 1, 0, 0));
-    auto factorsHi = _mm_shuffle_epi32(doubled, _MM_SHUFFLE(3, 3, 2, 2));
-    auto lo = _mm_mullo_epi16(_mm_unpacklo_epi8(pixels, zero), factorsLo);
-    auto hi = _mm_mullo_epi16(_mm_unpackhi_epi8(pixels, zero), factorsHi);
-    return _mm_packus_epi16(_mm_srli_epi16(lo, 8), _mm_srli_epi16(hi, 8));
+    // Each 32-bit lane contains one pixel and a factor in [0, 256].
+    // Scale alternating channels in 16-bit lanes without unpacking the pixels.
+    const auto mask = _mm256_set1_epi32(0x00ff00ff);
+    factors = _mm256_or_si256(factors, _mm256_slli_epi32(factors, 16));
+    auto even = _mm256_mullo_epi16(_mm256_and_si256(pixels, mask), factors);
+    auto odd = _mm256_mullo_epi16(_mm256_srli_epi16(pixels, 8), factors);
+    return _mm256_or_si256(_mm256_srli_epi16(even, 8), _mm256_andnot_si256(mask, odd));
 }
 
 static void avxRasterTranslucentPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
 {
-    const auto opacityVec = _mm_set1_epi32(opacity + 1);
-    const auto fullAlpha = _mm_set1_epi32(255);
+    const auto opacityVec = _mm256_set1_epi32(opacity + 1);
+    const auto full = _mm256_set1_epi32(256);
     uint32_t i = 0;
-    for (; len - i >= 4; i += 4) {
-        auto source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src + i));
+    for (; len - i >= 8; i += 8) {
+        auto source = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src + i));
         if (opacity != 255) source = avxScalePixels(source, opacityVec);
-        auto inverse = _mm_sub_epi32(fullAlpha, _mm_srli_epi32(source, 24));
-        inverse = _mm_add_epi32(inverse, _mm_set1_epi32(1));
-        auto target = _mm_loadu_si128(reinterpret_cast<const __m128i*>(dst + i));
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(dst + i),
-                         _mm_add_epi32(source, avxScalePixels(target, inverse)));
+        auto inverse = _mm256_sub_epi32(full, _mm256_srli_epi32(source, 24));
+        auto target = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst + i));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i),
+                           _mm256_add_epi32(source, avxScalePixels(target, inverse)));
     }
     cRasterTranslucentPixels(dst + i, src + i, len - i, opacity);
 }
@@ -156,6 +119,7 @@ static void avxRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int3
 
 static void avxRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
 {
+    if (len <= 0) return;
     //1. calculate how many iterations we need to cover the length
     uint32_t iterations = len / N_32BITS_IN_256REG;
     uint32_t avxFilled = iterations * N_32BITS_IN_256REG;
@@ -185,36 +149,18 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbo
 
         uint32_t ialpha = 255 - c.a;
 
-        auto avxColor = _mm_set1_epi32(color);
-        auto avxIalpha = _mm_set1_epi8(ialpha);
+        auto avxColor = _mm256_set1_epi32(color);
+        auto avxIalpha = _mm256_set1_epi32(ialpha + 1);
 
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
-
-            //1. fill the not aligned memory (for 128-bit registers a 16-bytes alignment is required)
-            auto notAligned = ((uintptr_t)dst & 0xf) / 4;
-            if (notAligned) {
-                notAligned = (N_32BITS_IN_128REG - notAligned > w ? w : N_32BITS_IN_128REG - notAligned);
-                for (uint32_t x = 0; x < notAligned; ++x, ++dst) {
-                    *dst = color + ALPHA_BLEND(*dst, ialpha);
-                }
+            uint32_t x = 0;
+            for (; w - x >= 8; x += 8) {
+                auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst + x));
+                auto result = _mm256_add_epi32(avxColor, avxScalePixels(pixels, avxIalpha));
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + x), result);
             }
-
-            //2. fill the aligned memory - N_32BITS_IN_128REG pixels processed at once
-            uint32_t iterations = (w - notAligned) / N_32BITS_IN_128REG;
-            uint32_t avxFilled = iterations * N_32BITS_IN_128REG;
-            auto avxDst = (__m128i*)dst;
-            for (uint32_t x = 0; x < iterations; ++x, ++avxDst) {
-                *avxDst = _mm_add_epi32(avxColor, ALPHA_BLEND(*avxDst, avxIalpha));
-            }
-
-            //3. fill the remaining pixels
-            int32_t leftovers = w - notAligned - avxFilled;
-            dst += avxFilled;
-            while (leftovers--) {
-                *dst = color + ALPHA_BLEND(*dst, ialpha);
-                dst++;
-            }
+            for (; x < w; ++x) dst[x] = color + ALPHA_BLEND(dst[x], ialpha);
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
@@ -249,37 +195,15 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
             auto dst = &surface->buf32[span->y * surface->stride + x];
             auto ialpha = IA(src);
 
-            //1. fill the not aligned memory (for 128-bit registers a 16-bytes alignment is required)
-            int32_t notAligned = ((uintptr_t)dst & 0xf) / 4;
-            if (notAligned) {
-                notAligned = (N_32BITS_IN_128REG - notAligned > len ? len : N_32BITS_IN_128REG - notAligned);
-                for (auto x = 0; x < notAligned; ++x, ++dst) {
-                    *dst = src + ALPHA_BLEND(*dst, ialpha);
-                }
+            auto avxSrc = _mm256_set1_epi32(src);
+            auto avxIalpha = _mm256_set1_epi32(ialpha + 1);
+            int32_t i = 0;
+            for (; i <= len - 8; i += 8) {
+                auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst + i));
+                auto result = _mm256_add_epi32(avxSrc, avxScalePixels(pixels, avxIalpha));
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), result);
             }
-
-            //2. fill the aligned memory using avx - N_32BITS_IN_128REG pixels processed at once
-            //In order to avoid unnecessary avx variables declarations a check is made whether there are any iterations at all
-            int32_t iterations = (len - notAligned) / N_32BITS_IN_128REG;
-            int32_t avxFilled = 0;
-            if (iterations > 0) {
-                auto avxSrc = _mm_set1_epi32(src);
-                auto avxIalpha = _mm_set1_epi8(ialpha);
-
-                avxFilled = iterations * N_32BITS_IN_128REG;
-                auto avxDst = (__m128i*)dst;
-                for (auto x = 0; x < iterations; ++x, ++avxDst) {
-                    *avxDst = _mm_add_epi32(avxSrc, ALPHA_BLEND(*avxDst, avxIalpha));
-                }
-            }
-
-            //3. fill the remaining pixels
-            auto leftovers = len - notAligned - avxFilled;
-            dst += avxFilled;
-            while (leftovers--) {
-                *dst = src + ALPHA_BLEND(*dst, ialpha);
-                dst++;
-            }
+            for (; i < len; ++i) dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
@@ -301,44 +225,41 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
 
 static void avxRasterUnpremultiply(uint32_t* buffer, uint32_t width)
 {
-    const auto mask = _mm_set1_epi32(0xff);
-    const auto full = _mm_set1_epi32(255);
-    const auto one = _mm_set1_epi32(1);
+    const auto mask = _mm256_set1_epi32(0xff);
+    const auto full = _mm256_set1_epi32(255);
+    const auto one = _mm256_set1_epi32(1);
     uint32_t x = 0;
-    for (; x + 4 <= width; x += 4) {
-        auto pixels = _mm_loadu_si128(reinterpret_cast<const __m128i*>(buffer + x));
-        auto alpha = _mm_srli_epi32(pixels, 24);
-        auto unchanged = _mm_or_si128(_mm_cmpeq_epi32(alpha, full), _mm_cmpeq_epi32(alpha, _mm_setzero_si128()));
-        auto divisor = _mm_cvtepi32_ps(_mm_max_epi32(alpha, one));
-        auto result = _mm_slli_epi32(alpha, 24);
+    for (; width - x >= 8; x += 8) {
+        auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(buffer + x));
+        auto alpha = _mm256_srli_epi32(pixels, 24);
+        auto unchanged = _mm256_or_si256(_mm256_cmpeq_epi32(alpha, full), _mm256_cmpeq_epi32(alpha, _mm256_setzero_si256()));
+        auto divisor = _mm256_cvtepi32_ps(_mm256_max_epi32(alpha, one));
+        auto result = _mm256_slli_epi32(alpha, 24);
         for (int shift = 0; shift < 24; shift += 8) {
             auto bits = _mm_cvtsi32_si128(shift);
-            auto channel = _mm_and_si128(_mm_srl_epi32(pixels, bits), mask);
-            auto scaled = _mm_mullo_epi32(channel, full);
-            auto quotient = _mm_cvttps_epi32(_mm_div_ps(_mm_cvtepi32_ps(scaled), divisor));
-            result = _mm_or_si128(result, _mm_sll_epi32(_mm_min_epi32(quotient, full), bits));
+            auto channel = _mm256_and_si256(_mm256_srl_epi32(pixels, bits), mask);
+            auto scaled = _mm256_mullo_epi32(channel, full);
+            auto quotient = _mm256_cvttps_epi32(_mm256_div_ps(_mm256_cvtepi32_ps(scaled), divisor));
+            result = _mm256_or_si256(result, _mm256_sll_epi32(_mm256_min_epi32(quotient, full), bits));
         }
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(buffer + x), _mm_blendv_epi8(result, pixels, unchanged));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(buffer + x), _mm256_blendv_epi8(result, pixels, unchanged));
     }
     for (; x < width; ++x) buffer[x] = rasterUnpremultiply(buffer[x]);
 }
 
 static void avxRasterPremultiply(uint32_t* buffer, uint32_t width)
 {
-    const auto mask = _mm_set1_epi32(255);
+    const auto full = _mm256_set1_epi32(255);
+    const auto alphaMask = _mm256_set1_epi32(0xff000000);
     uint32_t x = 0;
-    for (; x + 4 <= width; x += 4) {
-        auto pixels = _mm_loadu_si128(reinterpret_cast<const __m128i*>(buffer + x));
-        auto alpha = _mm_srli_epi32(pixels, 24);
-        auto result = _mm_slli_epi32(alpha, 24);
-        for (int shift = 0; shift < 24; shift += 8) {
-            auto bits = _mm_cvtsi32_si128(shift);
-            auto channel = _mm_and_si128(_mm_srl_epi32(pixels, bits), mask);
-            auto scaled = _mm_srli_epi32(_mm_mullo_epi32(channel, alpha), 8);
-            result = _mm_or_si128(result, _mm_sll_epi32(scaled, bits));
-        }
-        auto opaque = _mm_cmpeq_epi32(alpha, mask);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(buffer + x), _mm_blendv_epi8(result, pixels, opaque));
+    for (; width - x >= 8; x += 8) {
+        auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(buffer + x));
+        auto alpha = _mm256_srli_epi32(pixels, 24);
+        // A factor of 256 preserves opaque pixels; other pixels use alpha / 256.
+        auto factors = _mm256_sub_epi32(alpha, _mm256_cmpeq_epi32(alpha, full));
+        auto result = avxScalePixels(pixels, factors);
+        result = _mm256_blendv_epi8(result, pixels, alphaMask);
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(buffer + x), result);
     }
     cRasterPremultiply(buffer + x, width - x);
 }

@@ -16,8 +16,8 @@ if host_machine.system() == 'windows'
 endif
 
 if cc.get_id() == 'clang-cl'
-    if simd_type == 'avx'
-        compiler_flags += ['/clang:-mavx', '/clang:-msse4.1']
+    if simd_type == 'avx2'
+        compiler_flags += ['/clang:-mavx2']
     endif
     if simd_type == 'neon-arm'
         compiler_flags += ['/clang:-mfpu=neon']
@@ -34,9 +34,13 @@ if cc.get_id() == 'clang-cl'
                            '/clang:-fno-stack-protector', '/clang:-fno-unwind-tables' ,
                            '/clang:-fno-asynchronous-unwind-tables']
     endif
-elif (cc.get_id() != 'msvc')
-    if simd_type == 'avx'
-        compiler_flags += ['-mavx', '-msse4.1']
+elif cc.get_id() == 'msvc'
+    if simd_type == 'avx2'
+        compiler_flags += ['/arch:AVX2']
+    endif
+else
+    if simd_type == 'avx2'
+        compiler_flags += ['-mavx2']
     endif
     if simd_type == 'neon-arm'
         compiler_flags += ['-mfpu=neon']
