@@ -408,6 +408,8 @@ RenderPath& LottieOffsetModifier::modify(const RenderPath& in, RenderPath& out, 
     };
 
     auto& path = (next) ? RenderPath::scratch() : out;
+    if (in.pts.empty()) return path;
+
     path.cmds.reserve(in.cmds.count * 2);
     path.pts.reserve(in.pts.count * (join == StrokeJoin::Round ? 4 : 2));
 
@@ -424,14 +426,14 @@ RenderPath& LottieOffsetModifier::modify(const RenderPath& in, RenderPath& out, 
                 break;
             }
             case PathCommand::LineTo: {
-                line(out, in.cmds.data, in.cmds.count, in.pts.data, iPt, iCmd, state, offset, false);
+                line(path, in.cmds.data, in.cmds.count, in.pts.data, iPt, iCmd, state, offset, false);
                 break;
             }
             case PathCommand::CubicTo: {
                 //cubic degenerated to a line
                 if (_colinear(in.pts.data + iPt - 1)) {
                     ++iPt;
-                    line(out, in.cmds.data, in.cmds.count, in.pts.data, iPt, iCmd, state, offset, true);
+                    line(path, in.cmds.data, in.cmds.count, in.pts.data, iPt, iCmd, state, offset, true);
                     ++iPt;
                     continue;
                 }
@@ -442,7 +444,7 @@ RenderPath& LottieOffsetModifier::modify(const RenderPath& in, RenderPath& out, 
             default: {
                 if (!tvg::zero(in.pts[iPt - 1] - in.pts[state.movetoInIndex])) {
                     path.cmds.push(PathCommand::LineTo);
-                    corner(out, state.line, state.firstLine, state.movetoOutIndex, true);
+                    corner(path, state.line, state.firstLine, state.movetoOutIndex, true);
                 }
                 path.cmds.push(PathCommand::Close);
             }
