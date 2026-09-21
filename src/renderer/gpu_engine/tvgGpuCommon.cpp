@@ -675,8 +675,11 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
     static constexpr float MIN_CURR_LEN_THRESHOLD = 0.1f;
 
     if (tvg::zero(len)) {
-        out.moveTo(map(curPos));
-    } else if (len <= curLen) {
+        curPos = end;
+        return;
+    }
+
+    if (len <= curLen) {
         curLen -= len;
         if (!opGap) {
             if (move) {
@@ -722,6 +725,7 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
             if (++curIdx == int32_t(dash.count)) curIdx = 0;
             curLen = dash.pattern[curIdx];
             opGap = !opGap;
+            move = true;
         }
     }
     curPos = end;
@@ -761,10 +765,11 @@ void StrokeDashPath::beginSubpath(const Point& start, const DashPatternState& st
 void StrokeDashPath::closeSubpath(RenderPath& subOut, const Point& start, bool allowDot, DashSubpathState& state)
 {
     auto prevPtCount = subOut.pts.count;
+    auto zeroLength = tvg::zero(length(start - curPos));  // a zero-length close emits nothing, yet the dash may already have reached start
     lineTo(subOut, start, allowDot);
     state.closed = true;
     // Rejoin decisions use emitted piece endpoints; this only tracks whether Close reached start.
-    state.closeEndsAtStart = (subOut.pts.count > prevPtCount) && tvg::closed(subOut.pts.last(), map(start), DASH_ENDPOINT_TOLERANCE);
+    state.closeEndsAtStart = zeroLength || (subOut.pts.count > prevPtCount && tvg::closed(subOut.pts.last(), map(start), DASH_ENDPOINT_TOLERANCE));
 }
 
 void StrokeDashPath::processCommand(PathCommand cmd, const Point*& pts, const DashPatternState& initialState, Point& start,
