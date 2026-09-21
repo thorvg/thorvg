@@ -1643,16 +1643,27 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
     ScopedLock lock(surface->key);
     if (surface->cs == to) return true;
 
-    //TODO: Support SIMD accelerations
     auto from = surface->cs;
 
     if (((from == ColorSpace::ABGR8888) || (from == ColorSpace::ABGR8888S)) && ((to == ColorSpace::ARGB8888) || (to == ColorSpace::ARGB8888S))) {
         surface->cs = to;
+#if defined(THORVG_AVX_SUPPORT)
+        return avxRasterABGRtoARGB(surface);
+#elif defined(THORVG_NEON_SUPPORT)
+        return neonRasterABGRtoARGB(surface);
+#else
         return cRasterABGRtoARGB(surface);
+#endif
     }
     if (((from == ColorSpace::ARGB8888) || (from == ColorSpace::ARGB8888S)) && ((to == ColorSpace::ABGR8888) || (to == ColorSpace::ABGR8888S))) {
         surface->cs = to;
-        return cRasterARGBtoABGR(surface);
+#if defined(THORVG_AVX_SUPPORT)
+        return avxRasterABGRtoARGB(surface);
+#elif defined(THORVG_NEON_SUPPORT)
+        return neonRasterABGRtoARGB(surface);
+#else
+        return cRasterABGRtoARGB(surface);
+#endif
     }
     return false;
 }

@@ -201,7 +201,7 @@ static inline bool cRasterTranslucentRect(SwSurface* surface, const RenderRegion
     return true;
 }
 
-static bool cRasterABGRtoARGB(RenderSurface* surface)
+static inline bool cRasterABGRtoARGB(RenderSurface* surface)
 {
     TVGLOG("SW_ENGINE", "Convert ColorSpace ABGR - ARGB [Size: %d x %d]", surface->w, surface->h);
 
@@ -231,10 +231,4 @@ static bool cRasterABGRtoARGB(RenderSurface* surface)
         }
     }
     return true;
-}
-
-static bool cRasterARGBtoABGR(RenderSurface* surface)
-{
-    //exactly same with ABGRtoARGB
-    return cRasterABGRtoARGB(surface);
 }
