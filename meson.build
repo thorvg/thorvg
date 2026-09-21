@@ -108,19 +108,6 @@ endif
 # Vectorization
 simd_type = 'none'
 
-if get_option('simd')
-  if host_machine.cpu_family().startswith('x86')
-    config_h.set10('THORVG_AVX_SUPPORT', true)
-    simd_type = 'avx2'
-  elif host_machine.cpu_family().startswith('arm')
-    config_h.set10('THORVG_NEON_SUPPORT', true)
-    simd_type = 'neon-arm'
-  elif host_machine.cpu_family().startswith('aarch64')
-    config_h.set10('THORVG_NEON_SUPPORT', true)
-    simd_type = 'neon-aarch'
-  endif
-endif
-
 # Bindings
 if get_option('bindings').contains('capi')
     config_h.set10('THORVG_CAPI_BINDING_SUPPORT', true)
@@ -165,15 +152,15 @@ endif
 # Miscellaneous
 config_h.set10('WIN32_LEAN_AND_MEAN', true)
 
-configure_file(
-    output: 'config.h',
-    configuration: config_h
-)
-
 headers = [include_directories('inc'), include_directories('.')]
 
 subdir('inc')
 subdir('src')
+
+configure_file(
+    output: 'config.h',
+    configuration: config_h
+)
 
 if get_option('tests')
    subdir('test')
@@ -186,7 +173,7 @@ summary(
     'File I/O': get_option('file'),
     'Multi-Tasking': get_option('threads'),
     'Partial Rendering': get_option('partial'),
-    'SIMD Instruction': simd_type,
+    'SIMD': simd_type,
     'Log Message': get_option('log'),
     'Tests': get_option('tests')
   },

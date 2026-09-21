@@ -14,6 +14,6 @@ sys_root = 'NDK/toolchains/llvm/prebuilt/HOST_TAG/sysroot'
 
 [host_machine]
 system = 'android'
-cpu_family = 'arm'
+cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
