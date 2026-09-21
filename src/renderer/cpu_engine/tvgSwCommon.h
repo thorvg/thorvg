@@ -252,6 +252,8 @@ struct SwDashStroke
     Point ptCur = {0, 0};
     float* pattern = nullptr;
     uint32_t cnt = 0;
+    uint32_t cmdBegin = 0;
+    uint32_t ptBegin = 0;
     bool curOpGap = false;
     bool move = true;
 };
