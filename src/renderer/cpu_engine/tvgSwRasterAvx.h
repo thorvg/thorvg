@@ -26,6 +26,27 @@
 
 #define N_32BITS_IN_256REG 8
 
+static bool avxRasterABGRtoARGB(RenderSurface* surface)
+{
+    const auto shuffle = _mm256_setr_epi8(2, 1, 0, 3, 6, 5, 4, 7, 10, 9, 8, 11, 14, 13, 12, 15,
+                                        2, 1, 0, 3, 6, 5, 4, 7, 10, 9, 8, 11, 14, 13, 12, 15);
+    const auto end = surface->w & ~7u;
+    #pragma omp parallel for
+    for (int32_t y = 0; y < (int32_t)surface->h; ++y) {
+        auto dst = surface->buf32 + uint32_t(y) * surface->stride;
+        uint32_t x = 0;
+        for (; x < end; x += 8) {
+            auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst + x));
+            _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + x), _mm256_shuffle_epi8(pixels, shuffle));
+        }
+        for (; x < surface->w; ++x) {
+            auto c = dst[x];
+            dst[x] = (c & 0xff00ff00) | ((c & 0x00ff0000) >> 16) | ((c & 0x000000ff) << 16);
+        }
+    }
+    return true;
+}
+
 static uint32_t avxInterpDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n)
 {
     // At most 4*4 pixels contribute, so each channel sum fits in uint16_t.
