@@ -165,6 +165,35 @@ static void _dashCubicTo(SwDashStroke& dash, const Point& ctrl1, const Point& ct
 static void _dashClose(SwDashStroke& dash, bool validPoint)
 {
     _dashLineTo(dash, dash.ptStart, validPoint);
+    auto& cmds = dash.path->cmds;
+    auto& pts = dash.path->pts;
+
+    // join the first and the last dashes across the seam only when both touch the start point
+    if (cmds.count > dash.cmdBegin + 1 &&
+        tvg::closed(pts[dash.ptBegin], dash.ptStart, DASH_PATTERN_THRESHOLD) &&
+        tvg::closed(pts.last(), dash.ptStart, DASH_PATTERN_THRESHOLD)) {
+        // locate the end of the first dash
+        auto cmdEnd = dash.cmdBegin + 1, ptEnd = dash.ptBegin + 1;
+        for (; cmdEnd < cmds.count && cmds[cmdEnd] != PathCommand::MoveTo; ++cmdEnd) {
+            ptEnd += (cmds[cmdEnd] == PathCommand::CubicTo) ? 3 : 1;
+        }
+
+        // move the first dash behind the last to join them at the start point
+        if (cmdEnd < cmds.count) {
+            auto rotate = [](auto& arr, uint32_t from, uint32_t to) {
+                arr.grow(to - from);
+                memcpy(arr.end(), arr.begin() + from, (to - from) * sizeof(*arr.data));
+                memmove(arr.begin() + from, arr.begin() + to, (arr.count - from) * sizeof(*arr.data));
+            };
+            cmds[dash.cmdBegin] = PathCommand::LineTo;
+            rotate(pts, dash.ptBegin, ptEnd);
+            rotate(cmds, dash.cmdBegin, cmdEnd);
+        } 
+    }
+    // the next sub-path may continue without moveTo
+    dash.cmdBegin = cmds.count;
+    dash.ptBegin = pts.count;
+    dash.move = true;
 }
 
 static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const Point& pts)
@@ -173,6 +202,8 @@ static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const
     dash.curLen = dash.pattern[dash.curIdx] - offset;
     dash.curOpGap = offIdx % 2;
     dash.ptStart = dash.ptCur = pts;
+    dash.cmdBegin = dash.path->cmds.count;
+    dash.ptBegin = dash.path->pts.count;
     dash.move = true;
 }
 
