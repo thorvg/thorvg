@@ -28,7 +28,7 @@ option('threads',
 
 option('simd',
    type: 'boolean',
-   value: false,
+   value: true,
    description: 'Enable CPU vectorization (AVX2 on x86, NEON on ARM)')
 
 option('bindings',
