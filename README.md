@@ -500,7 +500,7 @@ Would you like us to showcase your project with ThorVG? Feel free to [open an is
 </p>
 
 ### Thor Pirates
-Check out [Thor Pirates](https://github.com/thorvg/thorvg.pirates). Every visual is rendered as real-time vector graphics, featuring physics-based cannon battles, dynamic water, ship debris, and interactive environmental effects. The entire game was built with AI-generated code using [Codex](https://chatgpt.com/codex/?utm_source=google&utm_medium=paid_search&c_id=24184441561&c_agid=203310201807&c_crid=822144559839&c_kwid=kwd-111182835&c_ims=&c_pms=9197166&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=24184441561&gbraid=0AAAAA-I0E5f01DRDjTP8rQ_p9rY5vklen&gclid=Cj0KCQjw5bjVBhCiARIsAJzMVnQf5XBIme-UebEIZUoYXOpv0NfPBbLdpAymExeO3H3gMSpog_nohNYaAl4sEALw_wcB), showcasing how naturally ThorVG’s retained structural APIs work with AI.
+Check out [Thor Pirates](https://github.com/thorvg/thorvg.demo.pirates). Every visual is rendered as real-time vector graphics, featuring physics-based cannon battles, dynamic water, ship debris, and interactive environmental effects. The entire game was built with AI-generated code using [Codex](https://chatgpt.com/codex/?utm_source=google&utm_medium=paid_search&c_id=24184441561&c_agid=203310201807&c_crid=822144559839&c_kwid=kwd-111182835&c_ims=&c_pms=9197166&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=24184441561&gbraid=0AAAAA-I0E5f01DRDjTP8rQ_p9rY5vklen&gclid=Cj0KCQjw5bjVBhCiARIsAJzMVnQf5XBIme-UebEIZUoYXOpv0NfPBbLdpAymExeO3H3gMSpog_nohNYaAl4sEALw_wcB), showcasing how naturally ThorVG’s retained structural APIs work with AI.
 
 <p align="center">
   <img width="700" height="auto" alt="thorvg" src="https://github.com/user-attachments/assets/cda8e26e-acbc-44fb-9b16-4c50b3b991f6" />
