@@ -31,6 +31,27 @@
     #define TVG_AARCH64 0
 #endif
 
+static bool neonRasterABGRtoARGB(RenderSurface* surface)
+{
+    const auto mask = vdupq_n_u32(0xff00ff00);
+    const auto end = surface->w & ~3u;
+    #pragma omp parallel for
+    for (int32_t y = 0; y < (int32_t)surface->h; ++y) {
+        auto dst = surface->buf32 + uint32_t(y) * surface->stride;
+        uint32_t x = 0;
+        for (; x < end; x += 4) {
+            auto pixels = vld1q_u32(dst + x);
+            auto swapped = vreinterpretq_u32_u16(vrev32q_u16(vreinterpretq_u16_u32(pixels)));
+            vst1q_u32(dst + x, vbslq_u32(mask, pixels, swapped));
+        }
+        for (; x < surface->w; ++x) {
+            auto c = dst[x];
+            dst[x] = (c & 0xff00ff00) | ((c & 0x00ff0000) >> 16) | ((c & 0x000000ff) << 16);
+        }
+    }
+    return true;
+}
+
 static void neonRasterUnpremultiply(uint32_t* buffer, uint32_t width)
 {
     const auto mask = vdupq_n_u32(255);
