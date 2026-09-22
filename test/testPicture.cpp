@@ -313,6 +313,8 @@ TEST_CASE("Load PNG file and render", "[tvgPicture]")
         REQUIRE(picture);
 
         REQUIRE(picture->load(TEST_DIR"/test.png") == Result::Success);
+        REQUIRE(picture->load(TEST_DIR "/test2.png") == Result::Success);
+
         REQUIRE(picture->opacity(192) == Result::Success);
         REQUIRE(picture->scale(5.0) == Result::Success);
 
