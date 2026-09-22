@@ -284,9 +284,9 @@ void WgPipelines::initialize(WgContext& context)
 
     // shader custom blend
     shaderSolidBlend = createShaderModule(context.device, "The shader blend solid", strcat(strcpy(shaderSourceBuff, cShaderSrc_Solid_Blend), cShaderSrc_BlendFuncs));
-    shaderLinearBlend = createShaderModule(context.device, "The shader blend linear", strcat(strcpy(shaderSourceBuff, cShaderSrc_Linear_Blend), cShaderSrc_BlendFuncs));
-    shaderRadialBlend = createShaderModule(context.device, "The shader blend radial", strcat(strcpy(shaderSourceBuff, cShaderSrc_Radial_Blend), cShaderSrc_BlendFuncs));
-    shaderConicBlend = createShaderModule(context.device, "The shader blend conic", strcat(strcpy(shaderSourceBuff, cShaderSrc_Conic_Blend), cShaderSrc_BlendFuncs));
+    shaderLinearBlend = createShaderModule(context.device, "The shader blend linear", strcat(strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Linear_Blend), cShaderSrc_Gradient_Blend), cShaderSrc_BlendSourceOver), cShaderSrc_BlendFuncs));
+    shaderRadialBlend = createShaderModule(context.device, "The shader blend radial", strcat(strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Radial_Blend), cShaderSrc_Gradient_Blend), cShaderSrc_BlendSourceOver), cShaderSrc_BlendFuncs));
+    shaderConicBlend = createShaderModule(context.device, "The shader blend conic", strcat(strcat(strcat(strcpy(shaderSourceBuff, cShaderSrc_Conic_Blend), cShaderSrc_Gradient_Blend), cShaderSrc_BlendSourceOver), cShaderSrc_BlendFuncs));
     shaderImageBlend = createShaderModule(context.device, "The shader blend image", strcat(strcpy(shaderSourceBuff, cShaderSrc_Image_Blend), cShaderSrc_BlendFuncs));
     shaderSceneBlend = createShaderModule(context.device, "The shader blend scene", strcat(strcpy(shaderSourceBuff, cShaderSrc_Scene_Blend), cShaderSrc_BlendFuncs));
 
