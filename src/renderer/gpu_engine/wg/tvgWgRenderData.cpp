@@ -34,11 +34,11 @@
 // WgGradientTexture
 //***********************************************************************
 
-void WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread& currentSpread)
+bool WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread& currentSpread)
 {
     // compute gradient data
     WgShaderTypeGradientData gradientData;
-    gradientData.update(fill);
+    auto opaque = gradientData.update(fill);
     // allocate new texture handle
     auto bytesPerRow = WG_TEXTURE_GRADIENT_SIZE * sizeof(uint32_t);
     bool texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data, bytesPerRow, bytesPerRow);
@@ -59,6 +59,7 @@ void WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread&
         bindGroup = context.layouts.createBindGroupTexSampled(sampler, textureView);
         currentSpread = spread;
     }
+    return opaque;
 };
 
 void WgGradientTexture::release(WgContext& context)
@@ -82,7 +83,7 @@ uint8_t WgRenderSettings::update(tvg::ColorSpace cs, uint8_t opacity)
 void WgRenderSettings::update(WgContext& context, const Fill* fill, const Matrix* transform, bool updateColorRamp)
 {
     settings.gradient.update(fill, transform);
-    if (updateColorRamp) gradientData.update(context, fill, spread);
+    if (updateColorRamp) opaque = gradientData.update(context, fill, spread);
     if (fill->type() == Type::LinearGradient)
         fillType = WgRenderSettingsType::Linear;
     else if (fill->type() == Type::RadialGradient)
@@ -173,7 +174,7 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
             // Drawable thin fills are tessellated as a minimal-width stroke.
             if (optPathThin && tvg::zero(rshape.strokeWidth())) {
                 WgStroker stroker(&shape.mesh, MIN_WG_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
-                stroker.run(optPath);
+                stroker.run(optPath, true);
                 bbox = stroker.getBBox();
                 shape.setting.opacityMultiplier = MIN_WG_STROKE_ALPHA;
             } else {
@@ -204,6 +205,7 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
             auto& dashed = RenderPath::scratch();
             if (gpuStrokeDash(rshape, dashed, nullptr)) stroker.run(dashed);
             else stroker.run(optStrokePath);
+            strokeDirect = stroker.overlapFree;
             stroke.setting.opacityMultiplier = 1.0f;
             if (stroke.mesh.ibuffer.empty()) {
                 stroke.mesh.clear();

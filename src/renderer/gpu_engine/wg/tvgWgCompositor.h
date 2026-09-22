@@ -87,9 +87,8 @@ private:
     void clipShape(WgContext& context, WgShape* rdata);
 
     // strokes
-    void drawStrokes(WgContext& context, WgShape* rdata);
+    void drawStrokes(WgContext& context, WgShape* rdata, bool clipped = false);
     void blendStrokes(WgContext& context, WgShape* rdata, BlendMethod blendMethod);
-    void clipStrokes(WgContext& context, WgShape* rdata);
 
     // images
     void drawImage(WgContext& context, WgImage* rdata);

@@ -25,6 +25,8 @@
 
 #include "tvgWgCommon.h"
 
+enum class WgRenderSettingsType;
+
 class WgPipelines {
 private:
     // shaders helpers
@@ -94,14 +96,15 @@ public:
     WGPURenderPipeline radial_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline linear_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline conic_conv{};  // convex geometry (no stencil)
+    WGPURenderPipeline stroke_clip[4]{};
     WGPURenderPipeline image{};
     WGPURenderPipeline image_direct{}; // image geometry (no stencil)
     WGPURenderPipeline scene{};
     // pipelines custom blend
-    WGPURenderPipeline solid_blend[18]{};
-    WGPURenderPipeline radial_blend[18]{};
-    WGPURenderPipeline linear_blend[18]{};
-    WGPURenderPipeline conic_blend[18]{};
+    WGPURenderPipeline solid_blend[2][18]{};
+    WGPURenderPipeline radial_blend[2][18]{};
+    WGPURenderPipeline linear_blend[2][18]{};
+    WGPURenderPipeline conic_blend[2][18]{};
     WGPURenderPipeline image_blend[18]{};
     WGPURenderPipeline scene_blend[18]{};
     // pipelines compose
@@ -144,10 +147,11 @@ private:
         const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt,
         const WGPUCompareFunction stencilFunctionBack, const WGPUStencilOperation stencilOperationBack);
 public:
-    WGPURenderPipeline solidBlend(WgContext& context, BlendMethod method);
-    WGPURenderPipeline radialBlend(WgContext& context, BlendMethod method);
-    WGPURenderPipeline linearBlend(WgContext& context, BlendMethod method);
-    WGPURenderPipeline conicBlend(WgContext& context, BlendMethod method);
+    WGPURenderPipeline solidBlend(WgContext& context, BlendMethod method, bool direct = false);
+    WGPURenderPipeline radialBlend(WgContext& context, BlendMethod method, bool direct = false);
+    WGPURenderPipeline linearBlend(WgContext& context, BlendMethod method, bool direct = false);
+    WGPURenderPipeline conicBlend(WgContext& context, BlendMethod method, bool direct = false);
+    WGPURenderPipeline clippedStroke(WgContext& context, WgRenderSettingsType type);
     WGPURenderPipeline imageBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline sceneBlend(WgContext& context, BlendMethod method);
 

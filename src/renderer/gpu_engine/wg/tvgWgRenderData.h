@@ -35,7 +35,7 @@ struct WgGradientTexture
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
 
-    void update(WgContext& context, const Fill* fill, FillSpread& currentSpread);
+    bool update(WgContext& context, const Fill* fill, FillSpread& currentSpread);
     void release(WgContext& context);
 };
 
@@ -63,6 +63,7 @@ struct WgRenderSettings
     WgRenderSettingsType fillType{};
     float opacityMultiplier = 1.0f;
     bool valid = false;
+    bool opaque;
     FillSpread spread{};  // cached here to use existing tail padding
 
     uint8_t update(tvg::ColorSpace cs, uint8_t opacity);
@@ -108,6 +109,7 @@ struct WgShape : WgPaint
     FillRule fillRule;
     bool convex;
     bool strokeFirst;
+    bool strokeDirect;
 
     void expand(const BBox& bb);
     void update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity);
