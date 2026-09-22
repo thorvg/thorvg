@@ -415,13 +415,14 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     } else if (radial) {
         auto radialFill = static_cast<const RadialGradient*>(fill);
         radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
-        // Uncorrectable radial gradients use the last stop as a solid color.
+        // Keep a constant last-stop gradient on the gradient blending path.
         if (!CONST_RADIAL(radialFill)->correct(fx, fy, fr)) {
-            auto& stop = stops[colorStopCnt - 1];
-            RenderColor color = {stop.r, stop.g, stop.b, stop.a};
-            auto solidFlag = (flag & RenderUpdateFlag::GradientStroke) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Color;
-            drawPrimitive(shape, color, solidFlag, depth);
-            return;
+            stops += colorStopCnt - 1;
+            stopCnt = 1;
+            fx = x;
+            fy = y;
+            fr = 0.0f;
+            r = 1.0f;
         }
 
         taskType = RT_RadGradient;
