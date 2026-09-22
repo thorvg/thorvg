@@ -29,6 +29,10 @@
 #include "tvgColor.h"
 #include "tvgRender.h"
 
+#ifdef THORVG_OPENMP_SUPPORT
+    #include <omp.h>
+#endif
+
 #define SW_COLOR_TABLE 1024
 
 struct SwCompositor;
@@ -517,6 +521,7 @@ void mpoolInit(uint32_t threads);
 void mpoolTerm();
 SwMpool* mpoolReq();
 
+void rasterInit();
 Result rasterCompositor(SwSurface* surface);
 bool rasterShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, RenderColor& c);
 bool rasterTexmapPolygon(SwSurface* surface, const SwImage& image, const Matrix& transform, const RenderRegion& bbox, uint8_t opacity);
@@ -528,14 +533,12 @@ bool rasterStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, 
 bool rasterGradientShape(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
-void rasterPixel32(uint32_t* dst, uint32_t val, uint32_t offset, int32_t len);
-void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
-void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
-void rasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len);
 void rasterUnpremultiply(RenderSurface* surface);
 void rasterPremultiply(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
-uint32_t rasterUnpremultiply(uint32_t data);
+
+extern void (*rasterSolidPixels)(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
+extern void (*rasterTranslucentPixels)(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
 
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
 bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
