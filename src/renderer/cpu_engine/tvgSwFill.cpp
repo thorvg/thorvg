@@ -27,54 +27,9 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#define RADIAL_A_THRESHOLD 0.0005f
 #define FIXPT_BITS 8
 #define FIXPT_SIZE (1<<FIXPT_BITS)
 #define MARGIN_MAX 40 // The maximum number of color table entries for the anti-aliasing (AA) margin at both ends.
-
-/*
- * quadratic equation with the following coefficients (rx and ry defined in the _calculateCoefficients()):
- * A = a  // fill->radial.a
- * B = 2 * (dr * fr + rx * dx + ry * dy)
- * C = fr^2 - rx^2 - ry^2
- * Derivatives are computed with respect to dx.
- * This procedure aims to optimize and eliminate the need to calculate all values from the beginning
- * for consecutive x values with a constant y. The Taylor series expansions are computed as long as
- * its terms are non-zero.
- */
-static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, float& b, float& deltaB, float& det, float& deltaDet, float& deltaDeltaDet)
-{
-    auto radial = &fill->radial;
-
-    auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
-    auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
-
-    b = (radial->dr * radial->fr + rx * radial->dx + ry * radial->dy) * radial->invA;
-    deltaB = (radial->a11 * radial->dx + radial->a21 * radial->dy) * radial->invA;
-
-    auto rr = rx * rx + ry * ry;
-    auto deltaRr = 2.0f * (rx * radial->a11 + ry * radial->a21) * radial->invA;
-    auto deltaDeltaRr = 2.0f * (radial->a11 * radial->a11 + radial->a21 * radial->a21) * radial->invA;
-
-    det = b * b + (rr - radial->fr * radial->fr) * radial->invA;
-    deltaDet = 2.0f * b * deltaB + deltaB * deltaB + deltaRr + deltaDeltaRr * 0.5f;
-    deltaDeltaDet = 2.0f * deltaB * deltaB + deltaDeltaRr;
-}
-
-static inline float _conicT(const SwFill* fill, float rx, float ry)
-{
-    // atan2 starts at 3 o'clock; offset rotates to the configured start angle.
-    auto t = atan2f(ry, rx) * (0.5f / MATH_PI) + fill->conic.offset;
-    return t - floorf(t);   //wrap to [0..1)
-}
-
-
-static uint32_t _estimateAAMargin(const SwFill* fill)
-{
-    constexpr float marginScalingFactor = 800.0f;
-    return tvg::zero(fill->extent) ? 0 : static_cast<uint32_t>(marginScalingFactor / fill->extent);
-}
-
 
 static void _adjustAAMargin(uint32_t& iMargin, uint32_t count)
 {
@@ -85,27 +40,38 @@ static void _adjustAAMargin(uint32_t& iMargin, uint32_t count)
     if (iMargin > MARGIN_MAX) iMargin = MARGIN_MAX;
 }
 
-
-static inline uint32_t _alphaUnblend(uint32_t c)
+static void _applyRepeatAA(SwFill* fill, const Fill::ColorStop* colors, uint32_t cnt)
 {
-    auto a = (c >> 24);
-    if (a == 255 || a == 0) return c;
-    auto invA = 255.0f / static_cast<float>(a);
-    auto c0 = static_cast<uint8_t>(static_cast<float>((c >> 16) & 0xFF) * invA);
-    auto c1 = static_cast<uint8_t>(static_cast<float>((c >> 8) & 0xFF) * invA);
-    auto c2 = static_cast<uint8_t>(static_cast<float>(c & 0xFF) * invA);
+    if (cnt == 1) return;
 
-    return (a << 24) | (c0 << 16) | (c1 << 8) | c2;
-}
+    // Calculate count that satisfies (i + 0.5) / SW_COLOR_TABLE < offset
+    auto countBegin = static_cast<uint32_t>(max(0.0f, floor((colors + 1)->offset * SW_COLOR_TABLE - 0.5f) + 1.0f));
+    auto countEnd = static_cast<uint32_t>(max(0.0f, floor((1.0f - (colors + cnt - 2)->offset) * SW_COLOR_TABLE - 0.5f) + 1.0f));
 
+    // estimate AA margine
+    constexpr float marginScaleFactor = 800.0f;
+    auto begin = tvg::zero(fill->extent) ? 0 : static_cast<uint32_t>(marginScaleFactor / fill->extent);
+    _adjustAAMargin(begin, countBegin);
+    auto end = begin;
+    _adjustAAMargin(end, countEnd);
 
-static void _applyAA(SwFill* fill, uint32_t begin, uint32_t end)
-{
+    // apply AA
     if (begin == 0 || end == 0) return;
 
+    auto unblend = [](uint32_t c) {
+        auto a = (c >> 24);
+        if (a == 255 || a == 0) return c;
+        auto invA = 255.0f / static_cast<float>(a);
+        auto c0 = static_cast<uint8_t>(static_cast<float>((c >> 16) & 0xFF) * invA);
+        auto c1 = static_cast<uint8_t>(static_cast<float>((c >> 8) & 0xFF) * invA);
+        auto c2 = static_cast<uint8_t>(static_cast<float>(c & 0xFF) * invA);
+
+        return (a << 24) | (c0 << 16) | (c1 << 8) | c2;
+    };
+
     auto i = SW_COLOR_TABLE - end;
-    auto rgbaEnd = _alphaUnblend(fill->ctable[i]);
-    auto rgbaBegin = _alphaUnblend(fill->ctable[begin]);
+    auto rgbaEnd = unblend(fill->ctable[i]);
+    auto rgbaBegin = unblend(fill->ctable[begin]);
 
     auto dt = 1.0f / (begin + end + 1.0f);
     float t = dt;
@@ -118,23 +84,6 @@ static void _applyAA(SwFill* fill, uint32_t begin, uint32_t end)
         t += dt;
     }
 }
-
-
-static void _applyRepeatAA(SwFill* fill, const Fill::ColorStop* colors, uint32_t cnt)
-{
-    if (cnt == 1) return;
-
-    // Calculate count that satisfies (i + 0.5) / SW_COLOR_TABLE < offset
-    auto countBegin = static_cast<uint32_t>(max(0.0f, floor((colors + 1)->offset * SW_COLOR_TABLE - 0.5f) + 1.0f));
-    auto countEnd = static_cast<uint32_t>(max(0.0f, floor((1.0f - (colors + cnt - 2)->offset) * SW_COLOR_TABLE - 0.5f) + 1.0f));
-
-    auto iAABegin = _estimateAAMargin(fill);
-    _adjustAAMargin(iAABegin, countBegin);
-    auto iAAEnd = iAABegin;
-    _adjustAAMargin(iAAEnd, countEnd);
-    _applyAA(fill, iAABegin, iAAEnd);
-}
-
 
 // Generate the ctable entries over the [begin, end) range
 static void _genColorTable(SwFill* fill, const Fill::ColorStop* colors, uint32_t cnt, const SwSurface* surface, uint8_t opacity, uint32_t begin, uint32_t end)
@@ -191,7 +140,6 @@ static void _genColorTable(SwFill* fill, const Fill::ColorStop* colors, uint32_t
     if (end == SW_COLOR_TABLE) fill->ctable[SW_COLOR_TABLE - 1] = rgba;
 }
 
-
 static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint8_t opacity)
 {
     if (fill->solid) return true;
@@ -205,7 +153,6 @@ static bool _updateColorTable(SwFill* fill, const Fill* fdata, const SwSurface* 
 
     return true;
 }
-
 
 // Update only the ctable corresponding to the margin based on the updated extent
 static bool _updateAAMargin(SwFill* fill, const Fill* fdata, const SwSurface* surface, uint8_t opacity)
@@ -221,49 +168,70 @@ static bool _updateAAMargin(SwFill* fill, const Fill* fdata, const SwSurface* su
     return true;
 }
 
-
-bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pTransform, bool& extentChanged)
+static inline uint32_t _clamp(const SwFill* fill, int32_t pos)
 {
-    float x1, x2, y1, y2;
-    linear->linear(&x1, &y1, &x2, &y2);
-
-    fill->linear.dx = x2 - x1;
-    fill->linear.dy = y2 - y1;
-    auto len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
-
-    if (len < FLOAT_EPSILON) {
-        if (tvg::zero(fill->linear.dx) && tvg::zero(fill->linear.dy)) {
-            fill->solid = true;
+    switch (fill->spread) {
+        case FillSpread::Pad: {
+            if (pos >= SW_COLOR_TABLE) pos = SW_COLOR_TABLE - 1;
+            else if (pos < 0) pos = 0;
+            break;
         }
-        return true;
+        case FillSpread::Repeat: {
+            pos = pos % SW_COLOR_TABLE;
+            if (pos < 0) pos = SW_COLOR_TABLE + pos;
+            break;
+        }
+        case FillSpread::Reflect: {
+            auto limit = SW_COLOR_TABLE * 2;
+            pos = pos % limit;
+            if (pos < 0) pos = limit + pos;
+            if (pos >= SW_COLOR_TABLE) pos = (limit - pos - 1);
+            break;
+        }
     }
-
-    fill->linear.dx /= len;
-    fill->linear.dy /= len;
-    fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
-
-    const auto& transform = pTransform * linear->transform();
-
-    Matrix itransform;
-    if (!inverse(&transform, &itransform)) return false;
-
-    fill->linear.offset += fill->linear.dx * itransform.e13 + fill->linear.dy * itransform.e23;
-
-    auto dx = fill->linear.dx;
-    fill->linear.dx = dx * itransform.e11 + fill->linear.dy * itransform.e21;
-    fill->linear.dy = dx * itransform.e12 + fill->linear.dy * itransform.e22;
-
-    // dx/dy is amount of change in screen space. The reciprocal of its magnitude is
-    // the pixel span of one full color table cycle.
-    auto ext = 1.0f / sqrtf(fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy);
-    if (!tvg::equal(ext, fill->extent)) {
-        extentChanged = true;
-        fill->extent = ext;
-    }
-
-    return true;
+    return pos;
 }
 
+static inline uint32_t _pixel(const SwFill* fill, float pos)
+{
+    auto i = static_cast<int32_t>(pos * (SW_COLOR_TABLE - 1) + 0.5f);
+    return fill->ctable[_clamp(fill, i)];
+}
+
+/************************************************************************/
+/* Radial Implementation                                                */
+/************************************************************************/
+
+#define RADIAL_A_THRESHOLD 0.0005f
+
+/*
+ * quadratic equation with the following coefficients (rx and ry defined in the _calculateCoefficients()):
+ * A = a  // fill->radial.a
+ * B = 2 * (dr * fr + rx * dx + ry * dy)
+ * C = fr^2 - rx^2 - ry^2
+ * Derivatives are computed with respect to dx.
+ * This procedure aims to optimize and eliminate the need to calculate all values from the beginning
+ * for consecutive x values with a constant y. The Taylor series expansions are computed as long as
+ * its terms are non-zero.
+ */
+static void _calculateCoefficients(const SwFill* fill, uint32_t x, uint32_t y, float& b, float& deltaB, float& det, float& deltaDet, float& deltaDeltaDet)
+{
+    auto radial = &fill->radial;
+
+    auto rx = (x + 0.5f) * radial->a11 + (y + 0.5f) * radial->a12 + radial->a13 - radial->fx;
+    auto ry = (x + 0.5f) * radial->a21 + (y + 0.5f) * radial->a22 + radial->a23 - radial->fy;
+
+    b = (radial->dr * radial->fr + rx * radial->dx + ry * radial->dy) * radial->invA;
+    deltaB = (radial->a11 * radial->dx + radial->a21 * radial->dy) * radial->invA;
+
+    auto rr = rx * rx + ry * ry;
+    auto deltaRr = 2.0f * (rx * radial->a11 + ry * radial->a21) * radial->invA;
+    auto deltaDeltaRr = 2.0f * (radial->a11 * radial->a11 + radial->a21 * radial->a21) * radial->invA;
+
+    det = b * b + (rr - radial->fr * radial->fr) * radial->invA;
+    deltaDet = 2.0f * b * deltaB + deltaB * deltaB + deltaRr + deltaDeltaRr * 0.5f;
+    deltaDeltaDet = 2.0f * deltaB * deltaB + deltaDeltaRr;
+}
 
 bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pTransform, bool& extentChanged)
 {
@@ -312,141 +280,7 @@ bool _prepareRadial(SwFill* fill, const RadialGradient* radial, const Matrix& pT
     return true;
 }
 
-bool _prepareConic(SwFill* fill, const ConicGradient* conic, const Matrix& pTransform)
-{
-    float cx, cy, angle;
-    conic->conic(&cx, &cy, &angle);
-
-    fill->conic.cx = cx;
-    fill->conic.cy = cy;
-    fill->conic.offset = -angle / 360.0f;
-
-    const auto& transform = pTransform * conic->transform();
-
-    Matrix itransform;
-    if (!inverse(&transform, &itransform)) return false;
-
-    fill->conic.a11 = itransform.e11;
-    fill->conic.a12 = itransform.e12;
-    fill->conic.a13 = itransform.e13;
-    fill->conic.a21 = itransform.e21;
-    fill->conic.a22 = itransform.e22;
-    fill->conic.a23 = itransform.e23;
-
-    //prepare conic anti-aliasing variables
-    auto radian = angle * (MATH_PI / 180.0f);
-    auto seam = Point{cosf(radian), sinf(radian)};
-    fill->conic.normal = {-seam.y, seam.x};
-    auto xStep = Point{fill->conic.a11, fill->conic.a21};
-    auto yStep = Point{fill->conic.a12, fill->conic.a22};
-    auto dFdx = dot(fill->conic.normal, xStep);
-    auto dFdy = dot(fill->conic.normal, yStep);
-    auto fwidth = fabsf(dFdx) + fabsf(dFdy);
-
-    fill->conic.invFwidth = (tvg::zero(dFdx) || tvg::zero(dFdy)) ? 0.0f : 1.0f / fwidth;
-    fill->conic.distanceDx = dFdx * fill->conic.invFwidth;
-    fill->conic.seamProjectionDx = dot(seam, xStep);
-
-    return true;
-}
-
-static inline uint32_t _clamp(const SwFill* fill, int32_t pos)
-{
-    switch (fill->spread) {
-        case FillSpread::Pad: {
-            if (pos >= SW_COLOR_TABLE) pos = SW_COLOR_TABLE - 1;
-            else if (pos < 0) pos = 0;
-            break;
-        }
-        case FillSpread::Repeat: {
-            pos = pos % SW_COLOR_TABLE;
-            if (pos < 0) pos = SW_COLOR_TABLE + pos;
-            break;
-        }
-        case FillSpread::Reflect: {
-            auto limit = SW_COLOR_TABLE * 2;
-            pos = pos % limit;
-            if (pos < 0) pos = limit + pos;
-            if (pos >= SW_COLOR_TABLE) pos = (limit - pos - 1);
-            break;
-        }
-    }
-    return pos;
-}
-
-
-static inline uint32_t _fixedPixel(const SwFill* fill, int32_t pos)
-{
-    int32_t i = (pos + (FIXPT_SIZE / 2)) >> FIXPT_BITS;
-    return fill->ctable[_clamp(fill, i)];
-}
-
-
-static inline uint32_t _pixel(const SwFill* fill, float pos)
-{
-    auto i = static_cast<int32_t>(pos * (SW_COLOR_TABLE - 1) + 0.5f);
-    return fill->ctable[_clamp(fill, i)];
-}
-
-struct ConicAARange
-{
-    float begin = 0.0f;
-    float end = 0.0f;
-    float distance = 0.0f;
-};
-
-static ConicAARange _conicAARange(const SwFill* fill, float rx, float ry, uint32_t len)
-{
-    auto conic = &fill->conic;
-    if (conic->invFwidth <= 0.0f || len == 0) return {};
-
-    auto offset = Point{rx, ry};
-
-    //normal distance limits AA to the band around the infinite boundary line
-    auto distance = dot(conic->normal, offset) * conic->invFwidth;
-    auto distanceDx = conic->distanceDx;
-    auto range = ConicAARange{0.0f, static_cast<float>(len)};
-    if (tvg::zero(distanceDx)) {
-        if (distance <= -0.5f || distance >= 0.5f) return {};
-    } else {
-        auto first = (-0.5f - distance) / distanceDx;  //distance + first * distanceDx = -0.5
-        auto last = (0.5f - distance) / distanceDx;    //distance + last * distanceDx = 0.5
-        if (first > last) std::swap(first, last);
-        range.begin = std::max(range.begin, floorf(first) + 1.0f);
-        range.end = std::min(range.end, ceilf(last));
-    }
-
-    //exclude the half of the AA band opposite the conic seam
-    auto seam = Point{conic->normal.y, -conic->normal.x};
-    auto seamProjection = dot(offset, seam);
-    auto seamProjectionDx = conic->seamProjectionDx;
-    if (tvg::zero(seamProjectionDx)) {
-        if (seamProjection < 0.0f) return {};
-    } else if (seamProjectionDx > 0.0f) {
-        range.begin = std::max(range.begin, ceilf(-seamProjection / seamProjectionDx));
-    } else {
-        range.end = std::min(range.end, floorf(-seamProjection / seamProjectionDx) + 1.0f);
-    }
-
-    if (range.begin >= range.end) return {};
-
-    range.distance = distance + range.begin * distanceDx;
-    return range;
-}
-
-static inline uint32_t _conicPixel(const SwFill* fill, float rx, float ry, uint32_t i, const ConicAARange& range)
-{
-    if (i < range.begin || i >= range.end) return _pixel(fill, _conicT(fill, rx, ry));
-    auto distance = range.distance + (i - range.begin) * fill->conic.distanceDx;
-    return INTERPOLATE(fill->ctable[0], fill->ctable[SW_COLOR_TABLE - 1], static_cast<uint8_t>(255.0f * (distance + 0.5f)));  // distance is kept within (-0.5f, 0.5f) by _conicAARange()
-}
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+static void _fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
 {
     //edge case
     if (fill->radial.a < RADIAL_A_THRESHOLD) {
@@ -491,8 +325,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     }
 }
 
-
-void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
+static void _fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
 {
     if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
@@ -517,8 +350,7 @@ void fillRadial(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     }
 }
 
-
-void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
+static void _fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
 {
     if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
@@ -545,8 +377,7 @@ void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
     }
 }
 
-
-void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
+static void _fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
 {
     if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
@@ -575,7 +406,7 @@ void fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
     }
 }
 
-void fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+static void _fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
 {
     if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
@@ -624,7 +455,108 @@ void fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uin
     }
 }
 
-void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+/************************************************************************/
+/* Conic Implementation                                                 */
+/************************************************************************/
+
+struct ConicAARange
+{
+    float begin = 0.0f;
+    float end = 0.0f;
+    float distance = 0.0f;
+};
+
+static ConicAARange _conicAARange(const SwFill* fill, float rx, float ry, uint32_t len)
+{
+    auto conic = &fill->conic;
+    if (conic->invFwidth <= 0.0f || len == 0) return {};
+
+    auto offset = Point{rx, ry};
+
+    // normal distance limits AA to the band around the infinite boundary line
+    auto distance = dot(conic->normal, offset) * conic->invFwidth;
+    auto distanceDx = conic->distanceDx;
+    auto range = ConicAARange{0.0f, static_cast<float>(len)};
+    if (tvg::zero(distanceDx)) {
+        if (distance <= -0.5f || distance >= 0.5f) return {};
+    } else {
+        auto first = (-0.5f - distance) / distanceDx;  // distance + first * distanceDx = -0.5
+        auto last = (0.5f - distance) / distanceDx;    // distance + last * distanceDx = 0.5
+        if (first > last) std::swap(first, last);
+        range.begin = std::max(range.begin, floorf(first) + 1.0f);
+        range.end = std::min(range.end, ceilf(last));
+    }
+
+    // exclude the half of the AA band opposite the conic seam
+    auto seam = Point{conic->normal.y, -conic->normal.x};
+    auto seamProjection = dot(offset, seam);
+    auto seamProjectionDx = conic->seamProjectionDx;
+    if (tvg::zero(seamProjectionDx)) {
+        if (seamProjection < 0.0f) return {};
+    } else if (seamProjectionDx > 0.0f) {
+        range.begin = std::max(range.begin, ceilf(-seamProjection / seamProjectionDx));
+    } else {
+        range.end = std::min(range.end, floorf(-seamProjection / seamProjectionDx) + 1.0f);
+    }
+
+    if (range.begin >= range.end) return {};
+
+    range.distance = distance + range.begin * distanceDx;
+    return range;
+}
+
+static uint32_t _conicPixel(const SwFill* fill, float rx, float ry, uint32_t i, const ConicAARange& range)
+{
+    auto t = [](const SwFill* fill, float rx, float ry) {
+        // atan2 starts at 3 o'clock; offset rotates to the configured start angle.
+        auto t = atan2f(ry, rx) * (0.5f / MATH_PI) + fill->conic.offset;
+        return t - floorf(t);  // wrap to [0..1)
+    };
+
+    if (i < range.begin || i >= range.end) return _pixel(fill, t(fill, rx, ry));
+    auto distance = range.distance + (i - range.begin) * fill->conic.distanceDx;
+    return INTERPOLATE(fill->ctable[0], fill->ctable[SW_COLOR_TABLE - 1], static_cast<uint8_t>(255.0f * (distance + 0.5f)));  // distance is kept within (-0.5f, 0.5f) by _conicAARange()
+}
+
+bool _prepareConic(SwFill* fill, const ConicGradient* conic, const Matrix& pTransform)
+{
+    float cx, cy, angle;
+    conic->conic(&cx, &cy, &angle);
+
+    fill->conic.cx = cx;
+    fill->conic.cy = cy;
+    fill->conic.offset = -angle / 360.0f;
+
+    const auto& transform = pTransform * conic->transform();
+
+    Matrix itransform;
+    if (!inverse(&transform, &itransform)) return false;
+
+    fill->conic.a11 = itransform.e11;
+    fill->conic.a12 = itransform.e12;
+    fill->conic.a13 = itransform.e13;
+    fill->conic.a21 = itransform.e21;
+    fill->conic.a22 = itransform.e22;
+    fill->conic.a23 = itransform.e23;
+
+    // prepare conic anti-aliasing variables
+    auto radian = angle * (MATH_PI / 180.0f);
+    auto seam = Point{cosf(radian), sinf(radian)};
+    fill->conic.normal = {-seam.y, seam.x};
+    auto xStep = Point{fill->conic.a11, fill->conic.a21};
+    auto yStep = Point{fill->conic.a12, fill->conic.a22};
+    auto dFdx = dot(fill->conic.normal, xStep);
+    auto dFdy = dot(fill->conic.normal, yStep);
+    auto fwidth = fabsf(dFdx) + fabsf(dFdy);
+
+    fill->conic.invFwidth = (tvg::zero(dFdx) || tvg::zero(dFdy)) ? 0.0f : 1.0f / fwidth;
+    fill->conic.distanceDx = dFdx * fill->conic.invFwidth;
+    fill->conic.seamProjectionDx = dot(seam, xStep);
+
+    return true;
+}
+
+static void _fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
 {
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
@@ -646,7 +578,7 @@ void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32
     }
 }
 
-void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
+static void _fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
 {
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
@@ -660,7 +592,7 @@ void fillConic(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32
     }
 }
 
-void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
+static void _fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
 {
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
@@ -675,7 +607,7 @@ void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_
     }
 }
 
-void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
+static void _fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
 {
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
@@ -691,7 +623,7 @@ void fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_
     }
 }
 
-void fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+static void _fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
 {
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
@@ -716,7 +648,59 @@ void fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint
     }
 }
 
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+/************************************************************************/
+/* Linear Implementation                                                */
+/************************************************************************/
+
+static inline uint32_t _fixedPixel(const SwFill* fill, int32_t pos)
+{
+    int32_t i = (pos + (FIXPT_SIZE / 2)) >> FIXPT_BITS;
+    return fill->ctable[_clamp(fill, i)];
+}
+
+bool _prepareLinear(SwFill* fill, const LinearGradient* linear, const Matrix& pTransform, bool& extentChanged)
+{
+    float x1, x2, y1, y2;
+    linear->linear(&x1, &y1, &x2, &y2);
+
+    fill->linear.dx = x2 - x1;
+    fill->linear.dy = y2 - y1;
+    auto len = fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy;
+
+    if (len < FLOAT_EPSILON) {
+        if (tvg::zero(fill->linear.dx) && tvg::zero(fill->linear.dy)) {
+            fill->solid = true;
+        }
+        return true;
+    }
+
+    fill->linear.dx /= len;
+    fill->linear.dy /= len;
+    fill->linear.offset = -fill->linear.dx * x1 - fill->linear.dy * y1;
+
+    const auto& transform = pTransform * linear->transform();
+
+    Matrix itransform;
+    if (!inverse(&transform, &itransform)) return false;
+
+    fill->linear.offset += fill->linear.dx * itransform.e13 + fill->linear.dy * itransform.e23;
+
+    auto dx = fill->linear.dx;
+    fill->linear.dx = dx * itransform.e11 + fill->linear.dy * itransform.e21;
+    fill->linear.dy = dx * itransform.e12 + fill->linear.dy * itransform.e22;
+
+    // dx/dy is amount of change in screen space. The reciprocal of its magnitude is
+    // the pixel span of one full color table cycle.
+    auto ext = 1.0f / sqrtf(fill->linear.dx * fill->linear.dx + fill->linear.dy * fill->linear.dy);
+    if (!tvg::equal(ext, fill->extent)) {
+        extentChanged = true;
+        fill->extent = ext;
+    }
+
+    return true;
+}
+
+static void _fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -789,8 +773,7 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     }
 }
 
-
-void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
+static void _fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask maskOp, uint8_t a)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -831,8 +814,7 @@ void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
     }
 }
 
-
-void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
+static void _fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask maskOp, uint8_t a)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -878,8 +860,7 @@ void fillLinear(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32
     }
 }
 
-
-void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
+static void _fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -918,7 +899,7 @@ void fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     }
 }
 
-void fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+static void _fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -992,6 +973,10 @@ void fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uin
     }
 }
 
+/************************************************************************/
+/* External Interace Implementation                                     */
+/************************************************************************/
+
 bool fillPrepare(SwFill*& fill, const Fill* fdata, const Matrix& transform, SwSurface* surface, uint8_t opacity, bool ctable)
 {
     if (!fdata) return true;  // a normal case
@@ -1012,12 +997,13 @@ bool fillPrepare(SwFill*& fill, const Fill* fdata, const Matrix& transform, SwSu
     auto extentChanged = false;
 
     fill->spread = fdata->spread();
+    fill->type = fdata->type();
 
-    if (fdata->type() == Type::LinearGradient) {
+    if (fill->type == Type::LinearGradient) {
         if (!_prepareLinear(fill, static_cast<const LinearGradient*>(fdata), transform, extentChanged)) return false;
-    } else if (fdata->type() == Type::RadialGradient) {
+    } else if (fill->type == Type::RadialGradient) {
         if (!_prepareRadial(fill, static_cast<const RadialGradient*>(fdata), transform, extentChanged)) return false;
-    } else if (fdata->type() == Type::ConicGradient) {
+    } else if (fill->type == Type::ConicGradient) {
         if (!_prepareConic(fill, static_cast<const ConicGradient*>(fdata), transform)) return false;
     }
 
@@ -1025,7 +1011,6 @@ bool fillPrepare(SwFill*& fill, const Fill* fdata, const Matrix& transform, SwSu
     else if (extentChanged && fill->spread == FillSpread::Repeat) return _updateAAMargin(fill, fdata, surface, opacity);
     return true;
 }
-
 
 const Fill::ColorStop* fillFetchSolid(const SwFill* fill, const Fill* fdata)
 {
@@ -1038,9 +1023,48 @@ const Fill::ColorStop* fillFetchSolid(const SwFill* fill, const Fill* fdata)
     return colors + cnt - 1;
 }
 
-
 void fillReset(SwFill* fill)
 {
     fill->translucent = false;
     fill->solid = false;
+}
+
+// composite masking ver.
+void fillRaster(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, SwMask op, uint8_t a)
+{
+    if (fill->type == Type::LinearGradient) _fillLinear(fill, dst, y, x, len, op, a);
+    if (fill->type == Type::RadialGradient) _fillRadial(fill, dst, y, x, len, op, a);
+    if (fill->type == Type::ConicGradient) _fillConic(fill, dst, y, x, len, op, a);
+}
+
+// direct masking ver.
+void fillRaster(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwMask op, uint8_t a)
+{
+    if (fill->type == Type::LinearGradient) _fillLinear(fill, dst, y, x, len, cmp, op, a);
+    if (fill->type == Type::RadialGradient) _fillRadial(fill, dst, y, x, len, cmp, op, a);
+    if (fill->type == Type::ConicGradient) _fillConic(fill, dst, y, x, len, cmp, op, a);
+}
+
+// blending ver.
+void fillRaster(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, uint8_t a)
+{
+    if (fill->type == Type::LinearGradient) _fillLinear(fill, dst, y, x, len, op, a);
+    if (fill->type == Type::RadialGradient) _fillRadial(fill, dst, y, x, len, op, a);
+    if (fill->type == Type::ConicGradient) _fillConic(fill, dst, y, x, len, op, a);
+}
+
+// matting ver.
+void fillRaster(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t* cmp, SwAlpha alpha, uint8_t csize, uint8_t opacity)
+{
+    if (fill->type == Type::LinearGradient) _fillLinear(fill, dst, y, x, len, cmp, alpha, csize, opacity);
+    if (fill->type == Type::RadialGradient) _fillRadial(fill, dst, y, x, len, cmp, alpha, csize, opacity);
+    if (fill->type == Type::ConicGradient) _fillConic(fill, dst, y, x, len, cmp, alpha, csize, opacity);
+}
+
+// blending + BlendingMethod(op2) ver.
+void fillRaster(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+{
+    if (fill->type == Type::LinearGradient) _fillLinear(surface, fill, dst, y, x, len, op, op2, a);
+    if (fill->type == Type::RadialGradient) _fillRadial(surface, fill, dst, y, x, len, op, op2, a);
+    if (fill->type == Type::ConicGradient) _fillConic(surface, fill, dst, y, x, len, op, op2, a);
 }
