@@ -209,6 +209,11 @@ static void _appendRect(Shape* shape, float x, float y, float w, float h, float 
 
 static void _appendCircle(Shape* shape, float cx, float cy, float rx, float ry)
 {
+    // Resolve unspecified or invalid radii from the other axis (SVG 2).
+    if (rx < 0.0f) rx = ry;
+    else if (ry < 0.0f) ry = rx;
+    if (rx <= 0.0f || ry <= 0.0f) return;
+
     auto rxKappa = rx * PATH_KAPPA;
     auto ryKappa = ry * PATH_KAPPA;
 

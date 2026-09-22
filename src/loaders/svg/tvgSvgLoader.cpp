@@ -1865,6 +1865,9 @@ static SvgNode* _createEllipseNode(SvgParserContext* ctx, SvgNode* parent, const
 
     if (!ctx->parser->node) return nullptr;
 
+    // Unspecified radii default to 'auto(-1)'; resolved when building the path.
+    ctx->parser->node->node.ellipse.rx = ctx->parser->node->node.ellipse.ry = -1.0f;
+
     func(buf, bufLength, _attrParseEllipseNode, ctx);
     return ctx->parser->node;
 }
