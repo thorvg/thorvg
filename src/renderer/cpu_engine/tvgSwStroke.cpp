@@ -282,6 +282,8 @@ static void _inside(SwStroke& stroke, int32_t side, float length)
         _rotate(delta, stroke.angleOut + rotate);
         delta += stroke.center;
         border->movable = false;
+        //pass through the corner so the segments overlap instead of beveling across the short one
+        _borderLineTo(border, stroke.center, false);
     } else {
         //compute median angle
         auto phi = stroke.angleIn + theta;
