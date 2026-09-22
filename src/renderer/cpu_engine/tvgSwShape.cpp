@@ -40,8 +40,11 @@ static void _dashLineTo(SwDashStroke& dash, const Point& to, bool validPoint)
     Line cur = {dash.ptCur, to};
     auto len = cur.length();
     if (tvg::zero(len)) {
-        dash.path->moveTo(dash.ptCur);
-    } else if (len <= dash.curLen) {
+        dash.ptCur = to;
+        return;
+    }
+
+    if (len <= dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
@@ -89,6 +92,7 @@ static void _dashLineTo(SwDashStroke& dash, const Point& to, bool validPoint)
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
             dash.curOpGap = !dash.curOpGap;
+            dash.move = true;
         }
     }
     dash.ptCur = to;
@@ -98,11 +102,13 @@ static void _dashCubicTo(SwDashStroke& dash, const Point& ctrl1, const Point& ct
 {
     Bezier cur = {dash.ptCur, ctrl1, ctrl2, to};
     auto len = cur.length();
+    if (tvg::zero(len)) {
+        dash.ptCur = to;
+        return;
+    }
 
     //draw the current line fully
-    if (tvg::zero(len)) {
-        dash.path->moveTo(dash.ptCur);
-    } else if (len <= dash.curLen) {
+    if (len <= dash.curLen) {
         dash.curLen -= len;
         if (!dash.curOpGap) {
             if (dash.move) {
@@ -150,6 +156,7 @@ static void _dashCubicTo(SwDashStroke& dash, const Point& ctrl1, const Point& ct
             dash.curIdx = (dash.curIdx + 1) % dash.cnt;
             dash.curLen = dash.pattern[dash.curIdx];
             dash.curOpGap = !dash.curOpGap;
+            dash.move = true;
         }
     }
     dash.ptCur = to;
