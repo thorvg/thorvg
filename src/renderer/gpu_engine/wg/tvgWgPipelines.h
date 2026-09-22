@@ -25,6 +25,8 @@
 
 #include "tvgWgCommon.h"
 
+enum class WgRenderSettingsType;
+
 struct WgPipelines
 {
     // stencil markup
@@ -48,6 +50,7 @@ struct WgPipelines
     WGPURenderPipeline radialConv{};         // convex geometry (no stencil)
     WGPURenderPipeline linearConv{};         // convex geometry (no stencil)
     WGPURenderPipeline conicConv{};          // convex geometry (no stencil)
+    WGPURenderPipeline strokeClip[4]{};
     WGPURenderPipeline image{};
     WGPURenderPipeline imageDirect{};  // image geometry (no stencil)
     WGPURenderPipeline scene{};
@@ -76,6 +79,7 @@ struct WgPipelines
     WGPURenderPipeline radialBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline linearBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline conicBlend(WgContext& context, BlendMethod method);
+    WGPURenderPipeline clippedStroke(WgContext& context, WgRenderSettingsType type);
     WGPURenderPipeline imageBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline sceneBlend(WgContext& context, BlendMethod method);
     void initialize(WgContext& context);
