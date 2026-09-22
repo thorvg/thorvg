@@ -1,4 +1,4 @@
-# CPU vectorization is enabled only when simd is true and the target machine supports it.
+# SIMD compiler flags are restricted to the SIMD implementation.
 simd_flags = []
 
 if get_option('simd')
@@ -56,17 +56,16 @@ endif
 
 source_file = [
    'tvgSwCommon.h',
-   'tvgSwRasterC.h',
-   'tvgSwRasterAvx.h',
-   'tvgSwRasterNeon.h',
+   'tvgSwRasterCore.h',
    'tvgSwRasterTexmap.h',
+   'tvgSwRenderer.h',
    'tvgSwBlendOp.cpp',
    'tvgSwFill.cpp',
    'tvgSwImage.cpp',
    'tvgSwMemPool.cpp',
    'tvgSwPostEffect.cpp',
-   'tvgSwRenderer.h',
    'tvgSwRaster.cpp',
+   'tvgSwRasterCore.cpp',
    'tvgSwRenderer.cpp',
    'tvgSwRle.cpp',
    'tvgSwShape.cpp',
@@ -80,9 +79,22 @@ if openmp
     omp_dep = dependency('openmp')
 endif
 
+simd_dep = []
+if simd_type != 'none' and simd_type != 'unsupported'
+    simd_lib = static_library('thorvg-sw-simd',
+        'tvgSwRasterSimd.cpp',
+        include_directories : [headers, include_directories('../../common', '..')],
+        dependencies        : omp_dep,
+        cpp_args            : compiler_flags + simd_flags,
+        gnu_symbol_visibility : 'hidden',
+        override_options    : override_options + ['b_lto=false'],
+        pic                 : true
+    )
+    simd_dep = [declare_dependency(link_whole: simd_lib)]
+endif
+
 engine_dep += [declare_dependency(
     include_directories : include_directories('.'),
-    dependencies        : omp_dep,
-    compile_args        : simd_flags,
+    dependencies        : [omp_dep, simd_dep],
     sources             : source_file
 )]

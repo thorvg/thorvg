@@ -473,7 +473,7 @@ bool AvfMediaLoader::sync()
     if (!surface.data) surface.data = tvg::malloc<pixel_t>(size);
     memcpy(surface.data, frame, size);
     surface.cs = ColorSpace::ARGB8888S;   // rasterConvertCS() can update this.
-    surface.premultiplied = false;        // rasterPremultiply() can update this.
+    surface.premultiplied = false;        // rasterPremultiplySurface() can update this.
     frameUpdated = false;
 
     return true;
