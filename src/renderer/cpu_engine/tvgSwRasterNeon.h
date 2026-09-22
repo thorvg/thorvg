@@ -147,8 +147,7 @@ static uint8x8_t ALPHA_BLEND(uint8x8_t c, uint8x8_t a)
 
 static uint8x8_t neonScalePixels(uint8x8_t pixels, uint32x2_t factors)
 {
-    auto expanded = vcombine_u16(vdup_n_u16(static_cast<uint16_t>(vget_lane_u32(factors, 0))),
-                                 vdup_n_u16(static_cast<uint16_t>(vget_lane_u32(factors, 1))));
+    auto expanded = vcombine_u16(vdup_n_u16(static_cast<uint16_t>(vget_lane_u32(factors, 0))), vdup_n_u16(static_cast<uint16_t>(vget_lane_u32(factors, 1))));
     return vmovn_u16(vshrq_n_u16(vmulq_u16(vmovl_u8(pixels), expanded), 8));
 }
 
@@ -168,37 +167,14 @@ static void neonRasterTranslucentPixels(uint32_t* dst, uint32_t* src, uint32_t l
 
 static void neonRasterPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
 {
-    if (opacity != 255) {
-        neonRasterTranslucentPixels(dst, src, len, opacity);
-        return;
-    }
-
-    uint32_t i = 0;
-    for (; len - i >= 4; i += 4) {
-        vst1q_u32(dst + i, vld1q_u32(src + i));
-    }
-    for (; i < len; ++i) dst[i] = src[i];
+    if (opacity == 255) memcpy(dst, src, size_t(len) * sizeof(uint32_t));
+    else neonRasterTranslucentPixels(dst, src, len, opacity);
 }
 
 static void neonRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len)
 {
-    dst += offset;
-
-    int32_t i = 0;
-    const uint8x16_t valVec = vdupq_n_u8(val);
-#if TVG_AARCH64
-    uint8x16x4_t valQuad = {valVec, valVec, valVec, valVec};
-    for (; i <= len - 16 * 4; i += 16 * 4) {
-        vst1q_u8_x4(dst + i, valQuad);
-    }
-#else
-    for (; i <= len - 16; i += 16) {
-        vst1q_u8(dst + i, valVec);
-    }
-#endif
-    for (; i < len; i++) {
-        dst[i] = val;
-    }
+    if (len <= 0) return;
+    memset(dst + offset, val, size_t(len));
 }
 
 static void neonRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
@@ -258,24 +234,35 @@ static bool neonRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const
             uint8x8_t vSrc = (uint8x8_t) vdup_n_u32(src);
             uint8x8_t vIalpha = vdup_n_u8((uint8_t) ialpha);
 
-            for (int32_t x = 0; x < (len - align) / 2; ++x)
+            for (int32_t x = 0; x < (len - align) / 2; ++x) {
                 vDst[x] = vadd_u8(vSrc, ALPHA_BLEND(vDst[x], vIalpha));
+            }
 
             auto leftovers = (len - align) % 2;
             if (leftovers > 0) dst[len - 1] = src + ALPHA_BLEND(dst[len - 1], ialpha);
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        TVGLOG("SW_ENGINE", "Require Neon Optimization, Channel Size = %d", surface->channelSize);
+        const auto ialpha = static_cast<uint8_t>(~c.a);
+        const auto vIalpha = vdup_n_u8(ialpha);
+        const auto bias = vdupq_n_u16(255);
         uint8_t src;
         for (auto span = rle->fetch(bbox, &end); span < end; ++span) {
             if (!span->fetch(bbox, x, len)) continue;
             auto dst = &surface->buf8[span->y * surface->stride + x];
             if (span->coverage < 255) src = MULTIPLY(span->coverage, c.a);
             else src = c.a;
-            auto ialpha = ~c.a;
-            for (auto x = 0; x < len; ++x, ++dst) {
-                *dst = src + MULTIPLY(*dst, ialpha);
+            const auto vSrc = vdupq_n_u8(src);
+            int32_t i = 0;
+            for (; len - i >= 16; i += 16) {
+                auto pixels = vld1q_u8(dst + i);
+                auto low = vmlal_u8(bias, vget_low_u8(pixels), vIalpha);
+                auto high = vmlal_u8(bias, vget_high_u8(pixels), vIalpha);
+                auto scaled = vcombine_u8(vshrn_n_u16(low, 8), vshrn_n_u16(high, 8));
+                vst1q_u8(dst + i, vaddq_u8(vSrc, scaled));
+            }
+            for (; i < len; ++i) {
+                dst[i] = src + MULTIPLY(dst[i], ialpha);
             }
         }
     }
@@ -292,10 +279,8 @@ static bool neonRasterTranslucentRect(SwSurface* surface, const RenderRegion& bb
         auto color = surface->join(c.r, c.g, c.b, c.a);
         auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
         auto ialpha = 255 - c.a;
-
         auto vColor = vdup_n_u32(color);
         auto vIalpha = vdup_n_u8((uint8_t) ialpha);
-
         uint8x8_t* vDst = nullptr;
         uint32_t align;
 
@@ -312,21 +297,32 @@ static bool neonRasterTranslucentRect(SwSurface* surface, const RenderRegion& bb
                 align = 0;
             }
 
-            for (uint32_t x = 0; x <  (w - align) / 2; ++x)
+            for (uint32_t x = 0; x <  (w - align) / 2; ++x) {
                 vDst[x] = vadd_u8((uint8x8_t)vColor, ALPHA_BLEND(vDst[x], vIalpha));
+            }
 
             auto leftovers = (w - align) % 2;
             if (leftovers > 0) dst[w - 1] = color + ALPHA_BLEND(dst[w - 1], ialpha);
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        TVGLOG("SW_ENGINE", "Require Neon Optimization, Channel Size = %d", surface->channelSize);
         auto buffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
-        auto ialpha = ~c.a;
+        const auto ialpha = static_cast<uint8_t>(~c.a);
+        const auto vIalpha = vdup_n_u8(ialpha);
+        const auto vAlpha = vdupq_n_u8(c.a);
+        const auto bias = vdupq_n_u16(255);
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
-            for (uint32_t x = 0; x < w; ++x, ++dst) {
-                *dst = c.a + MULTIPLY(*dst, ialpha);
+            uint32_t x = 0;
+            for (; w - x >= 16; x += 16) {
+                auto pixels = vld1q_u8(dst + x);
+                auto low = vmlal_u8(bias, vget_low_u8(pixels), vIalpha);
+                auto high = vmlal_u8(bias, vget_high_u8(pixels), vIalpha);
+                auto scaled = vcombine_u8(vshrn_n_u16(low, 8), vshrn_n_u16(high, 8));
+                vst1q_u8(dst + x, vaddq_u8(vAlpha, scaled));
+            }
+            for (; x < w; ++x) {
+                dst[x] = c.a + MULTIPLY(dst[x], ialpha);
             }
         }
     }
