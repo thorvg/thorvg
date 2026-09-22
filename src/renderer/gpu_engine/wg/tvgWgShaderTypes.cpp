@@ -139,7 +139,7 @@ void WgShaderTypeGradSettings::update(const Fill* fill, const Matrix* transform)
         ((LinearGradient*)fill)->linear(&coords.vec[0], &coords.vec[1], &coords.vec[2], &coords.vec[3]);
     } else if (fill->type() == Type::RadialGradient) {
         ((RadialGradient*)fill)->radial(&coords.vec[0], &coords.vec[1], &coords.vec[2], &focal.vec[0], &focal.vec[1], &focal.vec[2]);
-        CONST_RADIAL(fill)->correct(focal.vec[0], focal.vec[1], focal.vec[2]);
+        if (!CONST_RADIAL(fill)->correct(focal.vec[0], focal.vec[1], focal.vec[2])) coords.vec[2] = 0.0f;
     }
 }
 
