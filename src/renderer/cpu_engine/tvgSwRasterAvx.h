@@ -101,41 +101,21 @@ static void avxRasterTranslucentPixels(uint32_t* dst, uint32_t* src, uint32_t le
         if (opacity != 255) source = avxScalePixels(source, opacityVec);
         auto inverse = _mm256_sub_epi32(full, _mm256_srli_epi32(source, 24));
         auto target = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst + i));
-        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i),
-                           _mm256_add_epi32(source, avxScalePixels(target, inverse)));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), _mm256_add_epi32(source, avxScalePixels(target, inverse)));
     }
     cRasterTranslucentPixels(dst + i, src + i, len - i, opacity);
 }
 
 static void avxRasterPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
 {
-    if (opacity != 255) {
-        avxRasterTranslucentPixels(dst, src, len, opacity);
-        return;
-    }
-
-    uint32_t i = 0;
-    for (; len - i >= 8; i += 8) {
-        auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(src + i));
-        _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), pixels);
-    }
-    for (; i < len; ++i) dst[i] = src[i];
+    if (opacity == 255) memcpy(dst, src, size_t(len) * sizeof(uint32_t));
+    else avxRasterTranslucentPixels(dst, src, len, opacity);
 }
 
 static void avxRasterGrayscale8(uint8_t* dst, uint8_t val, uint32_t offset, int32_t len) 
 {
-    dst += offset; 
-
-    __m256i vecVal = _mm256_set1_epi8(val);
-
-    int32_t i = 0;
-    for (; i <= len - 32; i += 32) {
-        _mm256_storeu_si256((__m256i*)(dst + i), vecVal);
-    }
-
-    for (; i < len; ++i) {
-        dst[i] = val;
-    }
+    if (len <= 0) return;
+    memset(dst + offset, val, size_t(len));
 }
 
 static void avxRasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
@@ -163,16 +143,13 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbo
     auto h = bbox.h();
     auto w = bbox.w();
 
-    //32bits channels
+    // 32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
         auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
-
         uint32_t ialpha = 255 - c.a;
-
         auto avxColor = _mm256_set1_epi32(color);
         auto avxIalpha = _mm256_set1_epi32(ialpha + 1);
-
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
             uint32_t x = 0;
@@ -181,17 +158,31 @@ static bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbo
                 auto result = _mm256_add_epi32(avxColor, avxScalePixels(pixels, avxIalpha));
                 _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + x), result);
             }
-            for (; x < w; ++x) dst[x] = color + ALPHA_BLEND(dst[x], ialpha);
+            for (; x < w; ++x) {
+                dst[x] = color + ALPHA_BLEND(dst[x], ialpha);
+            }
         }
-    //8bit grayscale
+    // 8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        TVGLOG("SW_ENGINE", "Require AVX Optimization, Channel Size = %d", surface->channelSize);
         auto buffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
-        auto ialpha = ~c.a;
+        const auto ialpha = static_cast<uint8_t>(~c.a);
+        const auto mask = _mm256_set1_epi16(0x00ff);
+        const auto avxIalpha = _mm256_set1_epi16(ialpha);
+        const auto avxAlpha = _mm256_set1_epi8(c.a);
         for (uint32_t y = 0; y < h; ++y) {
             auto dst = &buffer[y * surface->stride];
-            for (uint32_t x = 0; x < w; ++x, ++dst) {
-                *dst = c.a + MULTIPLY(*dst, ialpha);
+            uint32_t x = 0;
+            for (; w - x >= 32; x += 32) {
+                auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst + x));
+                auto even = _mm256_mullo_epi16(_mm256_and_si256(pixels, mask), avxIalpha);
+                auto odd = _mm256_mullo_epi16(_mm256_srli_epi16(pixels, 8), avxIalpha);
+                even = _mm256_srli_epi16(_mm256_add_epi16(even, mask), 8);
+                odd = _mm256_andnot_si256(mask, _mm256_add_epi16(odd, mask));
+                auto result = _mm256_add_epi8(avxAlpha, _mm256_or_si256(even, odd));
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + x), result);
+            }
+            for (; x < w; ++x) {
+                dst[x] = c.a + MULTIPLY(dst[x], ialpha);
             }
         }
     }
@@ -203,7 +194,7 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
     const SwSpan* end;
     int32_t x, len;
 
-    //32bit channels
+    // 32bit channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
         uint32_t src;
@@ -212,10 +203,8 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
             if (!span->fetch(bbox, x, len)) continue;
             if (span->coverage < 255) src = ALPHA_BLEND(color, span->coverage);
             else src = color;
-
             auto dst = &surface->buf32[span->y * surface->stride + x];
             auto ialpha = IA(src);
-
             auto avxSrc = _mm256_set1_epi32(src);
             auto avxIalpha = _mm256_set1_epi32(ialpha + 1);
             int32_t i = 0;
@@ -224,20 +213,34 @@ static bool avxRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const 
                 auto result = _mm256_add_epi32(avxSrc, avxScalePixels(pixels, avxIalpha));
                 _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), result);
             }
-            for (; i < len; ++i) dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
+            for (; i < len; ++i) {
+                dst[i] = src + ALPHA_BLEND(dst[i], ialpha);
+            }
         }
-    //8bit grayscale
+    // 8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        TVGLOG("SW_ENGINE", "Require AVX Optimization, Channel Size = %d", surface->channelSize);
+        const auto mask = _mm256_set1_epi16(0x00ff);
+        const auto ialpha = static_cast<uint8_t>(~c.a);
+        const auto avxIalpha = _mm256_set1_epi16(ialpha);
         uint8_t src;
         for (auto span = rle->fetch(bbox, &end); span < end; ++span) {
             if (!span->fetch(bbox, x, len)) continue;
             auto dst = &surface->buf8[span->y * surface->stride + x];
             if (span->coverage < 255) src = MULTIPLY(span->coverage, c.a);
             else src = c.a;
-            auto ialpha = ~c.a;
-            for (auto x = 0; x < len; ++x, ++dst) {
-                *dst = src + MULTIPLY(*dst, ialpha);
+            const auto avxSrc = _mm256_set1_epi8(src);
+            int32_t i = 0;
+            for (; i <= len - 32; i += 32) {
+                auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(dst + i));
+                auto even = _mm256_mullo_epi16(_mm256_and_si256(pixels, mask), avxIalpha);
+                auto odd = _mm256_mullo_epi16(_mm256_srli_epi16(pixels, 8), avxIalpha);
+                even = _mm256_srli_epi16(_mm256_add_epi16(even, mask), 8);
+                odd = _mm256_andnot_si256(mask, _mm256_add_epi16(odd, mask));
+                auto result = _mm256_add_epi8(avxSrc, _mm256_or_si256(even, odd));
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), result);
+            }
+            for (; i < len; ++i) {
+                dst[i] = src + MULTIPLY(dst[i], ialpha);
             }
         }
     }
