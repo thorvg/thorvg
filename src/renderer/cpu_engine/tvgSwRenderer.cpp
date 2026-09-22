@@ -24,10 +24,6 @@
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
 
-#ifdef THORVG_OPENMP_SUPPORT
-    #include <omp.h>
-#endif
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -203,7 +199,7 @@ struct SwImageTask : SwTask
     {
         //Convert colorspace if it's not aligned.
         rasterConvertCS(source, renderer->surface->cs);
-        rasterPremultiply(source);
+        rasterPremultiplySurface(source);
 
         image.data = source->data;
         image.w = source->w;
@@ -355,7 +351,7 @@ bool SwRenderer::postRender()
 {
     //Unmultiply alpha if needed
     if (surface->cs == ColorSpace::ABGR8888S || surface->cs == ColorSpace::ARGB8888S) {
-        rasterUnpremultiply(surface);
+        rasterUnpremultiplySurface(surface);
     }
 
     dirtyRegion.clear();
@@ -914,6 +910,7 @@ SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 #ifdef THORVG_OPENMP_SUPPORT
         omp_set_num_threads(threads);
 #endif
+        rasterInit();
         mpoolInit(threads);
         _rendererCnt = 0;
     }
