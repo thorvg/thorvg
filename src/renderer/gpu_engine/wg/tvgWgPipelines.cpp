@@ -140,7 +140,13 @@ WGPURenderPipeline WgPipelines::createBlendPipeline(
         default:
             if (!shaderModuleBlend) {
                 char shaderSourceBuff[16384];
-                shaderModuleBlend = createShaderModule(context.device, shaderBlendLabel, strcat(strcpy(shaderSourceBuff, shaderBlendCode), cShaderSrc_BlendFuncs));
+                strcpy(shaderSourceBuff, shaderBlendCode);
+                if (pipelineLayoutBlend == layoutGradientBlend) {
+                    strcat(shaderSourceBuff, cShaderSrc_Gradient_Blend);
+                    strcat(shaderSourceBuff, cShaderSrc_BlendSourceOver);
+                }
+                strcat(shaderSourceBuff, cShaderSrc_BlendFuncs);
+                shaderModuleBlend = createShaderModule(context.device, shaderBlendLabel, shaderSourceBuff);
             }
             shaderModule = shaderModuleBlend;
             pipelineLayout = pipelineLayoutBlend;
