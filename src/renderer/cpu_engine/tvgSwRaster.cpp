@@ -1043,7 +1043,7 @@ static bool _rasterCompositeGradientMaskedRect(SwSurface* surface, const RenderR
 
     for (uint32_t y = 0; y < bbox.h(); ++y) {
         fillRaster(fill, cbuffer, bbox.min.y + y, bbox.min.x, bbox.w(), maskOp, 255);
-        cbuffer += surface->stride;
+        cbuffer += cstride;
     }
     return _compositeMaskImage(surface, surface->compositor->image, surface->compositor->bbox);
 }
@@ -1083,12 +1083,13 @@ static bool _rasterGradientMattedRect(SwSurface* surface, const RenderRegion& bb
     auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
     auto csize = surface->compositor->image.channelSize;
     auto cbuffer = surface->compositor->image.buf8 + (bbox.min.y * surface->compositor->image.stride + bbox.min.x) * csize;
+    auto cstride = surface->compositor->image.stride * csize;
     auto alpha = surface->alpha(surface->compositor->method);
 
     for (uint32_t y = 0; y < bbox.h(); ++y) {
         fillRaster(fill, buffer, bbox.min.y + y, bbox.min.x, bbox.w(), cbuffer, alpha, csize, 255);
         buffer += surface->stride;
-        cbuffer += surface->stride * csize;
+        cbuffer += cstride;
     }
     return true;
 }
