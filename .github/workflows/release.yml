@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: "thorvg"
       - name: Install Packages
@@ -19,6 +19,6 @@ jobs:
           meson setup builddir thorvg -Dextra="lottie_exp,openmp"
           meson dist -C builddir
       - name: Upload to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: builddir/meson-dist/*.xz

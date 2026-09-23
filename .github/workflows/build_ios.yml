@@ -15,7 +15,7 @@ jobs:
   build_simulator_x86_64:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Unbreak Python in GitHub Actions
       run: |
@@ -34,7 +34,7 @@ jobs:
         meson setup build -Dlog=true -Dloaders=all,media -Dsavers=all -Dbindings=capi -Dstatic=true -Dextra="lottie_exp" --cross-file ./cross/ios_simulator_x86_64.txt
         ninja -C build install
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: result_simulator_x86_64
         path: build/src/libthorvg*
@@ -42,7 +42,7 @@ jobs:
   build_simulator_arm64:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Unbreak Python in GitHub Actions
       run: |
@@ -61,7 +61,7 @@ jobs:
         meson setup build -Dlog=true -Dloaders=all,media -Dsavers=all -Dbindings=capi -Dstatic=true -Dextra="lottie_exp" --cross-file ./cross/ios_simulator_arm64.txt
         ninja -C build install
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: result_simulator_arm64
         path: build/src/libthorvg*
@@ -69,7 +69,7 @@ jobs:
   build_arm64:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Unbreak Python in GitHub Actions
       run: |
@@ -88,7 +88,7 @@ jobs:
         meson setup build -Dlog=true -Dloaders=all,media -Dsavers=all -Dbindings=capi -Dstatic=true -Dextra="lottie_exp" --cross-file ./cross/ios_arm64.txt
         ninja -C build install
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: result_arm64
         path: build/src/libthorvg*
