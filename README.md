@@ -171,7 +171,6 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [Related Projects](#related-projects)
   - [API Bindings](#api-bindings)
   - [Documentation](#documentation)
-  - [References](#references) 
   - [Dependencies](#dependencies)
   - [Contributors](#contributors)
   - [Partners](#partners)
@@ -579,12 +578,6 @@ meson setup builddir -Dbindings="capi"
 The ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also be found directly in this repository via the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h) and [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h). 
 
 For comprehensive and well-structured technical information, please visit the [DeepWiki](https://deepwiki.com/thorvg/thorvg), which offers in-depth guidance on ThorVG's architecture, features, and usage.
-
-[Back to contents](#contents)
-<br />
-<br />
-## References
-- [Universal Motion Graphics across All Platforms: Unleashing Creativity with ThorVG](https://youtu.be/qhHMycRPQ9M?si=RXAag3Fxm8R7W_I0)
 
 [Back to contents](#contents)
 <br />
