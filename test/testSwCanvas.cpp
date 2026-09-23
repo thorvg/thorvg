@@ -54,6 +54,36 @@ TEST_CASE("Basic Creation", "[tvgSwCanvas]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Re-initialization after termination on another thread", "[tvgSwCanvas]")
+{
+    uint32_t buffer[100 * 100] = {};
+
+    auto render = [&]() {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+        REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
+        auto shape = Shape::gen();
+        shape->appendRect(0, 0, 50, 50);
+        shape->fill(255, 0, 0);
+        REQUIRE(canvas->add(shape) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+    };
+
+    REQUIRE(Initializer::init() == Result::Success);
+    render();  // this thread now caches an engine memory pool
+
+    // terminating on another thread frees the pools but cannot reset this thread's cached one
+    auto ret = Result::Unknown;
+    thread([&]() { ret = Initializer::term(); }).join();
+    REQUIRE(ret == Result::Success);
+
+    REQUIRE(Initializer::init() == Result::Success);
+    render();  // must not render with the freed pool
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("Target Buffer", "[tvgSwCanvas]")
 {
     REQUIRE(Initializer::init() == Result::Success);
