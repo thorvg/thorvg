@@ -15,8 +15,8 @@ jobs:
   build_x86_64:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: nttld/setup-ndk@v1.3.1
+    - uses: actions/checkout@v7
+    - uses: nttld/setup-ndk@v1.6.0
       id: setup-ndk
       with:
         ndk-version: r21e
@@ -36,7 +36,7 @@ jobs:
         meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dbindings=capi -Dstatic=true -Dthreads=false -Dextra="lottie_exp" --cross-file /tmp/android_cross.txt
         sudo ninja -C build install
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: result_x86_64
         path: build/src/libthorvg*
@@ -44,8 +44,8 @@ jobs:
   build_aarch64:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: nttld/setup-ndk@v1.3.1
+    - uses: actions/checkout@v7
+    - uses: nttld/setup-ndk@v1.6.0
       id: setup-ndk
       with:
         ndk-version: r21e
@@ -65,7 +65,7 @@ jobs:
         meson setup build -Dlog=true -Dengines="cpu, gl" -Dloaders=all -Dsavers=all -Dbindings=capi -Dstatic=true -Dthreads=false -Dextra="lottie_exp" --cross-file /tmp/android_cross.txt
         sudo ninja -C build install
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: result_aarch64
         path: build/src/libthorvg*

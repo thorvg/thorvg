@@ -15,8 +15,10 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: actions/checkout@v7
+    - uses: TheMrMilchmann/setup-msvc-dev@v4
+      with:
+        arch: x64
 
     - name: Install Packages
       run: |
@@ -28,7 +30,7 @@ jobs:
         where link
         ninja -C build install
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: result_windows_static
         path: build/src/thorvg*
@@ -36,8 +38,10 @@ jobs:
   unit_test:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: actions/checkout@v7
+    - uses: TheMrMilchmann/setup-msvc-dev@v4
+      with:
+        arch: x64
 
     - name: Install Packages
       run: |
@@ -49,7 +53,7 @@ jobs:
         where link
         ninja -C build install test
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: UnitTestReport
         path: build/meson-logs/testlog.txt

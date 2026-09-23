@@ -1,54 +1,72 @@
 "APIs":
-  - inc/**/*
+  - changed-files:
+      - any-glob-to-any-file: inc/**/*
 
 "binding":
-  - src/bindings/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/bindings/**/*
 
 "documentation":
-  - README.md
+  - changed-files:
+      - any-glob-to-any-file: README.md
 
 "font":
-  - src/loaders/sfnt/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/loaders/sfnt/**/*
 
 "image":
-  - src/loaders/jpg/**/*
-  - src/loaders/external_jpg/**/*
-  - src/loaders/png/**/*
-  - src/loaders/external_png/**/*
-  - src/loaders/webp/**/*
-  - src/loaders/external_webp/**/*
-  - src/loaders/raw/**/*
-  - src/savers/gif/**/*
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/loaders/jpg/**/*
+          - src/loaders/external_jpg/**/*
+          - src/loaders/png/**/*
+          - src/loaders/external_png/**/*
+          - src/loaders/webp/**/*
+          - src/loaders/external_webp/**/*
+          - src/loaders/raw/**/*
+          - src/savers/gif/**/*
 
 "svg":
-  - src/loaders/svg/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/loaders/svg/**/*
 
 "media":
-  - src/loaders/media/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/loaders/media/**/*
 
 "test":
-  - test/**/*
+  - changed-files:
+      - any-glob-to-any-file: test/**/*
 
 "infrastructure":
-  - .github/**/*
-  - meson.build
-  - meson_option.txt
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**/*
+          - meson.build
+          - meson_option.txt
 
 "lottie":
-  - src/loaders/lottie/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/loaders/lottie/**/*
 
 "cpu":
-  - src/renderer/cpu_engine/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/renderer/cpu_engine/**/*
 
 "webgpu":
-  - src/renderer/gpu_engine/wg/**/*
-  - src/renderer/gpu_engine/*
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/renderer/gpu_engine/wg/**/*
+          - src/renderer/gpu_engine/*
 
 "gl":
-  - src/renderer/gpu_engine/gl/**/*
-  - src/renderer/gpu_engine/*
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/renderer/gpu_engine/gl/**/*
+          - src/renderer/gpu_engine/*
 
 "renderer":
-  - src/renderer/*
-  - src/common/**/*
-
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/renderer/*
+          - src/common/**/*

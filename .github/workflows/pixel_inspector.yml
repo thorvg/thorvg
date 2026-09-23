@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout ThorVG PR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.ref }}
           path: thorvg
@@ -36,7 +36,7 @@ jobs:
             main:refs/remotes/origin/main
 
       - name: Checkout Pixel-Inspector
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: thorvg/thorvg.pixel-inspector
           path: tvg-pixel-inspector
@@ -78,7 +78,7 @@ jobs:
             pixel-builds/runtime/lib
 
       - name: Upload built revisions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: thorvg-pixel-build
           path: ${{ runner.temp }}/thorvg-pixel-build.tar.gz
@@ -101,7 +101,7 @@ jobs:
 
     steps:
       - name: Checkout Pixel-Inspector
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: thorvg/thorvg.pixel-inspector
           path: tvg-pixel-inspector
@@ -113,12 +113,12 @@ jobs:
           sudo apt-get install -y libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
 
       - name: Setup Chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
         with:
           chrome-version: stable
 
       - name: Download built revisions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: thorvg-pixel-build
           path: ${{ runner.temp }}/thorvg-pixel-build
@@ -155,7 +155,7 @@ jobs:
 
       - name: Upload shard reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: thorvg-pixel-shard-${{ matrix.shard }}
           path: ${{ env.PIXEL_REPORT_EXPORT_DIR }}
@@ -172,7 +172,7 @@ jobs:
 
     steps:
       - name: Checkout Pixel-Inspector
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: thorvg/thorvg.pixel-inspector
           path: tvg-pixel-inspector
@@ -184,12 +184,12 @@ jobs:
           sudo apt-get install -y unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
 
       - name: Setup Chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
         with:
           chrome-version: stable
 
       - name: Download built revisions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: thorvg-pixel-build
           path: ${{ runner.temp }}/thorvg-pixel-build
@@ -221,7 +221,7 @@ jobs:
 
       - name: Upload compliance report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: thorvg-pixel-compliance
           path: ${{ env.PIXEL_REPORT_EXPORT_DIR }}
@@ -236,20 +236,20 @@ jobs:
     steps:
       - name: Download shard reports
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: thorvg-pixel-shard-*
           path: ${{ env.PIXEL_REPORT_INPUT_DIR }}
 
       - name: Download compliance report
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: thorvg-pixel-compliance
           path: ${{ env.PIXEL_REPORT_INPUT_DIR }}
 
       - name: Checkout Pixel-Inspector
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: thorvg/thorvg.pixel-inspector
           path: tvg-pixel-inspector
@@ -272,7 +272,7 @@ jobs:
 
       - name: Upload report PDFs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: thorvg-pixel-report-PR-${{ github.event.pull_request.number }}
           path: ${{ env.PIXEL_REPORT_EXPORT_DIR }}/reporter.*.PR-${{ github.event.pull_request.number }}.pdf
@@ -280,7 +280,7 @@ jobs:
 
       - name: Upload pixel report summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: thorvg-pixel-summary
           path: |
