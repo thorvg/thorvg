@@ -210,9 +210,7 @@ struct GlRenderer : RenderMethod
 
     TextureMgr textures;
 
-private:
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient, ConicGradient };
-    friend struct GlSolidBatch;
 
     GlRenderer(); 
     ~GlRenderer();
