@@ -83,9 +83,12 @@ struct Shape;
 /**
  * @defgroup ThorVG ThorVG
  * @brief ThorVG classes and enumerations providing C++ APIs.
+ *
+ *  @note Memory allocation failure is not guaranteed to be recoverable:
+ *        functions declared \c noexcept may terminate the process instead of returning a failure value.
+ *        Do not rely on \c nullptr or @ref Result::FailedAllocation unless the individual API documents it.
+ * \{
  */
-
-/**@{*/
 
 /**
  * @brief Enumeration specifying the result from the APIs.

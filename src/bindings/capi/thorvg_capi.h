@@ -53,6 +53,8 @@ extern "C"
  * @defgroup ThorVG_CAPI ThorVG_CAPI
  * @brief ThorVG C language binding APIs.
  *
+ * @note Memory allocation failure is not guaranteed to be recoverable:
+ *       object-creation APIs may terminate the process instead of returning a null handle or \c TVG_RESULT_FAILED_ALLOCATION.
  * \{
  */
 
