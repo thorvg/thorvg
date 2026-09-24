@@ -175,7 +175,7 @@ bool GlGeometry::tesselateThinFill(const RenderPath& path)
     // Thin fills borrow stroke tessellation, but the generated stroke buffer is
     // temporary. It must be moved into fill before this function returns.
     Stroker stroker(&stroke, MIN_GL_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
-    stroker.run(path); // path is already in world space.
+    stroker.run(path, true); // Preserve winding for thin fills.
     stroke.index.move(fill.index);
     stroke.vertex.move(fill.vertex);
     fillBBox = stroker.bounds();
@@ -206,6 +206,7 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
     if (gpuStrokeDash(rshape, dashed, nullptr)) stroker.run(dashed);
     else stroker.run(optStrokePath);
     strokeBBox = stroker.bounds();
+    strokeDirect = stroker.overlapFree;
     return true;
 }
 
@@ -265,8 +266,7 @@ void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
 
 GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag)
 {
-    if (flag & RenderUpdateFlag::Stroke) return GlStencilMode::Stroke;
-    if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
+    if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) return strokeDirect ? GlStencilMode::None : GlStencilMode::Stroke;
     if (flag & RenderUpdateFlag::Image) return GlStencilMode::None;
 
     if (convex) return GlStencilMode::None;

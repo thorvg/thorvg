@@ -36,11 +36,16 @@ struct Stroker
         Point firstPtDir;
         Point prevPt;
         Point prevPtDir;
+        float firstLength;
+        float prevLength;
+        uint32_t firstIndex;
+        uint32_t prevIndex;
     };
 
     Stroker(GlGeometryBuffer* buffer, float strokeWidth, StrokeCap cap, StrokeJoin join, float miterLimit = 4.0f, float qualityScale = 1.0f);
-    void run(const RenderPath& path);
+    void run(const RenderPath& path, bool thinFill = false);
     RenderRegion bounds() const;
+    bool overlapFree;
 
 private:
     float radius() const { return mWidth * 0.5f; }
@@ -48,10 +53,10 @@ private:
     void lineTo(const Point& curr);
     void cubicTo(const Point& cnt1, const Point& cnt2, const Point& end);
     void close();
-    void join(const Point& dir);
-    void round(const Point& prev, const Point& curr, const Point& center);
-    void miter(const Point& prev, const Point& curr, const Point& center);
-    void bevel(const Point& prev, const Point& curr, const Point& center);
+    void join(const Point& dir, float len, uint32_t index);
+    void round(const Point& prev, const Point& curr, const Point& center, const Point& apex);
+    void miter(const Point& prev, const Point& curr, const Point& center, const Point& apex);
+    void bevel(const Point& prev, const Point& curr, const Point& apex);
     void square(const Point& p, const Point& outDir);
     void squarePoint(const Point& p);
     void round(const Point& p, const Point& outDir);
@@ -63,6 +68,9 @@ private:
     float mQualityScale = 1.0f;
     StrokeCap mCap = StrokeCap::Square;
     StrokeJoin mJoin = StrokeJoin::Bevel;
+    bool mThinFill;
+    uint8_t mDirections;  // +x, -x, +y, -y of the tessellated edges
+    GpuConvexProbe mProbe;
     State mState = {};
     Point mLeftTop = {0.0f, 0.0f};
     Point mRightBottom = {0.0f, 0.0f};
