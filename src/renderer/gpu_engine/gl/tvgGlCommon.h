@@ -110,7 +110,7 @@ struct GlGeometry
     bool tesselateThinFill(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
     void draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const;
-    GlStencilMode stencilMode(RenderUpdateFlag flag);
+    GlStencilMode stencilMode(RenderUpdateFlag flag) const;
     RenderRegion bounds() const;
 
     GlGeometryBuffer fill, stroke;

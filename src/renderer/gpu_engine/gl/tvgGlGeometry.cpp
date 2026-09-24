@@ -263,7 +263,7 @@ void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     task->setDrawRange(indexOffset, buffer->index.count);
 }
 
-GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag)
+GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag) const
 {
     if (flag & RenderUpdateFlag::Stroke) return GlStencilMode::Stroke;
     if (flag & RenderUpdateFlag::GradientStroke) return GlStencilMode::Stroke;
