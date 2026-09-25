@@ -11,6 +11,8 @@ if system == 'darwin' or system == 'ios'
     subdir('apple')
 elif system == 'emscripten'
     subdir('web')
+elif system == 'windows'
+    subdir('windows')
 else
     # Use the fallback factory when no platform-specific media backend is available.
     source_file += ['tvgMediaLoader.cpp']
