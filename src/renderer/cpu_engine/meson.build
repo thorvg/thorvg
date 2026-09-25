@@ -56,16 +56,14 @@ endif
 
 source_file = [
    'tvgSwCommon.h',
-   'tvgSwRasterC.h',
-   'tvgSwRasterAvx.h',
-   'tvgSwRasterNeon.h',
+   'tvgSwRasterCore.h',
    'tvgSwRasterTexmap.h',
+   'tvgSwRenderer.h',
    'tvgSwBlendOp.cpp',
    'tvgSwFill.cpp',
    'tvgSwImage.cpp',
    'tvgSwMemPool.cpp',
    'tvgSwPostEffect.cpp',
-   'tvgSwRenderer.h',
    'tvgSwRaster.cpp',
    'tvgSwRenderer.cpp',
    'tvgSwRle.cpp',
