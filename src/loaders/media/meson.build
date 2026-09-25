@@ -9,6 +9,8 @@ source_file = [
 media_dep = []
 if system == 'darwin' or system == 'ios'
     subdir('apple')
+elif system == 'android'
+    subdir('android')
 elif system == 'emscripten'
     subdir('web')
 else
