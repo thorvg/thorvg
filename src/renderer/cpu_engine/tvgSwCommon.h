@@ -96,7 +96,7 @@ struct SwSize
     int32_t w, h;
 };
 
-struct SwOutline
+struct SwOutline : Allocator
 {
     /**
      * A shape refers to the renderer's path as is.
@@ -127,7 +127,7 @@ struct SwSpan
     }
 };
 
-struct SwRle
+struct SwRle : Allocator
 {
     Array<SwSpan> spans;
 
@@ -211,7 +211,7 @@ struct SwFill
     bool translucent;
 };
 
-struct SwStrokeBorder
+struct SwStrokeBorder : Allocator
 {
     Array<Point> pts;
     uint8_t* tags = nullptr;
@@ -334,7 +334,7 @@ struct SwCompositor : RenderCompositor
     bool valid;
 };
 
-struct SwCellPool
+struct SwCellPool : Allocator
 {
     #define DEFAULT_POOL_SIZE 16368
 
@@ -345,7 +345,7 @@ struct SwCellPool
     ~SwCellPool() { tvg::free(buffer); }
 };
 
-struct SwMpool
+struct SwMpool : Allocator
 {
     SwOutline* outlines;
     RenderPath* paths;

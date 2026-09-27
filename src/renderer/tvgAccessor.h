@@ -41,7 +41,7 @@ struct AccessorCallback
     void* data;
 };
 
-struct AccessorIterator
+struct AccessorIterator : Allocator
 {
     virtual ~AccessorIterator() {}
     virtual const Paint* next() = 0;

@@ -30,9 +30,9 @@ namespace tvg
 {
 
 template<typename K, typename V>
-struct Map
+struct Map : Allocator
 {
-    struct Item
+    struct Item : Allocator
     {
         INLIST_ITEM(Item);
         K key;

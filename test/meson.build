@@ -68,3 +68,15 @@ tests = executable('tvgUnitTests',
     dependencies : test_dep)
 
 test('Unit Tests', tests)
+
+#Global operators belong to the host, even when another archive uses new/delete.
+if lib_type == 'static' and cpu_engine
+    allocator_external = static_library('tvgAllocatorExternal', 'testAllocatorExternal.cpp')
+    allocator_tests = executable('tvgAllocatorTests',
+        'testAllocator.cpp',
+        include_directories: thorvg_inc,
+        link_with: [thorvg_lib, allocator_external],
+        cpp_args: test_compiler_flags,
+        dependencies: test_dep)
+    test('Allocator isolation', allocator_tests)
+endif

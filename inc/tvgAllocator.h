@@ -25,8 +25,9 @@
 
 #include <cstdlib>
 #include <cstddef>
+#include <new>
 
-//separate memory alloators for clean customization
+//separate memory allocators for clean customization
 namespace tvg
 {
     template<typename T = void>
@@ -52,6 +53,66 @@ namespace tvg
     {
         std::free(ptr);
     }
+
+    //Keep object allocation local to ThorVG, including in static builds.
+    struct Allocator
+    {
+        static void* operator new(std::size_t size)
+        {
+            if (auto ptr = tvg::malloc(size ? size : 1)) return ptr;
+            //ThorVG also builds without exceptions; never construct at nullptr.
+            std::abort();
+        }
+
+        static void* operator new[](std::size_t size)
+        {
+            return Allocator::operator new(size);
+        }
+
+        static void* operator new(std::size_t size, const std::nothrow_t&) noexcept
+        {
+            return tvg::malloc(size ? size : 1);
+        }
+
+        static void* operator new[](std::size_t size, const std::nothrow_t& tag) noexcept
+        {
+            return Allocator::operator new(size, tag);
+        }
+
+        static void* operator new(std::size_t, void* ptr) noexcept
+        {
+            return ptr;
+        }
+
+        static void* operator new[](std::size_t, void* ptr) noexcept
+        {
+            return ptr;
+        }
+
+        static void operator delete(void* ptr) noexcept
+        {
+            tvg::free(ptr);
+        }
+
+        static void operator delete[](void* ptr) noexcept
+        {
+            tvg::free(ptr);
+        }
+
+        static void operator delete(void* ptr, const std::nothrow_t&) noexcept
+        {
+            tvg::free(ptr);
+        }
+
+        static void operator delete[](void* ptr, const std::nothrow_t&) noexcept
+        {
+            tvg::free(ptr);
+        }
+
+        static void operator delete(void*, void*) noexcept {}
+
+        static void operator delete[](void*, void*) noexcept {}
+    };
 }
 
 #endif //_TVG_ALLOCATOR_H_

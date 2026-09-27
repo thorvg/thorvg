@@ -68,7 +68,7 @@ enum
 // The decoder is rather greedy: it will keep on calling this method until its internal input buffer is full, or until the EOF flag is set.
 // It the input stream contains data after the JPEG stream's EOI (end of image) marker it will probably be pulled into the internal buffer.
 // Call the get_total_bytes_read() method to determine the actual size of the JPEG stream after successful decoding.
-struct jpeg_decoder_stream
+struct jpeg_decoder_stream : Allocator
 {
     jpeg_decoder_stream() { }
     virtual ~jpeg_decoder_stream() { }
@@ -119,7 +119,7 @@ public:
 };
 
 
-class jpeg_decoder
+class jpeg_decoder : public Allocator
 {
 public:
     // Call get_error_code() after constructing to determine if the stream is valid or not. You may call the get_width(), get_height(), etc.

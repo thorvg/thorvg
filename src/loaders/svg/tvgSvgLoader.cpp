@@ -2255,7 +2255,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
                 INLIST_FOREACH(ctx->cloneNodes, pair) {
                     if (_checkPostponed(nodeFrom, pair->node, 1)) {
                         postpone = true;
-                        ctx->cloneNodes.back(new (tvg::malloc<SvgNodeIdPair>(sizeof(SvgNodeIdPair))) SvgNodeIdPair(node, id));
+                        ctx->cloneNodes.back(new SvgNodeIdPair(node, id));
                         break;
                     }
                 }
@@ -2273,7 +2273,7 @@ static bool _attrParseUseNode(void* data, const char* key, const char* value)
             //some svg export software include <defs> element at the end of the file
             //if so the 'from' element won't be found now and we have to repeat finding
             //after the whole file is parsed
-            ctx->cloneNodes.back(new (tvg::malloc<SvgNodeIdPair>(sizeof(SvgNodeIdPair))) SvgNodeIdPair(node, id));
+            ctx->cloneNodes.back(new SvgNodeIdPair(node, id));
         }
     } else {
         return _attrParseGNode(data, key, value);

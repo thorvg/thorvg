@@ -213,7 +213,7 @@ void LottieBuilder::updateTransform(LottieGroup* parent, LottieObject** child, f
             _update(transform, frameNo, m, opacity, false, tween, exps);
             *ctx->transform *= m;
         } else {
-            ctx->transform = new Matrix;
+            ctx->transform = tvg::malloc<Matrix>(sizeof(Matrix));
             _update(transform, frameNo, *ctx->transform, opacity, false, tween, exps);
         }
         return;

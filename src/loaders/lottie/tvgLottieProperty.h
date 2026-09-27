@@ -111,7 +111,7 @@ struct LottieVectorFrame
     }
 };
 
-struct LottieExpression
+struct LottieExpression : Allocator
 {
     char* code;
     LottieComposition* comp;
@@ -139,7 +139,7 @@ struct LottieExpression
 };
 
 //Property would have an either keyframes or single value.
-struct LottieProperty
+struct LottieProperty : Allocator
 {
     enum class Type : uint8_t
     {

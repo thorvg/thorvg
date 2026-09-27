@@ -24,6 +24,7 @@
 #define _TVG_INLIST_H_
 
 #include <cstdint>
+#include "tvgAllocator.h"
 
 namespace tvg
 {
@@ -34,7 +35,7 @@ namespace tvg
     T* next
 
 template<typename T>
-struct Inlist
+struct Inlist : Allocator
 {
     T* head = nullptr;
     T* tail = nullptr;

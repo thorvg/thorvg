@@ -35,7 +35,7 @@ namespace tvg
 {
 
 template<class T>
-struct Array
+struct Array : Allocator
 {
     T* data = nullptr;
     uint32_t count = 0;

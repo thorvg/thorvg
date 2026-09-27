@@ -70,7 +70,7 @@ struct GlBindingResource
         type(GlBindingType::kTexture), uniform(uniform), bindPoint(bindPoint), resourceId(textureId) {}
 };
 
-struct GlRenderTask
+struct GlRenderTask : Allocator
 {
     GlRenderTask(GlProgram* program) :
         program(program) {}

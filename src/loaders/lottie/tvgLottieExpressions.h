@@ -40,7 +40,7 @@ struct LottieModifier;
 
 #include "jerryscript.h"
 
-struct LottieExpressions
+struct LottieExpressions : Allocator
 {
     static LottieExpressions* instance();
     static void retrieve(LottieExpressions* instance);
@@ -158,7 +158,7 @@ private:
     LottieExpressions();
     ~LottieExpressions();
 
-    struct Context
+    struct Context : Allocator
     {
         //global objects, attributes, and methods per local thread instance
         jerry_value_t global;
@@ -192,7 +192,7 @@ private:
 
 #else
 
-struct LottieExpressions
+struct LottieExpressions : Allocator
 {
     static LottieExpressions* instance() { return nullptr; }
     static void retrieve(TVG_UNUSED LottieExpressions*) {}
