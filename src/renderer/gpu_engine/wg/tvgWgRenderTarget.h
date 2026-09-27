@@ -26,7 +26,7 @@
 #include "tvgWgPipelines.h"
 #include "tvgRender.h"
 
-struct WgRenderTarget
+struct WgRenderTarget : Allocator
 {
     WGPUTexture texture{}, textureMS{};
     WGPUTextureView texView{}, texViewMS{};

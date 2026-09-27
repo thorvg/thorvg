@@ -44,7 +44,7 @@ struct TextureMgr
         uint32_t refCnt = 0;
     };
 
-    struct SurfaceEntry
+    struct SurfaceEntry : Allocator
     {
         INLIST_ITEM(SurfaceEntry);
         const RenderSurface* surface = nullptr;

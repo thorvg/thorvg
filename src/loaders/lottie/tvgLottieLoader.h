@@ -35,7 +35,7 @@ struct LottieProperty;
 struct LottieSlot;
 
 
-struct LottieCustomSlot
+struct LottieCustomSlot : Allocator
 {
     INLIST_ITEM(LottieCustomSlot);
 

@@ -636,7 +636,7 @@ struct SvgParser
     } gradient;
 };
 
-struct SvgNodeIdPair
+struct SvgNodeIdPair : Allocator
 {
     INLIST_ITEM(SvgNodeIdPair);
     SvgNodeIdPair(SvgNode* n, char* i) : node{n}, id{i} {}

@@ -73,7 +73,7 @@ struct RenderText
 
 enum RenderFragment : uint8_t {ByNone = 0, ByFill, ByStroke};
 
-struct RenderContext
+struct RenderContext : Allocator
 {
     INLIST_ITEM(RenderContext);
 
@@ -96,7 +96,7 @@ struct RenderContext
     ~RenderContext()
     {
         propagator->unref(false);
-        delete(transform);
+        tvg::free(transform);
         delete (modifiers);
     }
 
@@ -136,7 +136,7 @@ struct RenderContext
         }
 
         if (rhs.transform) {
-            transform = new Matrix;
+            transform = tvg::malloc<Matrix>(sizeof(Matrix));
             *transform = *rhs.transform;
         }
     }
@@ -155,7 +155,7 @@ struct AudioResolver
 };
 
 
-struct LottieBuilder
+struct LottieBuilder : Allocator
 {
     LottieBuilder()
     {

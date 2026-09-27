@@ -32,7 +32,7 @@
     auto loader = tvg::to<PictureImpl>(pImpl->picture)->fetch<MediaLoader>(FileType::Media); \
     if (!loader) return RET_VAL
 
-struct Video::Impl
+struct Video::Impl : Allocator
 {
     Picture* picture;
 

@@ -13,7 +13,7 @@ namespace tvg
  *
  * @note Experimental API
  */
-struct TVG_API Video final
+struct TVG_API Video final : Allocator
 {
     ~Video();
 

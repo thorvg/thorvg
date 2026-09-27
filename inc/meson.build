@@ -1,4 +1,4 @@
-header_files = ['thorvg.h']
+header_files = ['thorvg.h', 'tvgAllocator.h']
 
 thorvg_inc = include_directories('.')
 
