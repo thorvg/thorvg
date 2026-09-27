@@ -80,7 +80,7 @@ jobs:
     - name: Install Packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y meson ninja-build pkg-config curl unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+        sudo apt-get install -y meson ninja-build pkg-config clang-tools libomp-dev curl unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
 
     - name: Install wgpu_native
       run: |
@@ -89,6 +89,7 @@ jobs:
     - name: Build & Test
       run: |
         meson setup build -Ddefault_library=static -Dloaders="all" -Dengines="all" -Dsavers="all" -Dbindings="capi" -Dtests=true -Dextra="lottie_exp,openmp" -Db_sanitize="address,undefined" --errorlogs
+        python3 test/checkAllocator.py build --self-test
         ninja -C build
         # LP_NUM_THREADS limits Mesa llvmpipe rendering threads, not OpenMP threads.
         env LIBGL_ALWAYS_SOFTWARE=1 LP_NUM_THREADS=1 ASAN_OPTIONS=halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 meson test -C build --print-errorlogs --timeout 120

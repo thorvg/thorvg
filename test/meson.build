@@ -11,6 +11,7 @@ endif
 
 test_file = [
     'testAccessor.cpp',
+    'testAllocatorData.cpp',
     'testAnimation.cpp',
     'testFill.cpp',
     'testInitializer.cpp',
