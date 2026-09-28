@@ -43,8 +43,7 @@ endif
 
 subdir('common')
 subdir('renderer')
-subdir('loaders')
-subdir('savers')
+subdir('modules')
 
 thorvg_lib_dep = [common_dep, utils_dep, loader_dep, saver_dep]
 

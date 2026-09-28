@@ -12,27 +12,27 @@
 
 "font":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/sfnt/**/*
+      - any-glob-to-any-file: src/modules/sfnt/load/**/*
 
 "image":
   - changed-files:
       - any-glob-to-any-file:
-          - src/loaders/jpg/**/*
-          - src/loaders/external_jpg/**/*
-          - src/loaders/png/**/*
-          - src/loaders/external_png/**/*
-          - src/loaders/webp/**/*
-          - src/loaders/external_webp/**/*
-          - src/loaders/raw/**/*
-          - src/savers/gif/**/*
+          - src/modules/jpg/load/internal/**/*
+          - src/modules/jpg/load/external/**/*
+          - src/modules/png/load/internal/**/*
+          - src/modules/png/load/external/**/*
+          - src/modules/webp/load/internal/**/*
+          - src/modules/webp/load/external/**/*
+          - src/modules/raw/load/**/*
+          - src/modules/gif/save/**/*
 
 "svg":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/svg/**/*
+      - any-glob-to-any-file: src/modules/svg/load/**/*
 
 "media":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/media/**/*
+      - any-glob-to-any-file: src/modules/media/load/**/*
 
 "test":
   - changed-files:
@@ -47,7 +47,7 @@
 
 "lottie":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/lottie/**/*
+      - any-glob-to-any-file: src/modules/lottie/load/**/*
 
 "cpu":
   - changed-files:
