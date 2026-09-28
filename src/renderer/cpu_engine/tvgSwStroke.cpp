@@ -658,7 +658,14 @@ static void _beginSubPath(SwStroke& stroke, const Point& to, bool closed)
 
 static void _endSubPath(SwStroke& stroke)
 {
-    if (stroke.closedSubPath) {
+    auto right = stroke.borders[0];
+    auto left = stroke.borders[1];
+
+    /* A closed subpath without any length leaves only the start point on each border.
+       Stroke it like a zero-length open line, so round/square caps still draw a dot. */
+    auto zeroLength = (right->pts.count == right->start + 1U) && (left->pts.count == left->start + 1U);
+
+    if (stroke.closedSubPath && !zeroLength) {
         //close the path if needed
         if (stroke.center != stroke.subPathStart) _lineTo(stroke, stroke.subPathStart);
 
@@ -673,11 +680,9 @@ static void _endSubPath(SwStroke& stroke)
             _inside(stroke, inside, stroke.subPathLength);       // inside
             _outside(stroke, 1 - inside, stroke.subPathLength);  // outside
         }
-        _borderClose(stroke.borders[0], false);
-        _borderClose(stroke.borders[1], true);
+        _borderClose(right, false);
+        _borderClose(left, true);
     } else {
-        auto right = stroke.borders[0];
-
         /* all right, this is an opened path, we need to add a cap between
            right & left, add the reverse of left, then add a final cap
            between left & right */
