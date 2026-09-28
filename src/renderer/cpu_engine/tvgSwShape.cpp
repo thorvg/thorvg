@@ -162,18 +162,18 @@ static void _dashCubicTo(SwDashStroke& dash, const Point& ctrl1, const Point& ct
     dash.ptCur = to;
 }
 
-static void _dashClose(SwDashStroke& dash, bool validPoint)
+static void _dashClose(SwDashStroke& dash, bool validPoint, uint32_t cmdBegin, uint32_t ptBegin)
 {
     _dashLineTo(dash, dash.ptStart, validPoint);
     auto& cmds = dash.path->cmds;
     auto& pts = dash.path->pts;
 
     // join the first and the last dashes across the seam only when both touch the start point
-    if (cmds.count > dash.cmdBegin + 1 &&
-        tvg::closed(pts[dash.ptBegin], dash.ptStart, DASH_PATTERN_THRESHOLD) &&
+    if (cmds.count > cmdBegin + 1 &&
+        tvg::closed(pts[ptBegin], dash.ptStart, DASH_PATTERN_THRESHOLD) &&
         tvg::closed(pts.last(), dash.ptStart, DASH_PATTERN_THRESHOLD)) {
         // locate the end of the first dash
-        auto cmdEnd = dash.cmdBegin + 1, ptEnd = dash.ptBegin + 1;
+        auto cmdEnd = cmdBegin + 1, ptEnd = ptBegin + 1;
         for (; cmdEnd < cmds.count && cmds[cmdEnd] != PathCommand::MoveTo; ++cmdEnd) {
             ptEnd += (cmds[cmdEnd] == PathCommand::CubicTo) ? 3 : 1;
         }
@@ -185,14 +185,12 @@ static void _dashClose(SwDashStroke& dash, bool validPoint)
                 memcpy(arr.end(), arr.begin() + from, (to - from) * sizeof(*arr.data));
                 memmove(arr.begin() + from, arr.begin() + to, (arr.count - from) * sizeof(*arr.data));
             };
-            cmds[dash.cmdBegin] = PathCommand::LineTo;
-            rotate(pts, dash.ptBegin, ptEnd);
-            rotate(cmds, dash.cmdBegin, cmdEnd);
+            cmds[cmdBegin] = PathCommand::LineTo;
+            rotate(pts, ptBegin, ptEnd);
+            rotate(cmds, cmdBegin, cmdEnd);
         } 
     }
     // the next sub-path may continue without moveTo
-    dash.cmdBegin = cmds.count;
-    dash.ptBegin = pts.count;
     dash.move = true;
 }
 
@@ -202,8 +200,6 @@ static void _dashMoveTo(SwDashStroke& dash, uint32_t offIdx, float offset, const
     dash.curLen = dash.pattern[dash.curIdx] - offset;
     dash.curOpGap = offIdx % 2;
     dash.ptStart = dash.ptCur = pts;
-    dash.cmdBegin = dash.path->cmds.count;
-    dash.ptBegin = dash.path->pts.count;
     dash.move = true;
 }
 
@@ -246,6 +242,8 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, SwMpool* mpool, uns
 
     auto outline = mpool->outline(tid);
     dash.path = const_cast<RenderPath*>(outline->path);
+    auto cmdBegin = dash.path->cmds.count;
+    auto ptBegin = dash.path->pts.count;
 
     //must begin with moveTo
     if (cmds[0] == PathCommand::MoveTo) {
@@ -259,11 +257,15 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, SwMpool* mpool, uns
     while (--cmdCnt > 0) {
         switch (*cmds) {
             case PathCommand::Close: {
-                _dashClose(dash, validPoint);
+                _dashClose(dash, validPoint, cmdBegin, ptBegin);
+                cmdBegin = dash.path->cmds.count;
+                ptBegin = dash.path->pts.count;
                 break;
             }
             case PathCommand::MoveTo: {
                 _dashMoveTo(dash, offIdx, offset, *pts);
+                cmdBegin = dash.path->cmds.count;
+                ptBegin = dash.path->pts.count;
                 ++pts;
                 break;
             }
