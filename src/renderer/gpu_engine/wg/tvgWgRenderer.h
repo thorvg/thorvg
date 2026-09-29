@@ -116,6 +116,8 @@ private:
     WGPUTexture targetTexture{};
     WGPUSurfaceTexture surfaceTexture{};
     WGPUSurface surface{};
+
+    bool mClearBuffer{};
 };
 
 #endif /* _TVG_WG_RENDERER_H_ */
