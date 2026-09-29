@@ -2492,8 +2492,6 @@ struct TVG_API GlCanvas final : Canvas
      *
      * @return A new GlCanvas object.
      *
-     * @note Currently, it does not support @c EngineOption::SmartRender. The request will be ignored.
-     *
      * @see enum EngineOption
      *
      * @since 1.0
