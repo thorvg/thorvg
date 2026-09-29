@@ -235,6 +235,8 @@ struct GlRenderer : RenderMethod
     void flush();
     void clearDisposes();
     bool currentContext();
+    void dirty(GlDrawable* drawable, bool visible, bool retained = false);
+    bool culled(const RenderRegion& box);
 
     void* mDisplay = nullptr;   // EGLDisplay for EGL; unused for other app-managed contexts.
     void* mSurface = nullptr;   // EGLSurface for EGL, HDC for WGL; unused for other app-managed contexts.
@@ -261,8 +263,15 @@ struct GlRenderer : RenderMethod
         Key key;
     } mDisposed;
 
+    RenderDirtyRegion mDirtyRegion;
+    Array<RenderRegion> mRenderRegions;  // the disjoint regions redrawn by the current frame
+    RenderRegion mRenderBounds;          // the bounds of the redrawn regions
+
     BlendMethod mBlendMethod = BlendMethod::Normal;
     bool mClearBuffer = false;
+    bool mFullDraw = true;      // the next frame must redraw everything
+    bool mPartialDraw = false;  // the current frame redraws the dirty regions only
+    bool mBlended = false;      // a blended scene was composited since the last frame
 };
 
 #endif /* _TVG_GL_RENDERER_H_ */
