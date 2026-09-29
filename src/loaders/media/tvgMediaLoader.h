@@ -30,7 +30,6 @@ struct MediaLoader : BitmapLoader
     float curTime = 0.0f;      // current playback position in seconds
     float totalTime = 0.0f;    // media duration in seconds
     float audioVolume = 1.0f;  // [0 - 1]
-    bool paused = false;
     bool muted = false;
     bool looping = false;
 
