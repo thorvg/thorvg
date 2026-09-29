@@ -8,6 +8,7 @@
 /src/loaders/svg @JSUYA
 /src/loaders/png @Nor-s
 /src/loaders/webp @Nor-s
+/src/loaders/media/android @Nor-s
 /src/loaders/media/apple @Nor-s
 /src/loaders/media/web @tinyjin
 /src/savers/gif @Nor-s
