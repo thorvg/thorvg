@@ -53,8 +53,6 @@ struct LottieModifier
     virtual void polystar(const RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness) = 0;
     virtual void rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise) = 0;
     virtual void ellipse(const RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise) = 0;
-
-    LottieModifier* decorate(LottieModifier* next);
 };
 
 struct LottieRoundnessModifier : LottieModifier

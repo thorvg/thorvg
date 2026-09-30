@@ -41,25 +41,6 @@ static bool _sharpCorner(const Point* p)
     return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 1) - *(p + 2));
 }
 
-LottieModifier* LottieModifier::decorate(LottieModifier* next)
-{
-    // let the offset modifer to the end in this chain
-    // roundness don't handle lines so far, so roundenss should handled earilier
-    // remove this trick once roundess has full coverage.
-    // see LottieRoundnessModifier::modify()
-    auto p = this;
-    while (p) {
-        if (!p->next && next->type == Offset) {
-            p->next = next;
-            return this;
-        }
-        p = p->next;
-    }
-
-    next->next = this;
-    return next;
-}
-
 /************************************************************************/
 /* LottieRoundnessModifier                                              */
 /************************************************************************/
@@ -462,13 +443,12 @@ RenderPath& LottieOffsetModifier::modify(const RenderPath& in, RenderPath& out, 
 void LottieOffsetModifier::path(const RenderPath& in, RenderPath& out, Matrix* transform)
 {
     auto& result = modify(in, out, nullptr);
-    if (next) next->path(result, out, nullptr);
+    if (next) next->path(result, out, transform);
 }
 
-void LottieOffsetModifier::polystar(const RenderPath& in, RenderPath& out, float outerRoundness, bool hasRoundness)
+void LottieOffsetModifier::polystar(const RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
 {
-    auto& result = modify(in, out, nullptr);
-    if (next) next->polystar(result, out, outerRoundness, hasRoundness);
+    path(in, out, nullptr);
 }
 
 void LottieOffsetModifier::rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise)
