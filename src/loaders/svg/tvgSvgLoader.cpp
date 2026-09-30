@@ -1341,7 +1341,7 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
                 styleTags[i].tagHandler(ctx, node, value);
             }
             if (importance) {
-                node->style->flagsImportance = (node->style->flags | styleTags[i].flag);
+                node->style->flagsImportance |= styleTags[i].flag;
                 tvg::free(const_cast<char*>(value));
             }
             return true;
