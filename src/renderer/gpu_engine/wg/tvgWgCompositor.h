@@ -84,7 +84,6 @@ private:
     // shapes
     void drawShape(WgContext& context, WgShape* rdata);
     void blendShape(WgContext& context, WgShape* rdata, BlendMethod blendMethod);
-    void clipShape(WgContext& context, WgShape* rdata);
 
     // strokes
     void drawStrokes(WgContext& context, WgShape* rdata);

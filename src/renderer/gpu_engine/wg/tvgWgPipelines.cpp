@@ -164,10 +164,10 @@ WGPURenderPipeline WgPipelines::conicBlend(WgContext& context, BlendMethod metho
     return conic_blend[index];
 }
 
-WGPURenderPipeline WgPipelines::clippedStroke(WgContext& context, WgRenderSettingsType type)
+WGPURenderPipeline WgPipelines::clippedShape(WgContext& context, WgRenderSettingsType type)
 {
     auto index = uint32_t(type) - 1;
-    auto& pipeline = stroke_clip[index];
+    auto& pipeline = shape_clip[index];
     if (!pipeline) {
         const WGPUShaderModule shaders[]{shader_solid, shader_linear, shader_radial, shader_conic};
         const bool solid = type == WgRenderSettingsType::Solid;
@@ -176,7 +176,7 @@ WGPURenderPipeline WgPipelines::clippedStroke(WgContext& context, WgRenderSettin
         const auto depthStencilState = _depthOnlyState(WGPUCompareFunction_Equal);
         const WGPUMultisampleState multisampleState{.count = 4, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false};
         pipeline = createRenderPipeline(
-            context.device, "The render pipeline clipped stroke",
+            context.device, "The render pipeline clipped shape",
             shaders[index], "vs_main", "fs_main",
             solid ? layout_solid : layout_gradient,
             solid ? vertexBufferLayoutsSolid : vertexBufferLayoutsShape, solid ? 2 : 1,
@@ -620,7 +620,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
         releaseRenderPipeline(solid_blend[i]);
     }
     // pipelines normal blend
-    for (auto& pipeline : stroke_clip)
+    for (auto& pipeline : shape_clip)
         releaseRenderPipeline(pipeline);
     releaseRenderPipeline(scene);
     releaseRenderPipeline(image);

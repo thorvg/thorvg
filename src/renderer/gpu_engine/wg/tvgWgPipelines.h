@@ -96,7 +96,7 @@ public:
     WGPURenderPipeline radial_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline linear_conv{}; // convex geometry (no stencil)
     WGPURenderPipeline conic_conv{};  // convex geometry (no stencil)
-    WGPURenderPipeline stroke_clip[4]{};
+    WGPURenderPipeline shape_clip[4]{};
     WGPURenderPipeline image{};
     WGPURenderPipeline image_direct{}; // image geometry (no stencil)
     WGPURenderPipeline scene{};
@@ -151,7 +151,7 @@ public:
     WGPURenderPipeline radialBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline linearBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline conicBlend(WgContext& context, BlendMethod method);
-    WGPURenderPipeline clippedStroke(WgContext& context, WgRenderSettingsType type);
+    WGPURenderPipeline clippedShape(WgContext& context, WgRenderSettingsType type);
     WGPURenderPipeline imageBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline sceneBlend(WgContext& context, BlendMethod method);
 
