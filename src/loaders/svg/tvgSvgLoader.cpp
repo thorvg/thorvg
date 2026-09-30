@@ -3763,10 +3763,12 @@ static void _svgLoaderParserXmlCssStyle(SvgParserContext* ctx, const char* conte
     SvgNode *node = nullptr;
 
     while (auto next = xmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
-        if ((method = _findGroupFactory(tag))) {
-            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) _copyId(&node->id, name);
-        } else if ((method = _findGraphicsFactory(tag))) {
-            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) _copyId(&node->id, name);
+        if (!STR_AS(tag, "style") && ((method = _findGroupFactory(tag)) || (method = _findGraphicsFactory(tag)))) {
+            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) {
+                _copyId(&node->id, name);
+                auto first = cssFindStyleNode(ctx->cssStyle, node->id, node->type);
+                if (first && first != node) cssCopyStyleAttr(first, node, true);
+            }
         } else if ((gradientMethod = _findGradientFactory(tag))) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "stop")) {
