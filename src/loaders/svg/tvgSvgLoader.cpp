@@ -397,9 +397,9 @@ _PARSE_TAG(BlendMethod, blendMode, BlendMode, blendModeTags, BlendMethod::Normal
  * Initial:    none
  * https://www.w3.org/TR/SVG/painting.html
  */
-static void _parseDashArray(SvgParserContext* ctx, const char* str, SvgDash* dash)
+static bool _parseDashArray(SvgParserContext* ctx, const char* str, SvgDash* dash)
 {
-    if (!strncmp(str, "none", 4)) return;
+    if (STR_AS(str, "none")) return true;
 
     char *end = nullptr;
 
@@ -409,7 +409,7 @@ static void _parseDashArray(SvgParserContext* ctx, const char* str, SvgDash* das
         if (str == end) break;
         if (parsedValue < 0.0f) {
             dash->array.reset();
-            return;
+            return false;
         }
         if (*end == '%') {
             ++end;
@@ -420,6 +420,7 @@ static void _parseDashArray(SvgParserContext* ctx, const char* str, SvgDash* das
         dash->array.push(parsedValue);
         str = end;
     }
+    return !dash->array.empty();
 }
 
 
@@ -1014,8 +1015,9 @@ static void _handleStrokeOpacityAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* 
 
 static void _handleStrokeDashArrayAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
 {
-    node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::Dash);
-    _parseDashArray(ctx, value, &node->style->stroke.dash);
+    if (_parseDashArray(ctx, value, &node->style->stroke.dash)) {
+        node->style->stroke.flags = (node->style->stroke.flags | SvgStrokeFlags::Dash);
+    }
 }
 
 static void _handleStrokeDashOffsetAttr(SvgParserContext* ctx, SvgNode* node, const char* value)
