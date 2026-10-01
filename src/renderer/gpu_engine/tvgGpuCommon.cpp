@@ -57,6 +57,119 @@ uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius)
     return static_cast<uint32_t>(ceilf(fabsf(arcAngle) / segmentAngle)) + 1;
 }
 
+static bool _prepareRect(GpuPrimitive& primitive, const RenderPath& path, const Matrix& matrix)
+{
+    if (path.cmds.count != 5 || path.pts.count != 4) return false;
+    auto pts = primitive.pts;
+    auto pathPts = path.pts.data;
+    for (uint32_t i = 0; i < 4; ++i)
+        pts[i] = pathPts[i] * matrix;
+
+    auto u = pts[1] - pts[0];
+    auto v = pts[3] - pts[0];
+    auto area = cross(u, v);
+    // Match the path optimizer's tolerance for thin geometry.
+    if (!(area * area > 0.125f * std::max(dot(u, u), dot(v, v)))) return false;
+
+    primitive.count = 4;
+    primitive.bbox.min = primitive.bbox.max = pts[0];
+    for (uint32_t i = 1; i < 4; ++i) {
+        primitive.bbox.min = tvg::min(primitive.bbox.min, pts[i]);
+        primitive.bbox.max = tvg::max(primitive.bbox.max, pts[i]);
+    }
+    return true;
+}
+
+
+static bool _prepareCircle(GpuPrimitive& primitive, const RenderPath& path, const Matrix& matrix)
+{
+    if (path.cmds.count != 6 || path.pts.count != 13) return false;
+
+    auto center = (path.pts[0] + path.pts[6]) * 0.5f;
+    auto u = path.pts[0] - center;
+    auto v = path.pts[3] - center;
+    u = {matrix.e11 * u.x + matrix.e12 * u.y, matrix.e21 * u.x + matrix.e22 * u.y};
+    v = {matrix.e11 * v.x + matrix.e12 * v.y, matrix.e21 * v.x + matrix.e22 * v.y};
+    center *= matrix;
+
+    // Frobenius norm bounds the largest radius; |det| / radius bounds the smallest.
+    auto radius = sqrtf(dot(u, u) + dot(v, v));
+    if (!(fabsf(cross(u, v)) > radius)) return false;
+
+    primitive.count = (gpuArcSegmentsCnt(MATH_2PI, radius) + 3u) & ~3u;
+    primitive.pts[0] = center;
+    primitive.pts[1] = u;
+    primitive.pts[2] = v;
+
+    Point extent{sqrtf(u.x * u.x + v.x * v.x), sqrtf(u.y * u.y + v.y * v.y)};
+    primitive.bbox.min = center - extent;
+    primitive.bbox.max = center + extent;
+    return true;
+}
+
+
+bool GpuPrimitive::prepare(const RenderShape& rshape, const Matrix& matrix)
+{
+    if (rshape.path.primitive == RenderPrimitive::General || !tvg::zero(rshape.strokeWidth()) || rshape.trimpath()) return false;
+
+    type = rshape.path.primitive;
+    switch (type) {
+        case RenderPrimitive::Rect: return _prepareRect(*this, rshape.path, matrix);
+        case RenderPrimitive::Ellipse: return _prepareCircle(*this, rshape.path, matrix);
+        default: return false;
+    }
+}
+
+
+static inline void _vertex(void* vertices, uint32_t index, const Point& point)
+{
+    static_assert(sizeof(Point) == 2 * sizeof(float), "vertices must be packed x/y floats.");
+    memcpy(static_cast<unsigned char*>(vertices) + size_t(index) * sizeof(Point), &point, sizeof(Point));
+}
+
+
+static void _tessellateCircle(const GpuPrimitive& primitive, void* vertices)
+{
+    auto center = primitive.pts[0];
+    auto u = primitive.pts[1];
+    auto v = primitive.pts[2];
+    auto quadrant = primitive.count / 4;
+    // Use double precision to limit accumulated rotation error.
+    auto angle = 6.28318530717958647692 / primitive.count;
+    auto cosStep = cos(angle);
+    auto sinStep = sin(angle);
+    auto x = 1.0;
+    auto y = 0.0;
+
+    for (uint32_t i = 0; i < quadrant; ++i) {
+        auto a = u * x + v * y;
+        auto b = v * x - u * y;
+        _vertex(vertices, i, center + a);
+        _vertex(vertices, quadrant + i, center + b);
+        _vertex(vertices, 2 * quadrant + i, center - a);
+        _vertex(vertices, 3 * quadrant + i, center - b);
+        auto nextX = x * cosStep - y * sinStep;
+        y = x * sinStep + y * cosStep;
+        x = nextX;
+    }
+}
+
+
+void GpuPrimitive::tessellate(void* vertices, uint32_t* indices) const
+{
+    switch (type) {
+        case RenderPrimitive::Rect: memcpy(vertices, pts, 4 * sizeof(Point)); break;
+        case RenderPrimitive::Ellipse: _tessellateCircle(*this, vertices); break;
+        default: return;
+    }
+
+    for (uint32_t i = 1; i < count - 1; ++i) {
+        *indices++ = 0;
+        *indices++ = i;
+        *indices++ = i + 1;
+    }
+}
+
 RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix)
 {
     if (bounds.invalid()) return bounds;

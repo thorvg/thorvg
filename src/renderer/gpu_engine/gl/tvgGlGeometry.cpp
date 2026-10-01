@@ -104,6 +104,30 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 /* GlGeometry                                                           */
 /************************************************************************/
 
+bool GlGeometry::tesselatePrimitive(const RenderShape& rshape)
+{
+    GpuPrimitive primitive;
+    if (!primitive.prepare(rshape, matrix)) return false;
+
+    fill.vertex.count = primitive.count * 2;
+    fill.vertex.reserve(fill.vertex.count);
+    fill.index.count = (primitive.count - 2) * 3;
+    fill.index.reserve(fill.index.count);
+    primitive.tessellate(fill.vertex.data, fill.index.data);
+    fillBBox = {{int32_t(floorf(primitive.bbox.min.x)), int32_t(floorf(primitive.bbox.min.y))},
+                {int32_t(ceilf(primitive.bbox.max.x)), int32_t(ceilf(primitive.bbox.max.y))}};
+    fillRule = rshape.rule;
+    fillWorld = true;
+    convex = true;
+    optStrokePath.clear();
+    optPathThin = optPathSkipFill = false;
+    stroke.clear();
+    strokeBBox = {};
+    strokeRenderWidth = 0.0f;
+    return true;
+}
+
+
 void GlGeometry::prepare(const RenderShape& rshape)
 {
     optPathThin = false;

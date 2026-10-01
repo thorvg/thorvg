@@ -1367,15 +1367,19 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     shape->geometry.viewport = vport;
 
     auto updateStroke = (flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && shape->geometry.optStrokePath.empty();
-    auto updatePath = (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) || updateStroke;
+    auto updatePath = (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) || updateStroke ||
+                      ((flags & RenderUpdateFlag::Stroke) && rshape.path.primitive != RenderPrimitive::General && tvg::zero(rshape.strokeWidth()));
 
     if (updatePath) {
-        shape->geometry.prepare(rshape);
-        shape->valid.fill = false;
-        if (shape->geometry.tesselateShape(*(shape->rshape), shape->multiplier)) {
+        if (shape->geometry.tesselatePrimitive(rshape)) {
             shape->valid.fill = true;
+            shape->valid.stroke = false;
+            shape->multiplier = 1.0f;
+        } else {
+            shape->geometry.prepare(rshape);
+            shape->valid.fill = shape->geometry.tesselateShape(rshape, shape->multiplier);
+            shape->valid.stroke = shape->geometry.tesselateStroke(rshape);
         }
-        shape->valid.stroke = shape->geometry.tesselateStroke(*(shape->rshape));
     }
 
     shape->opacity = float(opacity) * shape->multiplier;

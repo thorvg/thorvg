@@ -233,10 +233,17 @@ struct RenderRegion
 #endif
 
 
+#if defined(THORVG_GL_ENGINE_SUPPORT) || defined(THORVG_WG_ENGINE_SUPPORT)
+enum class RenderPrimitive : uint8_t { General, Rect, Ellipse };
+#endif
+
 struct RenderPath
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
+#if defined(THORVG_GL_ENGINE_SUPPORT) || defined(THORVG_WG_ENGINE_SUPPORT)
+    RenderPrimitive primitive = RenderPrimitive::General;
+#endif
 
     void dismiss()
     {
@@ -254,6 +261,9 @@ struct RenderPath
     {
         pts.clear();
         cmds.clear();
+#if defined(THORVG_GL_ENGINE_SUPPORT) || defined(THORVG_WG_ENGINE_SUPPORT)
+        primitive = RenderPrimitive::General;
+#endif
     }
 
     void close()

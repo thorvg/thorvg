@@ -339,8 +339,7 @@ struct ShapeImpl : Shape
 
     void resetPath()
     {
-        rs.path.cmds.clear();
-        rs.path.pts.clear();
+        rs.path.clear();
         impl.mark(RenderUpdateFlag::Path);
     }
 
@@ -357,12 +356,18 @@ struct ShapeImpl : Shape
 
     void addCircle(float cx, float cy, float rx, float ry, bool cw)
     {
+#if defined(THORVG_GL_ENGINE_SUPPORT) || defined(THORVG_WG_ENGINE_SUPPORT)
+        rs.path.primitive = (rs.path.cmds.empty() && rs.path.pts.empty()) ? RenderPrimitive::Ellipse : RenderPrimitive::General;
+#endif
         rs.path.addCircle(cx, cy, rx, ry, cw);
         impl.mark(RenderUpdateFlag::Path);
     }
 
     void addRect(float x, float y, float w, float h, float rx, float ry, bool cw)
     {
+#if defined(THORVG_GL_ENGINE_SUPPORT) || defined(THORVG_WG_ENGINE_SUPPORT)
+        rs.path.primitive = (rs.path.cmds.empty() && rs.path.pts.empty() && tvg::zero(rx) && tvg::zero(ry)) ? RenderPrimitive::Rect : RenderPrimitive::General;
+#endif
         rs.path.addRect(x, y, w, h, rx, ry, cw);
         impl.mark(RenderUpdateFlag::Path);
     }
@@ -374,9 +379,7 @@ struct ShapeImpl : Shape
         auto dup = to<ShapeImpl>(shape);
 
         //Path
-        dup->rs.path.clear();
-        dup->rs.path.cmds.push(rs.path.cmds);
-        dup->rs.path.pts.push(rs.path.pts);
+        dup->rs.path = rs.path;
 
         //Fill
         delete(dup->rs.fill);
@@ -401,8 +404,7 @@ struct ShapeImpl : Shape
     void reset()
     {
         PAINT(this)->reset();
-        rs.path.cmds.clear();
-        rs.path.pts.clear();
+        rs.path.clear();
 
         rs.color.a = 0;
         rs.rule = FillRule::NonZero;
