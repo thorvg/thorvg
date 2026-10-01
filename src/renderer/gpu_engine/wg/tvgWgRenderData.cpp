@@ -138,6 +138,20 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
     shape.setting.opacityMultiplier = 1.0f;
     stroke.setting.opacityMultiplier = 1.0f;
 
+    GpuEllipse ellipse;
+    if (ellipse.prepare(rshape, transform)) {
+        auto& mesh = shape.mesh;
+        mesh.vbuffer.count = ellipse.count;
+        mesh.vbuffer.reserve(ellipse.count);
+        mesh.ibuffer.count = (ellipse.count - 2) * 3;
+        mesh.ibuffer.reserve(mesh.ibuffer.count);
+        ellipse.tessellate(mesh.vbuffer.data, mesh.ibuffer.data);
+        shape.bbox = bbox = ellipse.bbox;
+        bboxMesh.bbox(bbox.min, bbox.max);
+        convex = true;
+        return;
+    }
+
     // optimize path
     auto& optPath = RenderPath::scratch();
     RenderPath optStrokePath;
@@ -161,7 +175,7 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
         optPathSkipFill = result.skipFill;
     }
 
-    auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
+    auto updatePath = (flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path)) || (rshape.path.ellipse && (flag & RenderUpdateFlag::Stroke));
 
     // update fill shapes
     if (updatePath || (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {

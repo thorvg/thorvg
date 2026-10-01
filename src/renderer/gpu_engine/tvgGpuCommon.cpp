@@ -57,6 +57,60 @@ uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius)
     return static_cast<uint32_t>(ceilf(fabsf(arcAngle) / segmentAngle)) + 1;
 }
 
+bool GpuEllipse::prepare(const RenderShape& rshape, const Matrix& matrix)
+{
+    if (!rshape.path.ellipse || !tvg::zero(rshape.strokeWidth()) || rshape.trimpath()) return false;
+
+    const auto& path = rshape.path;
+    if (path.cmds.count != 6 || path.pts.count != 13) return false;
+
+    center = (path.pts[0] + path.pts[6]) * 0.5f;
+    u = path.pts[0] - center;
+    v = path.pts[3] - center;
+    u = {matrix.e11 * u.x + matrix.e12 * u.y, matrix.e21 * u.x + matrix.e22 * u.y};
+    v = {matrix.e11 * v.x + matrix.e12 * v.y, matrix.e21 * v.x + matrix.e22 * v.y};
+    center *= matrix;
+
+    // Frobenius norm bounds the largest radius; |det| / radius bounds the smallest.
+    auto radius = sqrtf(dot(u, u) + dot(v, v));
+    if (!(fabsf(cross(u, v)) > radius)) return false;
+
+    count = (gpuArcSegmentsCnt(MATH_2PI, radius) + 3u) & ~3u;
+    Point extent{sqrtf(u.x * u.x + v.x * v.x), sqrtf(u.y * u.y + v.y * v.y)};
+    bbox.min = center - extent;
+    bbox.max = center + extent;
+    return true;
+}
+
+void GpuEllipse::tessellate(void* vertices, uint32_t* indices) const
+{
+    auto quadrant = count / 4;
+    auto vertex = static_cast<unsigned char*>(vertices);
+    // Use double precision to limit accumulated rotation error.
+    auto angle = 6.28318530717958647692 / count;
+    auto cosStep = cos(angle);
+    auto sinStep = sin(angle);
+    auto x = 1.0;
+    auto y = 0.0;
+
+    for (uint32_t i = 0; i < quadrant; ++i) {
+        auto a = u * x + v * y;
+        auto b = v * x - u * y;
+        Point points[] = {center + a, center + b, center - a, center - b};
+        for (uint32_t j = 0; j < 4; ++j)
+            memcpy(vertex + size_t(j * quadrant + i) * sizeof(Point), points + j, sizeof(Point));
+        auto nextX = x * cosStep - y * sinStep;
+        y = x * sinStep + y * cosStep;
+        x = nextX;
+    }
+
+    for (uint32_t i = 1; i < count - 1; ++i) {
+        *indices++ = 0;
+        *indices++ = i;
+        *indices++ = i + 1;
+    }
+}
+
 RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix)
 {
     if (bounds.invalid()) return bounds;

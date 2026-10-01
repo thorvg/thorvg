@@ -37,6 +37,16 @@ struct GpuOptimizeResult
     bool skipFill = false;
 };
 
+struct GpuEllipse
+{
+    Point center, u, v;
+    BBox bbox;
+    uint32_t count;
+
+    bool prepare(const RenderShape& rshape, const Matrix& matrix);
+    void tessellate(void* vertices, uint32_t* indices) const;
+};
+
 void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& matrix);
 RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix);
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3);
