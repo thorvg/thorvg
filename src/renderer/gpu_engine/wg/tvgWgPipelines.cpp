@@ -22,6 +22,7 @@
 
 #include "tvgWgShaderSrc.h"
 #include "tvgWgPipelines.h"
+#include "tvgWgRenderData.h"
 #include <cstring>
 
 static const char* shaderBlendNames[]{
@@ -60,6 +61,12 @@ static const WGPUVertexBufferLayout vertexBufferLayoutsSolid[]{vertexBufferLayou
 static const WGPUVertexBufferLayout vertexBufferLayoutsSolidBatch[]{vertexBufferLayoutPos, vertexBufferLayoutColorBatch};
 static const WGPUVertexBufferLayout vertexBufferLayoutsShape[]{vertexBufferLayoutPos};
 static const WGPUVertexBufferLayout vertexBufferLayoutsImage[]{vertexBufferLayoutPos, vertexBufferLayoutTex};
+
+static WGPUDepthStencilState _depthOnlyState(WGPUCompareFunction compare)
+{
+    const WGPUStencilFaceState stencil{.compare = WGPUCompareFunction_Always, .failOp = WGPUStencilOperation_Keep, .depthFailOp = WGPUStencilOperation_Keep, .passOp = WGPUStencilOperation_Keep};
+    return {.format = WGPUTextureFormat_Depth24PlusStencil8, .depthWriteEnabled = WGPUOptionalBool_False, .depthCompare = compare, .stencilFront = stencil, .stencilBack = stencil, .stencilReadMask = 0, .stencilWriteMask = 0};
+}
 
 WGPUShaderModule WgPipelines::createShaderModule(WGPUDevice device, const char* label, const char* code)
 {
@@ -155,6 +162,28 @@ WGPURenderPipeline WgPipelines::conicBlend(WgContext& context, BlendMethod metho
     auto index = (uint32_t)method;
     if (!conic_blend[index]) conic_blend[index] = createBlendPipeline(context, "The render pipeline conic blend", shader_conic_blend, shaderBlendNames[index], layout_gradient_blend, vertexBufferLayoutsShape, 1, WGPUCompareFunction_NotEqual);
     return conic_blend[index];
+}
+
+WGPURenderPipeline WgPipelines::clippedStroke(WgContext& context, WgRenderSettingsType type)
+{
+    auto index = uint32_t(type) - 1;
+    auto& pipeline = stroke_clip[index];
+    if (!pipeline) {
+        const WGPUShaderModule shaders[]{shader_solid, shader_linear, shader_radial, shader_conic};
+        const bool solid = type == WgRenderSettingsType::Solid;
+        const WGPUBlendComponent blendComponent{.operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_OneMinusSrcAlpha};
+        const WGPUBlendState blendState{.color = blendComponent, .alpha = blendComponent};
+        const auto depthStencilState = _depthOnlyState(WGPUCompareFunction_Equal);
+        const WGPUMultisampleState multisampleState{.count = 4, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false};
+        pipeline = createRenderPipeline(
+            context.device, "The render pipeline clipped stroke",
+            shaders[index], "vs_main", "fs_main",
+            solid ? layout_solid : layout_gradient,
+            solid ? vertexBufferLayoutsSolid : vertexBufferLayoutsShape, solid ? 2 : 1,
+            WGPUColorWriteMask_All, WGPUTextureFormat_RGBA8Unorm, blendState,
+            depthStencilState, multisampleState);
+    }
+    return pipeline;
 }
 
 WGPURenderPipeline WgPipelines::imageBlend(WgContext& context, BlendMethod method)
@@ -268,6 +297,7 @@ void WgPipelines::initialize(WgContext& context)
     // depth stencil state blend, compose and blit
     const WGPUDepthStencilState depthStencilStateShape = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False,  WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero);
     const WGPUDepthStencilState depthStencilStateScene = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False,  WGPUCompareFunction_Always, WGPUStencilOperation_Zero);
+    const auto depthStencilStateConv = _depthOnlyState(WGPUCompareFunction_Always);
     // shaders
     char shaderSourceBuff[16384]{};
     shader_stencil = createShaderModule(context.device, "The shader stencil", cShaderSrc_Stencil);
@@ -406,7 +436,7 @@ void WgPipelines::initialize(WgContext& context)
         shader_solid, "vs_main", "fs_main",
         layout_solid, vertexBufferLayoutsSolid, 2,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
-        depthStencilStateScene, multisampleState);
+        depthStencilStateConv, multisampleState);
     // render pipeline solid batch (no stencil, per-vertex color)
     solid_batch = createRenderPipeline(
         context.device, "The render pipeline solid batch",
@@ -427,21 +457,21 @@ void WgPipelines::initialize(WgContext& context)
         shader_radial, "vs_main", "fs_main",
         layout_gradient, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
-        depthStencilStateScene, multisampleState);
+        depthStencilStateConv, multisampleState);
     // render pipeline linear (no stencil)
     linear_conv = createRenderPipeline(
         context.device, "The render pipeline linear",
         shader_linear, "vs_main", "fs_main",
         layout_gradient, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
-        depthStencilStateScene, multisampleState);
+        depthStencilStateConv, multisampleState);
     // render pipeline conic (no stencil)
     conic_conv = createRenderPipeline(
         context.device, "The render pipeline conic",
         shader_conic, "vs_main", "fs_main",
         layout_gradient, vertexBufferLayoutsShape, 1,
         WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm,
-        depthStencilStateScene, multisampleState);
+        depthStencilStateConv, multisampleState);
     // render pipeline image
     image = createRenderPipeline(
         context.device, "The render pipeline image",
@@ -590,6 +620,8 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
         releaseRenderPipeline(solid_blend[i]);
     }
     // pipelines normal blend
+    for (auto& pipeline : stroke_clip)
+        releaseRenderPipeline(pipeline);
     releaseRenderPipeline(scene);
     releaseRenderPipeline(image);
     releaseRenderPipeline(image_direct);

@@ -92,7 +92,7 @@ struct WgShaderTypeGradientData
 {
     uint8_t data[WG_TEXTURE_GRADIENT_SIZE * 4];
 
-    void update(const Fill* fill);
+    bool update(const Fill* fill);
 };
 
 // gaussian params: sigma, scale, extend
