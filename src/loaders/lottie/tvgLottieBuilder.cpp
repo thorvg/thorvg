@@ -420,6 +420,9 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
                 shape->ref();   //prevent pooler returns the same shape
                 PAINT((*p))->duplicate(shape);
                 to<ShapeImpl>(shape)->rs.path = to<ShapeImpl>(path)->rs.path;
+#ifdef THORVG_GL_ENGINE_SUPPORT
+                to<ShapeImpl>(shape)->rs.primitive = to<ShapeImpl>(path)->rs.primitive;
+#endif
                 auto opacity = tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt);
                 shape->opacity(MULTIPLY(shape->opacity(), opacity));
 

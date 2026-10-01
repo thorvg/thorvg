@@ -421,6 +421,10 @@ struct RenderStroke
     }
 };
 
+#ifdef THORVG_GL_ENGINE_SUPPORT
+enum class RenderPrimitive : uint8_t { General, Rect, Ellipse };
+#endif
+
 struct RenderShape
 {
     RenderPath path;
@@ -428,6 +432,10 @@ struct RenderShape
     RenderColor color{};
     RenderStroke *stroke = nullptr;
     FillRule rule = FillRule::NonZero;
+#ifdef THORVG_GL_ENGINE_SUPPORT
+    // Creation hint; GL checks path counts to exclude subsequent appends.
+    RenderPrimitive primitive = RenderPrimitive::General;
+#endif
 
     ~RenderShape()
     {

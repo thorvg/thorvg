@@ -105,6 +105,7 @@ struct GlGeometry
     }
 
     void prepare(const RenderShape& rshape);
+    bool tesselatePrimitive(const RenderShape& rshape);
     bool tesselateShape(const RenderShape& rshape, float& multiplier);
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinFill(const RenderPath& path);

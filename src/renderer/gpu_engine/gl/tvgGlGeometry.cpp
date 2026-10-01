@@ -104,6 +104,105 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 /* GlGeometry                                                           */
 /************************************************************************/
 
+bool GlGeometry::tesselatePrimitive(const RenderShape& rshape)
+{
+    if (rshape.primitive == RenderPrimitive::General || !tvg::zero(rshape.strokeWidth()) || rshape.trimpath()) return false;
+
+    auto pts = rshape.path.pts.data;
+    Point min, max;
+    uint32_t count;
+
+    if (rshape.primitive == RenderPrimitive::Rect) {
+        // Appends retain the creation hint. Require the original rectangle
+        // (MoveTo, three LineTo, Close) so the mesh cannot omit appended geometry.
+        if (rshape.path.cmds.count != 5 || rshape.path.pts.count != 4) return false;
+        Point corners[4];
+        for (uint32_t i = 0; i < 4; ++i) corners[i] = pts[i] * matrix;
+        auto u = corners[1] - corners[0];
+        auto v = corners[3] - corners[0];
+        auto area = cross(u, v);
+        // Keep both altitudes safely above the optimizer's 0.25px tolerance.
+        // This also excludes short edges, thin fills and degenerate transforms.
+        if (!(area * area > 0.125f * std::max(dot(u, u), dot(v, v)))) return false;
+
+        count = 4;
+        fill.vertex.reserve(8);
+        min = max = corners[0];
+        for (uint32_t i = 0; i < 4; ++i) {
+            fill.vertex.data[2 * i] = corners[i].x;
+            fill.vertex.data[2 * i + 1] = corners[i].y;
+            min = tvg::min(min, corners[i]);
+            max = tvg::max(max, corners[i]);
+        }
+    } else {
+        // Only the original ellipse (MoveTo, four CubicTo, Close; 13 points)
+        // fits this mesh. Appended geometry must use general tessellation.
+        if (rshape.path.cmds.count != 6 || rshape.path.pts.count != 13) return false;
+        // Ordered cardinal points retain the winding, including affine loader transforms.
+        auto center = (pts[0] + pts[6]) * 0.5f;
+        auto u = pts[0] - center;
+        auto v = pts[3] - center;
+        u = {matrix.e11 * u.x + matrix.e12 * u.y, matrix.e21 * u.x + matrix.e22 * u.y};
+        v = {matrix.e11 * v.x + matrix.e12 * v.y, matrix.e21 * v.x + matrix.e22 * v.y};
+        center *= matrix;
+
+        // Frobenius norm bounds the largest radius even under shear; |det| / R
+        // bounds the smallest. Keep tiny/flat cubics on the optimizer's route.
+        auto radius = sqrtf(dot(u, u) + dot(v, v));
+        if (!(fabsf(cross(u, v)) > radius)) return false;
+
+        count = (std::max(4u, gpuArcSegmentsCnt(MATH_2PI, radius)) + 3u) & ~3u;
+        fill.vertex.reserve(count * 2);
+        auto quadrant = count / 4;
+        // Double precision keeps accumulated rotation error small for large ellipses.
+        auto angle = 6.28318530717958647692 / count;
+        auto cosStep = cos(angle);
+        auto sinStep = sin(angle);
+        auto x = 1.0;
+        auto y = 0.0;
+        for (uint32_t i = 0; i < quadrant; ++i) {
+            auto a = u * x + v * y;
+            auto b = v * x - u * y;
+            fill.vertex.data[2 * i] = center.x + a.x;
+            fill.vertex.data[2 * i + 1] = center.y + a.y;
+            fill.vertex.data[2 * (quadrant + i)] = center.x + b.x;
+            fill.vertex.data[2 * (quadrant + i) + 1] = center.y + b.y;
+            fill.vertex.data[2 * (2 * quadrant + i)] = center.x - a.x;
+            fill.vertex.data[2 * (2 * quadrant + i) + 1] = center.y - a.y;
+            fill.vertex.data[2 * (3 * quadrant + i)] = center.x - b.x;
+            fill.vertex.data[2 * (3 * quadrant + i) + 1] = center.y - b.y;
+            auto nextX = x * cosStep - y * sinStep;
+            y = x * sinStep + y * cosStep;
+            x = nextX;
+        }
+        // Analytic bounds enclose the polygon without another vertex pass.
+        Point extent{sqrtf(u.x * u.x + v.x * v.x), sqrtf(u.y * u.y + v.y * v.y)};
+        min = center - extent;
+        max = center + extent;
+    }
+
+    fill.vertex.count = count * 2;
+    fill.index.reserve((count - 2) * 3);
+    fill.index.count = 0;
+    for (uint32_t i = 1; i < count - 1; ++i) {
+        fill.index.data[fill.index.count++] = 0;
+        fill.index.data[fill.index.count++] = i;
+        fill.index.data[fill.index.count++] = i + 1;
+    }
+    fillBBox = {{int32_t(floorf(min.x)), int32_t(floorf(min.y))}, {int32_t(ceilf(max.x)), int32_t(ceilf(max.y))}};
+    fillRule = rshape.rule;
+    fillWorld = true;
+    convex = true;
+    optPath.clear();
+    optStrokePath.clear();
+    optPathThin = optPathSkipFill = false;
+    stroke.clear();
+    strokeBBox = {};
+    strokeRenderWidth = 0.0f;
+    return true;
+}
+
+
 void GlGeometry::prepare(const RenderShape& rshape)
 {
     optPathThin = false;
