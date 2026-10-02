@@ -304,7 +304,6 @@ int VP8GetHeaders(VP8Decoder* const dec, VP8Io* const io) {
     io->width = pic_hdr->width_;
     io->height = pic_hdr->height_;
     io->use_scaling  = 0;
-    io->use_cropping = 0;
     io->crop_top  = 0;
     io->crop_left = 0;
     io->crop_right  = io->width;

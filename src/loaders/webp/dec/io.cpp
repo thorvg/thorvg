@@ -308,9 +308,7 @@ static int CustomSetup(VP8Io* io) {
   p->emit_alpha = NULL;
   p->emit_alpha_row = NULL;
 
-  if (!WebPIoInitFromOptions(p->options, io, is_alpha ? MODE_YUV : MODE_YUVA)) {
-    return 0;
-  }
+  WebPIoInitFrame(io);
   if (is_alpha && WebPIsPremultipliedMode(colorspace)) {
     WebPInitUpsamplers();
   }
