@@ -3,7 +3,6 @@
 set -euo pipefail
 
 version="${WGPU_NATIVE_VERSION:-v29.0.1.1}"
-pc_url="${WGPU_NATIVE_PC_URL:-https://github.com/user-attachments/files/20096376/wgpu_native.pc.zip}"
 prefix="${WGPU_NATIVE_PREFIX:-/usr/local}"
 
 case "$(uname -m)" in
@@ -28,16 +27,27 @@ cleanup() {
 }
 trap cleanup EXIT
 
-curl -fL "${url}" -o "${tmpdir}/${archive}"
+curl -fL --retry 5 --retry-delay 5 --retry-all-errors "${url}" -o "${tmpdir}/${archive}"
 unzip -q "${tmpdir}/${archive}" -d "${tmpdir}/wgpu-native"
-curl -fL "${pc_url}" -o "${tmpdir}/wgpu_native.pc.zip"
-unzip -q "${tmpdir}/wgpu_native.pc.zip" -d "${tmpdir}/pkgconfig"
+
+cat > "${tmpdir}/wgpu_native.pc" <<EOF
+prefix=${prefix}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: wgpu-native
+Description: wgpu-native
+Version: 0
+Libs: -L\${libdir} -lwgpu_native
+Cflags: -I\${includedir}
+EOF
 
 sudo mkdir -p "${prefix}/lib" "${prefix}/include/webgpu" "${prefix}/lib/pkgconfig"
 sudo cp "${tmpdir}/wgpu-native/lib/libwgpu_native.so" "${prefix}/lib/"
 sudo cp "${tmpdir}/wgpu-native/include/webgpu/webgpu.h" "${prefix}/include/webgpu/"
 sudo cp "${tmpdir}/wgpu-native/include/webgpu/wgpu.h" "${prefix}/include/webgpu/"
-sudo cp "$(find "${tmpdir}/pkgconfig" -type f -name 'wgpu_native.pc' -print -quit)" "${prefix}/lib/pkgconfig/"
+sudo cp "${tmpdir}/wgpu_native.pc" "${prefix}/lib/pkgconfig/"
 
 sudo ldconfig
 
