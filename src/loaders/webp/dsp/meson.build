@@ -8,7 +8,6 @@ source_file = [
    'dec_clip_tables.cpp',
    'filters.cpp',
    'lossless.cpp',
-   'rescaler.cpp',
    'upsampling.cpp',
    'yuv.cpp'
 ]

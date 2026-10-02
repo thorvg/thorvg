@@ -101,46 +101,6 @@ UPSAMPLE_FUNC(UpsampleBgraLinePair, VP8YuvToBgra, 4)
 #endif  // FANCY_UPSAMPLING
 
 //------------------------------------------------------------------------------
-// YUV444 converter
-
-#define YUV444_FUNC(FUNC_NAME, FUNC, XSTEP)                                    \
-static void FUNC_NAME(const uint8_t* y, const uint8_t* u, const uint8_t* v,    \
-                      uint8_t* dst, int len) {                                 \
-  int i;                                                                       \
-  for (i = 0; i < len; ++i) FUNC(y[i], u[i], v[i], &dst[i * XSTEP]);           \
-}
-
-YUV444_FUNC(Yuv444ToRgba,     VP8YuvToRgba, 4)
-YUV444_FUNC(Yuv444ToBgra,     VP8YuvToBgra, 4)
-
-#undef YUV444_FUNC
-
-WebPYUV444Converter WebPYUV444Converters[MODE_LAST];
-
-extern void WebPInitYUV444ConvertersMIPSdspR2(void);
-
-static volatile VP8CPUInfo upsampling_last_cpuinfo_used1 =
-    (VP8CPUInfo)&upsampling_last_cpuinfo_used1;
-
-WEBP_TSAN_IGNORE_FUNCTION void WebPInitYUV444Converters(void) {
-  if (upsampling_last_cpuinfo_used1 == VP8GetCPUInfo) return;
-
-  WebPYUV444Converters[MODE_RGBA]      = Yuv444ToRgba;
-  WebPYUV444Converters[MODE_BGRA]      = Yuv444ToBgra;
-  WebPYUV444Converters[MODE_rgbA]      = Yuv444ToRgba;
-  WebPYUV444Converters[MODE_bgrA]      = Yuv444ToBgra;
-
-  if (VP8GetCPUInfo != NULL) {
-#if defined(WEBP_USE_MIPS_DSP_R2)
-    if (VP8GetCPUInfo(kMIPSdspR2)) {
-      WebPInitYUV444ConvertersMIPSdspR2();
-    }
-#endif
-  }
-  upsampling_last_cpuinfo_used1 = VP8GetCPUInfo;
-}
-
-//------------------------------------------------------------------------------
 // Main calls
 
 extern void WebPInitUpsamplersSSE2(void);
