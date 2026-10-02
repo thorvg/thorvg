@@ -25,134 +25,122 @@
 
 #include "tvgWgCommon.h"
 
-class WgPipelines {
-private:
-    // shaders helpers
-    WGPUShaderModule shader_stencil{};
-    WGPUShaderModule shader_depth{};
-    // shaders normal blend
-    WGPUShaderModule shader_solid{};
-    WGPUShaderModule shader_radial{};
-    WGPUShaderModule shader_linear{};
-    WGPUShaderModule shader_conic{};
-    WGPUShaderModule shader_image{};
-    WGPUShaderModule shader_scene{};
-    // shaders custom blend
-    WGPUShaderModule shader_solid_blend{};
-    WGPUShaderModule shader_radial_blend{};
-    WGPUShaderModule shader_linear_blend{};
-    WGPUShaderModule shader_conic_blend{};
-    WGPUShaderModule shader_image_blend{};
-    WGPUShaderModule shader_scene_blend{};
-    // shader scene compose
-    WGPUShaderModule shader_scene_compose{};
-    // shader blit
-    WGPUShaderModule shader_blit{};
-    // shader effects
-    WGPUShaderModule shader_shadow;
-    WGPUShaderModule shader_effects;
-
-    // layouts helpers
-    WGPUPipelineLayout layout_stencil{};
-    WGPUPipelineLayout layout_depth{};
-    // layouts normal blend
-    WGPUPipelineLayout layout_solid{};
-    WGPUPipelineLayout layout_gradient{};
-    WGPUPipelineLayout layout_image{};
-    WGPUPipelineLayout layout_scene{};
-    // layouts custom blend
-    WGPUPipelineLayout layout_solid_blend{};
-    WGPUPipelineLayout layout_gradient_blend{};
-    WGPUPipelineLayout layout_image_blend{};
-    WGPUPipelineLayout layout_scene_blend{};
-    // layouts scene compose
-    WGPUPipelineLayout layout_scene_compose{};
-    // layouts blit
-    WGPUPipelineLayout layout_blit{};
-    // layouts effects
-    WGPUPipelineLayout layout_shadow{};
-    WGPUPipelineLayout layout_effects{};
-public:
-    // pipelines stencil markup
+struct WgPipelines
+{
+    // stencil markup
     WGPURenderPipeline nonzero{};
     WGPURenderPipeline evenodd{};
     WGPURenderPipeline direct{};
-    // pipelines clip path markup
-    WGPURenderPipeline copy_stencil_to_depth{};        // depth 0.50, clear stencil
-    WGPURenderPipeline copy_stencil_to_depth_interm{}; // depth 0.75, clear stencil
-    WGPURenderPipeline copy_depth_to_stencil{}; // depth 0.50 and 0.75, update stencil
-    WGPURenderPipeline merge_depth_stencil{};   // depth 0.75, update stencil
-    WGPURenderPipeline clear_depth{}; // depth 1.00, clear ctencil
-    // pipelines normal blend
+    // clip path markup
+    WGPURenderPipeline copyStencilToDepth{};        // depth 0.50, clear stencil
+    WGPURenderPipeline copyStencilToDepthInterm{};  // depth 0.75, clear stencil
+    WGPURenderPipeline copyDepthToStencil{};        // depth 0.50 and 0.75, update stencil
+    WGPURenderPipeline mergeDepthStencil{};         // depth 0.75, update stencil
+    WGPURenderPipeline clearDepth{};                // depth 1.00, clear ctencil
+    // normal blend
     WGPURenderPipeline solid{};
     WGPURenderPipeline radial{};
     WGPURenderPipeline linear{};
     WGPURenderPipeline conic{};
-    WGPURenderPipeline solid_conv{};  // convex geometry (no stencil)
-    WGPURenderPipeline solid_batch{};  // batched convex geometry (no stencil)
-    WGPURenderPipeline solid_stencil_batch{};  // batched complex geometry cover
-    WGPURenderPipeline radial_conv{}; // convex geometry (no stencil)
-    WGPURenderPipeline linear_conv{}; // convex geometry (no stencil)
-    WGPURenderPipeline conic_conv{};  // convex geometry (no stencil)
+    WGPURenderPipeline solidConv{};          // convex geometry (no stencil)
+    WGPURenderPipeline solidBatch{};         // batched convex geometry (no stencil)
+    WGPURenderPipeline solidStencilBatch{};  // batched complex geometry cover
+    WGPURenderPipeline radialConv{};         // convex geometry (no stencil)
+    WGPURenderPipeline linearConv{};         // convex geometry (no stencil)
+    WGPURenderPipeline conicConv{};          // convex geometry (no stencil)
     WGPURenderPipeline image{};
-    WGPURenderPipeline image_direct{}; // image geometry (no stencil)
+    WGPURenderPipeline imageDirect{};  // image geometry (no stencil)
     WGPURenderPipeline scene{};
-    // pipelines custom blend
-    WGPURenderPipeline solid_blend[18]{};
-    WGPURenderPipeline radial_blend[18]{};
-    WGPURenderPipeline linear_blend[18]{};
-    WGPURenderPipeline conic_blend[18]{};
-    WGPURenderPipeline image_blend[18]{};
-    WGPURenderPipeline scene_blend[18]{};
-    // pipelines compose
-    WGPURenderPipeline scene_compose[11]{};
-    // pipeline blit
+    // custom blend
+    WGPURenderPipeline solidBlends[18]{};
+    WGPURenderPipeline radialBlends[18]{};
+    WGPURenderPipeline linearBlends[18]{};
+    WGPURenderPipeline conicBlends[18]{};
+    WGPURenderPipeline imageBlends[18]{};
+    WGPURenderPipeline sceneBlends[18]{};
+    // compose
+    WGPURenderPipeline sceneCompose[11]{};
+    // blit
     WGPURenderPipeline blit{};
-    WGPURenderPipeline blit_unpremultiplied{};
+    WGPURenderPipeline blitUnpremultiplied{};
     // effects
-    WGPURenderPipeline gaussian_vert{};
-    WGPURenderPipeline gaussian_horz{};
-    WGPURenderPipeline dropshadow{};
-    WGPURenderPipeline fill_effect{};
-    WGPURenderPipeline tint_effect{};
-    WGPURenderPipeline tritone_effect{};
-private:
-    void releaseGraphicHandles(WgContext& context);
-    WGPUShaderModule createShaderModule(WGPUDevice device, const char* label, const char* code);
-    WGPUPipelineLayout createPipelineLayout(WGPUDevice device, const WGPUBindGroupLayout* bindGroupLayouts, const uint32_t bindGroupLayoutsCount);
-    WGPURenderPipeline createRenderPipeline(
-        WGPUDevice device, const char* pipelineLabel,
-        const WGPUShaderModule shaderModule, const char* vsEntryPoint, const char* fsEntryPoint,
-        const WGPUPipelineLayout pipelineLayout,
-        const WGPUVertexBufferLayout *vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
-        const WGPUColorWriteMask writeMask, const WGPUTextureFormat colorTargetFormat, const WGPUBlendState blendState,
-        const WGPUDepthStencilState depthStencilState, const WGPUMultisampleState multisampleState);
-    WGPURenderPipeline createBlendPipeline(
-        WgContext& context, const char* pipelineLabel, const WGPUShaderModule shaderModule,
-        const char* fsEntryPoint, const WGPUPipelineLayout pipelineLayout,
-        const WGPUVertexBufferLayout* vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
-        const WGPUCompareFunction stencilCompare);
-    void releaseRenderPipeline(WGPURenderPipeline& renderPipeline);
-    void releasePipelineLayout(WGPUPipelineLayout& pipelineLayout);
-    void releaseShaderModule(WGPUShaderModule& shaderModule);
+    WGPURenderPipeline effectGaussianVert{};
+    WGPURenderPipeline effectGaussianHorz{};
+    WGPURenderPipeline effectDropShadow{};
+    WGPURenderPipeline effectFill{};
+    WGPURenderPipeline effectTint{};
+    WGPURenderPipeline effectTritone{};
 
-    WGPUDepthStencilState makeDepthStencilState(
-        const WGPUCompareFunction depthCompare, WGPUOptionalBool depthWriteEnabled,
-        const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt);
-    WGPUDepthStencilState makeDepthStencilState(
-        const WGPUCompareFunction depthCompare, WGPUOptionalBool depthWriteEnabled,
-        const WGPUCompareFunction stencilFunctionFrnt, const WGPUStencilOperation stencilOperationFrnt,
-        const WGPUCompareFunction stencilFunctionBack, const WGPUStencilOperation stencilOperationBack);
-public:
     WGPURenderPipeline solidBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline radialBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline linearBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline conicBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline imageBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline sceneBlend(WgContext& context, BlendMethod method);
-
     void initialize(WgContext& context);
     void release(WgContext& context);
+
+private:
+    // shaders helpers
+    WGPUShaderModule shaderStencil{};
+    WGPUShaderModule shaderDepth{};
+    // shaders normal blend
+    WGPUShaderModule shaderSolid{};
+    WGPUShaderModule shaderRadial{};
+    WGPUShaderModule shaderLinear{};
+    WGPUShaderModule shaderConic{};
+    WGPUShaderModule shaderImage{};
+    WGPUShaderModule shaderScene{};
+    // shaders custom blend
+    WGPUShaderModule shaderSolidBlend{};
+    WGPUShaderModule shaderRadialBlend{};
+    WGPUShaderModule shaderLinearBlend{};
+    WGPUShaderModule shaderConicBlend{};
+    WGPUShaderModule shaderImageBlend{};
+    WGPUShaderModule shaderSceneBlend{};
+    // shader scene compose
+    WGPUShaderModule shaderSceneCompose{};
+    // shader blit
+    WGPUShaderModule shaderBlit{};
+    // shader effects
+    WGPUShaderModule shaderShadow;
+    WGPUShaderModule shaderEffects;
+
+    // layouts helpers
+    WGPUPipelineLayout layoutStencil{};
+    WGPUPipelineLayout layoutDepth{};
+    // layouts normal blend
+    WGPUPipelineLayout layoutSolid{};
+    WGPUPipelineLayout layoutGradient{};
+    WGPUPipelineLayout layoutImage{};
+    WGPUPipelineLayout layoutScene{};
+    // layouts custom blend
+    WGPUPipelineLayout layoutSolidBlend{};
+    WGPUPipelineLayout layoutGradientBlend{};
+    WGPUPipelineLayout layoutImageBlend{};
+    WGPUPipelineLayout layoutSceneBlend{};
+    // layouts scene compose
+    WGPUPipelineLayout layoutSceneCompose{};
+    // layouts blit
+    WGPUPipelineLayout layoutBlit{};
+    // layouts effects
+    WGPUPipelineLayout layoutShadow{};
+    WGPUPipelineLayout layoutEffects{};
+
+    void releaseGraphicHandles(WgContext& context);
+    WGPUShaderModule createShaderModule(WGPUDevice device, const char* label, const char* code);
+    WGPUPipelineLayout createPipelineLayout(WGPUDevice device, WGPUBindGroupLayout* bindGroupLayouts, const uint32_t bindGroupLayoutsCount);
+    WGPURenderPipeline createRenderPipeline(WGPUDevice device, const char* pipelineLabel, WGPUShaderModule shaderModule, const char* vsEntryPoint, const char* fsEntryPoint,
+                                            WGPUPipelineLayout pipelineLayout, WGPUVertexBufferLayout* vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount, WGPUColorWriteMask writeMask,
+                                            WGPUTextureFormat colorTargetFormat, WGPUBlendState blendState, WGPUDepthStencilState depthStencilState, WGPUMultisampleState multisampleState);
+    WGPURenderPipeline createBlendPipeline(WgContext& context, const char* pipelineLabel, WGPUShaderModule shaderModule, const char* fsEntryPoint, WGPUPipelineLayout pipelineLayout,
+                                           WGPUVertexBufferLayout* vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount, WGPUCompareFunction stencilCompare);
+    void releaseRenderPipeline(WGPURenderPipeline& renderPipeline);
+    void releasePipelineLayout(WGPUPipelineLayout& pipelineLayout);
+    void releaseShaderModule(WGPUShaderModule& shaderModule);
+    WGPUDepthStencilState makeDepthStencilState(WGPUCompareFunction depthCompare, WGPUOptionalBool depthWriteEnabled, WGPUCompareFunction stencilFunctionFrnt, WGPUStencilOperation stencilOperationFrnt);
+    WGPUDepthStencilState makeDepthStencilState(WGPUCompareFunction depthCompare, WGPUOptionalBool depthWriteEnabled, WGPUCompareFunction stencilFunctionFrnt, WGPUStencilOperation stencilOperationFrnt,
+                                                WGPUCompareFunction stencilFunctionBack, WGPUStencilOperation stencilOperationBack);
 };
 
 #endif // _TVG_WG_PIPELINES_H_
