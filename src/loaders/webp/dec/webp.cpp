@@ -492,7 +492,7 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
       status = dec->status_;   // An error occurred. Grab error status.
     } else {
       // Allocate/check output buffers.
-      status = WebPAllocateDecBuffer(io.width, io.height, params->options,
+      status = WebPAllocateDecBuffer(io.width, io.height,
                                      params->output);
       if (status == VP8_STATUS_OK) {  // Decode
         VP8InitDithering(params->options, dec);
@@ -511,7 +511,7 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
       status = dec->status_;   // An error occurred. Grab error status.
     } else {
       // Allocate/check output buffers.
-      status = WebPAllocateDecBuffer(io.width, io.height, params->options,
+      status = WebPAllocateDecBuffer(io.width, io.height,
                                      params->output);
       if (status == VP8_STATUS_OK) {  // Decode
         if (!VP8LDecodeImage(dec)) {
@@ -524,10 +524,6 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
 
   if (status != VP8_STATUS_OK) {
     WebPFreeDecBuffer(params->output);
-  }
-
-  if (params->options != NULL && params->options->flip) {
-    status = WebPFlipBuffer(params->output);
   }
   return status;
 }
@@ -570,45 +566,20 @@ static void DefaultFeatures(WebPBitstreamFeatures* const features) {
 }
 
 //------------------------------------------------------------------------------
-// Cropping.
+// Output area: no cropping and no scaling, the whole picture is output.
 
-int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
-                          VP8Io* const io, WEBP_CSP_MODE src_colorspace) {
-  const int W = io->width;
-  const int H = io->height;
-  int x = 0, y = 0, w = W, h = H;
-
-  // Cropping
-  io->use_cropping = (options != NULL) && (options->use_cropping > 0);
-  if (io->use_cropping) {
-    w = options->crop_width;
-    h = options->crop_height;
-    x = options->crop_left;
-    y = options->crop_top;
-    if (!WebPIsRGBMode(src_colorspace)) {   // only snap for YUV420
-      x &= ~1;
-      y &= ~1;
-    }
-    if (x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > W || y + h > H) {
-      return 0;  // out of frame boundary error
-    }
-  }
-  io->crop_left   = x;
-  io->crop_top    = y;
-  io->crop_right  = x + w;
-  io->crop_bottom = y + h;
-  io->mb_w = w;
-  io->mb_h = h;
-
-  // Filter
-  io->bypass_filtering = options && options->bypass_filtering;
-
-  // Fancy upsampler
+void WebPIoInitFrame(VP8Io* const io) {
+  io->crop_left   = 0;
+  io->crop_top    = 0;
+  io->crop_right  = io->width;
+  io->crop_bottom = io->height;
+  io->mb_w = io->width;
+  io->mb_h = io->height;
 #ifdef FANCY_UPSAMPLING
-  io->fancy_upsampling = (options == NULL) || (!options->no_fancy_upsampling);
+  io->fancy_upsampling = 1;
+#else
+  io->fancy_upsampling = 0;
 #endif
-
-  return 1;
 }
 
 //------------------------------------------------------------------------------

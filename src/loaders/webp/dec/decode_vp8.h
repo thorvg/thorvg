@@ -87,14 +87,7 @@ struct VP8Io {
   size_t data_size;
   const uint8_t* data;
 
-  // If true, in-loop filtering will not be performed even if present in the
-  // bitstream. Switching off filtering may speed up decoding at the expense
-  // of more visible blocking. Note that output will also be non-compliant
-  // with the VP8 specifications.
-  int bypass_filtering;
-
-  // Cropping parameters.
-  int use_cropping;
+  // Output area (always the whole picture).
   int crop_left, crop_right, crop_top, crop_bottom;
 
   // If non NULL, pointer to the alpha data (if present) corresponding to the

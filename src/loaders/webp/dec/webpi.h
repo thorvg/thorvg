@@ -63,30 +63,20 @@ typedef struct {
 // hooks will use the supplied 'params' as io->opaque handle.
 void WebPInitCustomIo(WebPDecParams* const params, VP8Io* const io);
 
-// Setup crop_xxx fields, mb_w and mb_h in io. 'src_colorspace' refers
-// to the *compressed* format, not the output one.
-int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
-                          VP8Io* const io, WEBP_CSP_MODE src_colorspace);
+// Setup crop_xxx fields, mb_w and mb_h in io to output the whole picture.
+void WebPIoInitFrame(VP8Io* const io);
 
 //------------------------------------------------------------------------------
 // Internal functions regarding WebPDecBuffer memory (in buffer.c).
 // Don't really need to be externally visible for now.
 
-// Prepare 'buffer' with the requested initial dimensions width/height.
+// Prepare 'buffer' with the requested dimensions width/height.
 // If no external storage is supplied, initializes buffer by allocating output
 // memory and setting up the stride information. Validate the parameters. Return
 // an error code in case of problem (no memory, or invalid stride / size /
-// dimension / etc.). If *options is not NULL, also verify that the options'
-// parameters are valid and apply them to the width/height dimensions of the
-// output buffer. This takes cropping / scaling / rotation into account.
-// Also incorporates the options->flip flag to flip the buffer parameters if
-// needed.
+// dimension / etc.).
 VP8StatusCode WebPAllocateDecBuffer(int width, int height,
-                                    const WebPDecoderOptions* const options,
                                     WebPDecBuffer* const buffer);
-
-// Flip buffer vertically by negating the various strides.
-VP8StatusCode WebPFlipBuffer(WebPDecBuffer* const buffer);
 
 // Copy 'src' into 'dst' buffer, making sure 'dst' is not marked as owner of the
 // memory (still held by 'src').

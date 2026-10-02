@@ -1425,10 +1425,7 @@ int VP8LDecodeImage(VP8LDecoder* const dec) {
     dec->output_ = params->output;
     assert(dec->output_ != NULL);
 
-    if (!WebPIoInitFromOptions(params->options, io, MODE_BGRA)) {
-      dec->status_ = VP8_STATUS_INVALID_PARAM;
-      goto Err;
-    }
+    WebPIoInitFrame(io);
 
     if (!AllocateInternalBuffers32b(dec, io->width)) goto Err;
 
