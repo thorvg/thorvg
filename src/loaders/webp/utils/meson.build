@@ -6,14 +6,12 @@ source_file = [
    'huffman.h',
    'quant_levels_dec.h',
    'random.h',
-   'rescaler.h',
    'utils.h',
    'bit_reader.cpp',
    'color_cache.cpp',
    'huffman.cpp',
    'quant_levels_dec.cpp',
-   'random.cpp',
-   'rescaler.cpp'
+   'random.cpp'
 ]
 
 webp_deb += [declare_dependency(
