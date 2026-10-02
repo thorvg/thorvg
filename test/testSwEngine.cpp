@@ -370,6 +370,81 @@ TEST_CASE("Image Rotation", "[tvgSwEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Blending On Transparent Target", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        // where the target is fully transparent, every blend method must reduce to a normal source-over
+        uint32_t image[32 * 32];
+        for (int i = 0; i < 32 * 32; ++i)
+            image[i] = 0x6633d6ff;
+
+        // 0: scene, 1~3: direct, scaled and rotated images, 4~6: the same images clipped
+        auto draw = [&](uint32_t* buffer, BlendMethod method, int type, uint8_t opacity) {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+            REQUIRE(canvas->target(buffer, 100, 100, 100, ColorSpace::ARGB8888) == Result::Success);
+
+            Paint* paint;
+            if (type == 0) {
+                auto shape = Shape::gen();
+                REQUIRE(shape->appendRect(10, 10, 60, 60) == Result::Success);
+                REQUIRE(shape->fill(51, 214, 255, 102) == Result::Success);
+                auto scene = Scene::gen();
+                REQUIRE(scene->add(shape) == Result::Success);
+                paint = scene;
+            } else {
+                auto picture = Picture::gen();
+                REQUIRE(picture->load(image, 32, 32, ColorSpace::ARGB8888S, true) == Result::Success);
+                if (type % 3 == 1) {
+                    REQUIRE(picture->translate(10, 10) == Result::Success);
+                } else if (type % 3 == 2) {
+                    REQUIRE(picture->translate(10, 10) == Result::Success);
+                    REQUIRE(picture->scale(2.0f) == Result::Success);
+                } else {
+                    REQUIRE(picture->translate(50, 0) == Result::Success);
+                    REQUIRE(picture->rotate(30) == Result::Success);
+                }
+                if (type > 3) {
+                    auto clipper = Shape::gen();
+                    REQUIRE(clipper->appendCircle(40, 40, 30, 30) == Result::Success);
+                    REQUIRE(picture->clip(clipper) == Result::Success);
+                }
+                paint = picture;
+            }
+            REQUIRE(paint->opacity(opacity) == Result::Success);
+            REQUIRE(paint->blend(method) == Result::Success);
+            REQUIRE(canvas->add(paint) == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+        };
+
+        BlendMethod methods[] = {
+            BlendMethod::Multiply, BlendMethod::Screen, BlendMethod::Overlay, BlendMethod::Darken,
+            BlendMethod::Lighten, BlendMethod::ColorDodge, BlendMethod::ColorBurn, BlendMethod::HardLight,
+            BlendMethod::SoftLight, BlendMethod::Difference, BlendMethod::Exclusion, BlendMethod::Hue,
+            BlendMethod::Saturation, BlendMethod::Color, BlendMethod::Luminosity, BlendMethod::Add};
+
+        uint32_t expected[100 * 100];
+        uint32_t blended[100 * 100];
+
+        for (int type = 0; type < 14; ++type) {
+            auto opacity = (type < 7) ? 255 : 128;
+            draw(expected, BlendMethod::Normal, type % 7, opacity);
+            for (auto method : methods) {
+                draw(blended, method, type % 7, opacity);
+                int diff = 0;
+                for (int i = 0; i < 100 * 100; ++i) {
+                    for (int shift = 0; shift < 32; shift += 8) {
+                        diff = std::max(diff, abs(int((blended[i] >> shift) & 0xff) - int((expected[i] >> shift) & 0xff)));
+                    }
+                }
+                REQUIRE(diff <= 2);
+            }
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("Intersection", "[tvgSwEngine]")
 {
     REQUIRE(Initializer::init() == Result::Success);
