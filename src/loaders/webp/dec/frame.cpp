@@ -533,12 +533,6 @@ VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io) {
     return dec->status_;
   }
 
-  // Disable filtering per user request
-  if (io->bypass_filtering) {
-    dec->filter_type_ = 0;
-  }
-  // TODO(skal): filter type / strength / sharpness forcing
-
   // Define the area where we can skip in-loop filtering, in case of cropping.
   //
   // 'Simple' filter reads two luma samples outside of the macroblock

@@ -136,70 +136,14 @@ static VP8StatusCode AllocateBuffer(WebPDecBuffer* const buffer) {
   return CheckDecBuffer(buffer);
 }
 
-VP8StatusCode WebPFlipBuffer(WebPDecBuffer* const buffer) {
-  if (buffer == NULL) {
-    return VP8_STATUS_INVALID_PARAM;
-  }
-  if (WebPIsRGBMode(buffer->colorspace)) {
-    WebPRGBABuffer* const buf = &buffer->u.RGBA;
-    buf->rgba += (buffer->height - 1) * buf->stride;
-    buf->stride = -buf->stride;
-  } else {
-    WebPYUVABuffer* const buf = &buffer->u.YUVA;
-    const int H = buffer->height;
-    buf->y += (H - 1) * buf->y_stride;
-    buf->y_stride = -buf->y_stride;
-    buf->u += ((H - 1) >> 1) * buf->u_stride;
-    buf->u_stride = -buf->u_stride;
-    buf->v += ((H - 1) >> 1) * buf->v_stride;
-    buf->v_stride = -buf->v_stride;
-    if (buf->a != NULL) {
-      buf->a += (H - 1) * buf->a_stride;
-      buf->a_stride = -buf->a_stride;
-    }
-  }
-  return VP8_STATUS_OK;
-}
-
 VP8StatusCode WebPAllocateDecBuffer(int w, int h,
-                                    const WebPDecoderOptions* const options,
                                     WebPDecBuffer* const out) {
-  VP8StatusCode status;
   if (out == NULL || w <= 0 || h <= 0) {
     return VP8_STATUS_INVALID_PARAM;
   }
-  if (options != NULL) {    // First, apply options if there is any.
-    if (options->use_cropping) {
-      const int cw = options->crop_width;
-      const int ch = options->crop_height;
-      const int x = options->crop_left & ~1;
-      const int y = options->crop_top & ~1;
-      if (x < 0 || y < 0 || cw <= 0 || ch <= 0 || x + cw > w || y + ch > h) {
-        return VP8_STATUS_INVALID_PARAM;   // out of frame boundary.
-      }
-      w = cw;
-      h = ch;
-    }
-    if (options->use_scaling) {
-      if (options->scaled_width <= 0 || options->scaled_height <= 0) {
-        return VP8_STATUS_INVALID_PARAM;
-      }
-      w = options->scaled_width;
-      h = options->scaled_height;
-    }
-  }
   out->width = w;
   out->height = h;
-
-  // Then, allocate buffer for real.
-  status = AllocateBuffer(out);
-  if (status != VP8_STATUS_OK) return status;
-
-  // Use the stride trick if vertical flip is needed.
-  if (options != NULL && options->flip) {
-    status = WebPFlipBuffer(out);
-  }
-  return status;
+  return AllocateBuffer(out);
 }
 
 //------------------------------------------------------------------------------

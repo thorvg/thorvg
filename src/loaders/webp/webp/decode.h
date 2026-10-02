@@ -224,23 +224,10 @@ WEBP_EXTERN(VP8StatusCode) WebPGetFeatures(const uint8_t*, size_t, WebPBitstream
 
 // Decoding options
 struct WebPDecoderOptions {
-  int bypass_filtering;               // if true, skip the in-loop filtering
-  int no_fancy_upsampling;            // if true, use faster pointwise upsampler
-  int use_cropping;                   // if true, cropping is applied _first_
-  int crop_left, crop_top;            // top-left position for cropping.
-                                      // Will be snapped to even values.
-  int crop_width, crop_height;        // dimension of the cropping area
   int use_scaling;                    // if true, scaling is applied _afterward_
   int scaled_width, scaled_height;    // final resolution
-  int use_threads;                    // if true, use multi-threaded decoding
   int dithering_strength;             // dithering strength (0=Off, 100=full)
-  int flip;                           // flip output vertically
   int alpha_dithering_strength;       // alpha dithering strength in [0..100]
-
-  // Unused for now:
-  int force_rotation;                 // forced rotation (to be applied _last_)
-  int no_enhancement;                 // if true, discard enhancement layer
-  uint32_t pad[3];                    // padding for later use
 };
 
 #ifdef __cplusplus
