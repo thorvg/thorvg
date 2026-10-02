@@ -230,8 +230,6 @@ struct WebPDecoderOptions {
   int crop_left, crop_top;            // top-left position for cropping.
                                       // Will be snapped to even values.
   int crop_width, crop_height;        // dimension of the cropping area
-  int use_scaling;                    // if true, scaling is applied _afterward_
-  int scaled_width, scaled_height;    // final resolution
   int use_threads;                    // if true, use multi-threaded decoding
   int dithering_strength;             // dithering strength (0=Off, 100=full)
   int flip;                           // flip output vertically

@@ -177,39 +177,11 @@ extern WebPSamplerRowFunc WebPSamplers[/* MODE_LAST */];
 // as 0x00, 0x00, 0x00, 0xff (little endian).
 WebPUpsampleLinePairFunc WebPGetLinePairConverter(int alpha_is_last);
 
-// YUV444->RGB converters
-typedef void (*WebPYUV444Converter)(const uint8_t* y,
-                                    const uint8_t* u, const uint8_t* v,
-                                    uint8_t* dst, int len);
-
-extern WebPYUV444Converter WebPYUV444Converters[/* MODE_LAST */];
-
 // Must be called before using the WebPUpsamplers[] (and for premultiplied
 // colorspaces like rgbA, rgbA4444, etc)
 void WebPInitUpsamplers(void);
 // Must be called before using WebPSamplers[]
 void WebPInitSamplers(void);
-// Must be called before using WebPYUV444Converters[]
-void WebPInitYUV444Converters(void);
-
-//------------------------------------------------------------------------------
-// Rescaler
-
-struct WebPRescaler;
-
-// Import a row of data and save its contribution in the rescaler.
-// 'channel' denotes the channel number to be imported.
-extern void (*WebPRescalerImportRow)(struct WebPRescaler* const wrk,
-                                     const uint8_t* const src, int channel);
-
-// Export one row (starting at x_out position) from rescaler.
-extern void (*WebPRescalerExportRow)(struct WebPRescaler* const wrk, int x_out);
-
-// Plain-C implementation, as fall-back.
-extern void WebPRescalerExportRowC(struct WebPRescaler* const wrk, int x_out);
-
-// Must be called first before using the above.
-void WebPRescalerDspInit(void);
 
 //------------------------------------------------------------------------------
 // Utilities for processing transparent channel.

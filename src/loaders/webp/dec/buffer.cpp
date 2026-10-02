@@ -180,13 +180,6 @@ VP8StatusCode WebPAllocateDecBuffer(int w, int h,
       w = cw;
       h = ch;
     }
-    if (options->use_scaling) {
-      if (options->scaled_width <= 0 || options->scaled_height <= 0) {
-        return VP8_STATUS_INVALID_PARAM;
-      }
-      w = options->scaled_width;
-      h = options->scaled_height;
-    }
   }
   out->width = w;
   out->height = h;

@@ -570,7 +570,7 @@ static void DefaultFeatures(WebPBitstreamFeatures* const features) {
 }
 
 //------------------------------------------------------------------------------
-// Cropping and rescaling.
+// Cropping.
 
 int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
                           VP8Io* const io, WEBP_CSP_MODE src_colorspace) {
@@ -600,16 +600,6 @@ int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
   io->mb_w = w;
   io->mb_h = h;
 
-  // Scaling
-  io->use_scaling = (options != NULL) && (options->use_scaling > 0);
-  if (io->use_scaling) {
-    if (options->scaled_width <= 0 || options->scaled_height <= 0) {
-      return 0;
-    }
-    io->scaled_width = options->scaled_width;
-    io->scaled_height = options->scaled_height;
-  }
-
   // Filter
   io->bypass_filtering = options && options->bypass_filtering;
 
@@ -618,12 +608,6 @@ int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
   io->fancy_upsampling = (options == NULL) || (!options->no_fancy_upsampling);
 #endif
 
-  if (io->use_scaling) {
-    // disable filter (only for large downscaling ratio).
-    io->bypass_filtering = (io->scaled_width < W * 3 / 4) &&
-                           (io->scaled_height < H * 3 / 4);
-    io->fancy_upsampling = 0;
-  }
   return 1;
 }
 
