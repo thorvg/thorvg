@@ -19,7 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 #include "tvgMath.h"
 #include "tvgSwCommon.h"
 
@@ -81,7 +80,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
         auto i = p * 4;                 //current index
         auto l = -(dimension + 1);      //left index
         auto r = dimension;             //right index
-#if defined(THORVG_AVX_SUPPORT)
+    #if defined(THORVG_AVX_SUPPORT)
         auto acc = _mm_setzero_si128();
         const auto zero = _mm_setzero_si128();
         const auto scale = _mm_set1_ps(iarr);
@@ -108,7 +107,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
             memcpy(dst + i, &pixel, sizeof(pixel));
             i += 4;
         }
-#elif defined(THORVG_NEON_SUPPORT)
+    #elif defined(THORVG_NEON_SUPPORT)
         auto acc = vdupq_n_s32(0);
         const auto scale = vdupq_n_f32(iarr);
 
@@ -135,7 +134,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
             memcpy(dst + i, &pixel, sizeof(pixel));
             i += 4;
         }
-#else
+    #else
         int acc[4] = {0, 0, 0, 0};      //sliding accumulator
 
         //initial accumulation
@@ -160,11 +159,11 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
             dst[i++] = static_cast<uint8_t>(acc[2] * iarr);
             dst[i++] = static_cast<uint8_t>(acc[3] * iarr);
         }
-#endif
+    #endif
     }
 }
 
-void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, bool flipped)
+static void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, bool flipped)
 {
     constexpr int32_t BLOCK = 8;  // experimental decision
 
@@ -185,12 +184,13 @@ void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, in
             auto p = &in[y * stride];
             auto q = &out[y];
             auto by = std::min(h, y + BLOCK) - y;
+        #if defined(THORVG_AVX_SUPPORT) || defined(THORVG_NEON_SUPPORT)
             if (bx == BLOCK && by == BLOCK) {
-#if defined(THORVG_AVX_SUPPORT)
-                for (int32_t i = 0; i < BLOCK; i += 4) {
-                    for (int32_t j = 0; j < BLOCK; j += 4) {
-                        auto s = p + i + j * stride;
-                        auto d = q + i * stride + j;
+                for (int32_t xx = 0; xx < BLOCK; xx += 4) {
+                    for (int32_t yy = 0; yy < BLOCK; yy += 4) {
+                        auto s = p + xx + yy * stride;
+                        auto d = q + xx * stride + yy;
+                    #if defined(THORVG_AVX_SUPPORT)
                         auto r0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(s));
                         auto r1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(s + stride));
                         auto r2 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(s + 2 * stride));
@@ -203,13 +203,7 @@ void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, in
                         _mm_storeu_si128(reinterpret_cast<__m128i*>(d + stride), _mm_unpackhi_epi64(t0, t2));
                         _mm_storeu_si128(reinterpret_cast<__m128i*>(d + 2 * stride), _mm_unpacklo_epi64(t1, t3));
                         _mm_storeu_si128(reinterpret_cast<__m128i*>(d + 3 * stride), _mm_unpackhi_epi64(t1, t3));
-                    }
-                }
-#elif defined(THORVG_NEON_SUPPORT)
-                for (int32_t i = 0; i < BLOCK; i += 4) {
-                    for (int32_t j = 0; j < BLOCK; j += 4) {
-                        auto s = p + i + j * stride;
-                        auto d = q + i * stride + j;
+                    #elif defined(THORVG_NEON_SUPPORT)
                         auto r0 = vld1q_u32(s);
                         auto r1 = vld1q_u32(s + stride);
                         auto r2 = vld1q_u32(s + 2 * stride);
@@ -220,19 +214,20 @@ void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, in
                         vst1q_u32(d + stride, vcombine_u32(vget_low_u32(t0.val[1]), vget_low_u32(t1.val[1])));
                         vst1q_u32(d + 2 * stride, vcombine_u32(vget_high_u32(t0.val[0]), vget_high_u32(t1.val[0])));
                         vst1q_u32(d + 3 * stride, vcombine_u32(vget_high_u32(t0.val[1]), vget_high_u32(t1.val[1])));
+                    #endif
                     }
                 }
-#else
-                for (int32_t i = 0; i < bx; ++i) {
-                    for (int32_t j = 0; j < by; ++j)
-                        q[i * stride + j] = p[j * stride + i];
-                }
-#endif
                 continue;
             }
-            for (int32_t i = 0; i < bx; ++i) {
-                for (int32_t j = 0; j < by; ++j)
-                    q[i * stride + j] = p[j * stride + i];
+        #endif
+            for (int32_t xx = 0; xx < bx; ++xx) {
+                for (int32_t yy = 0; yy < by; ++yy) {
+                    *q = *p;
+                    p += stride;
+                    ++q;
+                }
+                p += 1 - by * stride;
+                q += stride - by;
             }
         }
     }
@@ -445,7 +440,7 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion
 
     // TODO: openmp optimization?
     for (auto y = 0; y < (bbox.max.y - bbox.min.y); ++y) {
-        rasterTranslucentPixel32(dst, src, bbox.max.x - bbox.min.x, 255);
+        rasterTranslucentPixels(dst, src, bbox.max.x - bbox.min.x, 255);
         src += sstride;
         dst += dstride;
     }
@@ -461,8 +456,8 @@ static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstr
 
     // TODO: openmp optimization?
     for (auto y = 0; y < size.h; ++y) {
-        if (direct) rasterTranslucentPixel32(dst, src, size.w, opacity);
-        else rasterPixel32(dst, src, size.w, opacity);
+        if (direct) rasterTranslucentPixels(dst, src, size.w, opacity);
+        else rasterSolidPixels(dst, src, size.w, opacity);
         src += sstride;
         dst += dstride;
     }
@@ -579,7 +574,7 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
 
     // TODO: openmp optimization?
     for (auto y = 0; y < h; ++y) {
-        rasterTranslucentPixel32(d, s, w, 255);
+        rasterTranslucentPixels(d, s, w, 255);
         s += buffer[0]->stride;
         d += cmp->image.stride;
     }

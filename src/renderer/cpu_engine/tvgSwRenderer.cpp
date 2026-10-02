@@ -24,10 +24,6 @@
 #include "tvgTaskScheduler.h"
 #include "tvgSwRenderer.h"
 
-#ifdef THORVG_OPENMP_SUPPORT
-    #include <omp.h>
-#endif
-
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
@@ -908,6 +904,7 @@ SwRenderer::SwRenderer(uint32_t threads, EngineOption op)
 #ifdef THORVG_OPENMP_SUPPORT
         omp_set_num_threads(threads);
 #endif
+        rasterInit();
         mpoolInit(threads);
         _rendererCnt = 0;
     }
