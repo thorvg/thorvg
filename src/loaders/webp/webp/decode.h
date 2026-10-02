@@ -187,8 +187,6 @@ WEBP_EXTERN(VP8StatusCode) WebPGetFeatures(const uint8_t*, size_t, WebPBitstream
 
 // Decoding options
 struct WebPDecoderOptions {
-  int use_scaling;                    // if true, scaling is applied _afterward_
-  int scaled_width, scaled_height;    // final resolution
   int dithering_strength;             // dithering strength (0=Off, 100=full)
   int alpha_dithering_strength;       // alpha dithering strength in [0..100]
 };
