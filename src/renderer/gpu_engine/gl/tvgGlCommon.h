@@ -129,7 +129,7 @@ struct GlGeometry
     bool convex : 1;
 };
 
-struct GlDrawable
+struct GlDrawable : Allocator
 {
     virtual ~GlDrawable() = default;
     virtual void destroy(GlRenderer& renderer) = 0;

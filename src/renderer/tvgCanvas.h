@@ -27,7 +27,7 @@
 
 enum Status : uint8_t {Synced = 0, Painting, Updating, Drawing, Damaged};
 
-struct Canvas::Impl
+struct Canvas::Impl : Allocator
 {
     Scene* scene;
     RenderMethod* renderer;

@@ -70,7 +70,7 @@ struct WgRenderSettings
     void release(WgContext& context);
 };
 
-struct WgPaint
+struct WgPaint : Allocator
 {
     RenderRegion viewport;
     Array<WgPaint*> clips;
@@ -178,7 +178,7 @@ struct WgStencilBatchRange
 
 // gaussian blur, drop shadow, fill, tint, tritone
 #define WG_GAUSSIAN_MAX_LEVEL 3
-struct WgRenderEffectParams
+struct WgRenderEffectParams : Allocator
 {
     WGPUBindGroup bindGroupParams{};
     WGPUBuffer bufferParams{};

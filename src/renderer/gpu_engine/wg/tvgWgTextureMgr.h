@@ -35,7 +35,7 @@ enum WgTexPrep : uint8_t
     Queued = 1 << 2
 };
 
-struct WgTextureEntry
+struct WgTextureEntry : Allocator
 {
     INLIST_ITEM(WgTextureEntry);
     WGPUTexture texture{};
@@ -52,7 +52,7 @@ struct WgTextureMgr
     bool flushPreprocess(WgContext& context);
     void clear(WgContext& context);
 
-    struct SurfaceEntry
+    struct SurfaceEntry : Allocator
     {
         INLIST_ITEM(SurfaceEntry);
         const RenderSurface* surface = nullptr;

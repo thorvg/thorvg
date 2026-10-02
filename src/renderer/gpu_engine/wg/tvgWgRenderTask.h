@@ -26,7 +26,7 @@
 #include "tvgWgCompositor.h"
 
 // base class for any renderable objects
-struct WgRenderTask
+struct WgRenderTask : Allocator
 {
     virtual ~WgRenderTask() {}
     virtual void stage(WgCompositor& compositor) = 0;

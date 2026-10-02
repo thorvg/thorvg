@@ -28,7 +28,7 @@
 #include "tvgMath.h"
 #include "tvgRender.h"
 
-struct LottieModifier
+struct LottieModifier : Allocator
 {
     enum Type : uint8_t
     {

@@ -74,7 +74,7 @@ static inline bool operator&(const EngineOption a, const EngineOption b)
     return (uint8_t(a) & uint8_t(b));
 }
 
-struct RenderSurface
+struct RenderSurface : Allocator
 {
     union {
         pixel_t* data = nullptr;    //system based data pointer
@@ -116,7 +116,7 @@ struct RenderSurface
     }
 };
 
-struct RenderCompositor
+struct RenderCompositor : Allocator
 {
     MaskMethod method;
     uint8_t opacity;
@@ -255,7 +255,7 @@ struct RenderRegion
 #endif
 
 
-struct RenderPath
+struct RenderPath : Allocator
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
@@ -374,7 +374,7 @@ struct RenderTrimPath
     bool trim(const RenderPath& in, RenderPath& out) const;
 };
 
-struct RenderStroke
+struct RenderStroke : Allocator
 {
     float width = 0.0f;
     RenderColor color{};
@@ -499,7 +499,7 @@ struct RenderShape
     }
 };
 
-struct RenderEffect
+struct RenderEffect : Allocator
 {
     RenderData rd = nullptr;
     RenderRegion extend{};
@@ -627,7 +627,7 @@ struct RenderEffectTritone : RenderEffect
     }
 };
 
-struct RenderMethod
+struct RenderMethod : Allocator
 {
 private:
     uint32_t refCnt = 0;

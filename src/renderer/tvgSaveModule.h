@@ -28,7 +28,7 @@
 namespace tvg
 {
 
-struct SaveModule
+struct SaveModule : Allocator
 {
     virtual ~SaveModule() {}
     virtual bool save(Paint* paint, Paint* bg, const char* filename, uint32_t quality) = 0;

@@ -28,7 +28,7 @@
 #include "tvgGlRenderTarget.h"
 #include "tvgGlProgram.h"
 
-struct GlRenderPass
+struct GlRenderPass : Allocator
 {
     GlRenderPass(GlRenderTarget* fbo);
     GlRenderPass(GlRenderPass&& other);

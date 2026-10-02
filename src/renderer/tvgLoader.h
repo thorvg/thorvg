@@ -63,7 +63,7 @@ struct PictureOps : LoaderOps
         LoaderOps{Type::Picture, owner}, resolver(resolver), rpath(rpath), accessible(accessible) {}
 };
 
-struct Loader
+struct Loader : Allocator
 {
     INLIST_ITEM(Loader);
 
