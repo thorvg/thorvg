@@ -86,6 +86,16 @@ struct Inlist
         ++count;
     }
 
+    void insert(T* element, T* at)
+    {
+        element->prev = at->prev;
+        element->next = at;
+        if (at->prev) at->prev->next = element;
+        else head = element;
+        at->prev = element;
+        ++count;
+    }
+
     T* back()
     {
         if (!tail) return nullptr;
