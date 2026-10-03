@@ -92,62 +92,13 @@ static void FUNC_NAME(const uint8_t* top_y, const uint8_t* bottom_y,           \
   }                                                                            \
 }
 
-// All variants implemented.
-UPSAMPLE_FUNC(UpsampleRgbLinePair,  VP8YuvToRgb,  3)
-UPSAMPLE_FUNC(UpsampleBgrLinePair,  VP8YuvToBgr,  3)
 UPSAMPLE_FUNC(UpsampleRgbaLinePair, VP8YuvToRgba, 4)
 UPSAMPLE_FUNC(UpsampleBgraLinePair, VP8YuvToBgra, 4)
-UPSAMPLE_FUNC(UpsampleArgbLinePair, VP8YuvToArgb, 4)
-UPSAMPLE_FUNC(UpsampleRgba4444LinePair, VP8YuvToRgba4444, 2)
-UPSAMPLE_FUNC(UpsampleRgb565LinePair,  VP8YuvToRgb565,  2)
 
 #undef LOAD_UV
 #undef UPSAMPLE_FUNC
 
 #endif  // FANCY_UPSAMPLING
-
-//------------------------------------------------------------------------------
-
-#if !defined(FANCY_UPSAMPLING)
-#define DUAL_SAMPLE_FUNC(FUNC_NAME, FUNC)                                      \
-static void FUNC_NAME(const uint8_t* top_y, const uint8_t* bot_y,              \
-                      const uint8_t* top_u, const uint8_t* top_v,              \
-                      const uint8_t* bot_u, const uint8_t* bot_v,              \
-                      uint8_t* top_dst, uint8_t* bot_dst, int len) {           \
-  const int half_len = len >> 1;                                               \
-  int x;                                                                       \
-  assert(top_dst != NULL);                                                     \
-  {                                                                            \
-    for (x = 0; x < half_len; ++x) {                                           \
-      FUNC(top_y[2 * x + 0], top_u[x], top_v[x], top_dst + 8 * x + 0);         \
-      FUNC(top_y[2 * x + 1], top_u[x], top_v[x], top_dst + 8 * x + 4);         \
-    }                                                                          \
-    if (len & 1) FUNC(top_y[2 * x + 0], top_u[x], top_v[x], top_dst + 8 * x);  \
-  }                                                                            \
-  if (bot_dst != NULL) {                                                       \
-    for (x = 0; x < half_len; ++x) {                                           \
-      FUNC(bot_y[2 * x + 0], bot_u[x], bot_v[x], bot_dst + 8 * x + 0);         \
-      FUNC(bot_y[2 * x + 1], bot_u[x], bot_v[x], bot_dst + 8 * x + 4);         \
-    }                                                                          \
-    if (len & 1) FUNC(bot_y[2 * x + 0], bot_u[x], bot_v[x], bot_dst + 8 * x);  \
-  }                                                                            \
-}
-
-DUAL_SAMPLE_FUNC(DualLineSamplerBGRA, VP8YuvToBgra)
-DUAL_SAMPLE_FUNC(DualLineSamplerARGB, VP8YuvToArgb)
-#undef DUAL_SAMPLE_FUNC
-
-#endif  // !FANCY_UPSAMPLING
-
-WebPUpsampleLinePairFunc WebPGetLinePairConverter(int alpha_is_last) {
-  WebPInitUpsamplers();
-  VP8YUVInit();
-#ifdef FANCY_UPSAMPLING
-  return WebPUpsamplers[alpha_is_last ? MODE_BGRA : MODE_ARGB];
-#else
-  return (alpha_is_last ? DualLineSamplerBGRA : DualLineSamplerARGB);
-#endif
-}
 
 //------------------------------------------------------------------------------
 // Main calls
@@ -163,17 +114,10 @@ WEBP_TSAN_IGNORE_FUNCTION void WebPInitUpsamplers(void) {
   if (upsampling_last_cpuinfo_used2 == VP8GetCPUInfo) return;
 
 #ifdef FANCY_UPSAMPLING
-  WebPUpsamplers[MODE_RGB]       = UpsampleRgbLinePair;
   WebPUpsamplers[MODE_RGBA]      = UpsampleRgbaLinePair;
-  WebPUpsamplers[MODE_BGR]       = UpsampleBgrLinePair;
   WebPUpsamplers[MODE_BGRA]      = UpsampleBgraLinePair;
-  WebPUpsamplers[MODE_ARGB]      = UpsampleArgbLinePair;
-  WebPUpsamplers[MODE_RGBA_4444] = UpsampleRgba4444LinePair;
-  WebPUpsamplers[MODE_RGB_565]   = UpsampleRgb565LinePair;
   WebPUpsamplers[MODE_rgbA]      = UpsampleRgbaLinePair;
   WebPUpsamplers[MODE_bgrA]      = UpsampleBgraLinePair;
-  WebPUpsamplers[MODE_Argb]      = UpsampleArgbLinePair;
-  WebPUpsamplers[MODE_rgbA_4444] = UpsampleRgba4444LinePair;
 
   // If defined, use CPUInfo() to overwrite some pointers with faster versions.
   if (VP8GetCPUInfo != NULL) {

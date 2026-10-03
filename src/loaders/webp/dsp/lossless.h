@@ -61,11 +61,7 @@ void VP8LInverseTransform(const struct VP8LTransform* const transform,
 // Color space conversion.
 typedef void (*VP8LConvertFunc)(const uint32_t* src, int num_pixels,
                                 uint8_t* dst);
-extern VP8LConvertFunc VP8LConvertBGRAToRGB;
 extern VP8LConvertFunc VP8LConvertBGRAToRGBA;
-extern VP8LConvertFunc VP8LConvertBGRAToRGBA4444;
-extern VP8LConvertFunc VP8LConvertBGRAToRGB565;
-extern VP8LConvertFunc VP8LConvertBGRAToBGR;
 
 // Converts from BGRA to other color spaces.
 void VP8LConvertFromBGRA(const uint32_t* const in_data, int num_pixels,
@@ -111,13 +107,7 @@ void VP8LColorIndexInverseTransformAlpha(
 void VP8LTransformColorInverse_C(const VP8LMultipliers* const m,
                                  uint32_t* data, int num_pixels);
 
-void VP8LConvertBGRAToRGB_C(const uint32_t* src, int num_pixels, uint8_t* dst);
 void VP8LConvertBGRAToRGBA_C(const uint32_t* src, int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToRGBA4444_C(const uint32_t* src,
-                                 int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToRGB565_C(const uint32_t* src,
-                               int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToBGR_C(const uint32_t* src, int num_pixels, uint8_t* dst);
 void VP8LAddGreenToBlueAndRed_C(uint32_t* data, int num_pixels);
 
 // Must be called before calling any of the above methods.

@@ -117,38 +117,6 @@ static WEBP_INLINE void VP8YuvToBgr(int y, int u, int v,
   bgr[2] = VP8YUVToR(y, v);
 }
 
-static WEBP_INLINE void VP8YuvToRgb565(int y, int u, int v,
-                                       uint8_t* const rgb) {
-  const int r = VP8YUVToR(y, v);      // 5 usable bits
-  const int g = VP8YUVToG(y, u, v);   // 6 usable bits
-  const int b = VP8YUVToB(y, u);      // 5 usable bits
-  const int rg = (r & 0xf8) | (g >> 5);
-  const int gb = ((g << 3) & 0xe0) | (b >> 3);
-#ifdef WEBP_SWAP_16BIT_CSP
-  rgb[0] = gb;
-  rgb[1] = rg;
-#else
-  rgb[0] = rg;
-  rgb[1] = gb;
-#endif
-}
-
-static WEBP_INLINE void VP8YuvToRgba4444(int y, int u, int v,
-                                         uint8_t* const argb) {
-  const int r = VP8YUVToR(y, v);        // 4 usable bits
-  const int g = VP8YUVToG(y, u, v);     // 4 usable bits
-  const int b = VP8YUVToB(y, u);        // 4 usable bits
-  const int rg = (r & 0xf0) | (g >> 4);
-  const int ba = (b & 0xf0) | 0x0f;     // overwrite the lower 4 bits
-#ifdef WEBP_SWAP_16BIT_CSP
-  argb[0] = ba;
-  argb[1] = rg;
-#else
-  argb[0] = rg;
-  argb[1] = ba;
-#endif
-}
-
 #else
 
 // Table-based version, not totally equivalent to the SSE2 version.
@@ -179,51 +147,10 @@ static WEBP_INLINE void VP8YuvToBgr(int y, int u, int v,
   bgr[2] = VP8kClip[y + r_off - YUV_RANGE_MIN];
 }
 
-static WEBP_INLINE void VP8YuvToRgb565(int y, int u, int v,
-                                       uint8_t* const rgb) {
-  const int r_off = VP8kVToR[v];
-  const int g_off = (VP8kVToG[v] + VP8kUToG[u]) >> YUV_FIX;
-  const int b_off = VP8kUToB[u];
-  const int rg = ((VP8kClip[y + r_off - YUV_RANGE_MIN] & 0xf8) |
-                  (VP8kClip[y + g_off - YUV_RANGE_MIN] >> 5));
-  const int gb = (((VP8kClip[y + g_off - YUV_RANGE_MIN] << 3) & 0xe0) |
-                   (VP8kClip[y + b_off - YUV_RANGE_MIN] >> 3));
-#ifdef WEBP_SWAP_16BIT_CSP
-  rgb[0] = gb;
-  rgb[1] = rg;
-#else
-  rgb[0] = rg;
-  rgb[1] = gb;
-#endif
-}
-
-static WEBP_INLINE void VP8YuvToRgba4444(int y, int u, int v,
-                                         uint8_t* const argb) {
-  const int r_off = VP8kVToR[v];
-  const int g_off = (VP8kVToG[v] + VP8kUToG[u]) >> YUV_FIX;
-  const int b_off = VP8kUToB[u];
-  const int rg = ((VP8kClip4Bits[y + r_off - YUV_RANGE_MIN] << 4) |
-                   VP8kClip4Bits[y + g_off - YUV_RANGE_MIN]);
-  const int ba = (VP8kClip4Bits[y + b_off - YUV_RANGE_MIN] << 4) | 0x0f;
-#ifdef WEBP_SWAP_16BIT_CSP
-  argb[0] = ba;
-  argb[1] = rg;
-#else
-  argb[0] = rg;
-  argb[1] = ba;
-#endif
-}
-
 #endif  // WEBP_YUV_USE_TABLE
 
 //-----------------------------------------------------------------------------
 // Alpha handling variants
-
-static WEBP_INLINE void VP8YuvToArgb(uint8_t y, uint8_t u, uint8_t v,
-                                     uint8_t* const argb) {
-  argb[0] = 0xff;
-  VP8YuvToRgb(y, u, v, argb + 1);
-}
 
 static WEBP_INLINE void VP8YuvToBgra(uint8_t y, uint8_t u, uint8_t v,
                                      uint8_t* const bgra) {
@@ -265,54 +192,6 @@ void VP8YuvToBgr32(const uint8_t* y, const uint8_t* u, const uint8_t* v,
 void VP8YUVInitSSE2(void);
 
 #endif    // WEBP_USE_SSE2
-
-//------------------------------------------------------------------------------
-// RGB -> YUV conversion
-
-// Stub functions that can be called with various rounding values:
-static WEBP_INLINE int VP8ClipUV(int uv, int rounding) {
-  uv = (uv + rounding + (128 << (YUV_FIX + 2))) >> (YUV_FIX + 2);
-  return ((uv & ~0xff) == 0) ? uv : (uv < 0) ? 0 : 255;
-}
-
-#ifndef USE_YUVj
-
-static WEBP_INLINE int VP8RGBToY(int r, int g, int b, int rounding) {
-  const int luma = 16839 * r + 33059 * g + 6420 * b;
-  return (luma + rounding + (16 << YUV_FIX)) >> YUV_FIX;  // no need to clip
-}
-
-static WEBP_INLINE int VP8RGBToU(int r, int g, int b, int rounding) {
-  const int u = -9719 * r - 19081 * g + 28800 * b;
-  return VP8ClipUV(u, rounding);
-}
-
-static WEBP_INLINE int VP8RGBToV(int r, int g, int b, int rounding) {
-  const int v = +28800 * r - 24116 * g - 4684 * b;
-  return VP8ClipUV(v, rounding);
-}
-
-#else
-
-// This JPEG-YUV colorspace, only for comparison!
-// These are also 16bit precision coefficients from Rec.601, but with full
-// [0..255] output range.
-static WEBP_INLINE int VP8RGBToY(int r, int g, int b, int rounding) {
-  const int luma = 19595 * r + 38470 * g + 7471 * b;
-  return (luma + rounding) >> YUV_FIX;  // no need to clip
-}
-
-static WEBP_INLINE int VP8RGBToU(int r, int g, int b, int rounding) {
-  const int u = -11058 * r - 21710 * g + 32768 * b;
-  return VP8ClipUV(u, rounding);
-}
-
-static WEBP_INLINE int VP8RGBToV(int r, int g, int b, int rounding) {
-  const int v = 32768 * r - 27439 * g - 5329 * b;
-  return VP8ClipUV(v, rounding);
-}
-
-#endif    // USE_YUVj
 
 #ifdef __cplusplus
 }    // extern "C"

@@ -172,11 +172,6 @@ void WebPSamplerProcessPlane(const uint8_t* y, int y_stride,
 // Sampling functions to convert rows of YUV to RGB(A)
 extern WebPSamplerRowFunc WebPSamplers[/* MODE_LAST */];
 
-// General function for converting two lines of ARGB or RGBA.
-// 'alpha_is_last' should be true if 0xff000000 is stored in memory as
-// as 0x00, 0x00, 0x00, 0xff (little endian).
-WebPUpsampleLinePairFunc WebPGetLinePairConverter(int alpha_is_last);
-
 // Must be called before using the WebPUpsamplers[] (and for premultiplied
 // colorspaces like rgbA, rgbA4444, etc)
 void WebPInitUpsamplers(void);
@@ -190,10 +185,6 @@ void WebPInitSamplers(void);
 // alpha_first should be 0 for argb, 1 for rgba or bgra (where alpha is last).
 extern void (*WebPApplyAlphaMultiply)(
     uint8_t* rgba, int alpha_first, int w, int h, int stride);
-
-// Same, buf specifically for RGBA4444 format
-extern void (*WebPApplyAlphaMultiply4444)(
-    uint8_t* rgba4444, int w, int h, int stride);
 
 // Dispatch the values from alpha[] plane to the ARGB destination 'dst'.
 // Returns true if alpha[] plane has non-trivial values different from 0xff.

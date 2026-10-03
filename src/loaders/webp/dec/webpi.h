@@ -34,7 +34,7 @@ struct WebPDecParams {
   const WebPDecoderOptions* options;  // if not NULL, use alt decoding features
   void* memory;                  // overall scratch memory for the output work.
 
-  OutputFunc emit;               // output RGB or YUV samples
+  OutputFunc emit;               // output RGB samples
   OutputFunc emit_alpha;         // output alpha channel
 };
 
