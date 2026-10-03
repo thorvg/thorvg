@@ -531,8 +531,7 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
 //------------------------------------------------------------------------------
 
 static uint8_t* Decode(WEBP_CSP_MODE mode, const uint8_t* const data,
-                       size_t data_size, int* const width, int* const height,
-                       WebPDecBuffer* const keep_info) {
+                       size_t data_size, int* const width, int* const height) {
   WebPDecParams params;
   WebPDecBuffer output;
 
@@ -551,9 +550,6 @@ static uint8_t* Decode(WEBP_CSP_MODE mode, const uint8_t* const data,
   // Decode
   if (DecodeInto(data, data_size, &params) != VP8_STATUS_OK) {
     return NULL;
-  }
-  if (keep_info != NULL) {    // keep track of the side-info
-    WebPCopyDecBuffer(&output, keep_info);
   }
   // return decoded samples (don't clear 'output'!)
   return output.u.RGBA.rgba;
@@ -591,12 +587,12 @@ void WebPIoInitFrame(VP8Io* const io) {
 
 uint8_t* WebPDecodeBGRA(const uint8_t* data, size_t data_size,
                         int* width, int* height) {
-  return Decode(MODE_bgrA, data, data_size, width, height, NULL);
+  return Decode(MODE_bgrA, data, data_size, width, height);
 }
 
 uint8_t* WebPDecodeRGBA(const uint8_t* data, size_t data_size,
                         int* width, int* height) {
-  return Decode(MODE_rgbA, data, data_size, width, height, NULL);
+  return Decode(MODE_rgbA, data, data_size, width, height);
 }
 
 int WebPGetInfo(const uint8_t* data, size_t data_size,

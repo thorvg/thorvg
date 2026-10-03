@@ -21,12 +21,6 @@
 #include "../utils/utils.h"
 
 //------------------------------------------------------------------------------
-
-int WebPGetDecoderVersion(void) {
-  return (DEC_MAJ_VERSION << 16) | (DEC_MIN_VERSION << 8) | DEC_REV_VERSION;
-}
-
-//------------------------------------------------------------------------------
 // VP8Decoder
 
 static void SetOk(VP8Decoder* const dec) {
@@ -52,17 +46,6 @@ VP8Decoder* VP8New(void) {
     dec->num_parts_ = 1;
   }
   return dec;
-}
-
-VP8StatusCode VP8Status(VP8Decoder* const dec) {
-  if (!dec) return VP8_STATUS_INVALID_PARAM;
-  return dec->status_;
-}
-
-const char* VP8StatusMessage(VP8Decoder* const dec) {
-  if (dec == NULL) return "no object";
-  if (!dec->error_msg_) return "OK";
-  return dec->error_msg_;
 }
 
 void VP8Delete(VP8Decoder* const dec) {

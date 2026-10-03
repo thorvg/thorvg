@@ -78,11 +78,6 @@ void WebPIoInitFrame(VP8Io* const io);
 VP8StatusCode WebPAllocateDecBuffer(int width, int height,
                                     WebPDecBuffer* const buffer);
 
-// Copy 'src' into 'dst' buffer, making sure 'dst' is not marked as owner of the
-// memory (still held by 'src').
-void WebPCopyDecBuffer(const WebPDecBuffer* const src,
-                       WebPDecBuffer* const dst);
-
 //------------------------------------------------------------------------------
 
 #ifdef __cplusplus

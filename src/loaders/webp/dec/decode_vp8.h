@@ -34,7 +34,6 @@ extern "C" {
 //
 //   VP8Decoder* dec = VP8New();
 //   bool ok = VP8Decode(dec);
-//   if (!ok) printf("Error: %s\n", VP8StatusMessage(dec));
 //   VP8Delete(dec);
 //   return ok;
 
@@ -120,12 +119,6 @@ int VP8GetHeaders(VP8Decoder* const dec, VP8Io* const io);
 // Decode a picture. Will call VP8GetHeaders() if it wasn't done already.
 // Returns false in case of error.
 int VP8Decode(VP8Decoder* const dec, VP8Io* const io);
-
-// Return current status of the decoder:
-VP8StatusCode VP8Status(VP8Decoder* const dec);
-
-// return readable string corresponding to the last status.
-const char* VP8StatusMessage(VP8Decoder* const dec);
 
 // Resets the decoder in its initial state, reclaiming memory.
 // Not a mandatory call between calls to VP8Decode().
