@@ -140,6 +140,7 @@ struct GlDrawable
     Point size;  // view size
     uint32_t opacity;
     RenderUpdateFlag flags = RenderUpdateFlag::None;  // a backup flag for deferred update
+    RenderRegion box{};                               // last reported region for partial rendering
 };
 
 struct GlShape : GlDrawable

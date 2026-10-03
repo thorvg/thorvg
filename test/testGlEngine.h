@@ -93,12 +93,24 @@ struct TestGLEngine
         CGLSetCurrentContext(context);
         canvas->target(nullptr, nullptr, context, static_cast<int32_t>(fbo), width, height, colorSpace);
     }
+
+    void bind()
+    {
+        CGLSetCurrentContext(context);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    }
 };
 
 #else
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#if defined(THORVG_GL_TARGET_GLES)
+#include <GLES3/gl3.h>
+#else
+#define GL_GLEXT_PROTOTYPES 1
+#include <GL/gl.h>
+#endif
 
 using namespace tvg;
 
@@ -181,6 +193,11 @@ struct TestGLEngine
     void target(GlCanvas* canvas)
     {
         canvas->target(display, surface, context, 0, width, height, colorSpace);
+    }
+
+    void bind()
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     bool initDisplay()

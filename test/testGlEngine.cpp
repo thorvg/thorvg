@@ -529,4 +529,176 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("GL Partial Rendering", "[tvgGlEngine]")
+{
+    TestGLEngine engine(200, 200);
+
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<GlCanvas>(GlCanvas::gen());
+        REQUIRE(canvas);
+        engine.target(canvas.get());
+
+        // The engine blends its result onto the target, so start from a defined target
+        engine.bind();
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Renders the pending changes partially, then the same state fully, and compares both
+        std::vector<uint32_t> partial(200 * 200), full(200 * 200);
+        auto verify = [&]() {
+            REQUIRE(canvas->update() == Result::Success);
+            REQUIRE(canvas->draw() == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+            engine.bind();
+            glReadPixels(0, 0, 200, 200, GL_RGBA, GL_UNSIGNED_BYTE, partial.data());
+
+            REQUIRE(canvas->update() == Result::Success);
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+            engine.bind();
+            glReadPixels(0, 0, 200, 200, GL_RGBA, GL_UNSIGNED_BYTE, full.data());
+
+            REQUIRE(full[0] != 0);
+            return partial == full;
+        };
+
+        auto bg = Shape::gen();
+        REQUIRE(bg->appendRect(0, 0, 200, 200) == Result::Success);
+        REQUIRE(bg->fill(240, 240, 240) == Result::Success);
+        REQUIRE(canvas->add(bg) == Result::Success);
+
+        // Translucent composition with a rounded clip
+        auto scene = Scene::gen();
+        auto child = Shape::gen();
+        REQUIRE(child->appendRect(40, 40, 120, 120) == Result::Success);
+        REQUIRE(child->fill(120, 40, 200) == Result::Success);
+        REQUIRE(scene->add(child) == Result::Success);
+        auto clipper = Shape::gen();
+        REQUIRE(clipper->appendRect(40, 40, 120, 120, 20, 20) == Result::Success);
+        REQUIRE(scene->clip(clipper) == Result::Success);
+        REQUIRE(scene->opacity(128) == Result::Success);
+        REQUIRE(canvas->add(scene) == Result::Success);
+
+        // Translucent shape straddling the dirty regions
+        auto shape = Shape::gen();
+        REQUIRE(shape->appendRect(20, 80, 60, 40) == Result::Success);
+        REQUIRE(shape->fill(0, 0, 255, 100) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
+
+        std::vector<uint32_t> data(16 * 16, 0xff20a040);
+        auto picture = Picture::gen();
+        REQUIRE(picture->load(data.data(), 16, 16, ColorSpace::ARGB8888, true) == Result::Success);
+        REQUIRE(picture->translate(170, 10) == Result::Success);
+        REQUIRE(canvas->add(picture) == Result::Success);
+
+        REQUIRE(verify());
+
+        // Transform
+        REQUIRE(shape->translate(30, 0) == Result::Success);
+        REQUIRE(verify());
+        REQUIRE(scene->translate(10, 10) == Result::Success);
+        REQUIRE(verify());
+        REQUIRE(clipper->translate(-20, 0) == Result::Success);
+        REQUIRE(verify());
+
+        // Opacity & Visibility
+        REQUIRE(shape->opacity(0) == Result::Success);
+        REQUIRE(picture->opacity(0) == Result::Success);
+        REQUIRE(verify());
+        REQUIRE(shape->opacity(255) == Result::Success);
+        REQUIRE(picture->opacity(255) == Result::Success);
+        REQUIRE(verify());
+        REQUIRE(shape->visible(false) == Result::Success);
+        REQUIRE(verify());
+
+        // Removal
+        REQUIRE(canvas->remove(picture) == Result::Success);
+        REQUIRE(verify());
+
+        // Moving a rectangular clipper changes the viewport of the nested clipped content only
+        auto outer = Scene::gen();
+        auto inner = Scene::gen();
+        auto nested = Shape::gen();
+        REQUIRE(nested->appendRect(0, 0, 90, 90) == Result::Success);
+        REQUIRE(nested->fill(255, 0, 0) == Result::Success);
+        REQUIRE(inner->add(nested) == Result::Success);
+        auto rounded = Shape::gen();
+        REQUIRE(rounded->appendRect(0, 0, 75, 75, 10, 10) == Result::Success);
+        REQUIRE(inner->clip(rounded) == Result::Success);
+        REQUIRE(outer->add(inner) == Result::Success);
+        auto rect = Shape::gen();
+        REQUIRE(rect->appendRect(0, 0, 40, 90) == Result::Success);
+        REQUIRE(outer->clip(rect) == Result::Success);
+        auto panel = Scene::gen();
+        REQUIRE(panel->add(outer) == Result::Success);
+        REQUIRE(panel->translate(100, 100) == Result::Success);
+        REQUIRE(canvas->add(panel) == Result::Success);
+        REQUIRE(verify());
+        REQUIRE(rect->translate(25, 0) == Result::Success);
+        REQUIRE(verify());
+        REQUIRE(rect->translate(0, 0) == Result::Success);
+        REQUIRE(verify());
+
+#if defined(THORVG_PARTIAL_RENDER_SUPPORT) && !defined(THORVG_GL_TARGET_GLES)
+        // Counts the samples a frame draws, the final blit covers the target once
+        auto samples = [&](bool clear) {
+            GLuint query = 0, cnt = 0;
+            glGenQueries(1, &query);
+            glBeginQuery(GL_SAMPLES_PASSED, query);
+            REQUIRE(canvas->update() == Result::Success);
+            REQUIRE(canvas->draw(clear) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+            glEndQuery(GL_SAMPLES_PASSED);
+            glGetQueryObjectuiv(query, GL_QUERY_RESULT, &cnt);
+            glDeleteQueries(1, &query);
+            return cnt;
+        };
+
+        // Nothing changed, the clipped scene included: only the blit
+        REQUIRE(samples(false) == 200 * 200);
+
+        // Distant changes redraw their own regions only
+        auto first = Shape::gen();
+        REQUIRE(first->appendRect(4, 4, 8, 8) == Result::Success);
+        REQUIRE(canvas->add(first) == Result::Success);
+        auto second = Shape::gen();
+        REQUIRE(second->appendRect(188, 188, 8, 8) == Result::Success);
+        REQUIRE(canvas->add(second) == Result::Success);
+        REQUIRE(samples(false) > 200 * 200);
+
+        REQUIRE(first->fill(255, 0, 0) == Result::Success);
+        REQUIRE(second->fill(0, 0, 255) == Result::Success);
+        auto dirty = samples(false) - 200 * 200;
+        REQUIRE(dirty * 20 < samples(true) - 200 * 200);
+#endif
+
+        // Blended scene between the dirty regions
+        auto blended = Scene::gen();
+        auto content = Shape::gen();
+        REQUIRE(content->appendRect(60, 60, 80, 80) == Result::Success);
+        REQUIRE(content->fill(180, 140, 90) == Result::Success);
+        REQUIRE(blended->add(content) == Result::Success);
+        REQUIRE(blended->blend(BlendMethod::Multiply) == Result::Success);
+        REQUIRE(canvas->add(blended) == Result::Success);
+        auto left = Shape::gen();
+        REQUIRE(left->appendRect(52, 95, 12, 10) == Result::Success);
+        REQUIRE(left->fill(200, 0, 0) == Result::Success);
+        REQUIRE(canvas->add(left) == Result::Success);
+        auto right = Shape::gen();
+        REQUIRE(right->appendRect(136, 95, 12, 10) == Result::Success);
+        REQUIRE(right->fill(0, 0, 200) == Result::Success);
+        REQUIRE(canvas->add(right) == Result::Success);
+        REQUIRE(verify());
+        REQUIRE(left->translate(0, 5) == Result::Success);
+        REQUIRE(right->translate(0, 5) == Result::Success);
+        REQUIRE(verify());
+
+        // Target
+        engine.target(canvas.get());
+        REQUIRE(verify());
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
