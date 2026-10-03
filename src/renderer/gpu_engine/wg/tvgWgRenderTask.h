@@ -84,7 +84,7 @@ struct WgSceneTask : WgRenderTask
     // scene blend/compose properties
     WgCompose* compose{};
     // scene effect properties
-    const RenderEffect* effect{};
+    Array<const RenderEffect*> effects;
 
     WgSceneTask(WgRenderTarget* renderTarget, WgCompose* compose, WgSceneTask* parent) :
         parent(parent), renderTarget(renderTarget), compose(compose) {}
@@ -94,7 +94,7 @@ struct WgSceneTask : WgRenderTask
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
 
     void runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
-    void runEffect(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
+    void runEffect(WgContext& context, WgCompositor& compositor, const RenderEffect* effect);
 };
 
 #endif  // _TVG_WG_RENDER_TASK_H_
