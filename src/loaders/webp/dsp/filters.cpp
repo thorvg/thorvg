@@ -165,25 +165,6 @@ static WEBP_INLINE void DoGradientFilter(const uint8_t* in,
 
 //------------------------------------------------------------------------------
 
-static void HorizontalFilter(const uint8_t* data, int width, int height,
-                             int stride, uint8_t* filtered_data) {
-  DoHorizontalFilter(data, width, height, stride, 0, height, 0, filtered_data);
-}
-
-static void VerticalFilter(const uint8_t* data, int width, int height,
-                           int stride, uint8_t* filtered_data) {
-  DoVerticalFilter(data, width, height, stride, 0, height, 0, filtered_data);
-}
-
-
-static void GradientFilter(const uint8_t* data, int width, int height,
-                           int stride, uint8_t* filtered_data) {
-  DoGradientFilter(data, width, height, stride, 0, height, 0, filtered_data);
-}
-
-
-//------------------------------------------------------------------------------
-
 static void VerticalUnfilter(int width, int height, int stride, int row,
                              int num_rows, uint8_t* data) {
   DoVerticalFilter(data, width, height, stride, row, num_rows, 1, data);
@@ -202,7 +183,6 @@ static void GradientUnfilter(int width, int height, int stride, int row,
 //------------------------------------------------------------------------------
 // Init function
 
-WebPFilterFunc WebPFilters[WEBP_FILTER_LAST];
 WebPUnfilterFunc WebPUnfilters[WEBP_FILTER_LAST];
 
 extern void VP8FiltersInitMIPSdspR2(void);
@@ -218,11 +198,6 @@ WEBP_TSAN_IGNORE_FUNCTION void VP8FiltersInit(void) {
   WebPUnfilters[WEBP_FILTER_HORIZONTAL] = HorizontalUnfilter;
   WebPUnfilters[WEBP_FILTER_VERTICAL] = VerticalUnfilter;
   WebPUnfilters[WEBP_FILTER_GRADIENT] = GradientUnfilter;
-
-  WebPFilters[WEBP_FILTER_NONE] = NULL;
-  WebPFilters[WEBP_FILTER_HORIZONTAL] = HorizontalFilter;
-  WebPFilters[WEBP_FILTER_VERTICAL] = VerticalFilter;
-  WebPFilters[WEBP_FILTER_GRADIENT] = GradientFilter;
 
   if (VP8GetCPUInfo != NULL) {
 #if defined(WEBP_USE_SSE2)
