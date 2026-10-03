@@ -74,12 +74,16 @@ struct VP8BitReader {
   // read buffer
   const uint8_t* buf_;        // next byte to be read
   const uint8_t* buf_end_;    // end of read buffer
+  const uint8_t* buf_max_;    // max packed-read position on buffer
   int eof_;                   // true if input is exhausted
 };
 
 // Initialize the bit reader and the boolean decoder.
 void VP8InitBitReader(VP8BitReader* const br,
-                      const uint8_t* const start, const uint8_t* const end);
+                      const uint8_t* const start, size_t size);
+// Sets the working read buffer.
+void VP8BitReaderSetBuffer(VP8BitReader* const br,
+                           const uint8_t* const start, size_t size);
 
 // return the next value made of 'num_bits' bits
 uint32_t VP8GetValue(VP8BitReader* const br, int num_bits);
