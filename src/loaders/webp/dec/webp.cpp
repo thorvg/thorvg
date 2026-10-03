@@ -492,7 +492,7 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
       status = dec->status_;   // An error occurred. Grab error status.
     } else {
       // Allocate/check output buffers.
-      status = WebPAllocateDecBuffer(io.width, io.height, params->options,
+      status = WebPAllocateDecBuffer(io.width, io.height,
                                      params->output);
       if (status == VP8_STATUS_OK) {  // Decode
         VP8InitDithering(params->options, dec);
@@ -511,7 +511,7 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
       status = dec->status_;   // An error occurred. Grab error status.
     } else {
       // Allocate/check output buffers.
-      status = WebPAllocateDecBuffer(io.width, io.height, params->options,
+      status = WebPAllocateDecBuffer(io.width, io.height,
                                      params->output);
       if (status == VP8_STATUS_OK) {  // Decode
         if (!VP8LDecodeImage(dec)) {
@@ -525,18 +525,13 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
   if (status != VP8_STATUS_OK) {
     WebPFreeDecBuffer(params->output);
   }
-
-  if (params->options != NULL && params->options->flip) {
-    status = WebPFlipBuffer(params->output);
-  }
   return status;
 }
 
 //------------------------------------------------------------------------------
 
 static uint8_t* Decode(WEBP_CSP_MODE mode, const uint8_t* const data,
-                       size_t data_size, int* const width, int* const height,
-                       WebPDecBuffer* const keep_info) {
+                       size_t data_size, int* const width, int* const height) {
   WebPDecParams params;
   WebPDecBuffer output;
 
@@ -556,11 +551,8 @@ static uint8_t* Decode(WEBP_CSP_MODE mode, const uint8_t* const data,
   if (DecodeInto(data, data_size, &params) != VP8_STATUS_OK) {
     return NULL;
   }
-  if (keep_info != NULL) {    // keep track of the side-info
-    WebPCopyDecBuffer(&output, keep_info);
-  }
   // return decoded samples (don't clear 'output'!)
-  return WebPIsRGBMode(mode) ? output.u.RGBA.rgba : output.u.YUVA.y;
+  return output.u.RGBA.rgba;
 }
 
 
@@ -570,61 +562,20 @@ static void DefaultFeatures(WebPBitstreamFeatures* const features) {
 }
 
 //------------------------------------------------------------------------------
-// Cropping and rescaling.
+// Output area: no cropping and no scaling, the whole picture is output.
 
-int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
-                          VP8Io* const io, WEBP_CSP_MODE src_colorspace) {
-  const int W = io->width;
-  const int H = io->height;
-  int x = 0, y = 0, w = W, h = H;
-
-  // Cropping
-  io->use_cropping = (options != NULL) && (options->use_cropping > 0);
-  if (io->use_cropping) {
-    w = options->crop_width;
-    h = options->crop_height;
-    x = options->crop_left;
-    y = options->crop_top;
-    if (!WebPIsRGBMode(src_colorspace)) {   // only snap for YUV420
-      x &= ~1;
-      y &= ~1;
-    }
-    if (x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > W || y + h > H) {
-      return 0;  // out of frame boundary error
-    }
-  }
-  io->crop_left   = x;
-  io->crop_top    = y;
-  io->crop_right  = x + w;
-  io->crop_bottom = y + h;
-  io->mb_w = w;
-  io->mb_h = h;
-
-  // Scaling
-  io->use_scaling = (options != NULL) && (options->use_scaling > 0);
-  if (io->use_scaling) {
-    if (options->scaled_width <= 0 || options->scaled_height <= 0) {
-      return 0;
-    }
-    io->scaled_width = options->scaled_width;
-    io->scaled_height = options->scaled_height;
-  }
-
-  // Filter
-  io->bypass_filtering = options && options->bypass_filtering;
-
-  // Fancy upsampler
+void WebPIoInitFrame(VP8Io* const io) {
+  io->crop_left   = 0;
+  io->crop_top    = 0;
+  io->crop_right  = io->width;
+  io->crop_bottom = io->height;
+  io->mb_w = io->width;
+  io->mb_h = io->height;
 #ifdef FANCY_UPSAMPLING
-  io->fancy_upsampling = (options == NULL) || (!options->no_fancy_upsampling);
+  io->fancy_upsampling = 1;
+#else
+  io->fancy_upsampling = 0;
 #endif
-
-  if (io->use_scaling) {
-    // disable filter (only for large downscaling ratio).
-    io->bypass_filtering = (io->scaled_width < W * 3 / 4) &&
-                           (io->scaled_height < H * 3 / 4);
-    io->fancy_upsampling = 0;
-  }
-  return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -636,12 +587,12 @@ int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
 
 uint8_t* WebPDecodeBGRA(const uint8_t* data, size_t data_size,
                         int* width, int* height) {
-  return Decode(MODE_bgrA, data, data_size, width, height, NULL);
+  return Decode(MODE_bgrA, data, data_size, width, height);
 }
 
 uint8_t* WebPDecodeRGBA(const uint8_t* data, size_t data_size,
                         int* width, int* height) {
-  return Decode(MODE_rgbA, data, data_size, width, height, NULL);
+  return Decode(MODE_rgbA, data, data_size, width, height);
 }
 
 int WebPGetInfo(const uint8_t* data, size_t data_size,

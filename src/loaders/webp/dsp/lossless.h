@@ -61,11 +61,7 @@ void VP8LInverseTransform(const struct VP8LTransform* const transform,
 // Color space conversion.
 typedef void (*VP8LConvertFunc)(const uint32_t* src, int num_pixels,
                                 uint8_t* dst);
-extern VP8LConvertFunc VP8LConvertBGRAToRGB;
 extern VP8LConvertFunc VP8LConvertBGRAToRGBA;
-extern VP8LConvertFunc VP8LConvertBGRAToRGBA4444;
-extern VP8LConvertFunc VP8LConvertBGRAToRGB565;
-extern VP8LConvertFunc VP8LConvertBGRAToBGR;
 
 // Converts from BGRA to other color spaces.
 void VP8LConvertFromBGRA(const uint32_t* const in_data, int num_pixels,
@@ -111,49 +107,11 @@ void VP8LColorIndexInverseTransformAlpha(
 void VP8LTransformColorInverse_C(const VP8LMultipliers* const m,
                                  uint32_t* data, int num_pixels);
 
-void VP8LConvertBGRAToRGB_C(const uint32_t* src, int num_pixels, uint8_t* dst);
 void VP8LConvertBGRAToRGBA_C(const uint32_t* src, int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToRGBA4444_C(const uint32_t* src,
-                                 int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToRGB565_C(const uint32_t* src,
-                               int num_pixels, uint8_t* dst);
-void VP8LConvertBGRAToBGR_C(const uint32_t* src, int num_pixels, uint8_t* dst);
 void VP8LAddGreenToBlueAndRed_C(uint32_t* data, int num_pixels);
 
 // Must be called before calling any of the above methods.
 void VP8LDspInit(void);
-
-//------------------------------------------------------------------------------
-// Encoding
-
-extern VP8LProcessBlueAndRedFunc VP8LSubtractGreenFromBlueAndRed;
-extern VP8LTransformColorFunc VP8LTransformColor;
-typedef void (*VP8LCollectColorBlueTransformsFunc)(
-    const uint32_t* argb, int stride,
-    int tile_width, int tile_height,
-    int green_to_blue, int red_to_blue, int histo[]);
-extern VP8LCollectColorBlueTransformsFunc VP8LCollectColorBlueTransforms;
-
-typedef void (*VP8LCollectColorRedTransformsFunc)(
-    const uint32_t* argb, int stride,
-    int tile_width, int tile_height,
-    int green_to_red, int histo[]);
-extern VP8LCollectColorRedTransformsFunc VP8LCollectColorRedTransforms;
-
-// Expose some C-only fallback functions
-void VP8LTransformColor_C(const VP8LMultipliers* const m,
-                          uint32_t* data, int num_pixels);
-void VP8LSubtractGreenFromBlueAndRed_C(uint32_t* argb_data, int num_pixels);
-
-//------------------------------------------------------------------------------
-// Image transforms.
-
-void VP8LResidualImage(int width, int height, int bits, int low_effort,
-                       uint32_t* const argb, uint32_t* const argb_scratch,
-                       uint32_t* const image);
-
-void VP8LColorSpaceTransform(int width, int height, int bits, int quality,
-                             uint32_t* const argb, uint32_t* image);
 
 //------------------------------------------------------------------------------
 // Misc methods.
@@ -163,136 +121,6 @@ static WEBP_INLINE uint32_t VP8LSubSampleSize(uint32_t size,
                                               uint32_t sampling_bits) {
   return (size + (1 << sampling_bits) - 1) >> sampling_bits;
 }
-
-// -----------------------------------------------------------------------------
-// Faster logarithm for integers. Small values use a look-up table.
-#define LOG_LOOKUP_IDX_MAX 256
-extern const float kLog2Table[LOG_LOOKUP_IDX_MAX];
-extern const float kSLog2Table[LOG_LOOKUP_IDX_MAX];
-typedef float (*VP8LFastLog2SlowFunc)(uint32_t v);
-
-extern VP8LFastLog2SlowFunc VP8LFastLog2Slow;
-extern VP8LFastLog2SlowFunc VP8LFastSLog2Slow;
-
-static WEBP_INLINE float VP8LFastLog2(uint32_t v) {
-  return (v < LOG_LOOKUP_IDX_MAX) ? kLog2Table[v] : VP8LFastLog2Slow(v);
-}
-// Fast calculation of v * log2(v) for integer input.
-static WEBP_INLINE float VP8LFastSLog2(uint32_t v) {
-  return (v < LOG_LOOKUP_IDX_MAX) ? kSLog2Table[v] : VP8LFastSLog2Slow(v);
-}
-
-// -----------------------------------------------------------------------------
-// Huffman-cost related functions.
-
-typedef double (*VP8LCostFunc)(const uint32_t* population, int length);
-typedef double (*VP8LCostCombinedFunc)(const uint32_t* X, const uint32_t* Y,
-                                       int length);
-
-extern VP8LCostFunc VP8LExtraCost;
-extern VP8LCostCombinedFunc VP8LExtraCostCombined;
-
-typedef struct {        // small struct to hold counters
-  int counts[2];        // index: 0=zero steak, 1=non-zero streak
-  int streaks[2][2];    // [zero/non-zero][streak<3 / streak>=3]
-} VP8LStreaks;
-
-typedef VP8LStreaks (*VP8LCostCountFunc)(const uint32_t* population,
-                                         int length);
-typedef VP8LStreaks (*VP8LCostCombinedCountFunc)(const uint32_t* X,
-                                                 const uint32_t* Y, int length);
-
-extern VP8LCostCountFunc VP8LHuffmanCostCount;
-extern VP8LCostCombinedCountFunc VP8LHuffmanCostCombinedCount;
-
-// Get the symbol entropy for the distribution 'population'.
-// Set 'trivial_sym', if there's only one symbol present in the distribution.
-double VP8LPopulationCost(const uint32_t* const population, int length,
-                          uint32_t* const trivial_sym);
-
-// Get the combined symbol entropy for the distributions 'X' and 'Y'.
-double VP8LGetCombinedEntropy(const uint32_t* const X,
-                              const uint32_t* const Y, int length);
-
-// -----------------------------------------------------------------------------
-// PrefixEncode()
-
-static WEBP_INLINE int VP8LBitsLog2Ceiling(uint32_t n) {
-  const int log_floor = BitsLog2Floor(n);
-  if (n == (n & ~(n - 1)))  // zero or a power of two.
-    return log_floor;
-  else
-    return log_floor + 1;
-}
-
-// Splitting of distance and length codes into prefixes and
-// extra bits. The prefixes are encoded with an entropy code
-// while the extra bits are stored just as normal bits.
-static WEBP_INLINE void VP8LPrefixEncodeBitsNoLUT(int distance, int* const code,
-                                                  int* const extra_bits) {
-  const int highest_bit = BitsLog2Floor(--distance);
-  const int second_highest_bit = (distance >> (highest_bit - 1)) & 1;
-  *extra_bits = highest_bit - 1;
-  *code = 2 * highest_bit + second_highest_bit;
-}
-
-static WEBP_INLINE void VP8LPrefixEncodeNoLUT(int distance, int* const code,
-                                              int* const extra_bits,
-                                              int* const extra_bits_value) {
-  const int highest_bit = BitsLog2Floor(--distance);
-  const int second_highest_bit = (distance >> (highest_bit - 1)) & 1;
-  *extra_bits = highest_bit - 1;
-  *extra_bits_value = distance & ((1 << *extra_bits) - 1);
-  *code = 2 * highest_bit + second_highest_bit;
-}
-
-#define PREFIX_LOOKUP_IDX_MAX   512
-typedef struct {
-  int8_t code_;
-  int8_t extra_bits_;
-} VP8LPrefixCode;
-
-// These tables are derived using VP8LPrefixEncodeNoLUT.
-extern const VP8LPrefixCode kPrefixEncodeCode[PREFIX_LOOKUP_IDX_MAX];
-extern const uint8_t kPrefixEncodeExtraBitsValue[PREFIX_LOOKUP_IDX_MAX];
-static WEBP_INLINE void VP8LPrefixEncodeBits(int distance, int* const code,
-                                             int* const extra_bits) {
-  if (distance < PREFIX_LOOKUP_IDX_MAX) {
-    const VP8LPrefixCode prefix_code = kPrefixEncodeCode[distance];
-    *code = prefix_code.code_;
-    *extra_bits = prefix_code.extra_bits_;
-  } else {
-    VP8LPrefixEncodeBitsNoLUT(distance, code, extra_bits);
-  }
-}
-
-static WEBP_INLINE void VP8LPrefixEncode(int distance, int* const code,
-                                         int* const extra_bits,
-                                         int* const extra_bits_value) {
-  if (distance < PREFIX_LOOKUP_IDX_MAX) {
-    const VP8LPrefixCode prefix_code = kPrefixEncodeCode[distance];
-    *code = prefix_code.code_;
-    *extra_bits = prefix_code.extra_bits_;
-    *extra_bits_value = kPrefixEncodeExtraBitsValue[distance];
-  } else {
-    VP8LPrefixEncodeNoLUT(distance, code, extra_bits, extra_bits_value);
-  }
-}
-
-// In-place difference of each component with mod 256.
-static WEBP_INLINE uint32_t VP8LSubPixels(uint32_t a, uint32_t b) {
-  const uint32_t alpha_and_green =
-      0x00ff00ffu + (a & 0xff00ff00u) - (b & 0xff00ff00u);
-  const uint32_t red_and_blue =
-      0xff00ff00u + (a & 0x00ff00ffu) - (b & 0x00ff00ffu);
-  return (alpha_and_green & 0xff00ff00u) | (red_and_blue & 0x00ff00ffu);
-}
-
-void VP8LBundleColorMap(const uint8_t* const row, int width,
-                        int xbits, uint32_t* const dst);
-
-// Must be called before calling any of the above methods.
-void VP8LEncDspInit(void);
 
 //------------------------------------------------------------------------------
 

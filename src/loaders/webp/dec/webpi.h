@@ -18,7 +18,6 @@
 extern "C" {
 #endif
 
-#include "../utils/rescaler.h"
 #include "./decode_vp8.h"
 
 //------------------------------------------------------------------------------
@@ -26,22 +25,17 @@ extern "C" {
 
 typedef struct WebPDecParams WebPDecParams;
 typedef int (*OutputFunc)(const VP8Io* const io, WebPDecParams* const p);
-typedef int (*OutputRowFunc)(WebPDecParams* const p, int y_pos);
 
 struct WebPDecParams {
   WebPDecBuffer* output;             // output buffer.
   uint8_t* tmp_y, *tmp_u, *tmp_v;    // cache for the fancy upsampler
-                                     // or used for tmp rescaling
 
   int last_y;                 // coordinate of the line that was last output
   const WebPDecoderOptions* options;  // if not NULL, use alt decoding features
-  // rescalers
-  WebPRescaler scaler_y, scaler_u, scaler_v, scaler_a;
   void* memory;                  // overall scratch memory for the output work.
 
-  OutputFunc emit;               // output RGB or YUV samples
+  OutputFunc emit;               // output RGB samples
   OutputFunc emit_alpha;         // output alpha channel
-  OutputRowFunc emit_alpha_row;  // output one line of rescaled alpha values
 };
 
 
@@ -69,35 +63,20 @@ typedef struct {
 // hooks will use the supplied 'params' as io->opaque handle.
 void WebPInitCustomIo(WebPDecParams* const params, VP8Io* const io);
 
-// Setup crop_xxx fields, mb_w and mb_h in io. 'src_colorspace' refers
-// to the *compressed* format, not the output one.
-int WebPIoInitFromOptions(const WebPDecoderOptions* const options,
-                          VP8Io* const io, WEBP_CSP_MODE src_colorspace);
+// Setup crop_xxx fields, mb_w and mb_h in io to output the whole picture.
+void WebPIoInitFrame(VP8Io* const io);
 
 //------------------------------------------------------------------------------
 // Internal functions regarding WebPDecBuffer memory (in buffer.c).
 // Don't really need to be externally visible for now.
 
-// Prepare 'buffer' with the requested initial dimensions width/height.
+// Prepare 'buffer' with the requested dimensions width/height.
 // If no external storage is supplied, initializes buffer by allocating output
 // memory and setting up the stride information. Validate the parameters. Return
 // an error code in case of problem (no memory, or invalid stride / size /
-// dimension / etc.). If *options is not NULL, also verify that the options'
-// parameters are valid and apply them to the width/height dimensions of the
-// output buffer. This takes cropping / scaling / rotation into account.
-// Also incorporates the options->flip flag to flip the buffer parameters if
-// needed.
+// dimension / etc.).
 VP8StatusCode WebPAllocateDecBuffer(int width, int height,
-                                    const WebPDecoderOptions* const options,
                                     WebPDecBuffer* const buffer);
-
-// Flip buffer vertically by negating the various strides.
-VP8StatusCode WebPFlipBuffer(WebPDecBuffer* const buffer);
-
-// Copy 'src' into 'dst' buffer, making sure 'dst' is not marked as owner of the
-// memory (still held by 'src').
-void WebPCopyDecBuffer(const WebPDecBuffer* const src,
-                       WebPDecBuffer* const dst);
 
 //------------------------------------------------------------------------------
 

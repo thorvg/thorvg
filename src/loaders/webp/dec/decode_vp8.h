@@ -34,7 +34,6 @@ extern "C" {
 //
 //   VP8Decoder* dec = VP8New();
 //   bool ok = VP8Decode(dec);
-//   if (!ok) printf("Error: %s\n", VP8StatusMessage(dec));
 //   VP8Delete(dec);
 //   return ok;
 
@@ -87,19 +86,8 @@ struct VP8Io {
   size_t data_size;
   const uint8_t* data;
 
-  // If true, in-loop filtering will not be performed even if present in the
-  // bitstream. Switching off filtering may speed up decoding at the expense
-  // of more visible blocking. Note that output will also be non-compliant
-  // with the VP8 specifications.
-  int bypass_filtering;
-
-  // Cropping parameters.
-  int use_cropping;
+  // Output area (always the whole picture).
   int crop_left, crop_right, crop_top, crop_bottom;
-
-  // Scaling parameters.
-  int use_scaling;
-  int scaled_width, scaled_height;
 
   // If non NULL, pointer to the alpha data (if present) corresponding to the
   // start of the current row (That is: it is pre-offset by mb_y and takes
@@ -131,12 +119,6 @@ int VP8GetHeaders(VP8Decoder* const dec, VP8Io* const io);
 // Decode a picture. Will call VP8GetHeaders() if it wasn't done already.
 // Returns false in case of error.
 int VP8Decode(VP8Decoder* const dec, VP8Io* const io);
-
-// Return current status of the decoder:
-VP8StatusCode VP8Status(VP8Decoder* const dec);
-
-// return readable string corresponding to the last status.
-const char* VP8StatusMessage(VP8Decoder* const dec);
 
 // Resets the decoder in its initial state, reclaiming memory.
 // Not a mandatory call between calls to VP8Decode().

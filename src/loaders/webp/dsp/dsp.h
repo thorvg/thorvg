@@ -172,44 +172,11 @@ void WebPSamplerProcessPlane(const uint8_t* y, int y_stride,
 // Sampling functions to convert rows of YUV to RGB(A)
 extern WebPSamplerRowFunc WebPSamplers[/* MODE_LAST */];
 
-// General function for converting two lines of ARGB or RGBA.
-// 'alpha_is_last' should be true if 0xff000000 is stored in memory as
-// as 0x00, 0x00, 0x00, 0xff (little endian).
-WebPUpsampleLinePairFunc WebPGetLinePairConverter(int alpha_is_last);
-
-// YUV444->RGB converters
-typedef void (*WebPYUV444Converter)(const uint8_t* y,
-                                    const uint8_t* u, const uint8_t* v,
-                                    uint8_t* dst, int len);
-
-extern WebPYUV444Converter WebPYUV444Converters[/* MODE_LAST */];
-
 // Must be called before using the WebPUpsamplers[] (and for premultiplied
 // colorspaces like rgbA, rgbA4444, etc)
 void WebPInitUpsamplers(void);
 // Must be called before using WebPSamplers[]
 void WebPInitSamplers(void);
-// Must be called before using WebPYUV444Converters[]
-void WebPInitYUV444Converters(void);
-
-//------------------------------------------------------------------------------
-// Rescaler
-
-struct WebPRescaler;
-
-// Import a row of data and save its contribution in the rescaler.
-// 'channel' denotes the channel number to be imported.
-extern void (*WebPRescalerImportRow)(struct WebPRescaler* const wrk,
-                                     const uint8_t* const src, int channel);
-
-// Export one row (starting at x_out position) from rescaler.
-extern void (*WebPRescalerExportRow)(struct WebPRescaler* const wrk, int x_out);
-
-// Plain-C implementation, as fall-back.
-extern void WebPRescalerExportRowC(struct WebPRescaler* const wrk, int x_out);
-
-// Must be called first before using the above.
-void WebPRescalerDspInit(void);
 
 //------------------------------------------------------------------------------
 // Utilities for processing transparent channel.
@@ -219,64 +186,14 @@ void WebPRescalerDspInit(void);
 extern void (*WebPApplyAlphaMultiply)(
     uint8_t* rgba, int alpha_first, int w, int h, int stride);
 
-// Same, buf specifically for RGBA4444 format
-extern void (*WebPApplyAlphaMultiply4444)(
-    uint8_t* rgba4444, int w, int h, int stride);
-
 // Dispatch the values from alpha[] plane to the ARGB destination 'dst'.
 // Returns true if alpha[] plane has non-trivial values different from 0xff.
 extern int (*WebPDispatchAlpha)(const uint8_t* alpha, int alpha_stride,
                                 int width, int height,
                                 uint8_t* dst, int dst_stride);
 
-// Transfer packed 8b alpha[] values to green channel in dst[], zero'ing the
-// A/R/B values. 'dst_stride' is the stride for dst[] in uint32_t units.
-extern void (*WebPDispatchAlphaToGreen)(const uint8_t* alpha, int alpha_stride,
-                                        int width, int height,
-                                        uint32_t* dst, int dst_stride);
-
-// Extract the alpha values from 32b values in argb[] and pack them into alpha[]
-// (this is the opposite of WebPDispatchAlpha).
-// Returns true if there's only trivial 0xff alpha values.
-extern int (*WebPExtractAlpha)(const uint8_t* argb, int argb_stride,
-                               int width, int height,
-                               uint8_t* alpha, int alpha_stride);
-
-// Pre-Multiply operation transforms x into x * A / 255  (where x=Y,R,G or B).
-// Un-Multiply operation transforms x into x * 255 / A.
-
-// Pre-Multiply or Un-Multiply (if 'inverse' is true) argb values in a row.
-extern void (*WebPMultARGBRow)(uint32_t* const ptr, int width, int inverse);
-
-// Same a WebPMultARGBRow(), but for several rows.
-void WebPMultARGBRows(uint8_t* ptr, int stride, int width, int num_rows,
-                      int inverse);
-
-// Same for a row of single values, with side alpha values.
-extern void (*WebPMultRow)(uint8_t* const ptr, const uint8_t* const alpha,
-                           int width, int inverse);
-
-// Same a WebPMultRow(), but for several 'num_rows' rows.
-void WebPMultRows(uint8_t* ptr, int stride,
-                  const uint8_t* alpha, int alpha_stride,
-                  int width, int num_rows, int inverse);
-
-// Plain-C versions, used as fallback by some implementations.
-void WebPMultRowC(uint8_t* const ptr, const uint8_t* const alpha,
-                  int width, int inverse);
-void WebPMultARGBRowC(uint32_t* const ptr, int width, int inverse);
-
 // To be called first before using the above.
 void WebPInitAlphaProcessing(void);
-
-// ARGB packing function: a/r/g/b input is rgba or bgra order.
-extern void (*VP8PackARGB)(const uint8_t* a, const uint8_t* r,
-                           const uint8_t* g, const uint8_t* b, int len,
-                           uint32_t* out);
-
-// RGB packing function. 'step' can be 3 or 4. r/g/b input is rgb or bgr order.
-extern void (*VP8PackRGB)(const uint8_t* r, const uint8_t* g, const uint8_t* b,
-                          int len, int step, uint32_t* out);
 
 
 //------------------------------------------------------------------------------
@@ -292,17 +209,8 @@ typedef enum {     // Filter types.
   WEBP_FILTER_FAST
 } WEBP_FILTER_TYPE;
 
-typedef void (*WebPFilterFunc)(const uint8_t* in, int width, int height,
-                               int stride, uint8_t* out);
 typedef void (*WebPUnfilterFunc)(int width, int height, int stride,
                                  int row, int num_rows, uint8_t* data);
-
-// Filter the given data using the given predictor.
-// 'in' corresponds to a 2-dimensional pixel array of size (stride * height)
-// in raster order.
-// 'stride' is number of bytes per scan line (with possible padding).
-// 'out' should be pre-allocated.
-extern WebPFilterFunc WebPFilters[WEBP_FILTER_LAST];
 
 // In-place reconstruct the original data from the given filtered data.
 // The reconstruction will be done for 'num_rows' rows starting from 'row'
