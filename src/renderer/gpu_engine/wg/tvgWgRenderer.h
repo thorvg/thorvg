@@ -101,7 +101,7 @@ private:
     WgStencilBatch mStencilBatch;
     WgRenderTargetPool mRenderTargetPool;
     WgPaintPool mPaintPool;
-    WgRenderEffectParamsPool mEffectParamsPool;
+    WgRenderEffectPool mEffectPool;
     WgTextureMgr mTextures;
     WgContext mContext;
     WgCompositor mCompositor;

@@ -150,7 +150,7 @@ void WgRenderer::release()
 
     // clear render data paint pools
     mPaintPool.release(mContext);
-    mEffectParamsPool.release(mContext);
+    mEffectPool.release(mContext);
 
     // clear render  pool
     mRenderTargetPool.release(mContext);
@@ -628,19 +628,19 @@ bool WgRenderer::endComposite(RenderCompositor* cmp)
 
 void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
-    if (!effect->rd) effect->rd = mEffectParamsPool.allocate(mContext);
-    auto effectParams = (WgRenderEffectParams*)effect->rd;
+    if (!effect->rd) effect->rd = mEffectPool.allocate(mContext);
+    auto rdata = (WgRenderEffect*)effect->rd;
 
     if (effect->type == SceneEffect::GaussianBlur) {
-        effectParams->update(mContext, (RenderEffectGaussianBlur*)effect, transform);
+        rdata->update(mContext, (RenderEffectGaussianBlur*)effect, transform);
     } else if (effect->type == SceneEffect::DropShadow) {
-        effectParams->update(mContext, (RenderEffectDropShadow*)effect, transform);
+        rdata->update(mContext, (RenderEffectDropShadow*)effect, transform);
     } else if (effect->type == SceneEffect::Fill) {
-        effectParams->update(mContext, (RenderEffectFill*)effect);
+        rdata->update(mContext, (RenderEffectFill*)effect);
     } else if (effect->type == SceneEffect::Tint) {
-        effectParams->update(mContext, (RenderEffectTint*)effect);
+        rdata->update(mContext, (RenderEffectTint*)effect);
     } else if (effect->type == SceneEffect::Tritone) {
-        effectParams->update(mContext, (RenderEffectTritone*)effect);
+        rdata->update(mContext, (RenderEffectTritone*)effect);
     } else {
         TVGERR("WG_ENGINE", "Missing effect type? = %d", (int) effect->type);
         return;
@@ -652,23 +652,23 @@ bool WgRenderer::region(RenderEffect* effect)
 {
     if (effect->type == SceneEffect::GaussianBlur) {
         auto gaussian = (RenderEffectGaussianBlur*)effect;
-        auto effectParams = (WgRenderEffectParams*)gaussian->rd;
+        auto rdata = (WgRenderEffect*)gaussian->rd;
         if (gaussian->direction != 2) {
-            gaussian->extend.min.x = -effectParams->extend;
-            gaussian->extend.max.x = +effectParams->extend;
+            gaussian->extend.min.x = -rdata->extend;
+            gaussian->extend.max.x = +rdata->extend;
         }
         if (gaussian->direction != 1) {
-            gaussian->extend.min.y = -effectParams->extend;
-            gaussian->extend.max.y = +effectParams->extend;
+            gaussian->extend.min.y = -rdata->extend;
+            gaussian->extend.max.y = +rdata->extend;
         }
         return true;
     } else if (effect->type == SceneEffect::DropShadow) {
         auto dropShadow = (RenderEffectDropShadow*)effect;
-        auto effectParams = (WgRenderEffectParams*)dropShadow->rd;
-        dropShadow->extend.min.x = -std::ceil(effectParams->extend + std::abs(effectParams->offset.x));
-        dropShadow->extend.min.y = -std::ceil(effectParams->extend + std::abs(effectParams->offset.y));
-        dropShadow->extend.max.x = +std::floor(effectParams->extend + std::abs(effectParams->offset.x));
-        dropShadow->extend.max.y = +std::floor(effectParams->extend + std::abs(effectParams->offset.y));
+        auto rdata = (WgRenderEffect*)dropShadow->rd;
+        dropShadow->extend.min.x = -std::ceil(rdata->extend + std::abs(rdata->offset.x));
+        dropShadow->extend.min.y = -std::ceil(rdata->extend + std::abs(rdata->offset.y));
+        dropShadow->extend.max.x = +std::floor(rdata->extend + std::abs(rdata->offset.x));
+        dropShadow->extend.max.y = +std::floor(rdata->extend + std::abs(rdata->offset.y));
         return true;
     }
     return false;
@@ -685,8 +685,8 @@ bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_U
 
 void WgRenderer::dispose(RenderEffect* effect)
 {
-    auto effectParams = (WgRenderEffectParams*)effect->rd;
-    mEffectParamsPool.free(mContext, effectParams);
+    auto rdata = (WgRenderEffect*)effect->rd;
+    mEffectPool.free(mContext, rdata);
     effect->rd = nullptr;
 };
 

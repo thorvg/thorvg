@@ -176,14 +176,12 @@ struct WgStencilBatchRange
     bool solidOnly;
 };
 
-// gaussian blur, drop shadow, fill, tint, tritone
-#define WG_GAUSSIAN_MAX_LEVEL 3
-struct WgRenderEffectParams
+struct WgRenderEffect
 {
     WGPUBindGroup bindGroupParams{};
     WGPUBuffer bufferParams{};
-    uint32_t extend{};
-    Point offset{};
+    uint32_t extend;
+    Point offset;
 
     void update(WgContext& context, WgShaderTypeEffectParams& effectParams);
     void update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform);
@@ -194,16 +192,15 @@ struct WgRenderEffectParams
     void release(WgContext& context);
 };
 
-struct WgRenderEffectParamsPool
+struct WgRenderEffectPool
 {
-    // pool contains all created but unused render data for params
-    Array<WgRenderEffectParams*> mPool;
-    // list contains all created render data for params
-    // to ensure that all created instances will be released
-    Array<WgRenderEffectParams*> mList;
+    // pool contains all created but unused render effects
+    Array<WgRenderEffect*> mPool;
+    // list contains all created render effects to ensure that all created instances will be released
+    Array<WgRenderEffect*> mList;
 
-    WgRenderEffectParams* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderEffectParams* rdata);
+    WgRenderEffect* allocate(WgContext& context);
+    void free(WgContext& context, WgRenderEffect* rdata);
     void release(WgContext& context);
 };
 
