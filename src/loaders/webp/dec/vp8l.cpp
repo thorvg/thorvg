@@ -964,26 +964,6 @@ static int DecodeAlphaData(VP8LDecoder* const dec, uint8_t* const data,
   return ok;
 }
 
-static void SaveState(VP8LDecoder* const dec, int last_pixel) {
-  assert(dec->incremental_);
-  dec->saved_br_ = dec->br_;
-  dec->saved_last_pixel_ = last_pixel;
-  if (dec->hdr_.color_cache_size_ > 0) {
-    VP8LColorCacheCopy(&dec->hdr_.color_cache_, &dec->hdr_.saved_color_cache_);
-  }
-}
-
-static void RestoreState(VP8LDecoder* const dec) {
-  assert(dec->br_.eos_);
-  dec->status_ = VP8_STATUS_SUSPENDED;
-  dec->br_ = dec->saved_br_;
-  dec->last_pixel_ = dec->saved_last_pixel_;
-  if (dec->hdr_.color_cache_size_ > 0) {
-    VP8LColorCacheCopy(&dec->hdr_.saved_color_cache_, &dec->hdr_.color_cache_);
-  }
-}
-
-#define SYNC_EVERY_N_ROWS 8  // minimum number of rows between check-points
 static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
                            int width, int height, int last_row,
                            ProcessRowsFunc process_func) {
@@ -998,7 +978,6 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
   uint32_t* const src_last = data + width * last_row;  // Last pixel to decode
   const int len_code_limit = NUM_LITERAL_CODES + NUM_LENGTH_CODES;
   const int color_cache_limit = len_code_limit + hdr->color_cache_size_;
-  int next_sync_row = dec->incremental_ ? row : 1 << 24;
   VP8LColorCache* const color_cache =
       (hdr->color_cache_size_ > 0) ? &hdr->color_cache_ : NULL;
   const int mask = hdr->huffman_mask_;
@@ -1008,10 +987,6 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
 
   while (src < src_last) {
     int code;
-    if (row >= next_sync_row) {
-      SaveState(dec, (int)(src - data));
-      next_sync_row = row + SYNC_EVERY_N_ROWS;
-    }
     // Only update when changing tile. Note we could use this test:
     // if "((((prev_col ^ col) | prev_row ^ row)) > mask)" -> tile changed
     // but that's actually slower and needs storing the previous col/row.
@@ -1094,9 +1069,7 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
     assert(br->eos_ == VP8LIsEndOfStream(br));
   }
 
-  if (dec->incremental_ && br->eos_ && src < src_end) {
-    RestoreState(dec);
-  } else if (!br->eos_) {
+  if (!br->eos_) {
     // Process the remaining rows corresponding to last row-block.
     if (process_func != NULL) {
       process_func(dec, row);
@@ -1104,8 +1077,7 @@ static int DecodeImageData(VP8LDecoder* const dec, uint32_t* const data,
     dec->status_ = VP8_STATUS_OK;
     dec->last_pixel_ = (int)(src - data);  // end-of-scan marker
   } else {
-    // if not incremental, and we are past the end of buffer (eos_=1), then this
-    // is a real bitstream error.
+    // we are past the end of buffer (eos_=1): this is a real bitstream error.
     goto Error;
   }
   return 1;
@@ -1215,7 +1187,6 @@ static void ClearMetadata(VP8LMetadata* const hdr) {
   tvg::free(hdr->huffman_tables_);
   VP8LHtreeGroupsFree(hdr->htree_groups_);
   VP8LColorCacheClear(&hdr->color_cache_);
-  VP8LColorCacheClear(&hdr->saved_color_cache_);
   InitMetadata(hdr);
 }
 
@@ -1545,16 +1516,6 @@ int VP8LDecodeImage(VP8LDecoder* const dec) {
     if (io->use_scaling || WebPIsPremultipliedMode(dec->output_->colorspace)) {
       // need the alpha-multiply functions for premultiplied output or rescaling
       WebPInitAlphaProcessing();
-    }
-    if (dec->incremental_) {
-      if (dec->hdr_.color_cache_size_ > 0 &&
-          dec->hdr_.saved_color_cache_.colors_ == NULL) {
-        if (!VP8LColorCacheInit(&dec->hdr_.saved_color_cache_,
-                                dec->hdr_.color_cache_.hash_bits_)) {
-          dec->status_ = VP8_STATUS_OUT_OF_MEMORY;
-          goto Err;
-        }
-      }
     }
     dec->state_ = READ_DATA;
   }

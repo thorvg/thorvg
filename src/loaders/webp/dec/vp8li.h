@@ -43,7 +43,6 @@ struct VP8LTransform {
 typedef struct {
   int             color_cache_size_;
   VP8LColorCache  color_cache_;
-  VP8LColorCache  saved_color_cache_;  // for incremental
 
   int             huffman_mask_;
   int             huffman_subsample_bits_;
@@ -67,9 +66,6 @@ struct VP8LDecoder {
   uint32_t        *argb_cache_;    // Scratch buffer for temporary BGRA storage.
 
   VP8LBitReader    br_;
-  int              incremental_;   // if true, incremental decoding is expected
-  VP8LBitReader    saved_br_;      // note: could be local variables too
-  int              saved_last_pixel_;
 
   int              width_;
   int              height_;
