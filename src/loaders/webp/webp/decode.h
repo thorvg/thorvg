@@ -31,11 +31,6 @@ typedef struct WebPYUVABuffer WebPYUVABuffer;
 typedef struct WebPDecBuffer WebPDecBuffer;
 typedef struct WebPBitstreamFeatures WebPBitstreamFeatures;
 typedef struct WebPDecoderOptions WebPDecoderOptions;
-typedef struct WebPDecoderConfig WebPDecoderConfig;
-
-// Return the decoder's version number, packed in hexadecimal using 8bits for
-// each of major/minor/revision. E.g: v2.5.7 is 0x020507.
-WEBP_EXTERN(int) WebPGetDecoderVersion(void);
 
 // Retrieve basic header information: width, height.
 // This function will also validate the header and return 0 in
@@ -166,37 +161,6 @@ typedef enum VP8StatusCode {
 } VP8StatusCode;
 
 //------------------------------------------------------------------------------
-// Advanced decoding parametrization
-//
-//  Code sample for using the advanced decoding API
-/*
-     // A) Init a configuration object
-     WebPDecoderConfig config;
-     CHECK(WebPInitDecoderConfig(&config));
-
-     // B) optional: retrieve the bitstream's features.
-     CHECK(WebPGetFeatures(data, data_size, &config.input) == VP8_STATUS_OK);
-
-     // C) Adjust 'config', if needed
-     config.no_fancy_upsampling = 1;
-     config.output.colorspace = MODE_BGRA;
-     // etc.
-
-     // Note that you can also make config.output point to an externally
-     // supplied memory buffer, provided it's big enough to store the decoded
-     // picture. Otherwise, config.output will just be used to allocate memory
-     // and store the decoded picture.
-
-     // D) Decode!
-     CHECK(WebPDecode(data, data_size, &config) == VP8_STATUS_OK);
-
-     // E) Decoded image is now in config.output (and config.output.u.RGBA)
-
-     // F) Reclaim memory allocated in config's object. It's safe to call
-     // this function even if the memory is external and wasn't allocated
-     // by WebPDecode().
-     WebPFreeDecBuffer(&config.output);
-*/
 
 // Features gathered from the bitstream
 struct WebPBitstreamFeatures {

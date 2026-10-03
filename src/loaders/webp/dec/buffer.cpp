@@ -167,16 +167,5 @@ void WebPFreeDecBuffer(WebPDecBuffer* buffer) {
   }
 }
 
-void WebPCopyDecBuffer(const WebPDecBuffer* const src,
-                       WebPDecBuffer* const dst) {
-  if (src != NULL && dst != NULL) {
-    *dst = *src;
-    if (src->private_memory != NULL) {
-      dst->is_external_memory = 1;   // dst buffer doesn't own the memory.
-      dst->private_memory = NULL;
-    }
-  }
-}
-
 //------------------------------------------------------------------------------
 
