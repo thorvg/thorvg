@@ -668,8 +668,8 @@ static bool _cubicTo(RleWorker& rw, const SwPoint& ctrl1, const SwPoint& ctrl2, 
             /* Split super curvy segments where the off points are so far
             from the chord that the angles P0-P1-P3 or P0-P2-P3 become
             acute as detected by appropriate dot products */
-            if (diff1.x * (diff1.x - diff.x) + diff1.y * (diff1.y - diff.y) > 0 ||
-                diff2.x * (diff2.x - diff.x) + diff2.y * (diff2.y - diff.y) > 0)
+            if (int64_t(diff1.x) * (diff1.x - diff.x) + int64_t(diff1.y) * (diff1.y - diff.y) > 0 ||
+                int64_t(diff2.x) * (diff2.x - diff.x) + int64_t(diff2.y) * (diff2.y - diff.y) > 0)
                 goto split;
 
             //no reason to split

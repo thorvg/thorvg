@@ -21,6 +21,7 @@
  */
 
 #include <thorvg.h>
+#include <algorithm>
 #include <fstream>
 #include "config.h"
 #include "testFramework.h"
@@ -331,6 +332,28 @@ TEST_CASE("Filling Draw", "[tvgSwEngine]")
 
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("Closed cubic curve with coincident endpoints renders", "[tvgSwEngine]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        REQUIRE(canvas);
+        vector<uint32_t> buffer(256 * 256, 0);
+        REQUIRE(canvas->target(buffer.data(), 256, 256, 256, ColorSpace::ARGB8888S) == Result::Success);
+
+        auto shape = Shape::gen();
+        REQUIRE(shape->moveTo(4, 4) == Result::Success);
+        REQUIRE(shape->cubicTo(29, 222, 204, 54, 4, 4) == Result::Success);
+        REQUIRE(shape->fill(255, 255, 255) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        CHECK(std::count_if(buffer.begin(), buffer.end(), [](uint32_t pixel) { return (pixel >> 24) != 0; }) > 1000);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
