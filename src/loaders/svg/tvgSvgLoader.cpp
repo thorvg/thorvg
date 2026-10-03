@@ -1339,7 +1339,7 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
                 styleTags[i].tagHandler(ctx, node, value);
             }
             if (importance) {
-                node->style->flagsImportance = (node->style->flags | styleTags[i].flag);
+                node->style->flagsImportance |= styleTags[i].flag;
                 tvg::free(const_cast<char*>(value));
             }
             return true;
@@ -3506,14 +3506,12 @@ static void _svgLoaderParserXmlOpen(SvgParserContext* ctx, const char* content, 
             if (ctx->stack.count > 0) parent = ctx->stack.last();
             else parent = ctx->doc;
             if (STR_AS(tagName, "style")) {
-                // TODO: For now only the first style node is saved. After the css id selector
-                // is introduced this if condition shouldn't be necessary any more
                 if (!ctx->cssStyle) {
                     node = method(ctx, nullptr, attrs, attrsLength, xmlParseAttributes);
                     ctx->cssStyle = node;
                     ctx->doc->node.doc.style = node;
-                    ctx->openedTag = OpenedTagType::Style;
-                }
+                } else node = ctx->cssStyle;
+                ctx->openedTag = OpenedTagType::Style;
             } else {
                 node = method(ctx, parent, attrs, attrsLength, xmlParseAttributes);
             }
@@ -3765,10 +3763,12 @@ static void _svgLoaderParserXmlCssStyle(SvgParserContext* ctx, const char* conte
     SvgNode *node = nullptr;
 
     while (auto next = xmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
-        if ((method = _findGroupFactory(tag))) {
-            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) _copyId(&node->id, name);
-        } else if ((method = _findGraphicsFactory(tag))) {
-            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) _copyId(&node->id, name);
+        if (!STR_AS(tag, "style") && ((method = _findGroupFactory(tag)) || (method = _findGraphicsFactory(tag)))) {
+            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) {
+                _copyId(&node->id, name);
+                auto first = cssFindStyleNode(ctx->cssStyle, node->id, node->type);
+                if (first && first != node) cssCopyStyleAttr(first, node, true);
+            }
         } else if ((gradientMethod = _findGradientFactory(tag))) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "stop")) {
