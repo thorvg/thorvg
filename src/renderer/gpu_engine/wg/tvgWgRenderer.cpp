@@ -678,7 +678,7 @@ bool WgRenderer::region(RenderEffect* effect)
 bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_UNUSED bool direct)
 {
     auto sceneTask = mSceneTaskStack.last();
-    sceneTask->effect = effect;
+    sceneTask->effects.push(effect);
     return true;
 }
 

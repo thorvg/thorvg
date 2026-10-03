@@ -97,20 +97,21 @@ void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
 {
     // begin the render pass for the current scene and clear the target content
     compositor.beginRenderPassMS(encoder, renderTarget, true);
-    // run all children (scenes and shapes)
-    runChildren(context, compositor, encoder);
-    // we must to end current render pass for current scene
+    runChildren(context, compositor, encoder);  // run all children (scenes and shapes)
     compositor.endRenderPass();
-    // we must to apply effect for current scene
-    if (effect)
-        runEffect(context, compositor, encoder);
-    // there's no point in continuing if the scene has no destination target (e.g., the root scene)
-    if (!renderTargetDst) return;
-    // apply scene blending
+
+    // apply effect for current scene
+    ARRAY_FOREACH(effect, effects) {
+        runEffect(context, compositor, *effect);
+    }
+
+    if (!renderTargetDst) return;  // there's no point in continuing (e.g., the root scene)
+
+    // scene blending
     if (compose->method == MaskMethod::None) {
         compositor.beginRenderPassMS(encoder, renderTargetDst, false);
         compositor.renderScene(context, renderTarget, compose);
-    // apply scene composition (for scenes, that have a handle to mask)
+    // scene composition (for scenes, that have a handle to mask)
     } else if (renderTargetMsk) {
         compositor.beginRenderPassMS(encoder, renderTargetDst, false);
         compositor.composeScene(context, renderTarget, renderTargetMsk, compose);
@@ -129,8 +130,7 @@ void WgSceneTask::runChildren(WgContext& context, WgCompositor& compositor, WGPU
     }
 }
 
-
-void WgSceneTask::runEffect(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
+void WgSceneTask::runEffect(WgContext& context, WgCompositor& compositor, const RenderEffect* effect)
 {
     switch (effect->type) {
         case SceneEffect::GaussianBlur: compositor.gaussianBlur(context, renderTarget, (RenderEffectGaussianBlur*)effect, compose); break;
