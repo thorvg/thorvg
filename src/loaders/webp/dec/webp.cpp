@@ -55,11 +55,11 @@ typedef enum WebPFeatureFlags {
 // Note: chunk data size must be padded to multiple of 2 when written.
 
 static WEBP_INLINE uint32_t get_le24(const uint8_t* const data) {
-  return data[0] | (data[1] << 8) | (data[2] << 16);
+  return (uint32_t)data[0] | ((uint32_t)data[1] << 8) | ((uint32_t)data[2] << 16);
 }
 
 static WEBP_INLINE uint32_t get_le32(const uint8_t* const data) {
-  return (uint32_t)get_le24(data) | (data[3] << 24);
+  return get_le24(data) | ((uint32_t)data[3] << 24);
 }
 
 // Validates the RIFF container (if detected) and skips over it.
@@ -197,7 +197,7 @@ static VP8StatusCode ParseOptionalChunks(const uint8_t** const data,
       return VP8_STATUS_BITSTREAM_ERROR;          // Not a valid chunk size.
     }
     // For odd-sized chunk-payload, there's one byte padding at the end.
-    disk_chunk_size = (CHUNK_HEADER_SIZE + chunk_size + 1) & ~1;
+    disk_chunk_size = (CHUNK_HEADER_SIZE + chunk_size + 1) & ~1u;
     total_size += disk_chunk_size;
 
     // Check that total bytes skipped so far does not exceed riff_size.
