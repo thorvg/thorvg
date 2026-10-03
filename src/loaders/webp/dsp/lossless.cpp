@@ -414,17 +414,6 @@ static int is_big_endian(void) {
   return (tmp.b[0] != 1);
 }
 
-void VP8LConvertBGRAToRGB_C(const uint32_t* src,
-                            int num_pixels, uint8_t* dst) {
-  const uint32_t* const src_end = src + num_pixels;
-  while (src < src_end) {
-    const uint32_t argb = *src++;
-    *dst++ = (argb >> 16) & 0xff;
-    *dst++ = (argb >>  8) & 0xff;
-    *dst++ = (argb >>  0) & 0xff;
-  }
-}
-
 void VP8LConvertBGRAToRGBA_C(const uint32_t* src,
                              int num_pixels, uint8_t* dst) {
   const uint32_t* const src_end = src + num_pixels;
@@ -434,51 +423,6 @@ void VP8LConvertBGRAToRGBA_C(const uint32_t* src,
     *dst++ = (argb >>  8) & 0xff;
     *dst++ = (argb >>  0) & 0xff;
     *dst++ = (argb >> 24) & 0xff;
-  }
-}
-
-void VP8LConvertBGRAToRGBA4444_C(const uint32_t* src,
-                                 int num_pixels, uint8_t* dst) {
-  const uint32_t* const src_end = src + num_pixels;
-  while (src < src_end) {
-    const uint32_t argb = *src++;
-    const uint8_t rg = ((argb >> 16) & 0xf0) | ((argb >> 12) & 0xf);
-    const uint8_t ba = ((argb >>  0) & 0xf0) | ((argb >> 28) & 0xf);
-#ifdef WEBP_SWAP_16BIT_CSP
-    *dst++ = ba;
-    *dst++ = rg;
-#else
-    *dst++ = rg;
-    *dst++ = ba;
-#endif
-  }
-}
-
-void VP8LConvertBGRAToRGB565_C(const uint32_t* src,
-                               int num_pixels, uint8_t* dst) {
-  const uint32_t* const src_end = src + num_pixels;
-  while (src < src_end) {
-    const uint32_t argb = *src++;
-    const uint8_t rg = ((argb >> 16) & 0xf8) | ((argb >> 13) & 0x7);
-    const uint8_t gb = ((argb >>  5) & 0xe0) | ((argb >>  3) & 0x1f);
-#ifdef WEBP_SWAP_16BIT_CSP
-    *dst++ = gb;
-    *dst++ = rg;
-#else
-    *dst++ = rg;
-    *dst++ = gb;
-#endif
-  }
-}
-
-void VP8LConvertBGRAToBGR_C(const uint32_t* src,
-                            int num_pixels, uint8_t* dst) {
-  const uint32_t* const src_end = src + num_pixels;
-  while (src < src_end) {
-    const uint32_t argb = *src++;
-    *dst++ = (argb >>  0) & 0xff;
-    *dst++ = (argb >>  8) & 0xff;
-    *dst++ = (argb >> 16) & 0xff;
   }
 }
 
@@ -514,9 +458,6 @@ static void CopyOrSwap(const uint32_t* src, int num_pixels, uint8_t* dst,
 void VP8LConvertFromBGRA(const uint32_t* const in_data, int num_pixels,
                          WEBP_CSP_MODE out_colorspace, uint8_t* const rgba) {
   switch (out_colorspace) {
-    case MODE_RGB:
-      VP8LConvertBGRAToRGB(in_data, num_pixels, rgba);
-      break;
     case MODE_RGBA:
       VP8LConvertBGRAToRGBA(in_data, num_pixels, rgba);
       break;
@@ -524,32 +465,12 @@ void VP8LConvertFromBGRA(const uint32_t* const in_data, int num_pixels,
       VP8LConvertBGRAToRGBA(in_data, num_pixels, rgba);
       WebPApplyAlphaMultiply(rgba, 0, num_pixels, 1, 0);
       break;
-    case MODE_BGR:
-      VP8LConvertBGRAToBGR(in_data, num_pixels, rgba);
-      break;
     case MODE_BGRA:
       CopyOrSwap(in_data, num_pixels, rgba, 1);
       break;
     case MODE_bgrA:
       CopyOrSwap(in_data, num_pixels, rgba, 1);
       WebPApplyAlphaMultiply(rgba, 0, num_pixels, 1, 0);
-      break;
-    case MODE_ARGB:
-      CopyOrSwap(in_data, num_pixels, rgba, 0);
-      break;
-    case MODE_Argb:
-      CopyOrSwap(in_data, num_pixels, rgba, 0);
-      WebPApplyAlphaMultiply(rgba, 1, num_pixels, 1, 0);
-      break;
-    case MODE_RGBA_4444:
-      VP8LConvertBGRAToRGBA4444(in_data, num_pixels, rgba);
-      break;
-    case MODE_rgbA_4444:
-      VP8LConvertBGRAToRGBA4444(in_data, num_pixels, rgba);
-      WebPApplyAlphaMultiply4444(rgba, num_pixels, 1, 0);
-      break;
-    case MODE_RGB_565:
-      VP8LConvertBGRAToRGB565(in_data, num_pixels, rgba);
       break;
     default:
       assert(0);          // Code flow should not reach here.
@@ -563,11 +484,7 @@ VP8LPredictorFunc VP8LPredictors[16];
 
 VP8LTransformColorFunc VP8LTransformColorInverse;
 
-VP8LConvertFunc VP8LConvertBGRAToRGB;
 VP8LConvertFunc VP8LConvertBGRAToRGBA;
-VP8LConvertFunc VP8LConvertBGRAToRGBA4444;
-VP8LConvertFunc VP8LConvertBGRAToRGB565;
-VP8LConvertFunc VP8LConvertBGRAToBGR;
 
 VP8LMapARGBFunc VP8LMapColor32b;
 VP8LMapAlphaFunc VP8LMapColor8b;
@@ -603,11 +520,7 @@ WEBP_TSAN_IGNORE_FUNCTION void VP8LDspInit(void) {
 
   VP8LTransformColorInverse = VP8LTransformColorInverse_C;
 
-  VP8LConvertBGRAToRGB = VP8LConvertBGRAToRGB_C;
   VP8LConvertBGRAToRGBA = VP8LConvertBGRAToRGBA_C;
-  VP8LConvertBGRAToRGBA4444 = VP8LConvertBGRAToRGBA4444_C;
-  VP8LConvertBGRAToRGB565 = VP8LConvertBGRAToRGB565_C;
-  VP8LConvertBGRAToBGR = VP8LConvertBGRAToBGR_C;
 
   VP8LMapColor32b = MapARGB;
   VP8LMapColor8b = MapAlpha;
