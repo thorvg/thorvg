@@ -81,10 +81,6 @@ struct VP8BitReader {
 void VP8InitBitReader(VP8BitReader* const br,
                       const uint8_t* const start, const uint8_t* const end);
 
-// Update internal pointers to displace the byte buffer by the
-// relative offset 'offset'.
-void VP8RemapBitReader(VP8BitReader* const br, ptrdiff_t offset);
-
 // return the next value made of 'num_bits' bits
 uint32_t VP8GetValue(VP8BitReader* const br, int num_bits);
 static WEBP_INLINE uint32_t VP8Get(VP8BitReader* const br) {
@@ -124,10 +120,6 @@ typedef struct {
 void VP8LInitBitReader(VP8LBitReader* const br,
                        const uint8_t* const start,
                        size_t length);
-
-//  Sets a new data buffer.
-void VP8LBitReaderSetBuffer(VP8LBitReader* const br,
-                            const uint8_t* const buffer, size_t length);
 
 // Reads the specified number of bits from read buffer.
 // Flags an error in case end_of_stream or n_bits is more than the allowed limit
