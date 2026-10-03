@@ -552,7 +552,7 @@ static uint8_t* Decode(WEBP_CSP_MODE mode, const uint8_t* const data,
     return NULL;
   }
   // return decoded samples (don't clear 'output'!)
-  return WebPIsRGBMode(mode) ? output.u.RGBA.rgba : output.u.YUVA.y;
+  return output.u.RGBA.rgba;
 }
 
 

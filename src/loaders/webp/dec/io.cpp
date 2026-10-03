@@ -128,19 +128,17 @@ static int EmitAlphaRGB(const VP8Io* const io, WebPDecParams* const p) {
   if (alpha != NULL) {
     const int mb_w = io->mb_w;
     const WEBP_CSP_MODE colorspace = p->output->colorspace;
-    const int alpha_first =
-        (colorspace == MODE_ARGB || colorspace == MODE_Argb);
     const WebPRGBABuffer* const buf = &p->output->u.RGBA;
     int num_rows;
     const int start_y = GetAlphaSourceRow(io, &alpha, &num_rows);
     uint8_t* const base_rgba = buf->rgba + start_y * buf->stride;
-    uint8_t* const dst = base_rgba + (alpha_first ? 0 : 3);
+    uint8_t* const dst = base_rgba + 3;   // alpha is last for (rgbA|bgrA|RGBA|BGRA)
     const int has_alpha = WebPDispatchAlpha(alpha, io->width, mb_w,
                                             num_rows, dst, buf->stride);
 
     // has_alpha is true if there's non-trivial alpha to premultiply with.
     if (has_alpha && WebPIsPremultipliedMode(colorspace)) {
-      WebPApplyAlphaMultiply(base_rgba, alpha_first,
+      WebPApplyAlphaMultiply(base_rgba, 0,
                              mb_w, num_rows, buf->stride);
     }
   }
@@ -300,7 +298,6 @@ static int InitRGBRescaler(const VP8Io* const io, WebPDecParams* const p) {
 static int CustomSetup(VP8Io* io) {
   WebPDecParams* const p = (WebPDecParams*)io->opaque;
   const WEBP_CSP_MODE colorspace = p->output->colorspace;
-  const int is_rgb = WebPIsRGBMode(colorspace);
   const int is_alpha = WebPIsAlphaMode(colorspace);
 
   p->memory = NULL;
@@ -318,34 +315,29 @@ static int CustomSetup(VP8Io* io) {
       return 0;    // memory error
     }
   } else {
-    if (is_rgb) {
-      p->emit = EmitSampledRGB;   // default
-      if (io->fancy_upsampling) {
+    p->emit = EmitSampledRGB;   // default
+    if (io->fancy_upsampling) {
 #ifdef FANCY_UPSAMPLING
-        const int uv_width = (io->mb_w + 1) >> 1;
-        p->memory = WebPSafeMalloc(1ULL, (size_t)(io->mb_w + 2 * uv_width));
-        if (p->memory == NULL) {
-          return 0;   // memory error.
-        }
-        p->tmp_y = (uint8_t*)p->memory;
-        p->tmp_u = p->tmp_y + io->mb_w;
-        p->tmp_v = p->tmp_u + uv_width;
-        p->emit = EmitFancyRGB;
-        WebPInitUpsamplers();
-#endif
-      } else {
-        WebPInitSamplers();
+      const int uv_width = (io->mb_w + 1) >> 1;
+      p->memory = WebPSafeMalloc(1ULL, (size_t)(io->mb_w + 2 * uv_width));
+      if (p->memory == NULL) {
+        return 0;   // memory error.
       }
+      p->tmp_y = (uint8_t*)p->memory;
+      p->tmp_u = p->tmp_y + io->mb_w;
+      p->tmp_v = p->tmp_u + uv_width;
+      p->emit = EmitFancyRGB;
+      WebPInitUpsamplers();
+#endif
+    } else {
+      WebPInitSamplers();
     }
     if (is_alpha) {  // need transparency output
       p->emit_alpha = EmitAlphaRGB;
-      if (is_rgb) WebPInitAlphaProcessing();
+      WebPInitAlphaProcessing();
     }
   }
-
-  if (is_rgb) {
-    VP8YUVInit();
-  }
+  VP8YUVInit();
   return 1;
 }
 

@@ -39,7 +39,7 @@ struct WebPDecParams {
   WebPRescaler scaler_y, scaler_u, scaler_v, scaler_a;
   void* memory;                  // overall scratch memory for the output work.
 
-  OutputFunc emit;               // output RGB or YUV samples
+  OutputFunc emit;               // output RGB samples
   OutputFunc emit_alpha;         // output alpha channel
   OutputRowFunc emit_alpha_row;  // output one line of rescaled alpha values
 };

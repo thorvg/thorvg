@@ -87,14 +87,9 @@ static void FUNC_NAME(const uint8_t* y,                                        \
   }                                                                            \
 }                                                                              \
 
-// All variants implemented.
-ROW_FUNC(YuvToRgbRow,      VP8YuvToRgb,  3)
-ROW_FUNC(YuvToBgrRow,      VP8YuvToBgr,  3)
+// Only the 32-bit RGBA / BGRA variants are needed.
 ROW_FUNC(YuvToRgbaRow,     VP8YuvToRgba, 4)
 ROW_FUNC(YuvToBgraRow,     VP8YuvToBgra, 4)
-ROW_FUNC(YuvToArgbRow,     VP8YuvToArgb, 4)
-ROW_FUNC(YuvToRgba4444Row, VP8YuvToRgba4444, 2)
-ROW_FUNC(YuvToRgb565Row,   VP8YuvToRgb565, 2)
 
 #undef ROW_FUNC
 
@@ -130,17 +125,10 @@ static volatile VP8CPUInfo yuv_last_cpuinfo_used =
 WEBP_TSAN_IGNORE_FUNCTION void WebPInitSamplers(void) {
   if (yuv_last_cpuinfo_used == VP8GetCPUInfo) return;
 
-  WebPSamplers[MODE_RGB]       = YuvToRgbRow;
   WebPSamplers[MODE_RGBA]      = YuvToRgbaRow;
-  WebPSamplers[MODE_BGR]       = YuvToBgrRow;
   WebPSamplers[MODE_BGRA]      = YuvToBgraRow;
-  WebPSamplers[MODE_ARGB]      = YuvToArgbRow;
-  WebPSamplers[MODE_RGBA_4444] = YuvToRgba4444Row;
-  WebPSamplers[MODE_RGB_565]   = YuvToRgb565Row;
   WebPSamplers[MODE_rgbA]      = YuvToRgbaRow;
   WebPSamplers[MODE_bgrA]      = YuvToBgraRow;
-  WebPSamplers[MODE_Argb]      = YuvToArgbRow;
-  WebPSamplers[MODE_rgbA_4444] = YuvToRgba4444Row;
 
   // If defined, use CPUInfo() to overwrite some pointers with faster versions.
   if (VP8GetCPUInfo != NULL) {
