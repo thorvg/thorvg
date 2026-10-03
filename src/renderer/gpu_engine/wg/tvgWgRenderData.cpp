@@ -281,10 +281,10 @@ void WgImage::release(WgContext& context)
 }
 
 //***********************************************************************
-// WgRenderEffectParams
+// WgRenderEffect
 //***********************************************************************
 
-void WgRenderEffectParams::update(WgContext& context, WgShaderTypeEffectParams& effectParams)
+void WgRenderEffect::update(WgContext& context, WgShaderTypeEffectParams& effectParams)
 {
     if (context.allocateBufferUniform(bufferParams, &effectParams.params, sizeof(effectParams.params))) {
         context.layouts.releaseBindGroup(bindGroupParams);
@@ -292,7 +292,7 @@ void WgRenderEffectParams::update(WgContext& context, WgShaderTypeEffectParams& 
     }
 }
 
-void WgRenderEffectParams::update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform)
+void WgRenderEffect::update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
     WgShaderTypeEffectParams effectParams;
     if (!effectParams.update(gaussian, transform)) return;
@@ -300,7 +300,7 @@ void WgRenderEffectParams::update(WgContext& context, RenderEffectGaussianBlur* 
     extend = effectParams.extend;
 }
 
-void WgRenderEffectParams::update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform)
+void WgRenderEffect::update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform)
 {
     WgShaderTypeEffectParams effectParams;
     if (!effectParams.update(dropShadow, transform)) return;
@@ -309,7 +309,7 @@ void WgRenderEffectParams::update(WgContext& context, RenderEffectDropShadow* dr
     offset = effectParams.offset;
 }
 
-void WgRenderEffectParams::update(WgContext& context, RenderEffectFill* fill)
+void WgRenderEffect::update(WgContext& context, RenderEffectFill* fill)
 {
     assert(fill);
     WgShaderTypeEffectParams effectParams;
@@ -317,7 +317,7 @@ void WgRenderEffectParams::update(WgContext& context, RenderEffectFill* fill)
     update(context, effectParams);
 }
 
-void WgRenderEffectParams::update(WgContext& context, RenderEffectTint* tint)
+void WgRenderEffect::update(WgContext& context, RenderEffectTint* tint)
 {
     assert(tint);
     WgShaderTypeEffectParams effectParams;
@@ -325,7 +325,7 @@ void WgRenderEffectParams::update(WgContext& context, RenderEffectTint* tint)
     update(context, effectParams);
 }
 
-void WgRenderEffectParams::update(WgContext& context, RenderEffectTritone* tritone)
+void WgRenderEffect::update(WgContext& context, RenderEffectTritone* tritone)
 {
     assert(tritone);
     WgShaderTypeEffectParams effectParams;
@@ -333,34 +333,34 @@ void WgRenderEffectParams::update(WgContext& context, RenderEffectTritone* trito
     update(context, effectParams);
 }
 
-void WgRenderEffectParams::release(WgContext& context)
+void WgRenderEffect::release(WgContext& context)
 {
     context.releaseBuffer(bufferParams);
     context.layouts.releaseBindGroup(bindGroupParams);
 }
 
 //***********************************************************************
-// WgRenderDataColorsPool
+// WgRenderEffectPool
 //***********************************************************************
 
-WgRenderEffectParams* WgRenderEffectParamsPool::allocate(WgContext& context)
+WgRenderEffect* WgRenderEffectPool::allocate(WgContext& context)
 {
-    WgRenderEffectParams* rdata{};
+    WgRenderEffect* rdata{};
     if (mPool.count > 0) {
         rdata = mPool.pick();
     } else {
-        rdata = new WgRenderEffectParams();
+        rdata = new WgRenderEffect();
         mList.push(rdata);
     }
     return rdata;
 }
 
-void WgRenderEffectParamsPool::free(WgContext& context, WgRenderEffectParams* rdata)
+void WgRenderEffectPool::free(WgContext& context, WgRenderEffect* rdata)
 {
     if (rdata) mPool.push(rdata);
 }
 
-void WgRenderEffectParamsPool::release(WgContext& context)
+void WgRenderEffectPool::release(WgContext& context)
 {
     ARRAY_FOREACH(p, mList) {
         (*p)->release(context);
