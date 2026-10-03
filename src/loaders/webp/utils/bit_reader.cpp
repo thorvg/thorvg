@@ -35,13 +35,6 @@ void VP8InitBitReader(VP8BitReader* const br,
   VP8LoadNewBytes(br);
 }
 
-void VP8RemapBitReader(VP8BitReader* const br, ptrdiff_t offset) {
-  if (br->buf_ != NULL) {
-    br->buf_ += offset;
-    br->buf_end_ += offset;
-  }
-}
-
 const uint8_t kVP8Log2Range[128] = {
      7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -148,17 +141,6 @@ void VP8LInitBitReader(VP8LBitReader* const br, const uint8_t* const start,
   br->val_ = value;
   br->pos_ = length;
   br->buf_ = start;
-}
-
-void VP8LBitReaderSetBuffer(VP8LBitReader* const br,
-                            const uint8_t* const buf, size_t len) {
-  assert(br != NULL);
-  assert(buf != NULL);
-  assert(len < 0xfffffff8u);   // can't happen with a RIFF chunk.
-  br->buf_ = buf;
-  br->len_ = len;
-  // pos_ > len_ should be considered a param error.
-  br->eos_ = (br->pos_ > br->len_) || VP8LIsEndOfStream(br);
 }
 
 static void VP8LSetEndOfStream(VP8LBitReader* const br) {

@@ -59,9 +59,6 @@ static WEBP_INLINE int VP8LColorCacheContains(const VP8LColorCache* const cc,
 // Returns false in case of memory error.
 int VP8LColorCacheInit(VP8LColorCache* const color_cache, int hash_bits);
 
-void VP8LColorCacheCopy(const VP8LColorCache* const src,
-                        VP8LColorCache* const dst);
-
 // Delete the memory associated to color cache.
 void VP8LColorCacheClear(VP8LColorCache* const color_cache);
 

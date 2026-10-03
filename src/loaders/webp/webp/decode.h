@@ -29,7 +29,6 @@ extern "C" {
 typedef struct WebPRGBABuffer WebPRGBABuffer;
 typedef struct WebPYUVABuffer WebPYUVABuffer;
 typedef struct WebPDecBuffer WebPDecBuffer;
-typedef struct WebPIDecoder WebPIDecoder;
 typedef struct WebPBitstreamFeatures WebPBitstreamFeatures;
 typedef struct WebPDecoderOptions WebPDecoderOptions;
 typedef struct WebPDecoderConfig WebPDecoderConfig;
