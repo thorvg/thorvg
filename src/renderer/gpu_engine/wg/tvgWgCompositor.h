@@ -138,7 +138,7 @@ public:
     void composeScene(WgContext& context, WgRenderTarget* src, WgRenderTarget* mask, WgCompose* compose);
 
     // blit render target to texture view (f.e. screen buffer)
-    void blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView, bool premultiplied);
+    void blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView, bool premultiplied, bool clear);
 
     // effects
     bool gaussianBlur(WgContext& context, WgRenderTarget* dst, const RenderEffectGaussianBlur* blur, const WgCompose* compose);

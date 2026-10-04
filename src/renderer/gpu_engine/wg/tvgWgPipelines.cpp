@@ -399,12 +399,12 @@ void WgPipelines::initialize(WgContext& context)
     }
 
     blit = createRenderPipeline(context.device, "The render pipeline blit", shaderBlit, "vs_main", "fs_main", layoutBlit, vertexBufferLayoutsImage, 2,
-                                WGPUColorWriteMask_All, context.format, blendStateSrc,  // must be preferred screen pixel format
+                                WGPUColorWriteMask_All, context.format, blendStateNrm,  // must be preferred screen pixel format
                                 depthStencilStateScene, multisampleStateX1);
 
     // TODO: either premultiplied blit or unpremultplied bit used.
     blitUnpremultiplied = createRenderPipeline(context.device, "The render pipeline blit unpremultiplied", shaderBlit, "vs_main", "fs_main_unpremultiplied", layoutBlit, vertexBufferLayoutsImage, 2,
-                                               WGPUColorWriteMask_All, context.format, blendStateSrc,  // must be preferred screen pixel format
+                                               WGPUColorWriteMask_All, context.format, blendStateNrm,  // must be preferred screen pixel format
                                                depthStencilStateScene, multisampleStateX1);
 
     // effects
