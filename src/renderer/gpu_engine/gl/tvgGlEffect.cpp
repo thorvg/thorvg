@@ -114,6 +114,60 @@ GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget*
     return task;
 }
 
+/************************************************************************/
+/* Motion Blur                                                          */
+/************************************************************************/
+
+struct alignas(16) GlMotionBlur
+{
+    float offset[2];
+    float samples;
+};
+
+void GlEffect::update(RenderEffectMotionBlur* effect, const Matrix& transform)
+{
+    Point offset;
+    int samples;
+    if (!effect->update(transform, offset, samples)) return;
+
+    auto blur = static_cast<GlMotionBlur*>(effect->rd);
+    if (!blur) blur = tvg::malloc<GlMotionBlur>(sizeof(GlMotionBlur));
+    if (!blur) {
+        effect->valid = false;
+        return;
+    }
+    blur->offset[0] = offset.x;
+    blur->offset[1] = -offset.y;  // Framebuffer Y runs opposite to scene Y.
+    blur->samples = samples;
+    effect->rd = blur;
+}
+
+bool GlEffect::region(RenderEffectMotionBlur* effect)
+{
+    auto blur = static_cast<const GlMotionBlur*>(effect->rd);
+    auto x = int32_t(ceilf(fabsf(blur->offset[0]) * 0.5f));
+    auto y = int32_t(ceilf(fabsf(blur->offset[1]) * 0.5f));
+    effect->extend = {{-x, -y}, {x, y}};
+    return true;
+}
+
+GlRenderTask* GlEffect::render(RenderEffectMotionBlur* effect, GlRenderTarget* dstFbo, Array<GlRenderTargetPool*>& blendPool, const RenderRegion& vp, uint32_t voffset, uint32_t ioffset)
+{
+    if (!pMotionBlur) pMotionBlur = new GlProgram(EFFECT_VERTEX, EFFECT_MOTIONBLUR);
+
+    auto dstCopyFbo = blendPool[0]->getRenderTarget(vp);
+    auto paramsOffset = gpuBuffer->push(effect->rd, sizeof(GlMotionBlur), true);
+    float viewport[4] = {0.0f, 0.0f, float(vp.sw()), float(vp.sh())};
+    auto viewportOffset = gpuBuffer->push(viewport, sizeof(viewport), true);
+
+    auto task = new GlEffectTask(pMotionBlur, dstFbo, dstCopyFbo);
+    task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
+    task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::Params, gpuBuffer->getBufferId(), paramsOffset, sizeof(GlMotionBlur)});
+    task->addBindResource(GlBindingResource{1, GlShaderUniformBlock::Viewport, gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
+    task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
+    task->setDrawRange(ioffset, 6);
+    return task;
+}
 
 /************************************************************************/
 /* DropShadow                                                           */
@@ -296,7 +350,7 @@ GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Arr
     auto paramsOffset = gpuBuffer->push((GlEffectParams*)(effect->rd), sizeof(GlEffectParams), true);
 
     // create and setup task
-    auto task = new GlEffectColorTransformTask(program, dstFbo, dstCopyFbo);
+    auto task = new GlEffectTask(program, dstFbo, dstCopyFbo);
     task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
     task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::Params, gpuBuffer->getBufferId(), paramsOffset, sizeof(GlEffectParams)});
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
@@ -313,6 +367,7 @@ GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Arr
 void GlEffect::update(RenderEffect* effect, const Matrix& transform)
 {
     switch (effect->type) {
+        case SceneEffect::MotionBlur: update(static_cast<RenderEffectMotionBlur*>(effect), transform); break;
         case SceneEffect::GaussianBlur: update(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
         case SceneEffect::DropShadow : update(static_cast<RenderEffectDropShadow*>(effect), transform); break;
         case SceneEffect::Fill: update(static_cast<RenderEffectFill*>(effect), transform); break;
@@ -326,6 +381,7 @@ void GlEffect::update(RenderEffect* effect, const Matrix& transform)
 bool GlEffect::region(RenderEffect* effect)
 {
     switch (effect->type) {
+        case SceneEffect::MotionBlur: return region(static_cast<RenderEffectMotionBlur*>(effect));
         case SceneEffect::GaussianBlur: return region(static_cast<RenderEffectGaussianBlur*>(effect));
         case SceneEffect::DropShadow : return region(static_cast<RenderEffectDropShadow*>(effect));
         default: return false;
@@ -345,7 +401,9 @@ bool GlEffect::render(RenderEffect* effect, GlRenderPass* pass, Array<GlRenderTa
     auto ioffset = gpuBuffer->pushIndex((void*)idata, sizeof(idata));
     GlRenderTask* output = nullptr;
 
-    if (effect->type == SceneEffect::GaussianBlur) {
+    if (effect->type == SceneEffect::MotionBlur) {
+        output = render(static_cast<RenderEffectMotionBlur*>(effect), pass->fbo, blendPool, vp, voffset, ioffset);
+    } else if (effect->type == SceneEffect::GaussianBlur) {
         output = render(static_cast<RenderEffectGaussianBlur*>(effect), pass->fbo, blendPool, vp, voffset, ioffset);
     } else if (effect->type == SceneEffect::DropShadow) {
         output = render(static_cast<RenderEffectDropShadow*>(effect), pass->fbo, blendPool, vp, voffset, ioffset);
@@ -370,6 +428,7 @@ GlEffect::~GlEffect()
     delete(pBlurV);
     delete(pBlurH);
     delete(pDropShadow);
+    delete (pMotionBlur);
     delete(pFill);
     delete(pTint);
     delete(pTritone);

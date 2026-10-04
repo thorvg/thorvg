@@ -138,6 +138,7 @@ void WgSceneTask::runEffect(WgContext& context, WgCompositor& compositor, const 
         case SceneEffect::Fill: compositor.fillEffect(context, renderTarget, (RenderEffectFill*)effect, compose); break;
         case SceneEffect::Tint: compositor.tintEffect(context, renderTarget, (RenderEffectTint*)effect, compose); break;
         case SceneEffect::Tritone : compositor.tritoneEffect(context, renderTarget, (RenderEffectTritone*)effect, compose); break;
+        case SceneEffect::MotionBlur: compositor.motionBlur(context, renderTarget, static_cast<const RenderEffectMotionBlur*>(effect), compose); break;
         default: break;
     }
 }

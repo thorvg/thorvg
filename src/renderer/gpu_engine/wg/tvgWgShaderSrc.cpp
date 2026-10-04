@@ -1040,6 +1040,23 @@ fn fs_main_horz(in: VertexOutput) -> @location(0) vec4f {
 };
 
 @fragment
+fn fs_main_motion(in: VertexOutput) -> @location(0) vec4f {
+    // Clamp sampling coordinates to the region's outermost texel centers.
+    let invTextureSize = 1.0 / vec2f(textureDimensions(uTextureSrc));
+    let minCoord = settings[1].xy + vec2f(0.5);
+    let maxCoord = settings[1].xy + settings[1].zw - vec2f(0.5);
+    let samples = i32(settings[0].z);
+    let invSamples = 1.0 / f32(samples);
+    var color = vec4f(0.0);
+    for (var i: i32 = 0; i < samples; i++) {
+        let t = (f32(i) + 0.5) * invSamples - 0.5;
+        let p = clamp(in.position.xy + settings[0].xy * t, minCoord, maxCoord);
+        color += textureSampleLevel(uTextureSrc, uSamplerSrc, p * invTextureSize, 0.0);
+    }
+    return color * invSamples;
+};
+
+@fragment
 fn fs_main_fill(in: VertexOutput) -> @location(0) vec4f {
     let orig = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
     let fill = settings[0];

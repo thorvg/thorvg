@@ -416,6 +416,31 @@ TEST_CASE("WG Scene Effects", "[tvgWgEngine]")
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
+        // Motion Blur
+        REQUIRE(scene->add(SceneEffect::Clear) == Result::Success);
+        REQUIRE(scene->add(SceneEffect::MotionBlur, 10.0, 0.0, 75) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->add(SceneEffect::Clear) == Result::Success);
+        REQUIRE(scene->add(SceneEffect::MotionBlur, 10.0, 45.0, 75) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->add(SceneEffect::Clear) == Result::Success);
+        REQUIRE(scene->add(SceneEffect::MotionBlur, 10.0, 90.0, 75) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(scene->add(SceneEffect::Clear) == Result::Success);
+        REQUIRE(scene->add(SceneEffect::MotionBlur, 0.0, 45.0, 75) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
         // Drop Shadow
         REQUIRE(scene->add(SceneEffect::Clear) == Result::Success);
         REQUIRE(scene->add(SceneEffect::DropShadow, 128, 128, 128, 200, 45.0, 5.0, 2.0, 60) == Result::Success);
@@ -450,8 +475,9 @@ TEST_CASE("WG Scene Effects", "[tvgWgEngine]")
         REQUIRE(canvas->draw() == Result::Success);
         REQUIRE(canvas->sync() == Result::Success);
 
-        // Tritone + Gaussian Blur + Drop Shadow
+        // Tritone + Gaussian Blur + Motion Blur + Drop Shadow
         REQUIRE(scene->add(SceneEffect::GaussianBlur, 1.5, 0, 0, 75) == Result::Success);
+        REQUIRE(scene->add(SceneEffect::MotionBlur, 10.0, 45.0, 75) == Result::Success);
         REQUIRE(scene->add(SceneEffect::DropShadow, 128, 128, 128, 200, 45.0, 5.0, 2.0, 60) == Result::Success);
 
         REQUIRE(canvas->add(scene->duplicate()) == Result::Success);

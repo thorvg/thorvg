@@ -35,9 +35,17 @@ void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t hei
     bgTexture = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
 }
 
+WGPUBindGroup WgRenderTarget::getBindGroupTextureLinear(WgContext& context)
+{
+    if (!bgTextureLinear) {
+        bgTextureLinear = context.layouts.createBindGroupTexSampled(context.samplerLinearClamp, texView);
+    }
+    return bgTextureLinear;
+}
 
 void WgRenderTarget::release(WgContext& context)
 {
+    context.layouts.releaseBindGroup(bgTextureLinear);
     context.layouts.releaseBindGroup(bgTexture);
     context.layouts.releaseBindGroup(bgWrite);
     context.layouts.releaseBindGroup(bgRead);
