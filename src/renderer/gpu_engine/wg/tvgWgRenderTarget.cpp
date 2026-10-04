@@ -30,17 +30,17 @@ void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t hei
     textureMS = context.createTexAttachement(width, height, WGPUTextureFormat_RGBA8Unorm, 4);
     texView = context.createTextureView(texture);
     texViewMS = context.createTextureView(textureMS);
-    bindGroupRead = context.layouts.createBindGroupStrorage1RO(texView);
-    bindGroupWrite = context.layouts.createBindGroupStrorage1WO(texView);
-    bindGroupTexture = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
+    bgRead = context.layouts.createBindGroupStrorage1RO(texView);
+    bgWrite = context.layouts.createBindGroupStrorage1WO(texView);
+    bgTexture = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
 }
 
 
 void WgRenderTarget::release(WgContext& context)
 {
-    context.layouts.releaseBindGroup(bindGroupTexture);
-    context.layouts.releaseBindGroup(bindGroupWrite);
-    context.layouts.releaseBindGroup(bindGroupRead);
+    context.layouts.releaseBindGroup(bgTexture);
+    context.layouts.releaseBindGroup(bgWrite);
+    context.layouts.releaseBindGroup(bgRead);
     context.releaseTextureView(texViewMS);
     context.releaseTexture(textureMS);
     context.releaseTextureView(texView);
@@ -55,30 +55,20 @@ void WgRenderTarget::release(WgContext& context)
 
 WgRenderTarget* WgRenderTargetPool::allocate(WgContext& context)
 {
-    WgRenderTarget* renderTarget{};
-    if (pool.count > 0) {
-        renderTarget = pool.pick();
-    } else {
-        renderTarget = new WgRenderTarget;
-        renderTarget->initialize(context, width, height);
-        list.push(renderTarget);
-    }
+    if (!pool.empty()) return pool.pick();
+
+    auto renderTarget = new WgRenderTarget;
+    renderTarget->initialize(context, width, height);
+    list.push(renderTarget);
+
     return renderTarget;
-};
+}
 
-
-void WgRenderTargetPool::free(WgContext& context, WgRenderTarget* renderTarget)
-{
-    pool.push(renderTarget);
-};
-
-
-void WgRenderTargetPool::initialize(WgContext& context, uint32_t width, uint32_t height)
+void WgRenderTargetPool::initialize(uint32_t width, uint32_t height)
 {
     this->width = width;
     this->height = height;
 }
-
 
 void WgRenderTargetPool::release(WgContext& context)
 {
@@ -90,4 +80,4 @@ void WgRenderTargetPool::release(WgContext& context)
     pool.clear();
     height = 0;
     width = 0;
-};
+}

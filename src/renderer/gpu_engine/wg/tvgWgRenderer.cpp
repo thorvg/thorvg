@@ -509,7 +509,7 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
     if ((mContext.device != ctx.device) || (mContext.instance != ctx.instance) || mContext.adapter != ctx.adapter) {
         release();
         mContext.initialize(ctx);
-        mRenderTargetPool.initialize(mContext, w, h);
+        mRenderTargetPool.initialize(w, h);
         mRenderTargetRoot.initialize(mContext, w, h);
         mCompositor.initialize(mContext, w, h);
     // update render targets dimensions
@@ -517,7 +517,7 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
         mRenderTargetPool.release(mContext);
         mRenderTargetRoot.release(mContext);
         clearTargets();
-        mRenderTargetPool.initialize(mContext, w, h);
+        mRenderTargetPool.initialize(w, h);
         mRenderTargetRoot.initialize(mContext, w, h);
         mCompositor.resize(mContext, w, h);
     }
@@ -612,13 +612,13 @@ bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
 bool WgRenderer::endComposite(RenderCompositor* cmp)
 {
     // pop targets and scenes from render tree
-    mRenderTargetPool.free(mContext, mRenderTargetStack.last());
+    mRenderTargetPool.pool.push(mRenderTargetStack.last());
     mSceneTaskStack.pop();
     mRenderTargetStack.pop();
     // in a case of masked target we must pop mask targets and scenes also
     WgCompose* compose = (WgCompose*)cmp;
     if (compose->masked) {
-        mRenderTargetPool.free(mContext, mRenderTargetStack.last());
+        mRenderTargetPool.pool.push(mRenderTargetStack.last());
         mSceneTaskStack.pop();
         mRenderTargetStack.pop();
     }

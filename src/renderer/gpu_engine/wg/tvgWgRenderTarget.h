@@ -26,33 +26,26 @@
 #include "tvgWgPipelines.h"
 #include "tvgRender.h"
 
-struct WgRenderTarget {
-    WGPUTexture texture{};
-    WGPUTexture textureMS{};
-    WGPUTextureView texView{};
-    WGPUTextureView texViewMS{};
-    WGPUBindGroup bindGroupRead{};
-    WGPUBindGroup bindGroupWrite{};
-    WGPUBindGroup bindGroupTexture{};
-    uint32_t width{};
-    uint32_t height{};
+struct WgRenderTarget
+{
+    WGPUTexture texture{}, textureMS{};
+    WGPUTextureView texView{}, texViewMS{};
+    WGPUBindGroup bgRead{}, bgWrite{};
+    WGPUBindGroup bgTexture{};
+    uint32_t width{}, height{};
 
     void initialize(WgContext& context, uint32_t width, uint32_t height);
     void release(WgContext& context);
 };
 
+struct WgRenderTargetPool
+{
+    Array<WgRenderTarget*> list, pool;
+    uint32_t width{}, height{};
 
-class WgRenderTargetPool {
-private:
-    Array<WgRenderTarget*> list;
-    Array<WgRenderTarget*> pool;
-    uint32_t width{};
-    uint32_t height{};
-public:
     WgRenderTarget* allocate(WgContext& context);
-    void free(WgContext& context, WgRenderTarget* renderTarget);
-
-    void initialize(WgContext& context, uint32_t width, uint32_t height);
+    void initialize(uint32_t width, uint32_t height);
     void release(WgContext& context);
 };
+
 #endif // _TVG_WG_RENDER_TARGET_H_
