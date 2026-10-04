@@ -73,26 +73,19 @@ struct WgImageBatchTask : WgRenderTask
 // task for scene rendering with blending, composition and effect
 struct WgSceneTask : WgRenderTask
 {
-    // parent scene (nullptr for root scene)
-    WgSceneTask* parent{};
-    // children can be shapes or scenes tasks
-    Array<WgRenderTask*> children;
-    // scene blend/compose targets
-    WgRenderTarget* renderTarget{};
+    WgSceneTask* parent{};           // parent scene (nullptr for root scene)
+    Array<WgRenderTask*> children;   // children can be shapes or scenes tasks
+    WgRenderTarget* renderTarget{};  // scene blend/compose targets
     WgRenderTarget* renderTargetMsk{};
     WgRenderTarget* renderTargetDst{};
-    // scene blend/compose properties
-    WgCompose* compose{};
-    // scene effect properties
+    WgCompose* compose{};  // scene blend/compose properties
     Array<const RenderEffect*> effects;
+    bool clearBuffer = true;
 
     WgSceneTask(WgRenderTarget* renderTarget, WgCompose* compose, WgSceneTask* parent) :
         parent(parent), renderTarget(renderTarget), compose(compose) {}
-    // stage all resources used by the scene tree
     void stage(WgCompositor& compositor) override;
-    // run all, including all shapes drawing, blending, composition and effect
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
-
     void runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
     void runEffect(WgContext& context, WgCompositor& compositor, const RenderEffect* effect);
 };
