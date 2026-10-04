@@ -56,6 +56,7 @@ private:
     MaskMethod getMaskMethod(bool inversed);
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
     LottieEffect* getEffect(int type);
+    LottieMergePath::Mode getMergeMode();
 
     void getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property);
     void getInterpolatorPoint(Point& pt);
@@ -102,6 +103,7 @@ private:
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();
     LottieOffsetPath* parseOffsetPath();
+    LottieMergePath* parseMergePath();
     LottiePuckerBloat* parsePuckerBloat();
     LottieZigZag* parseZigZag();
     LottieFont* parseFont();
