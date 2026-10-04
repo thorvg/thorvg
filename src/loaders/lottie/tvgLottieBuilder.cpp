@@ -185,6 +185,29 @@ static void _mergeOps(RenderPath& out, const RenderPath& path, const RenderMerge
 }
 
 
+static void _invertMask(RenderPath& path, RenderPath& plane, LottieComposition* comp, LottieLayer* layer)
+{
+    Matrix im;
+
+    if (plane.empty() && inverse(&layer->cache.matrix, &im)) {
+        //the mask paths should not touch the edges
+        auto w = std::max(layer->w, comp->w);
+        auto h = std::max(layer->h, comp->h);
+        Point pts[] = {{-w, -h}, {2.0f * w, -h}, {2.0f * w, 2.0f * h}, {-w, 2.0f * h}};
+
+        for (auto& pt : pts) pt *= im;
+
+        plane.moveTo(pts[0]);
+        plane.lineTo(pts[1]);
+        plane.lineTo(pts[2]);
+        plane.lineTo(pts[3]);
+        plane.close();
+    }
+
+    if (!tvg::pathop(plane, path, path, PathOp::Subtract)) path.clear();
+}
+
+
 void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 {
     if (!layer) return;
@@ -1466,7 +1489,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 }
 
 
-void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
+void LottieBuilder::updateMasks(LottieComposition* comp, LottieLayer* layer, float frameNo)
 {
     if (layer->masks.empty()) return;
 
@@ -1477,9 +1500,9 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         layer->scene = scene;
     }
 
+    RenderPath plane, operand;
     Shape* pShape = nullptr;
-    MaskMethod pMethod;
-    uint8_t pOpacity;
+    auto folding = false;
 
     ARRAY_FOREACH(p, layer->masks) {
         auto mask = *p;
@@ -1488,41 +1511,54 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         auto method = mask->method;
         auto opacity = mask->opacity(frameNo);
         auto expand = mask->expand(frameNo);
+        auto lead = !pShape;
+        auto foldable = (opacity == 255 && mask->opacity.frameCnt() <= 1 && method != MaskMethod::Lighten && method != MaskMethod::Darken);
+        auto inverted = lead && !foldable && method == MaskMethod::Subtract;
+        auto fresh = lead || !folding || !foldable;
 
-        //the first mask
-        if (!pShape) {
-            pShape = layer->pooling();
-            to<ShapeImpl>(pShape)->reset();
-            auto compMethod = (method == MaskMethod::Subtract || method == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
-            //Cheaper. Replace the masking with a clipper
-            if (!layer->effect && layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
-                layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
-                layer->scene->clip(pShape);
-            } else {
-                layer->scene->mask(pShape, compMethod);
-            }
-        //Chain mask composition
-        } else if (pMethod != method || pOpacity != opacity || (method != MaskMethod::Subtract && method != MaskMethod::Difference)) {
+        //a run of foldable masks collapses into a single path, the rest keeps chaining
+        if (fresh) {
             auto shape = layer->pooling();
             to<ShapeImpl>(shape)->reset();
-            pShape->mask(shape, method);
+            PAINT(shape)->mark(RenderUpdateFlag::Path);
+            shape->fill(255, 255, 255, opacity);
+            shape->transform(layer->cache.matrix);
+            //Cheaper. Replace the masking with a clipper
+            if (lead && !inverted && !layer->effect && layer->masks.count == 1) {
+                layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
+                layer->scene->clip(shape);
+            } else if (lead) {
+                layer->scene->mask(shape, inverted ? MaskMethod::InvAlpha : MaskMethod::Alpha);
+            } else {
+                pShape->mask(shape, method);
+            }
             pShape = shape;
+            folding = foldable;
         }
 
-        pShape->fill(255, 255, 255, opacity);
-        pShape->transform(layer->cache.matrix);
+        auto& path = to<ShapeImpl>(pShape)->rs.path;
+        auto& cur = fresh ? path : operand;
+        operand.clear();
 
         //Default Masking
         if (expand == 0.0f) {
-            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps);
+            mask->pathset(frameNo, cur, nullptr, tween, exps);
         //Masking with Expansion (Offset)
         } else {
             //TODO: Once path direction support is implemented, ensure that the direction is ignored here
             auto offset = LottieOffsetModifier(expand);
-            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps, &offset);
+            mask->pathset(frameNo, cur, nullptr, tween, exps, &offset);
         }
-        pOpacity = opacity;
-        pMethod = method;
+
+        if (mask->inverse != (lead && !inverted && method == MaskMethod::Subtract)) _invertMask(cur, plane, comp, layer);
+
+        if (fresh) continue;
+
+        auto op = PathOp::Add;
+        if (method == MaskMethod::Subtract) op = PathOp::Subtract;
+        else if (method == MaskMethod::Intersect) op = PathOp::Intersect;
+        else if (method == MaskMethod::Difference) op = PathOp::Difference;
+        if (!tvg::pathop(path, cur, path, op)) path.clear();
     }
 }
 
@@ -1715,7 +1751,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
         }
     }
 
-    updateMasks(layer, frameNo);
+    updateMasks(comp, layer, frameNo);
 
     updateEffect(layer, frameNo, comp->quality);
 
