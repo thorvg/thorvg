@@ -124,7 +124,7 @@ void WgCompositor::releasePools(WgContext& context)
 
 void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
     // release existig handles
-    if ((this->width != width) || (this->height != height)) {
+    if (this->width != width || this->height != height) {
         context.layouts.releaseBindGroup(bindGroupStorageTemp);
         // release intermediate render target
         targetTemp1.release(context);
@@ -134,16 +134,13 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
         context.releaseTexture(texDepthStencilMS);
         context.releaseTextureView(texViewDepthStencil);
         context.releaseTexture(texDepthStencil);
-        // store render target dimensions
-        this->height = height;
-        this->width = width;
     }
 
+    this->width = width;
+    this->height = height;
+
     // create render targets handles
-    if ((width != 0) && (height != 0)) {
-        // store render target dimensions
-        this->width = width;
-        this->height = height;
+    if (width > 0 && height > 0) {
         // update global view matrix handles
         updateViewMat(context, width, height);
         // allocate global stencil buffer handles
@@ -941,6 +938,31 @@ void WgCompositor::clearClipPath(WgContext& context, WgPaint* paint)
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.clearDepth);
         drawMesh(context, &rdata->bboxMesh);
     }
+}
+
+bool WgCompositor::motionBlur(WgContext& context, WgRenderTarget* dst, const RenderEffectMotionBlur* motion, const WgCompose* compose)
+{
+    auto effect = (WgRenderEffect*)motion->rd;
+    auto aabb = shrinkRenderRegion(compose->aabb);
+    if (aabb.invalid()) return true;
+
+    // The final clipped region is only known at composition time.
+    // Clamp bilinear sampling to this region within the full-sized texture.
+    float region[4] = {float(aabb.x()), float(aabb.y()), float(aabb.w()), float(aabb.h())};
+    wgpuQueueWriteBuffer(context.queue, effect->bufferParams, 4 * sizeof(float), region, sizeof(region));
+
+    copyTexture(&targetTemp0, dst, aabb);
+    beginRenderPass(commandEncoder, dst);
+    {
+        wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.getBindGroupTextureLinear(context), 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
+        wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectMotionBlur);
+        drawMeshImage(context, &meshDataBlit);
+    }
+    endRenderPass();
+
+    return true;
 }
 
 bool WgCompositor::gaussianBlur(WgContext& context, WgRenderTarget* dst, const RenderEffectGaussianBlur* blur, const WgCompose* compose)

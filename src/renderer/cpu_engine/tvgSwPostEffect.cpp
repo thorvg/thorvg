@@ -22,6 +22,7 @@
 
 #include "tvgMath.h"
 #include "tvgSwCommon.h"
+#include <cstdlib>
 
 #if defined(THORVG_AVX_SUPPORT)
     #include <immintrin.h>
@@ -337,6 +338,122 @@ bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffec
 
     if (swapped) std::swap(cmp->image.buf8, buffer.buf8);
 
+    return true;
+}
+
+/************************************************************************/
+/* Motion Blur Implementation                                           */
+/************************************************************************/
+
+struct SwMotionBlur
+{
+    static constexpr int MAX_TAPS = 4 * 257;
+
+    // integer pixel offsets with accumulated bilinear weights scaled by 65536.
+    struct Tap
+    {
+        int32_t x, y;
+        uint32_t weight;
+    } taps[MAX_TAPS];
+
+    int count;  // sample count, before merging bilinear taps
+    int tapCount;
+    SwPoint extent;
+};
+
+void effectMotionBlurUpdate(RenderEffectMotionBlur* params, const Matrix& transform)
+{
+    Point offset;
+    int samples;
+    if (!params->update(transform, offset, samples)) return;
+
+    if (!params->rd) params->rd = tvg::malloc<SwMotionBlur>(sizeof(SwMotionBlur));
+    auto data = static_cast<SwMotionBlur*>(params->rd);
+    data->extent = {int32_t(ceilf(fabsf(offset.x) * 0.5f)), int32_t(ceilf(fabsf(offset.y) * 0.5f))};
+    data->count = samples;
+
+    // flatten bilinear samples into nonzero integer taps.
+    data->tapCount = 0;
+    for (int i = 0; i < data->count; ++i) {
+        auto pt = offset * ((i + 0.5f) / data->count - 0.5f);
+        auto x = int32_t(floorf(pt.x));
+        auto y = int32_t(floorf(pt.y));
+        auto fx = uint32_t((pt.x - x) * 256.0f + 0.5f);
+        auto fy = uint32_t((pt.y - y) * 256.0f + 0.5f);
+        uint32_t weights[] = {(256 - fx) * (256 - fy), fx * (256 - fy), (256 - fx) * fy, fx * fy};
+        for (int k = 0; k < 4; ++k) {
+            if (weights[k]) data->taps[data->tapCount++] = {x + (k & 1), y + (k >> 1), weights[k]};
+        }
+    }
+
+    // merge repeated coordinates without changing the total integer weight.
+    std::qsort(data->taps, data->tapCount, sizeof(SwMotionBlur::Tap), [](const void* lhs, const void* rhs) {
+        auto a = static_cast<const SwMotionBlur::Tap*>(lhs);
+        auto b = static_cast<const SwMotionBlur::Tap*>(rhs);
+        if (a->y != b->y) return (a->y > b->y) ? 1 : -1;
+        return (a->x > b->x) - (a->x < b->x);
+    });
+    int merged = 0;
+    for (int i = 0; i < data->tapCount; ++i) {
+        auto& tap = data->taps[i];
+        if (merged > 0 && data->taps[merged - 1].x == tap.x && data->taps[merged - 1].y == tap.y) {
+            data->taps[merged - 1].weight += tap.weight;
+        } else {
+            data->taps[merged++] = tap;
+        }
+    }
+    data->tapCount = merged;
+    params->valid = true;
+}
+
+bool effectMotionBlurRegion(RenderEffectMotionBlur* params)
+{
+    auto data = static_cast<SwMotionBlur*>(params->rd);
+    params->extend = {{-data->extent.x, -data->extent.y}, {data->extent.x, data->extent.y}};
+    return true;
+}
+
+bool effectMotionBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectMotionBlur* params)
+{
+    auto& buffer = surface->compositor->image;
+    auto data = static_cast<SwMotionBlur*>(params->rd);
+    auto& bbox = cmp->bbox;
+    auto stride = cmp->image.stride;
+    auto w = bbox.max.x - bbox.min.x;
+    auto h = bbox.max.y - bbox.min.y;
+    auto divisor = uint64_t(data->count) * 65536;
+    auto src = cmp->image.buf32 + bbox.min.y * stride + bbox.min.x;
+    auto dst = buffer.buf32 + bbox.min.y * stride + bbox.min.x;
+
+    #pragma omp parallel for
+    for (int32_t y = 0; y < h; ++y) {
+        // Y clamping and row addressing are shared by all pixels in this row.
+        const uint32_t* tapRows[SwMotionBlur::MAX_TAPS];
+        for (int i = 0; i < data->tapCount; ++i) {
+            auto sy = _gaussianEdgeExtend(h - 1, y + data->taps[i].y);
+            tapRows[i] = src + sy * stride;
+        }
+        // Accumulate weighted taps with X coordinates clamped to the row edges.
+        // Each sample contributes 65536 total weight; normalize with rounding.
+        auto row = (uint8_t*)(dst + y * stride);
+        for (int32_t x = 0; x < w; ++x) {
+            uint64_t acc[4] = {};
+            for (int i = 0; i < data->tapCount; ++i) {
+                auto& tap = data->taps[i];
+                auto sx = _gaussianEdgeExtend(w - 1, x + tap.x);
+                auto pixel = (uint8_t*)(tapRows[i] + sx);
+                // Filter premultiplied channels together to preserve alpha.
+                for (int c = 0; c < 4; ++c) {
+                    acc[c] += uint64_t(pixel[c]) * tap.weight;
+                }
+            }
+            for (int c = 0; c < 4; ++c) {
+                row[x * 4 + c] = uint8_t((acc[c] + divisor / 2) / divisor);
+            }
+        }
+    }
+
+    std::swap(cmp->image.buf8, buffer.buf8);
     return true;
 }
 

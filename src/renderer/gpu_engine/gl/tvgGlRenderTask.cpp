@@ -565,10 +565,10 @@ void GlEffectDropShadowTask::run(GlStateCache& state)
 }
 
 /************************************************************************/
-/* GlEffectColorTransformTask Class Implementation                      */
+/* GlEffectTask Class Implementation                                    */
 /************************************************************************/
 
-void GlEffectColorTransformTask::run(GlStateCache& state)
+void GlEffectTask::run(GlStateCache& state)
 {
     const auto width = dstFbo->width;
     const auto height = dstFbo->height;
@@ -583,7 +583,7 @@ void GlEffectColorTransformTask::run(GlStateCache& state)
     GL_CHECK(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST));
     state.bindFramebuffer(GL_FRAMEBUFFER, dstFbo->fbo);
 
-    // run transform
+    // run the single-pass effect
     state.disable(GL_BLEND);
     state.depthFunc(GL_ALWAYS);
     GlRenderTask::run(state);

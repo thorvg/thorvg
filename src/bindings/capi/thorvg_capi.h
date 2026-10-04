@@ -2363,20 +2363,32 @@ TVG_API Tvg_Result tvg_scene_clear_effects(Tvg_Paint scene);
  * The blur can be applied in different directions with configurable border handling and quality settings.
  *
  * @param[in] scene The scene object.
- * @param[in] sigma The blur radius (sigma) value. Must be greater than 0.
+ * @param[in] sigma The blur radius (sigma) value. Must be >= 0.
  * @param[in] direction Blur direction: 0 = both directions, 1 = horizontal only, 2 = vertical only.
  * @param[in] border Border handling method: 0 = duplicate, 1 = wrap.
- * @param[in] quality Blur quality level [0 - 100].
+ * @param[in] quality Visual quality level [0 - 100].
  *
  * @since 1.0
  */
 TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double sigma, int direction, int border, int quality);
 
 /**
+ * @brief Adds a centered linear motion blur.
+ *
+ * @param[in] scene The scene to apply the effect to.
+ * @param[in] distance Total blur length in scene-local units. Must be >= 0.
+ * @param[in] angle Angle in degrees, clockwise from the positive X axis. The scene transform applies to the blur vector.
+ * @param[in] quality Visual quality level [0 - 100].
+ *
+ * @note Experimental API
+ */
+TVG_API Tvg_Result tvg_scene_add_effect_motion_blur(Tvg_Paint scene, double distance, double angle, int quality);
+
+/**
  * @brief Adds a drop shadow effect to the scene.
  *
- * This function adds a drop shadow with a Gaussian blur to the scene. The shadow 
- * can be customized using color, opacity, angle, distance, blur radius (sigma), 
+ * This function adds a drop shadow with a Gaussian blur to the scene. The shadow
+ * can be customized using color, opacity, angle, distance, blur radius (sigma),
  * and quality parameters.
  *
  * @param[in] scene The scene object.
@@ -2387,7 +2399,7 @@ TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double si
  * @param[in] angle Shadow direction in degrees [0 - 360].
  * @param[in] distance Distance of the shadow from the original object.
  * @param[in] sigma Gaussian blur sigma value for the shadow. Must be > 0.
- * @param[in] quality Blur quality level [0 - 100].
+ * @param[in] quality Visual quality level [0 - 100].
  *
  * @since 1.0
  */

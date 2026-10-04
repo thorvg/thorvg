@@ -95,21 +95,22 @@ struct WgShaderTypeGradientData
     void update(const Fill* fill);
 };
 
-// gaussian params: sigma, scale, extend
-#define WG_GAUSSIAN_KERNEL_SIZE_MAX (128.0f)
-// gaussian blur, drop shadow, fill, tint, tritone
+#define WG_GAUSSIAN_KERNEL_SIZE_MAX (128.0f)  // gaussian params: sigma, scale, extend
+
+// gaussian blur: [0]: sigma, [1]: scale, [2]: kernel size
+// drop shadow:   [0]: sigma, [1]: scale, [2]: kernel size [4..7]: premultiplied RGBA, [8, 9]: offset in pixels
+// fill:          [0..3]: normalized RGBA
+// tint:          [0..2]: normalized black RGB, [4..6]: normalized white RGB [8]: normalized intensity
+// tritone:       [0..2]: normalized shadow RGB, [4..6]: normalized midtone RGB [8..10]: normalized highlight RGB, [11]: normalized blender
+// motion blur:   [0, 1]: offset in pixels, [2]: sample count, [3]: unused [4..7]: clipped compositing region (x, y, width, height) in pixels
 struct WgShaderTypeEffectParams
 {
-    // gaussian blur: [0]: sigma, [1]: scale, [2]: kernel size
-    // drop shadow:   [0]: sigma, [1]: scale, [2]: kernel size, [4..7]: color, [8, 9]: offset
-    // fill:          [0..3]: color
-    // tint:          [0..2]: black,  [4..6]: white,   [8]: intensity
-    // tritone:       [0..2]: shadow, [4..6]: midtone, [8..10]: highlight
-    float params[4+4+4]{}; // settings: array<vec4f, 3>;
-    uint32_t extend{};     // gaussian blur extend
-    Point offset{};        // drop shadow offset
+    float params[4 + 4 + 4];  // settings: array<vec4f, 3>;
+    uint32_t extend;          // gaussian blur and drop shadow extend
+    Point offset;             // drop shadow and motion blur offset
 
     bool update(RenderEffectGaussianBlur* gaussian, const Matrix& transform);
+    bool update(RenderEffectMotionBlur* motion, const Matrix& transform);
     bool update(RenderEffectDropShadow* dropShadow, const Matrix& transform);
     bool update(RenderEffectFill* fill);
     bool update(RenderEffectTint* tint);

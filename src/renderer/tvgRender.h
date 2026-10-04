@@ -528,6 +528,47 @@ struct RenderEffectGaussianBlur : RenderEffect
     }
 };
 
+struct RenderEffectMotionBlur : RenderEffect
+{
+    float distance;
+    float angle;
+    uint8_t quality;
+
+    // computes the transformed blur offset and quality-based sample count
+    bool update(const Matrix& transform, Point& offset, int& samples)
+    {
+        valid = false;
+
+        // transform the local blur vector, without translating it.
+        auto radian = tvg::deg2rad(angle);
+        auto vx = distance * cosf(radian);
+        auto vy = distance * sinf(radian);
+        offset = {transform.e11 * vx + transform.e12 * vy, transform.e21 * vx + transform.e22 * vy};
+
+        // avoid spurious one-pixel expansion at exact cardinal angles.
+        if (fabsf(offset.x) < 0.001f) offset.x = 0.0f;
+        if (fabsf(offset.y) < 0.001f) offset.y = 0.0f;
+        auto length = std::max(fabsf(offset.x), fabsf(offset.y));
+        if (tvg::zero(length)) return false;
+
+        // confirm the samples count; Uniform midpoint samples, including the original position.
+        auto density = 0.25f + quality * 0.0075f;
+        samples = 2 * int(std::min(128.0f, ceilf(length * density * 0.5f))) + 1;
+        valid = true;
+        return true;
+    }
+
+    static RenderEffectMotionBlur* gen(va_list& args)
+    {
+        auto inst = new RenderEffectMotionBlur;
+        inst->distance = std::max(0.0f, float(va_arg(args, double)));
+        inst->angle = fmod((float)va_arg(args, double), 180.0f);
+        inst->quality = std::min(va_arg(args, int), 100);
+        inst->type = SceneEffect::MotionBlur;
+        return inst;
+    }
+};
+
 struct RenderEffectDropShadow : RenderEffect
 {
     uint8_t color[4];  //rgba

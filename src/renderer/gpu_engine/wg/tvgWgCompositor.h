@@ -146,6 +146,7 @@ public:
     bool fillEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectFill* fill, const WgCompose* compose);
     bool tintEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectTint* tint, const WgCompose* compose);
     bool tritoneEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectTritone* tritone, const WgCompose* compose);
+    bool motionBlur(WgContext& context, WgRenderTarget* dst, const RenderEffectMotionBlur* params, const WgCompose* compose);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_

@@ -920,6 +920,11 @@ TVG_API Tvg_Result tvg_scene_add_effect_gaussian_blur(Tvg_Paint scene, double si
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+TVG_API Tvg_Result tvg_scene_add_effect_motion_blur(Tvg_Paint scene, double distance, double angle, int quality)
+{
+    if (scene) return (Tvg_Result) reinterpret_cast<Scene*>(scene)->add(SceneEffect::MotionBlur, distance, angle, quality);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API Tvg_Result tvg_scene_add_effect_fill(Tvg_Paint scene, int r, int g, int b, int a)
 {

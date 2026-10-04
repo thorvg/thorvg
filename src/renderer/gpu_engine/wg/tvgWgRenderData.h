@@ -183,7 +183,8 @@ struct WgRenderEffect
     uint32_t extend;
     Point offset;
 
-    void update(WgContext& context, WgShaderTypeEffectParams& effectParams);
+    void update(WgContext& context, WgShaderTypeEffectParams& params);
+    void update(WgContext& context, RenderEffectMotionBlur* motion, const Matrix& transform);
     void update(WgContext& context, RenderEffectGaussianBlur* gaussian, const Matrix& transform);
     void update(WgContext& context, RenderEffectDropShadow* dropShadow, const Matrix& transform);
     void update(WgContext& context, RenderEffectFill* fill);

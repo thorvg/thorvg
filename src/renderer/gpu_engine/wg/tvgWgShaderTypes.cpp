@@ -203,6 +203,16 @@ void WgShaderTypeGradientData::update(const Fill* fill)
 // WgShaderTypeEffectParams
 //************************************************************************
 
+bool WgShaderTypeEffectParams::update(RenderEffectMotionBlur* motion, const Matrix& transform)
+{
+    int samples;
+    if (!motion->update(transform, offset, samples)) return false;
+    params[0] = offset.x;
+    params[1] = offset.y;
+    params[2] = samples;
+    return true;
+}
+
 bool WgShaderTypeEffectParams::update(RenderEffectGaussianBlur* gaussian, const Matrix& transform)
 {
     params[0] = gaussian->sigma;

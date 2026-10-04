@@ -408,6 +408,9 @@ void WgPipelines::initialize(WgContext& context)
                                                depthStencilStateScene, multisampleStateX1);
 
     // effects
+    effectMotionBlur = createRenderPipeline(context.device, "The render pipeline motion blur", shaderEffects, "vs_main", "fs_main_motion", layoutEffects, vertexBufferLayoutsImage, 2,
+                                            WGPUColorWriteMask_All, offscreenTargetFormat, blendStateSrc, depthStencilStateScene, multisampleStateX1);
+
     effectDropShadow = createRenderPipeline(context.device, "The render pipeline drop shadow", shaderShadow, "vs_main", "fs_main_shadow", layoutShadow, vertexBufferLayoutsImage, 2,
                                             WGPUColorWriteMask_All, offscreenTargetFormat, blendStateSrc, depthStencilStateScene, multisampleStateX1);
 
@@ -436,6 +439,7 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
     releaseRenderPipeline(effectGaussianHorz);
     releaseRenderPipeline(effectGaussianVert);
     releaseRenderPipeline(effectDropShadow);
+    releaseRenderPipeline(effectMotionBlur);
     // pipeline blit
     releaseRenderPipeline(blitUnpremultiplied);
     releaseRenderPipeline(blit);

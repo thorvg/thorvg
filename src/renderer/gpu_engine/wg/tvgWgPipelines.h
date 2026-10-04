@@ -70,6 +70,7 @@ struct WgPipelines
     WGPURenderPipeline effectFill{};
     WGPURenderPipeline effectTint{};
     WGPURenderPipeline effectTritone{};
+    WGPURenderPipeline effectMotionBlur{};
 
     WGPURenderPipeline solidBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline radialBlend(WgContext& context, BlendMethod method);
