@@ -506,8 +506,8 @@ void WgCompositor::composeScene(WgContext& context, WgRenderTarget* src, WgRende
     RenderRegion rect = shrinkRenderRegion(cmp->aabb);
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x(), rect.y(), rect.w(), rect.h());
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bindGroupTexture, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, mask->bindGroupTexture, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bgTexture, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, mask->bgTexture, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.sceneCompose[(uint32_t)cmp->method]);
     drawMeshImage(context, &meshDataBlit);
 }
@@ -529,7 +529,7 @@ void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRender
     };
     const WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
     renderPassEncoder = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bindGroupTexture, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bgTexture, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, premultiplied ? pipelines.blit : pipelines.blitUnpremultiplied);
     drawMeshImage(context, &meshDataBlit);
     wgpuRenderPassEncoderEnd(renderPassEncoder);
@@ -630,13 +630,13 @@ void WgCompositor::blendShape(WgContext& context, WgShape* rdata, BlendMethod bl
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solidBlend(context, blendMethod));
         drawMeshSolid(context, &rdata->bboxMesh, rdata->shape.solid.colorIdx);
     } else {
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupIdx], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, _gradientBlendPipeline(pipelines, context, settings.fillType, blendMethod));
         drawMesh(context, &rdata->bboxMesh);
     }
@@ -722,13 +722,13 @@ void WgCompositor::blendStrokes(WgContext& context, WgShape* rdata, BlendMethod 
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, strokeView, 0, nullptr);
     if (settings.fillType == WgRenderSettingsType::Solid) {
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.solidBlend(context, blendMethod));
         drawMeshSolid(context, &rdata->stroke.bboxMesh, rdata->stroke.solid.colorIdx);
     } else {
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupIdx], 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, settings.gradientData.bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, _gradientBlendPipeline(pipelines, context, settings.fillType, blendMethod));
         drawMesh(context, &rdata->stroke.bboxMesh);
     }
@@ -801,7 +801,7 @@ void WgCompositor::blendImage(WgContext& context, WgImage* rdata, BlendMethod bl
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, stageBufferPaint[settings.bindGroupIdx], 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, rdata->bindGroup, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bindGroupTexture, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 3, targetTemp0.bgTexture, 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.imageBlend(context, blendMethod));
     drawMeshImage(context, &rdata->mesh);
 };
@@ -837,7 +837,7 @@ void WgCompositor::drawScene(WgContext& context, WgRenderTarget* scene, WgCompos
     RenderRegion rect = shrinkRenderRegion(compose->aabb);
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x(), rect.y(), rect.w(), rect.h());
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, scene->bindGroupTexture, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, scene->bgTexture, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, bindGroupOpacities[compose->opacity], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.scene);
     drawMeshImage(context, &meshDataBlit);
@@ -855,8 +855,8 @@ void WgCompositor::blendScene(WgContext& context, WgRenderTarget* scene, WgCompo
     RenderRegion rect = shrinkRenderRegion(compose->aabb);
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, rect.x(), rect.y(), rect.w(), rect.h());
     wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, scene->bindGroupTexture, 0, nullptr);
-    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bindGroupTexture, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, scene->bgTexture, 0, nullptr);
+    wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp0.bgTexture, 0, nullptr);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, bindGroupOpacities[compose->opacity], 0, nullptr);
     wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.sceneBlend(context, compose->blend));
     drawMeshImage(context, &meshDataBlit);
@@ -952,14 +952,14 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderTarget* dst, const R
     if (blur->direction == 0) {  // both
         beginRenderPass(commandEncoder, &targetTemp0); {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, dst->bindGroupTexture, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, dst->bgTexture, 0, nullptr);
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectGaussianHorz);
             drawMeshImage(context, &meshDataBlit);
         } endRenderPass();
         beginRenderPass(commandEncoder, dst); {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectGaussianVert);
             drawMeshImage(context, &meshDataBlit);
@@ -967,7 +967,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderTarget* dst, const R
     } else if (blur->direction == 1) {  // horizontal
         beginRenderPass(commandEncoder, dst); {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectGaussianHorz);
             drawMeshImage(context, &meshDataBlit);
@@ -975,7 +975,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, WgRenderTarget* dst, const R
     } else if (blur->direction == 2) {  // vertical
         beginRenderPass(commandEncoder, dst); {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectGaussianVert);
             drawMeshImage(context, &meshDataBlit);
@@ -996,7 +996,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderTarget* dst, const Ren
         // horizontal
         beginRenderPass(commandEncoder, &targetTemp0); {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, dst->bindGroupTexture, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, dst->bgTexture, 0, nullptr);
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectGaussianHorz);
             drawMeshImage(context, &meshDataBlit);
@@ -1004,7 +1004,7 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderTarget* dst, const Ren
         // vertical
         beginRenderPass(commandEncoder, &targetTemp1); {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
             wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectGaussianVert);
             drawMeshImage(context, &meshDataBlit);
@@ -1014,8 +1014,8 @@ bool WgCompositor::dropShadow(WgContext& context, WgRenderTarget* dst, const Ren
     copyTexture(&targetTemp0, dst, aabb);
     beginRenderPass(commandEncoder, dst); {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp1.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, targetTemp1.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 2, effect->bindGroupParams, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectDropShadow);
         drawMeshImage(context, &meshDataBlit);
@@ -1031,7 +1031,7 @@ bool WgCompositor::fillEffect(WgContext& context, WgRenderTarget* dst, const Ren
     copyTexture(&targetTemp0, dst, aabb);
     beginRenderPass(commandEncoder, dst); {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectFill);
         drawMeshImage(context, &meshDataBlit);
@@ -1048,7 +1048,7 @@ bool WgCompositor::tintEffect(WgContext& context, WgRenderTarget* dst, const Ren
     copyTexture(&targetTemp0, dst, aabb);
     beginRenderPass(commandEncoder, dst); {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectTint);
         drawMeshImage(context, &meshDataBlit);
@@ -1065,7 +1065,7 @@ bool WgCompositor::tritoneEffect(WgContext& context, WgRenderTarget* dst, const 
     copyTexture(&targetTemp0, dst, aabb);
     beginRenderPass(commandEncoder, dst); {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
-        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bindGroupTexture, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 1, effect->bindGroupParams, 0, nullptr);
         wgpuRenderPassEncoderSetPipeline(renderPassEncoder, pipelines.effectTritone);
         drawMeshImage(context, &meshDataBlit);
