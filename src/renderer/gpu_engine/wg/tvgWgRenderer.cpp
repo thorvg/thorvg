@@ -456,7 +456,7 @@ bool WgRenderer::clear()
 {
     if (mContext.invalid()) return false;
 
-    //TODO: clear the current target buffer only if clear() is called
+    mClearBuffer = true;
     return true;
 }
 
@@ -485,11 +485,13 @@ bool WgRenderer::sync()
         auto dstTextureView = mContext.createTextureView(dstTexture);
         auto commandEncoder = mContext.createCommandEncoder();
         // show root offscreen buffer
-        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView, mTargetSurface.premultiplied);
+        mCompositor.blit(mContext, commandEncoder, &mRenderTargetRoot, dstTextureView, mTargetSurface.premultiplied, mClearBuffer);
         mContext.submitCommandEncoder(commandEncoder);
         mContext.releaseCommandEncoder(commandEncoder);
         mContext.releaseTextureView(dstTextureView);
     }
+
+    mClearBuffer = false;
 
     return true;
 }
