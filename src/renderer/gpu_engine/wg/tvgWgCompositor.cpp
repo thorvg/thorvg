@@ -180,8 +180,7 @@ void WgCompositor::copyTexture(const WgRenderTarget* dst, const WgRenderTarget* 
     wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
 }
 
-
-void WgCompositor::beginRenderPassMS(WGPUCommandEncoder commandEncoder, WgRenderTarget* target, bool clear, WGPUColor clearColor)
+void WgCompositor::beginRenderPassMS(WGPUCommandEncoder commandEncoder, WgRenderTarget* target, bool clearBuffer)
 {
     // do not start same render bass
     if (target == currentTarget) return;
@@ -203,10 +202,9 @@ void WgCompositor::beginRenderPassMS(WGPUCommandEncoder commandEncoder, WgRender
         .view = target->texViewMS,
         .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
         .resolveTarget = target->texView,
-        .loadOp = clear ? WGPULoadOp_Clear : WGPULoadOp_Load,
+        .loadOp = clearBuffer ? WGPULoadOp_Clear : WGPULoadOp_Load,
         .storeOp = WGPUStoreOp_Store,
-        .clearValue = clearColor
-    };
+        .clearValue = {0.0, 0.0, 0.0, 0.0}};
     WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
     renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
     assert(renderPassEncoder);
@@ -509,7 +507,7 @@ void WgCompositor::composeScene(WgContext& context, WgRenderTarget* src, WgRende
     drawMeshImage(context, &meshDataBlit);
 }
 
-void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView, bool premultiplied)
+void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView, bool premultiplied, bool clearBuffer)
 {
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{
         .view = texViewDepthStencil,
@@ -518,12 +516,12 @@ void WgCompositor::blit(WgContext& context, WGPUCommandEncoder encoder, WgRender
         .stencilLoadOp = WGPULoadOp_Load,
         .stencilStoreOp = WGPUStoreOp_Discard
     };
-    const WGPURenderPassColorAttachment colorAttachment { 
+    const WGPURenderPassColorAttachment colorAttachment{
         .view = dstView,
         .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
-        .loadOp = WGPULoadOp_Load,
+        .loadOp = clearBuffer ? WGPULoadOp_Clear : WGPULoadOp_Load,
         .storeOp = WGPUStoreOp_Store,
-    };
+        .clearValue = {0.0, 0.0, 0.0, 0.0}};
     const WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
     renderPassEncoder = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
     wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, src->bgTexture, 0, nullptr);

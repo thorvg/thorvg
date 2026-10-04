@@ -88,15 +88,17 @@ void WgPaintTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
 
 void WgSceneTask::stage(WgCompositor& compositor)
 {
+    // stage all resources used by the scene tree
     ARRAY_FOREACH(task, children) {
         (*task)->stage(compositor);
     }
 }
 
+// run all, including all shapes drawing, blending, composition and effect
 void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {
-    // begin the render pass for the current scene and clear the target content
-    compositor.beginRenderPassMS(encoder, renderTarget, true);
+    // Preserve the canvas contents when clearing is disabled; temporary scenes always clear.
+    compositor.beginRenderPassMS(encoder, renderTarget, clearBuffer);
     runChildren(context, compositor, encoder);  // run all children (scenes and shapes)
     compositor.endRenderPass();
 
