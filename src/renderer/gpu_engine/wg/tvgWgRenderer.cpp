@@ -641,6 +641,8 @@ void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
         rdata->update(mContext, (RenderEffectTint*)effect);
     } else if (effect->type == SceneEffect::Tritone) {
         rdata->update(mContext, (RenderEffectTritone*)effect);
+    } else if (effect->type == SceneEffect::MotionBlur) {
+        rdata->update(mContext, (RenderEffectMotionBlur*)effect, transform);
     } else {
         TVGERR("WG_ENGINE", "Missing effect type? = %d", (int) effect->type);
         return;
@@ -650,9 +652,10 @@ void WgRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 
 bool WgRenderer::region(RenderEffect* effect)
 {
+    auto rdata = (WgRenderEffect*)effect->rd;
+
     if (effect->type == SceneEffect::GaussianBlur) {
         auto gaussian = (RenderEffectGaussianBlur*)effect;
-        auto rdata = (WgRenderEffect*)gaussian->rd;
         if (gaussian->direction != 2) {
             gaussian->extend.min.x = -rdata->extend;
             gaussian->extend.max.x = +rdata->extend;
@@ -664,11 +667,15 @@ bool WgRenderer::region(RenderEffect* effect)
         return true;
     } else if (effect->type == SceneEffect::DropShadow) {
         auto dropShadow = (RenderEffectDropShadow*)effect;
-        auto rdata = (WgRenderEffect*)dropShadow->rd;
         dropShadow->extend.min.x = -std::ceil(rdata->extend + std::abs(rdata->offset.x));
         dropShadow->extend.min.y = -std::ceil(rdata->extend + std::abs(rdata->offset.y));
         dropShadow->extend.max.x = +std::floor(rdata->extend + std::abs(rdata->offset.x));
         dropShadow->extend.max.y = +std::floor(rdata->extend + std::abs(rdata->offset.y));
+        return true;
+    } else if (effect->type == SceneEffect::MotionBlur) {
+        auto x = int32_t(ceilf(fabsf(rdata->offset.x) * 0.5f));
+        auto y = int32_t(ceilf(fabsf(rdata->offset.y) * 0.5f));
+        effect->extend = {{-x, -y}, {x, y}};
         return true;
     }
     return false;
@@ -685,8 +692,8 @@ bool WgRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, TVG_U
 
 void WgRenderer::dispose(RenderEffect* effect)
 {
-    auto rdata = (WgRenderEffect*)effect->rd;
-    mEffectPool.free(mContext, rdata);
+    if (!effect->rd) return;
+    mEffectPool.free(mContext, (WgRenderEffect*)effect->rd);
     effect->rd = nullptr;
 };
 
