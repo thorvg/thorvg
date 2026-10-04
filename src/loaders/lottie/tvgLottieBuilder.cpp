@@ -176,6 +176,15 @@ static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, u
 }
 
 
+static void _mergeOps(RenderPath& out, const RenderPath& path, const RenderMerge::Operand& from, const RenderMerge::Operand& to)
+{
+    out.cmds.data = path.cmds.data + from.cmds;
+    out.cmds.count = to.cmds - from.cmds;
+    out.pts.data = path.pts.data + from.pts;
+    out.pts.count = to.pts - from.pts;
+}
+
+
 void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 {
     if (!layer) return;
@@ -838,6 +847,106 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
 }
 
 
+void LottieBuilder::collectMerge(RenderContext* ctx)
+{
+    auto merge = ctx->merge;
+
+    if (merge->target != ctx->merging) {
+        if (merge->target) {
+            auto op = merge->operands.last().op;
+            resolveMerge(ctx);
+            merge->operands.push({0, 0, op, true});
+        }
+        merge->target = ctx->merging;
+    }
+    if (!merge->target || merge->joined) return;
+
+    auto& path = to<ShapeImpl>(merge->target)->rs.path;
+    auto& last = merge->operands.last();
+    if (path.cmds.count > last.cmds) merge->operands.push({path.cmds.count, path.pts.count, last.op, false});
+}
+
+
+void LottieBuilder::resolveMerge(RenderContext* ctx)
+{
+    auto merge = ctx->merge;
+    if (!merge->target) return;
+
+    auto& path = to<ShapeImpl>(merge->target)->rs.path;
+    RenderMerge::Operand end = {path.cmds.count, path.pts.count, PathOp::Add, false};
+    RenderMerge::Operand from = end, to = end;
+    RenderPath out, lhs, rhs;
+    auto count = 0;
+    auto inherited = false;
+
+    for (auto operand = merge->operands.end() - 1; operand >= merge->operands.begin(); --operand) {
+        if (inherited || operand->cmds < end.cmds) {
+            if (count == 0) {
+                from = *operand;
+                to = end;
+            } else {
+                if (count == 1) _mergeOps(lhs, path, from, to);
+                _mergeOps(rhs, path, *operand, end);
+                if (!tvg::pathop((count == 1) ? lhs : out, rhs, out, operand->op)) out.clear();
+            }
+            ++count;
+        }
+        inherited = false;
+        end = *operand;
+        if (!operand->head) continue;
+
+        if (count > 1) {
+            path.cmds.count = operand->cmds;
+            path.pts.count = operand->pts;
+            path.cmds.push(out.cmds);
+            path.pts.push(out.pts);
+        }
+        inherited = (count > 0);
+        count = 0;
+        end = {path.cmds.count, path.pts.count, PathOp::Add, false};
+    }
+
+    lhs.dismiss();
+    rhs.dismiss();
+    merge->operands.clear();
+    PAINT(merge->target)->mark(RenderUpdateFlag::Path);
+}
+
+
+void LottieBuilder::updateMergePath(TVG_UNUSED LottieGroup* parent, LottieObject** child, TVG_UNUSED float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+{
+    auto mergePath = static_cast<LottieMergePath*>(*child);
+
+    if (mergePath->mode == LottieMergePath::Merge) {
+        if (ctx->merge) ctx->merge->joined = true;
+        return;
+    }
+
+    if (!ctx->merge) {
+        ctx->merge = new RenderMerge;
+        ctx->merge->target = ctx->merging;
+    }
+
+    RenderMerge::Operand operand = {0, 0, PathOp::Add, true};
+
+    switch (mergePath->mode) {
+        case LottieMergePath::Subtract: operand.op = PathOp::Subtract; break;
+        case LottieMergePath::Intersect: operand.op = PathOp::Intersect; break;
+        case LottieMergePath::Exclude: operand.op = PathOp::Difference; break;
+        default: break;
+    }
+
+    if (ctx->merge->target) {
+        auto& path = to<ShapeImpl>(ctx->merge->target)->rs.path;
+        operand.cmds = path.cmds.count;
+        operand.pts = path.pts.count;
+    }
+
+    ctx->merge->operands.push(operand);
+    ctx->merge->joined = false;
+}
+
+
 void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts)
 {
     contexts.head->begin = parent->children.end() - 1;
@@ -905,6 +1014,10 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                     updateOffsetPath(parent, child, frameNo, contexts, ctx);
                     break;
                 }
+                case LottieObject::MergePath: {
+                    updateMergePath(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
                 case LottieObject::PuckerBloat: {
                     updatePuckerBloat(parent, child, frameNo, contexts, ctx);
                     break;
@@ -916,9 +1029,12 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                 default: break;
             }
 
+            if (ctx->merge) collectMerge(ctx);
+
             //stop processing for those invisible contents
             if (stop || ctx->propagator->opacity() == 0) break;
         }
+        if (ctx->merge) resolveMerge(ctx);
         delete(ctx);
     }
 }

@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgInlist.h"
 #include "tvgShape.h"
+#include "tvgPath.h"
 #include "tvgLottieExpressions.h"
 #include "tvgLottieModifier.h"
 #include "tvgLottieTween.h"
@@ -73,6 +74,20 @@ struct RenderText
 
 enum RenderFragment : uint8_t {ByNone = 0, ByFill, ByStroke};
 
+struct RenderMerge
+{
+    struct Operand
+    {
+        uint32_t cmds, pts;
+        PathOp op;
+        bool head;
+    };
+
+    Array<Operand> operands;
+    Shape* target = nullptr;
+    bool joined = false;
+};
+
 struct RenderContext
 {
     INLIST_ITEM(RenderContext);
@@ -83,6 +98,7 @@ struct RenderContext
     Array<RenderRepeater> repeaters;
     Matrix* transform = nullptr;
     LottieModifier* modifiers = nullptr;
+    RenderMerge* merge = nullptr;
     RenderFragment fragment = ByNone;  //render context has been fragmented
     bool reqFragment = false;  //requirement to fragment the render context
 
@@ -98,6 +114,7 @@ struct RenderContext
         propagator->unref(false);
         delete(transform);
         delete (modifiers);
+        delete(merge);
     }
 
     RenderContext(const RenderContext& rhs, Shape* propagator, bool mergeable = false) : propagator(propagator)
@@ -218,6 +235,9 @@ private:
     void updateRepeater(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateRoundedCorner(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateOffsetPath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    void updateMergePath(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
+    void collectMerge(RenderContext* ctx);
+    void resolveMerge(RenderContext* ctx);
     void updatePuckerBloat(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
     void updateZigZag(LottieGroup* parent, LottieObject** child, float frameNo, Inlist<RenderContext>& contexts, RenderContext* ctx);
 
