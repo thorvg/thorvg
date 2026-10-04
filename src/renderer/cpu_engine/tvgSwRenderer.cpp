@@ -677,6 +677,7 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
 void SwRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
     switch (effect->type) {
+        case SceneEffect::MotionBlur: effectMotionBlurUpdate(static_cast<RenderEffectMotionBlur*>(effect), transform); break;
         case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
         case SceneEffect::DropShadow: effectDropShadowUpdate(static_cast<RenderEffectDropShadow*>(effect), transform); break;
         case SceneEffect::Fill: effectFillUpdate(static_cast<RenderEffectFill*>(effect)); break;
@@ -756,6 +757,7 @@ bool SwRenderer::intersectsImage(RenderData data, const RenderRegion& region)
 bool SwRenderer::region(RenderEffect* effect)
 {
     switch (effect->type) {
+        case SceneEffect::MotionBlur: return effectMotionBlurRegion(static_cast<RenderEffectMotionBlur*>(effect));
         case SceneEffect::GaussianBlur: return effectGaussianBlurRegion(static_cast<RenderEffectGaussianBlur*>(effect));
         case SceneEffect::DropShadow: return effectDropShadowRegion(static_cast<RenderEffectDropShadow*>(effect));
         default: return false;
@@ -776,6 +778,9 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
     if (p->recoverSfc->channelSize != sizeof(uint32_t)) direct = false;
     
     switch (effect->type) {
+        case SceneEffect::MotionBlur: {
+            return effectMotionBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectMotionBlur*>(effect));
+        }
         case SceneEffect::GaussianBlur: {
             return effectGaussianBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectGaussianBlur*>(effect));
         }

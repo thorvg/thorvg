@@ -31,10 +31,12 @@ struct WgRenderTarget
     WGPUTexture texture{}, textureMS{};
     WGPUTextureView texView{}, texViewMS{};
     WGPUBindGroup bgRead{}, bgWrite{};
-    WGPUBindGroup bgTexture{};
+    WGPUBindGroup bgTexture{};        // Nearest + repeat for general compositing and pixel-aligned effects.
+    WGPUBindGroup bgTextureLinear{};  // Linear + clamp for subpixel sampling, such as motion blur.
     uint32_t width{}, height{};
 
     void initialize(WgContext& context, uint32_t width, uint32_t height);
+    WGPUBindGroup getBindGroupTextureLinear(WgContext& context);
     void release(WgContext& context);
 };
 

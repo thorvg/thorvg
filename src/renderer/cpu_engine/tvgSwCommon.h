@@ -537,6 +537,9 @@ void rasterPremultiply(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 uint32_t rasterUnpremultiply(uint32_t data);
 
+bool effectMotionBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectMotionBlur* params);
+bool effectMotionBlurRegion(RenderEffectMotionBlur* params);
+void effectMotionBlurUpdate(RenderEffectMotionBlur* params, const Matrix& transform);
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
 bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
 void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);

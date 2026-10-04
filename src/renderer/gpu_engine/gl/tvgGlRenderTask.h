@@ -282,10 +282,10 @@ struct GlEffectDropShadowTask : GlRenderTask
     GlRenderTarget* dstCopyFbo1;
 };
 
-struct GlEffectColorTransformTask : GlRenderTask
+struct GlEffectTask : GlRenderTask
 {
-    GlEffectColorTransformTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo) :
-        GlRenderTask(program), dstFbo(dstFbo), dstCopyFbo(dstCopyFbo){};
+    GlEffectTask(GlProgram* program, GlRenderTarget* dstFbo, GlRenderTarget* dstCopyFbo) :
+        GlRenderTask(program), dstFbo(dstFbo), dstCopyFbo(dstCopyFbo) {};
 
     void run(GlStateCache& state) override;
 

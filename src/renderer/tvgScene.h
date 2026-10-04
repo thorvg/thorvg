@@ -266,6 +266,10 @@ struct SceneImpl : Scene
                         ret = new RenderEffectGaussianBlur(*(RenderEffectGaussianBlur*)(*p));
                         break;
                     }
+                    case SceneEffect::MotionBlur: {
+                        ret = new RenderEffectMotionBlur(*(RenderEffectMotionBlur*)(*p));
+                        break;
+                    }
                     case SceneEffect::DropShadow: {
                         ret = new RenderEffectDropShadow(*(RenderEffectDropShadow*)(*p));
                         break;
@@ -421,6 +425,10 @@ struct SceneImpl : Scene
             }
             case SceneEffect::Tritone: {
                 re = RenderEffectTritone::gen(args);
+                break;
+            }
+            case SceneEffect::MotionBlur: {
+                re = RenderEffectMotionBlur::gen(args);
                 break;
             }
             default: break;
