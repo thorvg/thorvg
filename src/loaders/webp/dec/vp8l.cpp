@@ -374,13 +374,13 @@ static int ReadHuffmanCodes(VP8LDecoder* const dec, int xsize, int ysize,
         alphabet_size += 1 << color_cache_bits;
       }
       size = ReadHuffmanCode(alphabet_size, dec, code_lengths, next);
+      if (size == 0) {
+        goto Error;
+      }
       if (is_trivial_literal && kLiteralMap[j] == 1) {
         is_trivial_literal = (next->bits == 0);
       }
       next += size;
-      if (size == 0) {
-        goto Error;
-      }
     }
     htree_group->is_trivial_literal = is_trivial_literal;
     if (is_trivial_literal) {
