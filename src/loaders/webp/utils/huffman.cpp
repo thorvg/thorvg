@@ -219,7 +219,7 @@ int VP8LBuildHuffmanTable(HuffmanTables* const root_table, int root_bits,
   assert(code_lengths_size <= MAX_CODE_LENGTHS_SIZE);
   if (total_size == 0 || root_table == NULL) return total_size;
 
-  if (root_table->curr_segment->curr_table + total_size >=
+  if (root_table->curr_segment->curr_table + total_size >
       root_table->curr_segment->start + root_table->curr_segment->size) {
     // If 'root_table' does not have enough memory, allocate a new segment.
     // The available part of root_table->curr_segment is left unused because we
