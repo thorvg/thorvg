@@ -26,289 +26,160 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static uint32_t _premultiply(uint32_t c1, uint32_t c2, uint8_t a)
+//W3C compositing in the premultiplied space: s * (1 - Da) + d * (1 - Sa) + Sa * Da * B(Cs, Cb)
+//x1, x2, x3: Sa * Da * B(Cs, Cb) per channel in the 255 * 255 scale
+static uint32_t _compose(uint32_t s, uint32_t d, int32_t x1, int32_t x2, int32_t x3)
 {
-    if (a == 255) return c1;
-    else if (a == 0) return c2;
-    return ALPHA_BLEND(c1, a) + ALPHA_BLEND(c2, 255 - a);
+    int32_t sa = A(s), da = A(d);
+    auto c = [&](int32_t s, int32_t d, int32_t x) { return (s * (255 - da) + d * (255 - sa) + x + 127) / 255; };
+    return JOIN(sa + da - (sa * da + 127) / 255, c(C1(s), C1(d), x1), c(C2(s), C2(d), x2), c(C3(s), C3(d), x3));
 }
 
-static RenderColor _unpremultiply(uint32_t c)
+template<typename F>
+static uint32_t _separate(uint32_t s, uint32_t d, F f)
 {
-    RenderColor o = {C1(c), C2(c), C3(c), A(c)};
-    if (o.a > 0 && o.a < 255) {
-        o.r = std::min((o.r * 255u + o.a / 2) / o.a, 255u);
-        o.g = std::min((o.g * 255u + o.a / 2) / o.a, 255u);
-        o.b = std::min((o.b * 255u + o.a / 2) / o.a, 255u);
-    }
-    return o;
-}
-
-static void _saturate(uint8_t& c1, uint8_t& c2, uint8_t& c3, const uint8_t& s1, const uint8_t& s2, const uint8_t& s3)
-{
-    // to saturation
-    auto s = std::max(s1, std::max(s2, s3)) - std::min(s1, std::min(s2, s3));
-
-    uint8_t v[3] = {c1, c2, c3};
-    int lo = 0, mid = 1, hi = 2;
-
-    if (v[lo] > v[mid]) std::swap(lo, mid);
-    if (v[mid] > v[hi]) std::swap(mid, hi);
-    if (v[lo] > v[mid]) std::swap(lo, mid);
-
-    auto minv = v[lo];
-    auto maxv = v[hi];
-
-    if (maxv > minv) {
-        v[mid] = uint8_t((int(v[mid] - minv) * s) / (maxv - minv));
-        v[hi] = s;
-    } else {
-        v[mid] = v[hi] = 0;
-    }
-
-    v[lo] = 0;
-    c1 = v[0];
-    c2 = v[1];
-    c3 = v[2];
+    int32_t sa = A(s), da = A(d);
+    return _compose(s, d, f(C1(s), C1(d), sa, da), f(C2(s), C2(d), sa, da), f(C3(s), C3(d), sa, da));
 }
 
 //W3C luminosity: 0.3 * R + 0.59 * G + 0.11 * B
-static int _lum(const SwSurface* surface, uint8_t c1, uint8_t c2, uint8_t c3)
+static int32_t _lum(const SwSurface* surface, int32_t c1, int32_t c2, int32_t c3)
 {
     auto w = surface->join(30, 59, 11, 0);
     return (c1 * C1(w) + c2 * C2(w) + c3 * C3(w) + 50) / 100;
 }
 
-static void _luminance(uint8_t& c1, uint8_t& c2, uint8_t& c3, int cl, int l)
+static int32_t _sat(int32_t c1, int32_t c2, int32_t c3)
 {
-    auto d = l - cl;
-    auto r = int(c1) + d;
-    auto g = int(c2) + d;
-    auto b = int(c3) + d;
-    auto minv = std::min(r, std::min(g, b));
-    auto maxv = std::max(r, std::max(g, b));
+    return std::max(c1, std::max(c2, c3)) - std::min(c1, std::min(c2, c3));
+}
 
-    if (minv < 0) {
-        r = l + ((r - l) * l) / (l - minv);
-        g = l + ((g - l) * l) / (l - minv);
-        b = l + ((b - l) * l) / (l - minv);
-        maxv = std::max(r, std::max(g, b));
-    }
+static void _setSat(int32_t& c1, int32_t& c2, int32_t& c3, int32_t s)
+{
+    auto n = std::min(c1, std::min(c2, c3));
+    auto x = std::max(c1, std::max(c2, c3));
+    auto f = [&](int32_t& c) { c = (x > n) ? int32_t(int64_t(c - n) * s / (x - n)) : 0; };
+    f(c1); f(c2); f(c3);
+}
 
-    if (maxv > 255) {
-        r = l + ((r - l) * (255 - l)) / (maxv - l);
-        g = l + ((g - l) * (255 - l)) / (maxv - l);
-        b = l + ((b - l) * (255 - l)) / (maxv - l);
-    }
-
-    c1 = static_cast<uint8_t>(r);
-    c2 = static_cast<uint8_t>(g);
-    c3 = static_cast<uint8_t>(b);
+//set the luminosity, then clip the color into [0, a]
+static void _setLum(const SwSurface* surface, int32_t& c1, int32_t& c2, int32_t& c3, int32_t l, int32_t a)
+{
+    auto t = l - _lum(surface, c1, c2, c3);
+    c1 += t; c2 += t; c3 += t;
+    auto n = std::min(c1, std::min(c2, c3));
+    auto x = std::max(c1, std::max(c2, c3));
+    auto f = [&](int32_t& c) {
+        if (n < 0) c = l + int32_t(int64_t(c - l) * l / (l - n));
+        if (x > a) c = l + int32_t(int64_t(c - l) * (a - l) / (x - l));
+    };
+    f(c1); f(c2); f(c3);
 }
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
-//W3C compositing: blend the straight source color with the target, then source-over by the source alpha (s: premultiplied)
 uint32_t opBlendMethod(const SwSurface* surface, uint32_t s, uint32_t d, uint8_t a)
 {
-    auto o = _unpremultiply(s);
-    auto t = surface->blender(surface, JOIN(255, o.r, o.g, o.b), d);
-    a = MULTIPLY(a, o.a);
+    //colors are clamped by the alpha to tolerate invalid premultiplied pixels
+    auto valid = [](uint32_t c) { auto a = A(c); return JOIN(a, std::min(C1(c), a), std::min(C2(c), a), std::min(C3(c), a)); };
+    auto t = surface->blender(surface, valid(s), valid(d));
     return (a == 255) ? t : INTERPOLATE(t, d, a);
 }
 
 uint32_t blendDifference(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (s > d) ? (s - d) : (d - s);
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return abs(s * da - d * sa); });
 }
 
 uint32_t blendExclusion(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return tvg::clamp(s + d - 2 * MULTIPLY(s, d), 0, 255);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return s * da + d * sa - 2 * s * d; });
 }
 
 uint32_t blendAdd(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::min(s + d, 255);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return std::min(s * da + d * sa, sa * da); });
 }
 
 uint32_t blendScreen(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return s + d - MULTIPLY(s, d);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return s * da + d * sa - s * d; });
 }
 
 uint32_t blendMultiply(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return MULTIPLY(s, d);
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return s * d; });
 }
 
 uint32_t blendOverlay(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (d < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return (2 * d <= da) ? 2 * s * d : sa * da - 2 * (sa - s) * (da - d); });
 }
 
 uint32_t blendDarken(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::min(s, d);
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return std::min(s * da, d * sa); });
 }
 
 uint32_t blendLighten(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::max(s, d);
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return std::max(s * da, d * sa); });
 }
 
 uint32_t blendColorDodge(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return d == 0 ? 0 : (s == 255 ? 255 : std::min(d * 255 / (255 - s), 255));
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return (d == 0) ? 0 : ((s >= sa) ? sa * da : std::min(sa * sa * d / (sa - s), sa * da)); });
 }
 
 uint32_t blendColorBurn(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return d == 255 ? 255 : (s == 0 ? 0 : 255 - std::min((255 - d) * 255 / s, 255));
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return (d >= da) ? sa * da : ((s == 0) ? 0 : sa * da - std::min(sa * sa * (da - d) / s, sa * da)); });
 }
 
 uint32_t blendHardLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (s < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) { return (2 * s <= sa) ? 2 * s * d : sa * da - 2 * (sa - s) * (da - d); });
 }
 
 uint32_t blendSoftLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) -> uint8_t {
-        if (s <= 127) return (d - ((255 - 2 * s) * d * (255 - d)) / 65025);
-
-        // use Look up table for skip sqrt per every pixels.
-        static constexpr uint8_t SQRT_LUT[256] = {
-            0, 15, 22, 27, 31, 35, 39, 42, 45, 47, 50, 52, 55, 57, 59, 61,
-            63, 65, 67, 69, 71, 73, 74, 76, 78, 79, 81, 82, 84, 85, 87, 88,
-            90, 91, 93, 94, 95, 97, 98, 99, 100, 102, 103, 104, 105, 107, 108, 109,
-            110, 111, 112, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126,
-            127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 141,
-            142, 143, 144, 145, 146, 147, 148, 148, 149, 150, 151, 152, 153, 153, 154, 155,
-            156, 157, 158, 158, 159, 160, 161, 162, 162, 163, 164, 165, 165, 166, 167, 168,
-            168, 169, 170, 171, 171, 172, 173, 174, 174, 175, 176, 177, 177, 178, 179, 179,
-            180, 181, 182, 182, 183, 184, 184, 185, 186, 186, 187, 188, 188, 189, 190, 190,
-            191, 192, 192, 193, 194, 194, 195, 196, 196, 197, 198, 198, 199, 200, 200, 201,
-            201, 202, 203, 203, 204, 205, 205, 206, 206, 207, 208, 208, 209, 210, 210, 211,
-            211, 212, 213, 213, 214, 214, 215, 216, 216, 217, 217, 218, 218, 219, 220, 220,
-            221, 221, 222, 222, 223, 224, 224, 225, 225, 226, 226, 227, 228, 228, 229, 229,
-            230, 230, 231, 231, 232, 233, 233, 234, 234, 235, 235, 236, 236, 237, 237, 238,
-            238, 239, 240, 240, 241, 241, 242, 242, 243, 243, 244, 244, 245, 245, 246, 246,
-            247, 247, 248, 248, 249, 249, 250, 250, 251, 251, 252, 252, 253, 253, 254, 255};
-        auto D = (d <= 64) ? (4 * d - (12 * d * d) / 255 + (16 * d * d * d) / 65025) : SQRT_LUT[d];
-        return static_cast<uint8_t>(d + ((2 * s - 255) * (D - d)) / 255);
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _separate(s, d, [](int32_t s, int32_t d, int32_t sa, int32_t da) {
+        if (da == 0) return 0;
+        if (2 * s <= sa) return sa * d - (sa - 2 * s) * d * (da - d) / da;
+        if (4 * d <= da) return sa * d + int32_t(int64_t(2 * s - sa) * d * ((16 * d - 12 * da) * d + 3 * da * da) / (da * da));
+        return sa * d + (2 * s - sa) * (int32_t(sqrtf(float(d * da)) * 256.0f) - 256 * d) / 256;
+    });
 }
 
 uint32_t blendHue(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto c1 = C1(s);
-    auto c2 = C2(s);
-    auto c3 = C3(s);
-    _saturate(c1, c2, c3, o.r, o.g, o.b);
-    _luminance(c1, c2, c3, _lum(surface, c1, c2, c3), _lum(surface, o.r, o.g, o.b));
-
-    return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
+    int32_t sa = A(s), da = A(d), c1 = C1(s) * da, c2 = C2(s) * da, c3 = C3(s) * da;
+    _setSat(c1, c2, c3, _sat(C1(d), C2(d), C3(d)) * sa);
+    _setLum(surface, c1, c2, c3, _lum(surface, C1(d) * sa, C2(d) * sa, C3(d) * sa), sa * da);
+    return _compose(s, d, c1, c2, c3);
 }
 
 uint32_t blendSaturation(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto c1 = o.r;
-    auto c2 = o.g;
-    auto c3 = o.b;
-    _saturate(c1, c2, c3, C1(s), C2(s), C3(s));
-    _luminance(c1, c2, c3, _lum(surface, c1, c2, c3), _lum(surface, o.r, o.g, o.b));
-
-    return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
+    int32_t sa = A(s), da = A(d), c1 = C1(d) * sa, c2 = C2(d) * sa, c3 = C3(d) * sa;
+    auto l = _lum(surface, c1, c2, c3);
+    _setSat(c1, c2, c3, _sat(C1(s), C2(s), C3(s)) * da);
+    _setLum(surface, c1, c2, c3, l, sa * da);
+    return _compose(s, d, c1, c2, c3);
 }
 
 uint32_t blendColor(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto c1 = C1(s);
-    auto c2 = C2(s);
-    auto c3 = C3(s);
-    _luminance(c1, c2, c3, _lum(surface, c1, c2, c3), _lum(surface, o.r, o.g, o.b));
-
-    return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
+    int32_t sa = A(s), da = A(d), c1 = C1(s) * da, c2 = C2(s) * da, c3 = C3(s) * da;
+    _setLum(surface, c1, c2, c3, _lum(surface, C1(d) * sa, C2(d) * sa, C3(d) * sa), sa * da);
+    return _compose(s, d, c1, c2, c3);
 }
 
 uint32_t blendLuminosity(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    _luminance(o.r, o.g, o.b, _lum(surface, o.r, o.g, o.b), _lum(surface, C1(s), C2(s), C3(s)));
-
-    return _premultiply(JOIN(255, o.r, o.g, o.b), s, o.a);
+    int32_t sa = A(s), da = A(d), c1 = C1(d) * sa, c2 = C2(d) * sa, c3 = C3(d) * sa;
+    _setLum(surface, c1, c2, c3, _lum(surface, C1(s) * da, C2(s) * da, C3(s) * da), sa * da);
+    return _compose(s, d, c1, c2, c3);
 }

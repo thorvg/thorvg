@@ -289,7 +289,7 @@ struct SwImage
 };
 
 typedef uint8_t (*SwMask)(uint8_t s, uint8_t d, uint8_t a);                       // src, dst, alpha
-typedef uint32_t (*SwBlender)(const SwSurface* surface, uint32_t s, uint32_t d);  // src(straight, opaque), dst
+typedef uint32_t (*SwBlender)(const SwSurface* surface, uint32_t s, uint32_t d);  // src, dst
 typedef uint32_t (*SwBlenderA)(uint32_t s, uint32_t d, uint8_t a);                // src, dst, alpha
 typedef uint32_t (*SwJoin)(uint8_t r, uint8_t g, uint8_t b, uint8_t a);           // color channel join
 typedef uint8_t (*SwAlpha)(uint8_t*);                                             // blending alpha
