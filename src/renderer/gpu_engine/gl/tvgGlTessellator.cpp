@@ -72,7 +72,7 @@ void Stroker::run(const RenderPath& path, bool thinFill)
                     cap();
                     validStrokeCap = false;
                 }
-                mState = {};
+                mState.firstLength = 0.0f;  // The first segment initializes the remaining edge state.
                 mState.firstPt = mState.prevPt = *pts++;
                 validStrokeCap = false;
             } break;
@@ -103,9 +103,9 @@ void Stroker::cap()
     // Open contours monotone in either axis may turn both ways. Half-segment cuts
     // keep joins independent, and their forward boundaries separate the caps.
     auto monotone = (mDirections & 3) != 3 || (mDirections & 12) != 12;
-    overlapFree &= mState.firstLength > 0.0f && (mCap == StrokeCap::Butt || mState.firstPt != mState.prevPt) &&
-                   (monotone || (mProbe.convex && mProbe.xDirChanges <= 1 && mProbe.yDirChanges <= 1 &&
-                    mProbe.winding * cross(mState.firstPtDir, mState.prevPtDir) >= 0.0f));
+    overlapFree = overlapFree && mState.firstLength > 0.0f && (mCap == StrokeCap::Butt || mState.firstPt != mState.prevPt) &&
+                  (monotone || (mProbe.convex && mProbe.xDirChanges <= 1 && mProbe.yDirChanges <= 1 &&
+                   mProbe.winding * cross(mState.firstPtDir, mState.prevPtDir) >= 0.0f));
     if (mCap == StrokeCap::Butt) return;
 
     if (mCap == StrokeCap::Square) {
@@ -222,9 +222,8 @@ void Stroker::close()
     if (overlapFree) mProbe.addEdge(mState.firstPtDir);
     join(mState.firstPtDir, len, mState.firstIndex);
     overlapFree &= mProbe.convex;
-    auto first = mState.firstPt;
-    mState = {};
-    mState.firstPt = mState.prevPt = first;
+    mState.firstLength = 0.0f;
+    mState.prevPt = mState.firstPt;
 }
 
 
@@ -246,15 +245,17 @@ void Stroker::join(const Point& dir, float len, uint32_t index)
         auto prevJoin = mState.prevPt + prevNormal * offset;
         auto currJoin = mState.prevPt + normal * offset;
         auto apex = mState.prevPt;
-        auto denom = 1.0f + dot(mState.prevPtDir, dir);
+        auto cosine = dot(mState.prevPtDir, dir);
+        auto denom = 1.0f + cosine;
         auto trimmed = false;
 
         if (!mThinFill && denom > FLOAT_EPSILON) {
-            auto setback = radius() * fabsf(turn) / denom;
+            // Choose the half-angle ratio that avoids cancellation near a reversal.
+            auto setback = radius() * (cosine < 0.0f ? (1.0f - cosine) / fabsf(turn) : fabsf(turn) / denom);
             auto scale = std::max(std::max(fabsf(apex.x), fabsf(apex.y)), std::max(radius(), std::max(mState.prevLength, len)));
             // Keep each cut within its half-segment so neighboring cuts and caps stay independent.
             if (2.0f * setback + FLOAT_EPSILON * scale < std::min(mState.prevLength, len)) {
-                auto inner = apex - (prevNormal + normal) * (offset / denom);
+                auto inner = apex - mState.prevPtDir * setback - prevNormal * offset;
                 auto side = turn < 0.0f ? 1u : 0u;
                 auto vertices = mBuffer->vertex.data;
                 auto prev = (mState.prevIndex + 2 + side) * 2;
@@ -294,15 +295,16 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center, c
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale);
+    auto count = std::max(2u, gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale));
 
     auto c = _pushVertex(mBuffer->vertex, apex.x, apex.y);
     auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
     auto step = (endAngle - startAngle) / (count - 1);
 
-    for (uint32_t i = 1; i + 1 < count; i++) {
+    for (uint32_t i = 1; i < count; i++) {
         auto angle = startAngle + step * i;
-        Point out = {center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
+        // Keep the shared edge exact so adjacent arcs and segments do not overlap.
+        Point out = (i + 1 == count) ? curr : Point{center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
         auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
 
         _pushTriangle(mBuffer->index, c, pi, oi);
@@ -314,10 +316,6 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center, c
         mRightBottom.x = std::max(mRightBottom.x, out.x);
         mRightBottom.y = std::max(mRightBottom.y, out.y);
     }
-
-    // Keep the shared edge exact so adjacent arcs and segments do not overlap.
-    auto oi = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    _pushTriangle(mBuffer->index, c, pi, oi);
 }
 
 
