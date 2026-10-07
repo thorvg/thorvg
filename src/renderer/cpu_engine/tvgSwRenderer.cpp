@@ -210,7 +210,7 @@ struct SwImageTask : SwTask
         image.h = source->h;
         image.stride = source->stride;
         image.channelSize = source->channelSize;
-        image.alphaIgnored = source->alphaIgnored;
+        image.alphaIgnored = source->opaque;
 
         auto updateImage = flags[0] & (RenderUpdateFlag::Image | RenderUpdateFlag::Clip | RenderUpdateFlag::Transform);
         auto updateColor = flags[0] & (RenderUpdateFlag::Color);
@@ -285,6 +285,7 @@ bool SwRenderer::sync()
 Result SwRenderer::target(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs)
 {
     if (!data || stride == 0 || w == 0 || h == 0 || w > stride) return Result::InvalidArguments;
+    if (cs != ColorSpace::ABGR8888 && cs != ColorSpace::ABGR8888S && cs != ColorSpace::ARGB8888 && cs != ColorSpace::ARGB8888S) return Result::NonSupport;
 
     clearCompositors();
 

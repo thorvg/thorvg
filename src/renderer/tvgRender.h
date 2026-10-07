@@ -87,33 +87,11 @@ struct RenderSurface
     ColorSpace cs = ColorSpace::Unknown;
     uint8_t channelSize = 0;
     bool premultiplied = false;         //Alpha-premultiplied
-    bool alphaIgnored = false;          // If true, the alpha channel can be ignored.
+    bool opaque = false;                // If true, the alpha channel can be ignored.
 
     RenderSurface() = default;
-
-    RenderSurface(const RenderSurface* rhs)
-    {
-        data = rhs->data;
-        stride = rhs->stride;
-        w = rhs->w;
-        h = rhs->h;
-        cs = rhs->cs;
-        channelSize = rhs->channelSize;
-        premultiplied = rhs->premultiplied;
-        alphaIgnored = rhs->alphaIgnored;
-    }
-
-    void setup(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, uint8_t channelSize, ColorSpace cs, bool alphaIgnored = false)
-    {
-        this->data = data;
-        this->stride = stride;
-        this->w = w;
-        this->h = h;
-        this->channelSize = channelSize;
-        this->cs = cs;
-        this->premultiplied = (cs == ColorSpace::ABGR8888 || cs == ColorSpace::ARGB8888);
-        this->alphaIgnored = alphaIgnored;
-    }
+    RenderSurface(const RenderSurface* rhs);
+    void setup(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, uint8_t channelSize, ColorSpace cs);
 };
 
 struct RenderCompositor
@@ -746,6 +724,8 @@ static inline bool MASK_REGION_MERGING(MaskMethod method)
 static inline uint8_t CHANNEL_SIZE(ColorSpace cs)
 {
     switch(cs) {
+        case ColorSpace::XBGR8888:
+        case ColorSpace::XRGB8888:
         case ColorSpace::ABGR8888:
         case ColorSpace::ABGR8888S:
         case ColorSpace::ARGB8888:

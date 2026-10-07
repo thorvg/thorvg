@@ -90,8 +90,9 @@ private:
     void releaseSurfaceTexture();
 
     void clearTargets();
-    void surfaceConfigure(WGPUSurface surface, WgContext& context, uint32_t width, uint32_t height, ColorSpace cs);
+    void surfaceConfigure(RenderSurface& rsurface, WGPUSurface wsurface, WgContext& context);
 
+    RenderSurface mSurface;  // main surface
     WgRenderTarget mRenderTargetRoot;
     Array<WgCompose*> mCompositorList;
     Array<WgRenderTarget*> mRenderTargetStack;
@@ -105,7 +106,6 @@ private:
     WgTextureMgr mTextures;
     WgContext mContext;
     WgCompositor mCompositor;
-    RenderSurface mTargetSurface;
     BlendMethod mBlendMethod = BlendMethod::Normal;
 
     // disposable data list

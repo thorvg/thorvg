@@ -450,7 +450,7 @@ bool AvfMediaLoader::read()
     surface.h = static_cast<uint32_t>(h);
     surface.stride = surface.w;
     surface.channelSize = sizeof(uint32_t);
-    surface.alphaIgnored = true;
+    surface.opaque = true;
 
     // Prime the first frame so Picture can render immediately after load().
     return _readStillFrame(*this, 0.0f) && sync();

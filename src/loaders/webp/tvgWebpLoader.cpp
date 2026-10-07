@@ -41,10 +41,10 @@ void WebpLoader::run(unsigned tid)
     // static loader WebPDecodeRGBA/WebPDecodeBGRA returns a premultiplied version.
     if (surface.cs == ColorSpace::ARGB8888 || surface.cs == ColorSpace::ARGB8888S) {
         buf8 = WebPDecodeBGRA(data, size, nullptr, nullptr);
-        cs = ColorSpace::ARGB8888;
+        cs = surface.opaque ? ColorSpace::XRGB8888 : ColorSpace::ARGB8888;
     } else  {
         buf8 = WebPDecodeRGBA(data, size, nullptr, nullptr);
-        cs = ColorSpace::ABGR8888;
+        cs = surface.opaque ? ColorSpace::XBGR8888 : ColorSpace::ABGR8888;
     }
     surface.setup((pixel_t*)buf8, static_cast<uint32_t>(w), static_cast<uint32_t>(w), static_cast<uint32_t>(h), sizeof(uint32_t), cs);
     clear();
@@ -72,7 +72,7 @@ Result WebpLoader::open(const char* path, const LoaderOps& ops)
     if (WebPGetFeatures(data, size, &features)) return Result::InvalidArguments;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
-    surface.alphaIgnored = !features.has_alpha;
+    surface.opaque = !features.has_alpha;
     return Result::Success;
 #else
     return Result::NonSupport;
@@ -93,7 +93,7 @@ Result WebpLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     if (WebPGetFeatures(this->data, size, &features)) return Result::InvalidArguments;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
-    surface.alphaIgnored = !features.has_alpha;
+    surface.opaque = !features.has_alpha;
     this->size = size;
 
     return Result::Success;

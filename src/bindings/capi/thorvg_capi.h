@@ -149,10 +149,12 @@ typedef enum
 {
     TVG_COLORSPACE_ABGR8888 = 0,   ///< The channels are joined in the order: alpha, blue, green, red. Colors are alpha-premultiplied.
     TVG_COLORSPACE_ARGB8888,       ///< The channels are joined in the order: alpha, red, green, blue. Colors are alpha-premultiplied.
-    TVG_COLORSPACE_ABGR8888S,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. (since 0.13)
-    TVG_COLORSPACE_ARGB8888S,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. (since 0.13)
-    TVG_COLORSPACE_GRAYSCALE8,     ///< Single channel, 1 byte per pixel 8-bit grayscale. (since 1.1)
-    TVG_COLORSPACE_UNKNOWN = 255,  ///< Unknown channel data. This is reserved for an initial ColorSpace value. (since 1.0)
+    TVG_COLORSPACE_ABGR8888S,      ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.13
+    TVG_COLORSPACE_ARGB8888S,      ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.13
+    TVG_COLORSPACE_GRAYSCALE8,     ///< Single channel, 1 byte per pixel 8-bit grayscale. @since 1.1
+    TVG_COLORSPACE_XBGR8888,       ///< 32-bit opaque color in the order: unused, blue, green, red. @note Experimental API
+    TVG_COLORSPACE_XRGB8888,       ///< 32-bit opaque color in the order: unused, red, green, blue. @note Experimental API
+    TVG_COLORSPACE_UNKNOWN = 255,  ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
 } Tvg_Colorspace;
 
 /**
@@ -659,13 +661,14 @@ TVG_API Tvg_Canvas tvg_wgcanvas_create(Tvg_Engine_Option op);
  * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
  * @param[in] w The width of the target.
  * @param[in] h The height of the target.
- * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888 and @c TVG_COLORSPACE_ABGR8888S.
+ * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888, @c TVG_COLORSPACE_ABGR8888S, and @c TVG_COLORSPACE_XBGR8888.
  * @param[in] type @c 0: surface, @c 1: texture are used as presentable target.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
  * @retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
  *
- * @warning Regardless of the value of @p cs, this target API uses the default alpha mode.
+ * @warning For alpha formats, this target API uses the default alpha mode.
+ * @note @c TVG_COLORSPACE_XBGR8888 selects opaque surface composition and ignores output alpha. This format requires @p type to be @c 0.
  *
  * @see tvg_wgcanvas_set_target_with_context()
  *
@@ -680,12 +683,13 @@ TVG_API Tvg_Result tvg_wgcanvas_set_target(Tvg_Canvas canvas, void* device, void
  * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
  * @param[in] w The width of the target.
  * @param[in] h The height of the target.
- * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888 and @c TVG_COLORSPACE_ABGR8888S.
+ * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c TVG_COLORSPACE_ABGR8888, @c TVG_COLORSPACE_ABGR8888S, and @c TVG_COLORSPACE_XBGR8888.
  * @param[in] type @c 0: surface, @c 1: texture are used as presentable target.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION if the canvas is performing rendering. Please ensure the canvas is synced.
  * @retval TVG_RESULT_NOT_SUPPORTED In case the wg engine is not supported.
  *
+ * @note @c TVG_COLORSPACE_XBGR8888 selects opaque surface composition and ignores output alpha. This format requires @p type to be @c 0.
  * @note Experimental API
  */
 TVG_API Tvg_Result tvg_wgcanvas_set_target_with_context(Tvg_Canvas canvas, const Tvg_WgContext* context, void* target, uint32_t w, uint32_t h, Tvg_Colorspace cs, int type);
@@ -2072,6 +2076,8 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint picture, const char* path);
  * @param[in] copy If @c true, the data is copied into the engine's local buffer. If @c false, the data is not copied.
  *
  * @retval TVG_RESULT_INVALID_ARGUMENT No data are provided or the @p w or @p h value is zero or less.
+ *
+ * @note @c TVG_COLORSPACE_XBGR8888 and @c TVG_COLORSPACE_XRGB8888 overwrite fully covered pixels without alpha blending.
  *
  * @since 0.9
  */
