@@ -38,7 +38,7 @@ void JpgLoader::clear()
 
 void JpgLoader::run(unsigned tid)
 {
-    surface.setup((pixel_t*)jpgdDecompress(decoder), static_cast<uint32_t>(w), static_cast<uint32_t>(w), static_cast<uint32_t>(h), sizeof(uint32_t), ColorSpace::ABGR8888, true);
+    surface.setup((pixel_t*)jpgdDecompress(decoder), static_cast<uint32_t>(w), static_cast<uint32_t>(w), static_cast<uint32_t>(h), sizeof(uint32_t), ColorSpace::XBGR8888);
     clear();
 }
 

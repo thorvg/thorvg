@@ -100,10 +100,10 @@ bool JpgLoader::read()
     TJPF format;
     if (BitmapLoader::cs == ColorSpace::ARGB8888 || BitmapLoader::cs == ColorSpace::ARGB8888S) {
         format = TJPF_BGRX;
-        cs = ColorSpace::ARGB8888;
+        cs = ColorSpace::XRGB8888;
     } else {
         format = TJPF_RGBX;
-        cs = ColorSpace::ABGR8888;
+        cs = ColorSpace::XBGR8888;
     }
 
     if (static_cast<int>(w) > INT_MAX / static_cast<int>(h) / tjPixelSize[format]) return false;
@@ -118,7 +118,7 @@ bool JpgLoader::read()
         return false;
     }
 
-    surface.setup((pixel_t*)image, w, w, h, sizeof(uint32_t), cs, true);
+    surface.setup((pixel_t*)image, w, w, h, sizeof(uint32_t), cs);
     clear();
     return true;
 }

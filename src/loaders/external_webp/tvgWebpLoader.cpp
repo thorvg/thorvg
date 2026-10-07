@@ -41,11 +41,11 @@ void WebpLoader::run(unsigned tid)
     if (BitmapLoader::cs == ColorSpace::ARGB8888 || BitmapLoader::cs == ColorSpace::ARGB8888S) {
         config.output.colorspace = MODE_bgrA;
         if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
-        cs = ColorSpace::ARGB8888;
+        cs = surface.opaque ? ColorSpace::XRGB8888 : ColorSpace::ARGB8888;
     } else {
         config.output.colorspace = MODE_rgbA;
         if (WebPDecode(data, size, &config) != VP8_STATUS_OK) return;
-        cs = ColorSpace::ABGR8888;
+        cs = surface.opaque ? ColorSpace::XBGR8888 : ColorSpace::ABGR8888;
     }
     surface.setup((pixel_t*)config.output.u.RGBA.rgba, (uint32_t)w, (uint32_t)w, (uint32_t)h, sizeof(uint32_t), cs);
 }
@@ -76,7 +76,7 @@ Result WebpLoader::open(const char* path, const LoaderOps& ops)
     if (WebPGetFeatures(data, size, &features)) return Result::InvalidArguments;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
-    surface.alphaIgnored = !features.has_alpha;
+    surface.opaque = !features.has_alpha;
     return Result::Success;
 #else
     return Result::NonSupport;
@@ -97,7 +97,7 @@ Result WebpLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     if (WebPGetFeatures(this->data, size, &features)) return Result::InvalidArguments;
     w = static_cast<float>(features.width);
     h = static_cast<float>(features.height);
-    surface.alphaIgnored = !features.has_alpha;
+    surface.opaque = !features.has_alpha;
     this->size = size;
     return Result::Success;
 }

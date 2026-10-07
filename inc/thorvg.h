@@ -120,6 +120,8 @@ enum struct ColorSpace : uint8_t
     ABGR8888S,     ///< The channels are joined in the order: alpha, blue, green, red. Colors are un-alpha-premultiplied. @since 0.12
     ARGB8888S,     ///< The channels are joined in the order: alpha, red, green, blue. Colors are un-alpha-premultiplied. @since 0.12
     Grayscale8,    ///< Single channel, 1 byte per pixel 8-bit grayscale.
+    XBGR8888,      ///< 32-bit opaque color in the order: unused, blue, green, red. @note Experimental API
+    XRGB8888,      ///< 32-bit opaque color in the order: unused, red, green, blue. @note Experimental API
     Unknown = 255  ///< Unknown channel data. This is reserved for an initial ColorSpace value. @since 1.0
 };
 
@@ -1802,6 +1804,7 @@ struct TVG_API Picture : Paint
      * @param[in] copy If @c true, the data is copied into the engine's local buffer. If @c false, the data is not copied.
      *
      * @note If the memory data pointed to by @p data is modified, calling this API will re-upload the updated content to the canvas.
+     * @note @c ColorSpace::XBGR8888 and @c ColorSpace::XRGB8888 overwrite fully covered pixels without alpha blending.
      *
      * @since 0.9
      */
@@ -2537,13 +2540,14 @@ struct TVG_API WgCanvas final : Canvas
      * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
      * @param[in] w The width of the target.
      * @param[in] h The height of the target.
-     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c ColorSpace::ABGR8888 and @c ColorSpace::ABGR8888S.
+     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c ColorSpace::ABGR8888, @c ColorSpace::ABGR8888S, and @c ColorSpace::XBGR8888.
      * @param[in] type @c 0: surface, @c 1: texture are used as pesentable target.
      *
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
      * @retval Result::NonSupport In case the wg engine is not supported.
      *
-     * @warning Regardless of the value of @p cs, this target API uses the default alpha mode.
+     * @warning For alpha formats, this target API uses the default alpha mode.
+     * @note @c ColorSpace::XBGR8888 selects opaque surface composition and ignores output alpha. This format requires @p type to be @c 0.
      *
      * @see WgCanvas::target(const Context&, void*, uint32_t, uint32_t, ColorSpace, int)
      * @see Canvas::viewport()
@@ -2560,7 +2564,7 @@ struct TVG_API WgCanvas final : Canvas
      * @param[in] target Either WGPUSurface or WGPUTexture, serving as handles to a presentable surface or texture.
      * @param[in] w The width of the target.
      * @param[in] h The height of the target.
-     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c ColorSpace::ABGR8888 and @c ColorSpace::ABGR8888S.
+     * @param[in] cs Specifies how the pixel values should be interpreted. Currently, it allows @c ColorSpace::ABGR8888, @c ColorSpace::ABGR8888S, and @c ColorSpace::XBGR8888.
      * @param[in] type @c 0: surface, @c 1: texture are used as pesentable target.
      *
      * @retval Result::InsufficientCondition if the canvas is performing rendering. Please ensure the canvas is synced.
@@ -2569,6 +2573,7 @@ struct TVG_API WgCanvas final : Canvas
      * @see Canvas::viewport()
      * @see Canvas::sync()
      *
+     * @note @c ColorSpace::XBGR8888 selects opaque surface composition and ignores output alpha. This format requires @p type to be @c 0.
      * @note Experimental API
      */
     Result target(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0) noexcept;
