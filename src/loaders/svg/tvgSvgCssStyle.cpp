@@ -198,8 +198,14 @@ void cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite)
     //Copy style attribute
     _copyStyle(to->style, from->style, overwrite);
 
-    if (from->style->clipPath.url) svgUtilReplace(&to->style->clipPath.url, from->style->clipPath.url);
-    if (from->style->mask.url) svgUtilReplace(&to->style->mask.url, from->style->mask.url);
+    if (from->style->clipPath.url && (!(to->style->flagsImportance & SvgStyleFlags::ClipPath) || (from->style->flagsImportance & SvgStyleFlags::ClipPath))) {
+        svgUtilReplace(&to->style->clipPath.url, from->style->clipPath.url);
+        if (from->style->flagsImportance & SvgStyleFlags::ClipPath) to->style->flagsImportance |= SvgStyleFlags::ClipPath;
+    }
+    if (from->style->mask.url && (!(to->style->flagsImportance & SvgStyleFlags::Mask) || (from->style->flagsImportance & SvgStyleFlags::Mask))) {
+        svgUtilReplace(&to->style->mask.url, from->style->mask.url);
+        if (from->style->flagsImportance & SvgStyleFlags::Mask) to->style->flagsImportance |= SvgStyleFlags::Mask;
+    }
 }
 
 
