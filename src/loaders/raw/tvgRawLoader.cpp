@@ -44,10 +44,10 @@ bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
     } else {
         surface.buf32 = const_cast<uint32_t*>(data);
     }
+
     surface.setup(surface.buf32, w, w, h, sizeof(uint32_t), cs);
     return true;
 }
-
 
 bool RawLoader::read()
 {

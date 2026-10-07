@@ -24,7 +24,42 @@
 #include "tvgRender.h"
 
 /************************************************************************/
-/* RenderMethod Class Implementation                                    */
+/* RenderSurface                                                        */
+/************************************************************************/
+
+RenderSurface::RenderSurface(const RenderSurface* rhs)
+{
+    data = rhs->data;
+    stride = rhs->stride;
+    w = rhs->w;
+    h = rhs->h;
+    cs = rhs->cs;
+    channelSize = rhs->channelSize;
+    premultiplied = rhs->premultiplied;
+    opaque = rhs->opaque;
+}
+
+void RenderSurface::setup(pixel_t* data, uint32_t stride, uint32_t w, uint32_t h, uint8_t channelSize, ColorSpace cs)
+{
+    if (cs == ColorSpace::XBGR8888) {
+        cs = ColorSpace::ABGR8888;
+        this->opaque = true;
+    } else if (cs == ColorSpace::XRGB8888) {
+        cs = ColorSpace::ARGB8888;
+        this->opaque = true;
+    }
+
+    this->data = data;
+    this->stride = stride;
+    this->w = w;
+    this->h = h;
+    this->channelSize = channelSize;
+    this->cs = cs;
+    this->premultiplied = (cs == ColorSpace::ABGR8888 || cs == ColorSpace::ARGB8888);
+}
+
+/************************************************************************/
+/* RenderMethod                                                         */
 /************************************************************************/
 
 uint32_t RenderMethod::ref()
@@ -55,7 +90,7 @@ bool RenderMethod::viewport(const RenderRegion& vp)
 
 
 /************************************************************************/
-/* RenderPath Class Implementation                                      */
+/* RenderPath                                                           */
 /************************************************************************/
 
 // used as a temporary buffer
@@ -243,9 +278,8 @@ bool RenderPath::bounds(const Matrix* m, BBox& box)
 }
 
 /************************************************************************/
-/* RenderRegion Class Implementation                                    */
+/* RenderRegion                                                         */
 /************************************************************************/
-
 
 void RenderRegion::intersect(const RenderRegion& rhs)
 {
@@ -448,7 +482,7 @@ void RenderDirtyRegion::commit()
 #endif
 
 /************************************************************************/
-/* RenderTrimPath Class Implementation                                  */
+/* RenderTrimPath                                                       */
 /************************************************************************/
 
 #define EPSILON 1e-4f
