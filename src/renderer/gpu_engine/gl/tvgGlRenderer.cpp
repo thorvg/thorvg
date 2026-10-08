@@ -63,6 +63,7 @@ void GlImage::destroy(GlRenderer& renderer)
         renderer.disposeTexture(renderer.textures.release(surface, filter, texId));
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopColors, const Fill::ColorStop* stops, uint32_t stopCnt, FillSpread spread, float alpha)
 {
     stopInfo[1] = NOISE_LEVEL;
@@ -87,6 +88,7 @@ static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopCo
     stopInfo[0] = nStops;
     return opaque;
 }
+#endif
 
 static bool _skipRender(const Array<RenderData>& clips)
 {
@@ -121,7 +123,9 @@ void GlRenderer::clearDisposes()
     delete (*p);
     mRenderPassStack.clear();
     mSolidBatch.clear();
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     mStencilCoverBatch.clear();
+#endif
 }
 
 
@@ -223,10 +227,17 @@ void GlRenderer::initShaders()
         STR_GRADIENT_MAIN
     );
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    mPrograms.push(nullptr);
+    mPrograms.push(nullptr);
+    mPrograms.push(nullptr);
+    mPrograms.push(nullptr);
+#else
     mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
     mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
     mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
     mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, conicGradientFragShader));
+#endif
     mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
 
     // compose Renderer
@@ -270,6 +281,7 @@ static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, 
     return viewMatrix;
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
 {
     dstCopyFbo = nullptr;
@@ -277,9 +289,9 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
     if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
     dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
-#else  // TODO: create partial buffer when MSAA is disabled
+#else
     dstCopyFbo = mBlendPool[0]->getRenderTarget(currentPass()->getViewport());
 #endif
 
@@ -291,9 +303,9 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
 {
     if (!dstCopyFbo) return;
 
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
     float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else  // TODO: create partial buffer when MSAA is disabled
+#else
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
     task->addBindResource(GlBindingResource{
@@ -530,12 +542,16 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 }
 
 
+#endif
+
 void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds)
 {
     if (viewBounds.invalid()) return;
 
     // Clip is a render boundary.
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     mStencilCoverBatch.clear();
+#endif
 
     // Clip masks must stay inside the target paint view bounds. Fast-tracked
     // Lottie clips narrow geometry.viewport while the pass viewport remains
@@ -613,9 +629,9 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 
     const auto& vp = blendPass->getViewport();
     if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
-#else // TODO: create partial buffer when MSAA is disabled        
+#else
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
 #endif
 
@@ -631,7 +647,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
 
-#if defined(THORVG_GL_TARGET_GLES)
+#if !defined(THORVG_GL_TARGET_GL) && !defined(THORVG_ANALYTIC_AA_SUPPORT)
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
     task->addBindResource(GlBindingResource{
         0,
@@ -709,7 +725,11 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         return mPrograms[shaderInd];
     }
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    vertShader = nullptr;
+#else
     vertShader = (source == BlendSource::Solid) ? COLOR_VERT_SHADER : GRADIENT_VERT_SHADER;
+#endif
     switch (source) {
         case BlendSource::Solid:
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s",
@@ -886,21 +906,20 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         if (!renderPass->isEmpty()) {
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
             if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(renderPass->getViewport());
-#else // TODO: create partial buffer when MSAA is disabled
+#else
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
 #endif
             uint32_t info[4] = {cmp->opacity, 0, 0, 0};
 
             auto program = getBlendProgram(glCmp->blendMethod, BlendSource::Scene);
             auto task = renderPass->endRenderPass<GlSceneBlendTask>(program, currentPass()->getFboId());
-            task->srcFbo = currentPass()->fbo;
             task->dstCopyFbo = dstCopyFbo;
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
-#if defined(THORVG_GL_TARGET_GLES)
+#if !defined(THORVG_GL_TARGET_GL) && !defined(THORVG_ANALYTIC_AA_SUPPORT)
             float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
             task->addBindResource(GlBindingResource{
                 1,
@@ -1054,6 +1073,9 @@ bool GlRenderer::sync()
 
 bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    return false;
+#else
     if (!data) return false;
 
     auto shape = static_cast<GlShape*>(data);
@@ -1073,6 +1095,7 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
     pt4[2] = bbox.max;
     pt4[3] = {bbox.min.x, bbox.max.y};
     return true;
+#endif
 }
 
 
@@ -1260,6 +1283,10 @@ bool GlRenderer::renderImage(void* data)
 
 bool GlRenderer::renderShape(RenderData data)
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    // Shape drawing is deferred until coverage rendering is implemented.
+    return false;
+#else
     auto shape = static_cast<GlShape*>(data);
     if (currentPass()->isEmpty() || (!shape->valid.fill && !shape->valid.stroke)) return true;
 
@@ -1303,6 +1330,7 @@ bool GlRenderer::renderShape(RenderData data)
     }
 
     return true;
+#endif
 }
 
 
@@ -1359,6 +1387,11 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         flags = RenderUpdateFlag::All;
     }
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    shape->geometry.transform(transform);
+    shape->geometry.viewport = vport;
+    shape->opacity = opacity;
+#else
     if (shape->prepare(flags, {float(surface.w), float(surface.h)}, opacity, clipper)) return shape;
 
     if (flags & RenderUpdateFlag::Path) shape->geometry = GlGeometry();
@@ -1379,6 +1412,7 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     shape->opacity = float(opacity) * shape->multiplier;
+#endif
 
     if (flags & RenderUpdateFlag::Clip) shape->clips = clips;
 
@@ -1416,6 +1450,9 @@ bool GlRenderer::partial(bool disable)
 
 bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    return false;
+#else
     if (!data) return false;
     auto shape = (GlShape*)data;
     if (shape->opacity == 0) return false;
@@ -1426,6 +1463,7 @@ bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion&
         return intersector.intersect(shape, RenderRegion::intersect(region, bbox));
     }
     return false;
+#endif
 }
 
 

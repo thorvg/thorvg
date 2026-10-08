@@ -29,6 +29,7 @@
 #include "tvgGlRenderTask.h"
 #include "tvgGlRenderPass.h"
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 struct GlRenderer;
 
 struct GlStencilCoverBatch
@@ -74,5 +75,6 @@ private:
     bool ySorted = false;
     bool open = false;
 };
+#endif
 
 #endif /* _TVG_GL_STENCIL_COVER_BATCH_H_ */

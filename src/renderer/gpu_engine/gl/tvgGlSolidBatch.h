@@ -32,7 +32,9 @@ struct GlRenderer;
 struct GlSolidBatch
 {
     void clear() { *this = {}; }
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     void draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
+#endif
     void draw(GlRenderer& renderer, GlImage& image, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
 
     struct DrawData
@@ -40,7 +42,9 @@ struct GlSolidBatch
         const GlGeometry* geometry;
         GlProgram* program;
         RenderUpdateFlag flag;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
         RenderColor color;
+#endif
         GLuint texId;
         uint32_t opacity;
         uint32_t vertexSize;
@@ -49,16 +53,20 @@ struct GlSolidBatch
     void draw(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
     bool appendable(const GlRenderPass* pass, const DrawData& data, const RenderRegion& viewBounds) const;
     void emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount, uint32_t indexCount);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     void promote(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
+    static void buildColors(tvg::RGBA* out, uint32_t count, const RenderColor& color);
+#endif
     void append(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
     void appendGeometry(GlRenderer& renderer, const DrawData& data);
     void commit(int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount);
-    static void buildColors(tvg::RGBA* out, uint32_t count, const RenderColor& color);
     static void buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint32_t baseVertex);
 
     GlRenderTask* task = nullptr;
     RenderRegion viewBounds = {};
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     RenderColor color = {};
+#endif
     uint32_t vertexCount = 0;
     GLuint texId = 0;
     uint32_t opacity = 0;

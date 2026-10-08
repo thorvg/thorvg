@@ -32,7 +32,9 @@
 #include "tvgGlEffect.h"
 #include "tvgGlStateCache.h"
 #include "tvgGlSolidBatch.h"
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 #include "tvgGlStencilCoverBatch.h"
+#endif
 
 struct GlRenderer : RenderMethod
 {
@@ -217,10 +219,12 @@ struct GlRenderer : RenderMethod
 
     void initShaders();
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+#endif
     void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
 
     GlRenderPass* currentPass();
@@ -253,7 +257,9 @@ struct GlRenderer : RenderMethod
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
     GlSolidBatch mSolidBatch;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     GlStencilCoverBatch mStencilCoverBatch;
+#endif
 
     //Disposed resources. They should be released on synced call.
     struct {

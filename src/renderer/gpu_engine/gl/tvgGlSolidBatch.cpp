@@ -22,6 +22,7 @@
 
 #include "tvgGlRenderer.h"
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 void GlSolidBatch::draw(GlRenderer& renderer, GlShape& shape, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds)
 {
     auto buffer = &shape.geometry.fill;
@@ -42,6 +43,7 @@ void GlSolidBatch::draw(GlRenderer& renderer, GlShape& shape, const RenderColor&
     };
     draw(renderer, data, depth, viewRegion, viewBounds);
 }
+#endif
 
 void GlSolidBatch::draw(GlRenderer& renderer, GlImage& image, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds)
 {
@@ -49,7 +51,9 @@ void GlSolidBatch::draw(GlRenderer& renderer, GlImage& image, int32_t depth, con
         &image.geometry,
         renderer.mPrograms[GlRenderer::RT_Image],
         RenderUpdateFlag::Image,
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
         {},
+#endif
         image.texId,
         image.opacity,
         4,
@@ -69,10 +73,12 @@ void GlSolidBatch::draw(GlRenderer& renderer, const DrawData& data, int32_t dept
         return;
     }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (task->vertexLayout.count == 1) {
         promote(renderer, data, depth, viewRegion, vertexCount, indexCount);
         return;
     }
+#endif
 
     append(renderer, data, depth, viewRegion, vertexCount, indexCount);
 }
@@ -107,8 +113,10 @@ void GlSolidBatch::emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData
 
     if (data.flag == RenderUpdateFlag::Image) {
         drawTask->addBindResource(GlBindingResource{0, data.texId, GlShaderUniform::Texture});
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     } else {
         drawTask->setVertexColor(data.color.r / 255.f, data.color.g / 255.f, data.color.b / 255.f, data.color.a / 255.f);
+#endif
     }
 
     auto viewport = viewRegion;
@@ -118,7 +126,9 @@ void GlSolidBatch::emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData
 
     task = drawTask;
     this->viewBounds = viewBounds;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     color = data.color;
+#endif
     this->vertexCount = vertexCount;
     texId = data.texId;
     opacity = data.opacity;
@@ -135,6 +145,7 @@ void GlSolidBatch::appendGeometry(GlRenderer& renderer, const DrawData& data)
     buildIndices(indices, buffer, this->vertexCount);
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 void GlSolidBatch::promote(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount)
 {
     appendGeometry(renderer, data);
@@ -148,16 +159,19 @@ void GlSolidBatch::promote(GlRenderer& renderer, const DrawData& data, int32_t d
     task->addVertexLayout(GlVertexLayout{1, 4, sizeof(tvg::RGBA), colorOffset, GL_UNSIGNED_BYTE, GL_TRUE, renderer.mGpuBuffer.getAuxBufferId()});
     commit(depth, viewRegion, vertexCount, indexCount);
 }
+#endif
 
 void GlSolidBatch::append(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, uint32_t vertexCount, uint32_t indexCount)
 {
     appendGeometry(renderer, data);
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (data.flag == RenderUpdateFlag::Color) {
         tvg::RGBA* colors = nullptr;
         renderer.mGpuBuffer.reserveAux(vertexCount * sizeof(tvg::RGBA), reinterpret_cast<void**>(&colors));
         buildColors(colors, vertexCount, data.color);
     }
+#endif
 
     commit(depth, viewRegion, vertexCount, indexCount);
 }
@@ -174,11 +188,13 @@ void GlSolidBatch::commit(int32_t depth, const RenderRegion& viewRegion, uint32_
     task->setViewport(viewport);
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 void GlSolidBatch::buildColors(tvg::RGBA* out, uint32_t count, const RenderColor& color)
 {
     for (uint32_t i = 0; i < count; ++i)
         out[i] = {color.r, color.g, color.b, color.a};
 }
+#endif
 
 void GlSolidBatch::buildIndices(uint32_t* out, const GlGeometryBuffer* src, uint32_t baseVertex)
 {

@@ -1013,7 +1013,9 @@
         typedef void (*PFNGLFRAMEBUFFERTEXTURE2DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
         typedef void (*PFNGLFRAMEBUFFERRENDERBUFFERPROC)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
         typedef void (*PFNGLBLITFRAMEBUFFERPROC)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
         typedef void (*PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+#endif
         typedef void (*PFNGLBINDVERTEXARRAYPROC)(GLuint array);
         typedef void (*PFNGLDELETEVERTEXARRAYSPROC)(GLsizei n, const GLuint *arrays);
         typedef void (*PFNGLGENVERTEXARRAYSPROC)(GLsizei n, GLuint *arrays);
@@ -1075,7 +1077,9 @@
         //typedef void (*PFNGLCLEARBUFFERFIPROC)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
         //typedef const GLubyte *(*PFNGLGETSTRINGIPROC)(GLenum name, GLuint index);
         //typedef GLboolean (*PFNGLISRENDERBUFFERPROC)(GLuint renderbuffer);
-        //typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+#endif
         //typedef void (*PFNGLGETRENDERBUFFERPARAMETERIVPROC)(GLenum target, GLenum pname, GLint *params);
         //typedef GLboolean (*PFNGLISFRAMEBUFFERPROC)(GLuint framebuffer);
         //typedef GLenum (*PFNGLCHECKFRAMEBUFFERSTATUSPROC)(GLenum target);
@@ -1411,7 +1415,9 @@
     extern PFNGLFRAMEBUFFERTEXTURE2DPROC                glFramebufferTexture2D;
     extern PFNGLFRAMEBUFFERRENDERBUFFERPROC             glFramebufferRenderbuffer;
     extern PFNGLBLITFRAMEBUFFERPROC                     glBlitFramebuffer;
-    extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC      glRenderbufferStorageMultisample;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
+    extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC       glRenderbufferStorageMultisample;
+#endif
     extern PFNGLBINDVERTEXARRAYPROC                     glBindVertexArray;
     extern PFNGLDELETEVERTEXARRAYSPROC                  glDeleteVertexArrays;
     extern PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
@@ -1473,7 +1479,9 @@
     //extern PFNGLCLEARBUFFERFIPROC                       glClearBufferfi;
     //extern PFNGLGETSTRINGIPROC                          glGetStringi;
     //extern PFNGLISRENDERBUFFERPROC                      glIsRenderbuffer;
-    //extern PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    extern PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+#endif
     //extern PFNGLGETRENDERBUFFERPARAMETERIVPROC          glGetRenderbufferParameteriv;
     //extern PFNGLISFRAMEBUFFERPROC                       glIsFramebuffer;
     //extern PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;

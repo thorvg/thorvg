@@ -13,7 +13,6 @@ source_file = [
    'tvgGlShaderSrc.h',
    'tvgGlSolidBatch.h',
    'tvgGlStateCache.h',
-   'tvgGlStencilCoverBatch.h',
    'tvgGl.cpp',
    'tvgGlEffect.cpp',
    'tvgGlGeometry.cpp',
@@ -28,10 +27,12 @@ source_file = [
    'tvgGlShader.cpp',
    'tvgGlShaderSrc.cpp',
    'tvgGlStateCache.cpp',
-   'tvgGlStencilCoverBatch.cpp',
-   'tvgGlTessellator.cpp',
-   'tvgGlTessellator.h',
 ]
+
+if not get_option('analytic_aa')
+    source_file += ['tvgGlTessellator.cpp', 'tvgGlTessellator.h',
+                    'tvgGlStencilCoverBatch.cpp', 'tvgGlStencilCoverBatch.h']
+endif
 
 #force to use gles
 if cc.get_id() == 'emscripten'

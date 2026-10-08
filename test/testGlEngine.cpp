@@ -30,6 +30,72 @@ using namespace std;
 
 #if defined(THORVG_GL_TEST_SUPPORT)
 
+#if !defined(__APPLE__)
+    #if defined(THORVG_GL_TARGET_GLES)
+        #include <GLES3/gl3.h>
+    #else
+        #include <GL/gl.h>
+    #endif
+#endif
+
+TEST_CASE("GL Single Sample Rendering", "[tvgGlEngine]")
+{
+    TestGLEngine engine(64, 64);
+
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = unique_ptr<GlCanvas>(GlCanvas::gen());
+        REQUIRE(canvas);
+        engine.target(canvas.get());
+
+        for (uint32_t mode = 0; mode < 4; ++mode) {
+            CAPTURE(mode);
+            REQUIRE(canvas->remove() == Result::Success);
+
+            auto shape = Shape::gen();
+            REQUIRE(shape->moveTo(8, 8) == Result::Success);
+            REQUIRE(shape->lineTo(50, 8) == Result::Success);
+            REQUIRE(shape->lineTo(8, 50) == Result::Success);
+            REQUIRE(shape->close() == Result::Success);
+            REQUIRE(shape->fill(255, 255, 255) == Result::Success);
+
+            uint8_t alpha = 255;
+            if (mode == 1 || mode == 3) {
+                auto scene = Scene::gen();
+                REQUIRE(scene->add(shape) == Result::Success);
+                REQUIRE(scene->opacity(128) == Result::Success);
+                if (mode == 3) REQUIRE(scene->blend(BlendMethod::Multiply) == Result::Success);
+                REQUIRE(canvas->add(scene) == Result::Success);
+                alpha = 128;
+            } else {
+                if (mode == 2) {
+                    auto mask = Shape::gen();
+                    REQUIRE(mask->appendRect(0, 0, 64, 64) == Result::Success);
+                    REQUIRE(mask->fill(255, 255, 255) == Result::Success);
+                    REQUIRE(shape->mask(mask, MaskMethod::Alpha) == Result::Success);
+                }
+                REQUIRE(canvas->add(shape) == Result::Success);
+            }
+
+            REQUIRE(canvas->draw(true) == Result::Success);
+            REQUIRE(canvas->sync() == Result::Success);
+
+            uint8_t pixels[64 * 64 * 4];
+            glReadPixels(0, 0, 64, 64, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            REQUIRE(glGetError() == GL_NO_ERROR);
+            uint32_t covered = 0;
+            for (uint32_t i = 0; i < 64 * 64; ++i) {
+                auto a = pixels[i * 4 + 3];
+                REQUIRE((a == 0 || a == alpha));
+                if (a == alpha) ++covered;
+            }
+            REQUIRE(covered > 800);
+            REQUIRE(covered < 900);
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("GL Basic draw", "[tvgGlEngine]")
 {
     TestGLEngine engine;

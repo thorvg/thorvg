@@ -46,6 +46,11 @@ if get_option('partial')
   config_h.set10('THORVG_PARTIAL_RENDER_SUPPORT', true)
 endif
 
+# Analytic AA
+if get_option('analytic_aa')
+  config_h.set10('THORVG_ANALYTIC_AA_SUPPORT', true)
+endif
+
 # Loaders
 all_loaders = get_option('loaders').contains('all')
 svg_loader = all_loaders or get_option('loaders').contains('svg')
@@ -173,6 +178,7 @@ summary(
     'File I/O': get_option('file'),
     'Multi-Tasking': get_option('threads'),
     'Partial Rendering': get_option('partial'),
+    'Analytic AA': get_option('analytic_aa'),
     'SIMD': simd_type,
     'Log Message': get_option('log'),
     'Tests': get_option('tests')

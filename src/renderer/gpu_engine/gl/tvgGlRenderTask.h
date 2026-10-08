@@ -107,6 +107,7 @@ struct GlRenderTask
     bool useDrawArrays = false;
 };
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 struct GlStencilCoverTask : GlRenderTask
 {
     GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode);
@@ -119,6 +120,7 @@ struct GlStencilCoverTask : GlRenderTask
     Array<GlRenderTask*> coverTasks;
     GlStencilMode stencilMode;
 };
+#endif
 
 struct GlComposeTask : GlRenderTask
 {
@@ -126,14 +128,12 @@ struct GlComposeTask : GlRenderTask
     ~GlComposeTask();
 
     void run(GlStateCache& state) override;
-    void onResolve(GlStateCache& state);
     void setRenderSize(uint32_t width, uint32_t height)
     {
         renderWidth = width;
         renderHeight = height;
     }
     GLuint getSelfFbo() { return fbo->fbo; }
-    GLuint getResolveFboId() { return fbo->resolvedFbo; }
 
     GLuint targetFbo;
     GlRenderTarget* fbo;
@@ -187,7 +187,6 @@ struct GlSceneBlendTask : GlComposeTask
 
     void run(GlStateCache& state) override;
 
-    GlRenderTarget* srcFbo = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
     uint32_t parentWidth = 0;
     uint32_t parentHeight = 0;

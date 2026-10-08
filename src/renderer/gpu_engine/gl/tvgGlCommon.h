@@ -33,8 +33,10 @@ struct GlStageBuffer;
 struct GlRenderTask;
 struct GlRenderer;
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
 constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
+#endif
 
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
 constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
@@ -61,6 +63,7 @@ static inline void getMatrix3Std140(const Matrix& mat3, float* matOut)
     matOut[3] = 0.0f;     matOut[7] = 0.0f;     matOut[11] = 0.0f;
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 enum class GlStencilMode
 {
     None,
@@ -68,6 +71,7 @@ enum class GlStencilMode
     FillEvenOdd,
     Stroke,
 };
+#endif
 
 struct GlGeometryBuffer
 {
@@ -104,29 +108,37 @@ struct GlGeometry
         return !buffer.index.empty();
     }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     void prepare(const RenderShape& rshape);
     bool tesselateShape(const RenderShape& rshape, float& multiplier);
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinFill(const RenderPath& path);
+#endif
     void tesselateImage(const RenderSurface* image);
     void draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     GlStencilMode stencilMode(RenderUpdateFlag flag) const;
+#endif
     RenderRegion bounds() const;
 
     GlGeometryBuffer fill, stroke;
     Matrix matrix;
     RenderRegion viewport;
     RenderRegion fillBBox, strokeBBox;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     RenderPath optPath;        // optimal transformed path
     RenderPath optStrokePath;  // matching local path using transformed-space tolerance
     float strokeRenderWidth;
+#endif
     mutable Matrix imatrix;      // inverse matrix
     mutable bool mDirty = true;  // matrix dirty
     FillRule fillRule;
     bool fillWorld : 1;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     bool optPathThin : 1;
     bool optPathSkipFill : 1;
     bool convex : 1;
+#endif
 };
 
 struct GlDrawable
@@ -147,7 +159,9 @@ struct GlShape : GlDrawable
     void destroy(GlRenderer& renderer) override {}
 
     const RenderShape* rshape;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     float multiplier = 1.0f;
+#endif
     struct {
         bool fill = false;
         bool stroke = false;
@@ -167,7 +181,9 @@ struct GlImage : GlDrawable
 struct GlIntersector
 {
     bool intersect(const tvg::Array<tvg::RenderData>& clips, const Point& pt);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     bool intersect(const GlShape* shape, const RenderRegion& region);
+#endif
     bool intersect(const GlImage* image, const RenderRegion& region);
 };
 

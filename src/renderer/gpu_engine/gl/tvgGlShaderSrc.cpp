@@ -20,10 +20,12 @@
  * SOFTWARE.
  */
 
+#include "config.h"
 #include "tvgGlShaderSrc.h"
 
 #define TVG_COMPOSE_SHADER(shader) #shader
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
     uniform mat3 uViewMatrix;                                       \n
@@ -38,6 +40,8 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
         vColor = aColor;                                            \n
     }                                                               \n);
 
+#endif
+
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
     in vec4 vColor;                                          \n
     out vec4 FragColor;                                      \n
@@ -48,6 +52,7 @@ const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
         FragColor = vec4(uColor.rgb * uColor.a, uColor.a);   \n
     }                                                        \n);
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                                           \n
     uniform mat3 uViewMatrix;                                                       \n
@@ -66,6 +71,8 @@ const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     }                                                                               \n
 );
 
+
+#endif
 
 //See: GlRenderer::initShaders()
 const char* STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
@@ -655,11 +662,8 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; }
 )";
 
-// GL keeps a viewport-sized dst copy, so src/dst can share vUV.
-// GLES/WebGL must keep a full resolved dst copy because MSAA resolve/blit is only valid for the
-// full buffer there; down-blitting into a smaller FBO would add another full copy pass. Rebuild
-// dst UV from gl_FragCoord + BlendRegion instead of reusing vUV.
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
+// Source and destination copies share the same viewport and texture coordinates.
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
@@ -717,6 +721,7 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 #else
+// GLES/WebGL MSAA resolves the full destination buffer, so its UV differs from the source.
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
 layout(std140) uniform BlendRegion {
     vec4 region;

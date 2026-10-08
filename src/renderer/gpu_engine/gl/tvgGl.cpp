@@ -399,7 +399,9 @@ PFNGLGENFRAMEBUFFERSPROC                     glGenFramebuffers;
 PFNGLFRAMEBUFFERTEXTURE2DPROC                glFramebufferTexture2D;
 PFNGLFRAMEBUFFERRENDERBUFFERPROC             glFramebufferRenderbuffer;
 PFNGLBLITFRAMEBUFFERPROC                     glBlitFramebuffer;
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC      glRenderbufferStorageMultisample;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC       glRenderbufferStorageMultisample;
+#endif
 PFNGLBINDVERTEXARRAYPROC                     glBindVertexArray;
 PFNGLDELETEVERTEXARRAYSPROC                  glDeleteVertexArrays;
 PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
@@ -461,7 +463,9 @@ PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
 //PFNGLCLEARBUFFERFIPROC                       glClearBufferfi;
 //PFNGLGETSTRINGIPROC                          glGetStringi;
 //PFNGLISRENDERBUFFERPROC                      glIsRenderbuffer;
-//PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+#endif
 //PFNGLGETRENDERBUFFERPARAMETERIVPROC          glGetRenderbufferParameteriv;
 //PFNGLISFRAMEBUFFERPROC                       glIsFramebuffer;
 //PFNGLCHECKFRAMEBUFFERSTATUSPROC              glCheckFramebufferStatus;
@@ -791,7 +795,9 @@ bool glInit()
     GL_FUNCTION_FETCH(glBindRenderbuffer, PFNGLBINDRENDERBUFFERPROC);
     GL_FUNCTION_FETCH(glDeleteRenderbuffers, PFNGLDELETERENDERBUFFERSPROC);
     GL_FUNCTION_FETCH(glGenRenderbuffers, PFNGLGENRENDERBUFFERSPROC);
-    // GL_FUNCTION_FETCH(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGEPROC);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    GL_FUNCTION_FETCH(glRenderbufferStorage, PFNGLRENDERBUFFERSTORAGEPROC);
+#endif
     // GL_FUNCTION_FETCH(glGetRenderbufferParameteriv, PFNGLGETRENDERBUFFERPARAMETERIVPROC);
     // GL_FUNCTION_FETCH(glIsFramebuffer, PFNGLISFRAMEBUFFERPROC);
 #if defined(THORVG_GL_TARGET_GLES)
@@ -808,7 +814,9 @@ bool glInit()
     // GL_FUNCTION_FETCH(glGetFramebufferAttachmentParameteriv, PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC);
     // GL_FUNCTION_FETCH(glGenerateMipmap, PFNGLGENERATEMIPMAPPROC);
     GL_FUNCTION_FETCH(glBlitFramebuffer, PFNGLBLITFRAMEBUFFERPROC);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     GL_FUNCTION_FETCH(glRenderbufferStorageMultisample, PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC);
+#endif
     // GL_FUNCTION_FETCH(glFramebufferTextureLayer, PFNGLFRAMEBUFFERTEXTURELAYERPROC);
     // GL_FUNCTION_FETCH(glMapBufferRange, PFNGLMAPBUFFERRANGEPROC);
     // GL_FUNCTION_FETCH(glFlushMappedBufferRange, PFNGLFLUSHMAPPEDBUFFERRANGEPROC);
