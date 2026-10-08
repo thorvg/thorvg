@@ -202,29 +202,36 @@ typedef enum
 /**
  * @brief Enumeration indicates the method used for blending paint. Please refer to the respective formulas for each method.
  *
+ * Notation: S(source paint as the top layer), D(destination as the bottom layer), Sa(source paint alpha), Da(destination alpha)
+ * S and D are not premultiplied, and all values are normalized to [0, 1].
+ *
+ * Except TVG_BLEND_METHOD_ADD, each formula is the blend function B(S, D) of the W3C Compositing and Blending Level 1 (https://www.w3.org/TR/compositing-1/).
+ * The premultiplied result is Sa * (1 - Da) * S + Da * (1 - Sa) * D + Sa * Da * B(S, D), and its alpha is Sa + Da - Sa * Da.
+ * TVG_BLEND_METHOD_HUE, TVG_BLEND_METHOD_SATURATION, TVG_BLEND_METHOD_COLOR and TVG_BLEND_METHOD_LUMINOSITY measure the luminosity as 0.3 * R + 0.59 * G + 0.11 * B.
+ *
  * @ingroup ThorVGCapi_Paint
  *
  * @since 0.15
  */
 typedef enum
 {
-    TVG_BLEND_METHOD_NORMAL = 0,        ///< Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D
+    TVG_BLEND_METHOD_NORMAL = 0,        ///< Perform the alpha blending(default). S, which results in (Sa * S) + (1 - Sa) * Da * D
     TVG_BLEND_METHOD_MULTIPLY,          ///< Takes the RGB channel values from 0 to 255 of each pixel in the top layer and multiples them with the values for the corresponding pixel from the bottom layer. (S * D)
     TVG_BLEND_METHOD_SCREEN,            ///< The values of the pixels in the two layers are inverted, multiplied, and then inverted again. (S + D) - (S * D)
-    TVG_BLEND_METHOD_OVERLAY,           ///< Combines Multiply and Screen blend modes. (2 * S * D) if (2 * D < Da), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
+    TVG_BLEND_METHOD_OVERLAY,           ///< Combines Multiply and Screen blend modes. (2 * S * D) if (D <= 0.5), otherwise 1 - 2 * (1 - S) * (1 - D)
     TVG_BLEND_METHOD_DARKEN,            ///< Creates a pixel that retains the smallest components of the top and bottom layer pixels. min(S, D)
     TVG_BLEND_METHOD_LIGHTEN,           ///< Only has the opposite action of Darken Only. max(S, D)
-    TVG_BLEND_METHOD_COLORDODGE,        ///< Divides the bottom layer by the inverted top layer. D / (255 - S)
-    TVG_BLEND_METHOD_COLORBURN,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 255 - (255 - D) / S
-    TVG_BLEND_METHOD_HARDLIGHT,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S < Sa), otherwise (Sa * Da) - 2 * (Da - S) * (Sa - D)
+    TVG_BLEND_METHOD_COLORDODGE,        ///< Divides the bottom layer by the inverted top layer. 0 if (D == 0), 1 if (S == 1), otherwise min(1, D / (1 - S))
+    TVG_BLEND_METHOD_COLORBURN,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 1 if (D == 1), 0 if (S == 0), otherwise 1 - min(1, (1 - D) / S)
+    TVG_BLEND_METHOD_HARDLIGHT,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S <= 0.5), otherwise 1 - 2 * (1 - S) * (1 - D)
     TVG_BLEND_METHOD_SOFTLIGHT,         ///< Darkens or lightens the colors, depending on the source color value. If S <= 0.5: D - (1 - 2 * S) * D * (1 - D), otherwise: D + (2 * S - 1) * (G(D) - D), where G(D) = ((16 * D - 12) * D + 4) * D if D <= 0.25, otherwise sqrt(D).
     TVG_BLEND_METHOD_DIFFERENCE,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
-    TVG_BLEND_METHOD_EXCLUSION,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. s + d - (2 * s * d)
+    TVG_BLEND_METHOD_EXCLUSION,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. S + D - (2 * S * D)
     TVG_BLEND_METHOD_HUE,               ///< Uses the hue of the source and the saturation and luminosity of the destination. @since 1.0
     TVG_BLEND_METHOD_SATURATION,        ///< Uses the saturation of the source and the hue and luminosity of the destination. @since 1.0
     TVG_BLEND_METHOD_COLOR,             ///< Uses the hue and saturation of the source and the luminosity of the destination. @since 1.0
     TVG_BLEND_METHOD_LUMINOSITY,        ///< Uses the luminosity of the source and the hue and saturation of the destination. @since 1.0
-    TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. (S + D)
+    TVG_BLEND_METHOD_ADD,               ///< Simply adds pixel values of one layer with the other. W3C plus-lighter: min(1, Sa * S + Da * D) with the alpha min(1, Sa + Da)
     TVG_BLEND_METHOD_COMPOSITION = 255  ///< Used for intermediate composition. @since 1.0
 } Tvg_Blend_Method;
 

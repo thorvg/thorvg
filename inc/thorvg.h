@@ -239,6 +239,11 @@ enum struct MaskMethod : uint8_t
  * @brief Enumeration indicates the method used for blending paint. Please refer to the respective formulas for each method.
  *
  * Notation: S(source paint as the top layer), D(destination as the bottom layer), Sa(source paint alpha), Da(destination alpha)
+ * S and D are not premultiplied, and all values are normalized to [0, 1].
+ *
+ * Except Add, each formula is the blend function B(S, D) of the W3C Compositing and Blending Level 1 (https://www.w3.org/TR/compositing-1/).
+ * The premultiplied result is Sa * (1 - Da) * S + Da * (1 - Sa) * D + Sa * Da * B(S, D), and its alpha is Sa + Da - Sa * Da.
+ * Hue, Saturation, Color and Luminosity measure the luminosity as 0.3 * R + 0.59 * G + 0.11 * B.
  *
  * @see Paint::blend()
  *
@@ -246,15 +251,15 @@ enum struct MaskMethod : uint8_t
  */
 enum struct BlendMethod : uint8_t
 {
-    Normal = 0,        ///< Perform the alpha blending(default). S if (Sa == 255), otherwise (Sa * S) + (255 - Sa) * D
+    Normal = 0,        ///< Perform the alpha blending(default). S, which results in (Sa * S) + (1 - Sa) * Da * D
     Multiply,          ///< Takes the RGB channel values from 0 to 255 of each pixel in the top layer and multiples them with the values for the corresponding pixel from the bottom layer. (S * D)
     Screen,            ///< The values of the pixels in the two layers are inverted, multiplied, and then inverted again. (S + D) - (S * D)
-    Overlay,           ///< Combines Multiply and Screen blend modes. (2 * S * D) if (D < 128), otherwise 255 - 2 * (255 - S) * (255 - D)
+    Overlay,           ///< Combines Multiply and Screen blend modes. (2 * S * D) if (D <= 0.5), otherwise 1 - 2 * (1 - S) * (1 - D)
     Darken,            ///< Creates a pixel that retains the smallest components of the top and bottom layer pixels. min(S, D)
     Lighten,           ///< Only has the opposite action of Darken Only. max(S, D)
-    ColorDodge,        ///< Divides the bottom layer by the inverted top layer. D / (255 - S)
-    ColorBurn,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 255 - (255 - D) / S
-    HardLight,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S < 128), otherwise 255 - 2 * (255 - S) * (255 - D)
+    ColorDodge,        ///< Divides the bottom layer by the inverted top layer. 0 if (D == 0), 1 if (S == 1), otherwise min(1, D / (1 - S))
+    ColorBurn,         ///< Divides the inverted bottom layer by the top layer, and then inverts the result. 1 if (D == 1), 0 if (S == 0), otherwise 1 - min(1, (1 - D) / S)
+    HardLight,         ///< The same as Overlay but with the color roles reversed. (2 * S * D) if (S <= 0.5), otherwise 1 - 2 * (1 - S) * (1 - D)
     SoftLight,         ///< Darkens or lightens the colors, depending on the source color value. If S <= 0.5: D - (1 - 2 * S) * D * (1 - D), otherwise: D + (2 * S - 1) * (G(D) - D), where G(D) = ((16 * D - 12) * D + 4) * D if D <= 0.25, otherwise sqrt(D).
     Difference,        ///< Subtracts the bottom layer from the top layer or the other way around, to always get a non-negative value. (S - D) if (S > D), otherwise (D - S)
     Exclusion,         ///< The result is twice the product of the top and bottom layers, subtracted from their sum. S + D - (2 * S * D)
@@ -262,7 +267,7 @@ enum struct BlendMethod : uint8_t
     Saturation,        ///< Uses the saturation of the source and the hue and luminosity of the destination. @since 1.0
     Color,             ///< Uses the hue and saturation of the source and the luminosity of the destination. @since 1.0
     Luminosity,        ///< Uses the luminosity of the source and the hue and saturation of the destination. @since 1.0
-    Add,               ///< Simply adds pixel values of one layer with the other. (S + D)
+    Add,               ///< Simply adds pixel values of one layer with the other. W3C plus-lighter: min(1, Sa * S + Da * D) with the alpha min(1, Sa + Da)
     Composition = 255  ///< For intermediate composition layers; suitable for use with Scene or Picture. @since 1.0
 };
 
