@@ -23,9 +23,16 @@
 #ifndef _TVG_GL_SHADERSRC_H_
 #define _TVG_GL_SHADERSRC_H_
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+extern const char* COVERAGE_VERT_SHADER;
+extern const char* COVERAGE_FRAG_HEADER;
+extern const char* COVERAGE_FRAG_MAIN;
+extern const char* COVERAGE_BLEND_FRAG_MAIN;
+#else
 extern const char* COLOR_VERT_SHADER;
-extern const char* COLOR_FRAG_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
+#endif
+extern const char* COLOR_FRAG_SHADER;
 extern const char* STR_GRADIENT_FRAG_COMMON_VARIABLES;
 extern const char* STR_GRADIENT_FRAG_COMMON_FUNCTIONS;
 extern const char* STR_GRADIENT_MAIN;

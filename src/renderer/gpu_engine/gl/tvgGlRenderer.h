@@ -32,7 +32,9 @@
 #include "tvgGlEffect.h"
 #include "tvgGlStateCache.h"
 #include "tvgGlSolidBatch.h"
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 #include "tvgGlStencilCoverBatch.h"
+#endif
 
 struct GlRenderer : RenderMethod
 {
@@ -43,6 +45,9 @@ struct GlRenderer : RenderMethod
         RT_RadGradient,
         RT_ConGradient,
         RT_Image,
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        RT_ClipImage,
+#endif
         RT_MaskAlpha,
         RT_MaskAlphaInv,
         RT_MaskLuma,
@@ -211,6 +216,23 @@ struct GlRenderer : RenderMethod
     void disposeTexture(GLuint texId);
 
     TextureMgr textures;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    GlCoverageAtlas coverageAtlas;
+    Inlist<GlShape> coverageShapes;
+    Inlist<GlImage> coverageImages;
+    static CoverageStatus clipCoverage(CoverageMap& map, const Array<RenderData>& clips);
+    bool stageCoverage(GlCoverageMap& coverage);
+    void bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage);
+
+    static void bindCoverageTextures(GlRenderTask* task, GLuint texture, bool runs)
+    {
+        task->addBindResource(GlBindingResource{runs ? 2u : 1u, texture,
+                                              runs ? GlShaderUniform::CoverageRuns : GlShaderUniform::CoverageTexture});
+        // WebGL validates both active sampler types, including the unused branch.
+        task->addBindResource(GlBindingResource{runs ? 1u : 2u, 0,
+                                              runs ? GlShaderUniform::CoverageTexture : GlShaderUniform::CoverageRuns});
+    }
+#endif
 
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient, ConicGradient };
 
@@ -218,6 +240,7 @@ struct GlRenderer : RenderMethod
     ~GlRenderer();
 
     void initShaders();
+    GlProgram* createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend = false);
     static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
     static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
@@ -230,8 +253,10 @@ struct GlRenderer : RenderMethod
     inline void submitGradient(GlRenderTask* task, GlShape& shape, RenderUpdateFlag flag, bool opaque, const RenderRegion& viewBounds);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     static bool skipClips(const Array<RenderData>& clips);
     void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
+#endif
 
     GlRenderPass* currentPass();
 
@@ -263,7 +288,9 @@ struct GlRenderer : RenderMethod
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
     GlSolidBatch mSolidBatch;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     GlStencilCoverBatch mStencilCoverBatch;
+#endif
 
     //Disposed resources. They should be released on synced call.
     struct {

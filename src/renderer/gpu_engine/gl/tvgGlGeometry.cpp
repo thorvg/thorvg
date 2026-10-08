@@ -23,7 +23,9 @@
 #include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderTask.h"
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 #include "tvgGlTessellator.h"
+#endif
 
 /************************************************************************/
 /* GlIntersector                                                        */
@@ -45,6 +47,7 @@ bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Po
     return true;
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
 {
     const auto& geometry = shape->geometry;
@@ -75,6 +78,7 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
     }
     return false;
 }
+#endif
 
 bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 {
@@ -105,6 +109,7 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 /* GlGeometry                                                           */
 /************************************************************************/
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 void GlGeometry::prepare(const RenderShape& rshape)
 {
     optPathThin = false;
@@ -212,11 +217,15 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
 }
 
 
+#endif
+
 void GlGeometry::tesselateImage(const RenderSurface* image)
 {
     fill.clear();
     fillWorld = true;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     strokeRenderWidth = 0.0f;
+#endif
     fill.vertex.reserve(5 * 4);
     fill.index.reserve(6);
 
@@ -265,6 +274,7 @@ void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     task->setDrawRange(indexOffset, buffer->index.count);
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag) const
 {
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) return strokeDirect ? GlStencilMode::None : GlStencilMode::Stroke;
@@ -276,9 +286,18 @@ GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag) const
 
     return GlStencilMode::None;
 }
+#endif
 
 RenderRegion GlGeometry::bounds() const
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto bbox = fillBBox;
+    if (strokeBBox.valid()) {
+        if (bbox.valid()) bbox.add(strokeBBox);
+        else bbox = strokeBBox;
+    }
+    return bbox;
+#else
     auto bbox = RenderRegion{};
     auto valid = false;
 
@@ -299,4 +318,5 @@ RenderRegion GlGeometry::bounds() const
     }
 
     return bbox;
+#endif
 }

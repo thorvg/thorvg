@@ -55,6 +55,10 @@ bool GlDrawable::prepare(RenderUpdateFlag& updateFlags, const Point& viewSize, u
 
 void GlImage::destroy(GlRenderer& renderer)
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    renderer.coverageAtlas.retire(clipCoverage.region);
+    renderer.coverageImages.remove(this);
+#endif
     if (texId && (stamp == renderer.textures.stamp))
         renderer.disposeTexture(renderer.textures.release(surface, filter, texId));
 }
@@ -78,12 +82,24 @@ void GlRenderer::clearDisposes()
     delete (*p);
     mRenderPassStack.clear();
     mSolidBatch.clear();
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     mStencilCoverBatch.clear();
+#endif
 }
 
 
 void GlRenderer::flush()
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    INLIST_FOREACH(coverageShapes, shape) {
+        for (auto coverage : {&shape->fillCoverage, &shape->strokeCoverage}) {
+            coverage->region = {};
+            coverage->runCount = 0;
+        }
+    }
+    INLIST_FOREACH(coverageImages, image) image->clipCoverage.region = {};
+    coverageAtlas.clear(mStateCache);
+#endif
     clearDisposes();
 
     mRootTarget.reset();
@@ -136,6 +152,24 @@ GlRenderer::~GlRenderer()
 }
 
 
+GlProgram* GlRenderer::createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend)
+{
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto tail = blend ? COVERAGE_BLEND_FRAG_MAIN : COVERAGE_FRAG_MAIN;
+    auto length = strlen(COVERAGE_FRAG_HEADER) + strlen(fragSrc) + strlen(tail) + 1;
+    auto source = tvg::malloc<char>(length);
+    snprintf(source, length, "%s%s%s", COVERAGE_FRAG_HEADER, fragSrc, tail);
+    auto program = new GlProgram(COVERAGE_VERT_SHADER, source);
+    tvg::free(source);
+    mStateCache.useProgram(program->getProgramId());
+    program->setSampler(GlShaderUniform::CoverageTexture, 1);
+    program->setSampler(GlShaderUniform::CoverageRuns, 2);
+    return program;
+#else
+    return new GlProgram(vertSrc, fragSrc);
+#endif
+}
+
 void GlRenderer::initShaders()
 {
     mPrograms.reserve((int)RT_None);
@@ -180,11 +214,21 @@ void GlRenderer::initShaders()
         STR_GRADIENT_MAIN
     );
 
-    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, conicGradientFragShader));
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    const char* colorVertShader = nullptr;
+    const char* gradientVertShader = nullptr;
+#else
+    auto colorVertShader = COLOR_VERT_SHADER;
+    auto gradientVertShader = GRADIENT_VERT_SHADER;
+#endif
+    mPrograms.push(createShapeProgram(colorVertShader, COLOR_FRAG_SHADER));
+    mPrograms.push(createShapeProgram(gradientVertShader, linearGradientFragShader));
+    mPrograms.push(createShapeProgram(gradientVertShader, radialGradientFragShader));
+    mPrograms.push(createShapeProgram(gradientVertShader, conicGradientFragShader));
     mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    mPrograms.push(createShapeProgram(nullptr, IMAGE_FRAG_SHADER));
+#endif
 
     // compose Renderer
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER));
@@ -227,9 +271,9 @@ GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource sour
     if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
     dstCopyFbo = mBlendPool[0]->getRenderTarget(viewRegion);
-#else  // TODO: create partial buffer when MSAA is disabled
+#else
     dstCopyFbo = mBlendPool[0]->getRenderTarget(currentPass()->getViewport());
 #endif
 
@@ -241,9 +285,9 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
 {
     if (!dstCopyFbo) return;
 
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
     float region[] = {float(viewRegion.sx()), float(viewRegion.sy()), float(dstCopyFbo->width), float(dstCopyFbo->height)};
-#else  // TODO: create partial buffer when MSAA is disabled
+#else
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
 #endif
     task->addBindResource(GlBindingResource{
@@ -291,9 +335,9 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 
     const auto& vp = blendPass->getViewport();
     if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(vp);
-#else // TODO: create partial buffer when MSAA is disabled        
+#else
     auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
 #endif
 
@@ -309,7 +353,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
     prepareCmpTask(task, vp, blendPass->getFboWidth(), blendPass->getFboHeight());
     task->setDrawDepth(currentPass()->nextDrawDepth());
 
-#if defined(THORVG_GL_TARGET_GLES)
+#if !defined(THORVG_GL_TARGET_GL) && !defined(THORVG_ANALYTIC_AA_SUPPORT)
     float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
     task->addBindResource(GlBindingResource{
         0,
@@ -387,7 +431,11 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         return mPrograms[shaderInd];
     }
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    vertShader = nullptr;
+#else
     vertShader = (source == BlendSource::Solid) ? COLOR_VERT_SHADER : GRADIENT_VERT_SHADER;
+#endif
     switch (source) {
         case BlendSource::Solid:
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s",
@@ -434,7 +482,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
             break;
     }
 
-    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
+    mPrograms[shaderInd] = createShapeProgram(vertShader, fragShader, true);
     return mPrograms[shaderInd];
 }
 
@@ -564,21 +612,20 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         if (!renderPass->isEmpty()) {
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
             if (mBlendPool.count < 2) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(renderPass->getViewport());
-#else // TODO: create partial buffer when MSAA is disabled
+#else
             auto dstCopyFbo = mBlendPool[1]->getRenderTarget(currentPass()->getViewport());
 #endif
             uint32_t info[4] = {cmp->opacity, 0, 0, 0};
 
             auto program = getBlendProgram(glCmp->blendMethod, BlendSource::Scene);
             auto task = renderPass->endRenderPass<GlSceneBlendTask>(program, currentPass()->getFboId());
-            task->srcFbo = currentPass()->fbo;
             task->dstCopyFbo = dstCopyFbo;
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
-#if defined(THORVG_GL_TARGET_GLES)
+#if !defined(THORVG_GL_TARGET_GL) && !defined(THORVG_ANALYTIC_AA_SUPPORT)
             float region[] = {0.0f, 0.0f, float(dstCopyFbo->width), float(dstCopyFbo->height)};
             task->addBindResource(GlBindingResource{
                 1,
@@ -684,8 +731,18 @@ bool GlRenderer::sync()
     // ThorVG-tracked assumption.
     mStateCache.invalidate();
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (mContext) currentContext();
+    coverageAtlas.flush(mStateCache);
+#endif
     //nothing to be done.
-    if (mRenderPassStack.empty()) return true;
+    if (mRenderPassStack.empty()) {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        coverageAtlas.reclaim();
+        mStateCache.invalidate();
+#endif
+        return true;
+    }
 
     currentContext();
 
@@ -726,6 +783,9 @@ bool GlRenderer::sync()
 
     delete task;
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    coverageAtlas.reclaim();
+#endif
     return true;
 }
 
@@ -741,6 +801,9 @@ bool GlRenderer::preRender()
     if (mRootTarget.invalid()) return false;
 
     currentContext();
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    coverageAtlas.flush(mStateCache);
+#endif
     if (!textures.flushPreprocess(mStateCache, mTargetFboId)) return false;
     if (mPrograms.empty()) initShaders();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
@@ -863,7 +926,13 @@ bool GlRenderer::renderImage(void* data)
     bbox.intersect(vp);
     if (bbox.invalid()) return true;
     if (!image->geometry.drawable(RenderUpdateFlag::Image)) return true;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto clipped = !image->clips.empty();
+    Matrix inverseImage;
+    if (clipped && (image->clipCoverage.status != CoverageStatus::Ready || !inverse(&image->geometry.matrix, &inverseImage))) return true;
+#else
     if (skipClips(image->clips)) return true;  // TODO: move this in prepare() stage?
+#endif
 
     auto drawDepth = currentPass()->nextDrawDepth();
 
@@ -873,14 +942,25 @@ bool GlRenderer::renderImage(void* data)
         return true;
     }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (!image->clips.empty()) drawClip(image->clips, bbox);
-
-    auto task = new GlRenderTask(mPrograms[RT_Image]);
-    task->setDrawDepth(drawDepth);
-    image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
-
+#endif
     bool complexBlend = beginComplexBlending(bbox, image->geometry.bounds());
     if (complexBlend) vp = currentPass()->getViewport();
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto task = new GlRenderTask(mPrograms[clipped ? RT_ClipImage : RT_Image]);
+    if (clipped) {
+        bindCoverage(task, image->clipCoverage);
+        float matrix[GL_MAT3_STD140_SIZE];
+        getMatrix3Std140(inverseImage, matrix);
+        task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::TransformInfo, mGpuBuffer.getBufferId(),
+                                              mGpuBuffer.push(matrix, sizeof(matrix), true), sizeof(matrix)});
+    } else image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
+#else
+    auto task = new GlRenderTask(mPrograms[RT_Image]);
+    image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
+#endif
+    task->setDrawDepth(drawDepth);
     task->setViewMatrix(currentPass()->getViewMatrix());
 
     uint32_t info[4] = {image->opacity, 0, 0, 0};
@@ -926,14 +1006,21 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     if (!image) {
         image = new GlImage;
         flags = RenderUpdateFlag::All;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        coverageImages.back(image);
+#endif
     }
 
     auto cacheStale = image->texId && (image->stamp != textures.stamp);
     if (cacheStale) flags |= RenderUpdateFlag::Image;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (!clips.empty() && !image->clipCoverage.region.texture) flags |= RenderUpdateFlag::Clip;
+#endif
     if (image->prepare(flags, {float(this->surface.w), float(this->surface.h)}, opacity, false)) return image;
 
     if (cacheStale || image->texId == 0 || image->surface != surface || image->filter != filter) {
-        image->destroy(*this);
+        if (image->texId && image->stamp == textures.stamp)
+            disposeTexture(textures.release(image->surface, image->filter, image->texId));
         image->texId = textures.retain(mStateCache, surface, filter);
         image->surface = surface;
         image->filter = filter;
@@ -953,6 +1040,17 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     image->geometry.viewport = vport;
     image->opacity = opacity;
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    image->clipCoverage.map.reset();
+    image->clipCoverage.status = CoverageStatus::Empty;
+    if (!image->clips.empty()) {
+        image->clipCoverage.map.bounds = image->geometry.bounds();
+        image->clipCoverage.map.bounds.intersect(vport);
+        image->clipCoverage.status = clipCoverage(image->clipCoverage.map, image->clips);
+    }
+    if (!stageCoverage(image->clipCoverage)) image->clipCoverage.status = CoverageStatus::Error;
+#endif
+
     return image;
 }
 
@@ -968,6 +1066,9 @@ bool GlRenderer::preUpdate()
 
 bool GlRenderer::postUpdate()
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    coverageAtlas.flush(mStateCache);
+#endif
     return true;
 }
 
