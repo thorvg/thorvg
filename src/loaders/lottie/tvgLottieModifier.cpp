@@ -41,6 +41,21 @@ static bool _sharpCorner(const Point* p)
     return tvg::zero(*p - *(p + 1)) && tvg::zero(*(p + 1) - *(p + 2));
 }
 
+void LottieModifier::polystar(const RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
+{
+    path(in, out, nullptr);
+}
+
+void LottieModifier::rect(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED float, TVG_UNUSED bool)
+{
+    path(in, out, nullptr);
+}
+
+void LottieModifier::ellipse(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED bool)
+{
+    path(in, out, nullptr);
+}
+
 /************************************************************************/
 /* LottieRoundnessModifier                                              */
 /************************************************************************/
@@ -446,16 +461,6 @@ void LottieOffsetModifier::path(const RenderPath& in, RenderPath& out, Matrix* t
     if (next) next->path(result, out, transform);
 }
 
-void LottieOffsetModifier::polystar(const RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
-{
-    path(in, out, nullptr);
-}
-
-void LottieOffsetModifier::rect(const RenderPath& in, RenderPath& out, const Point& pos, const Point& size, float r, bool clockwise)
-{
-    path(in, out, nullptr);
-}
-
 void LottieOffsetModifier::ellipse(const RenderPath& in, RenderPath& out, const Point& center, const Point& radius, bool clockwise)
 {
     auto& path = (next) ? RenderPath::scratch() : out;
@@ -568,21 +573,6 @@ void LottiePuckerBloatModifier::path(const RenderPath& in, RenderPath& out, Matr
     }
 
     if (next) return next->path(path, out, transform);
-}
-
-void LottiePuckerBloatModifier::polystar(const RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
-{
-    path(in, out, nullptr);
-}
-
-void LottiePuckerBloatModifier::rect(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED float, TVG_UNUSED bool)
-{
-    path(in, out, nullptr);
-}
-
-void LottiePuckerBloatModifier::ellipse(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED bool)
-{
-    path(in, out, nullptr);
 }
 
 /************************************************************************/
@@ -727,19 +717,4 @@ void LottieZigZagModifier::path(const RenderPath& in, RenderPath& out, Matrix* t
 {
     auto& result = modify(in, out, transform);
     if (next) next->path(result, out, nullptr);
-}
-
-void LottieZigZagModifier::polystar(const RenderPath& in, RenderPath& out, TVG_UNUSED float, TVG_UNUSED bool)
-{
-    path(in, out, nullptr);
-}
-
-void LottieZigZagModifier::rect(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED float, TVG_UNUSED bool)
-{
-    path(in, out, nullptr);
-}
-
-void LottieZigZagModifier::ellipse(const RenderPath& in, RenderPath& out, TVG_UNUSED const Point&, TVG_UNUSED const Point&, TVG_UNUSED bool)
-{
-    path(in, out, nullptr);
 }
