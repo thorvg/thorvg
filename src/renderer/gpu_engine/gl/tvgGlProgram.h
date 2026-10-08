@@ -34,6 +34,9 @@ enum class GlShaderUniform : uint8_t
     DestinationTexture,
     MaskTexture,
     Texture,
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    CoverageTexture,
+#endif
     Count,
 };
 
@@ -47,6 +50,9 @@ enum class GlShaderUniformBlock : uint8_t
     TransformInfo,
     GradientInfo,
     ColorInfo,
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    CoverageInfo,
+#endif
     Count,
 };
 
