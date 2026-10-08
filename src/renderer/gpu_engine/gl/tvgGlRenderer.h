@@ -218,11 +218,19 @@ struct GlRenderer : RenderMethod
     ~GlRenderer();
 
     void initShaders();
+    static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
+    static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
+    inline void drawShapePaint(GlShape* shape, int32_t drawDepth1, int32_t drawDepth2);
+    static inline bool primitiveBounds(const GlShape& shape, RenderUpdateFlag flag, RenderRegion& bounds);
+    // Bind backend geometry, adjust inverse fill coordinates, and return its opacity.
+    inline float bindGradientGeometry(GlRenderTask* task, const GlShape& shape, RenderUpdateFlag flag, Matrix& inverseFill);
+    inline void submitGradient(GlRenderTask* task, GlShape& shape, RenderUpdateFlag flag, bool opaque, const RenderRegion& viewBounds);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+    static bool skipClips(const Array<RenderData>& clips);
     void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
 
     GlRenderPass* currentPass();

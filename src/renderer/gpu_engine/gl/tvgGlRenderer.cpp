@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include "tvgFill.h"
 #include "tvgGlCommon.h"
 #include "tvgGlRenderer.h"
 #include "tvgGlGpuBuffer.h"
@@ -33,14 +32,11 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-#define NOISE_LEVEL 0.5f
 
 static int32_t _rendererCnt = -1;
 static StrictKey _rendererMtx;
 
-static constexpr float IDENTITY_VERTEX[] = {-1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f, -1.f};
-static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
-static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
+constexpr uint32_t GlRenderer::RECT_INDEX[];
 
 bool GlDrawable::prepare(RenderUpdateFlag& updateFlags, const Point& viewSize, uint8_t opacity, bool clipper)
 {
@@ -63,45 +59,6 @@ void GlImage::destroy(GlRenderer& renderer)
         renderer.disposeTexture(renderer.textures.release(surface, filter, texId));
 }
 
-static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopColors, const Fill::ColorStop* stops, uint32_t stopCnt, FillSpread spread, float alpha)
-{
-    stopInfo[1] = NOISE_LEVEL;
-    stopInfo[2] = static_cast<int32_t>(spread);
-
-    auto opaque = alpha == 1.0f;
-    uint32_t nStops = 0;
-    for (uint32_t i = 0; i < stopCnt; ++i) {
-        if (nStops > 0 && stopPoints[nStops - 1] > stops[i].offset) {
-            opaque = false;
-            continue;
-        }
-
-        auto index = nStops++;
-        stopPoints[index] = stops[i].offset;
-        stopColors[index * 4 + 0] = stops[i].r / 255.f;
-        stopColors[index * 4 + 1] = stops[i].g / 255.f;
-        stopColors[index * 4 + 2] = stops[i].b / 255.f;
-        stopColors[index * 4 + 3] = stops[i].a / 255.f * alpha;
-        opaque &= stops[i].a == 255;
-    }
-    stopInfo[0] = nStops;
-    return opaque;
-}
-
-static bool _skipRender(const Array<RenderData>& clips)
-{
-    if (clips.empty()) return false;
-
-    // Clip geometries are prepared during update(), before this paint renders.
-    // Clip masks are intersected, so one empty clip makes the paint invisible.
-    ARRAY_FOREACH(p, clips) {
-        auto clip = static_cast<GlShape*>(*p);
-        auto flag = (clip->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
-        if (!clip->geometry.drawable(flag)) return true;
-    }
-
-    return false;
-}
 
 void GlRenderer::disposeTexture(GLuint texId)
 {
@@ -262,13 +219,6 @@ RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegi
     return {x, yGl, x + w, yGl + h};
 }
 
-static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, RenderUpdateFlag flag)
-{
-    // Most GL meshes are already in world space; local strokes fold model into
-    // the shader's view matrix so the draw path can stay shared.
-    if ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) return viewMatrix * geometry.matrix;
-    return viewMatrix;
-}
 
 GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
 {
@@ -304,278 +254,6 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
         4 * sizeof(float),
     });
     task->addBindResource(GlBindingResource{0, dstCopyFbo->colorTex, GlShaderUniform::DestinationTexture});
-}
-
-void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
-{
-    if (!shape.geometry.drawable(flag)) return;
-
-    auto blendShape = (mBlendMethod != BlendMethod::Normal);
-    auto vp = currentPass()->getViewport();
-    // geometry.viewport carries the fast-tracked clip bounds; the pass
-    // viewport can still be the full framebuffer.
-    auto viewBounds = shape.geometry.viewport;
-    viewBounds.intersect(vp);
-    if (viewBounds.invalid()) return;
-
-    auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
-    auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBBox, shape.geometry.matrix) : shape.geometry.fillBBox;
-    bbox.intersect(viewBounds);
-    if (bbox.invalid()) return;
-
-    auto viewRegion = viewportRegion(vp, bbox);
-    auto stencilMode = shape.geometry.stencilMode(flag);
-
-    if (!stroke && !blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
-        mSolidBatch.draw(*this, shape, c, depth, viewRegion, viewportRegion(vp, viewBounds));
-        return;
-    }
-
-    if (!shape.clips.empty()) mSolidBatch.clear();
-
-    GlRenderTarget* dstCopyFbo = nullptr;
-    auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo);
-    auto viewMatrix = _viewMatrix(shape.geometry, currentPass()->getViewMatrix(), flag);
-
-    task->setViewMatrix(viewMatrix);
-    task->setDrawDepth(depth);
-
-    auto a = MULTIPLY(c.a, shape.opacity);
-    if (flag & RenderUpdateFlag::Stroke) {
-        auto strokeWidth = shape.geometry.strokeRenderWidth;
-        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
-            auto alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
-            a = MULTIPLY(a, static_cast<uint8_t>(alpha * 255));
-        }
-    }
-    RenderColor color = {c.r, c.g, c.b, a};
-
-    if (stroke && (blendShape || a == 255)) {
-        stencilMode = GlStencilMode::None;
-    }
-
-    if (stencilMode == GlStencilMode::None) task->setVertexColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
-    task->setViewport(viewRegion);
-
-    auto preparation = mStencilCoverBatch.prepare(*this, task, shape, flag, stencilMode, &color, viewBounds);
-    // Keep BlendRegion on the existing solid-shape blend UBO slot.
-    bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
-
-    mStencilCoverBatch.draw(currentPass(), task, preparation);
-}
-
-void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
-{
-    if (!shape.geometry.drawable(flag)) return;
-
-    auto vp = currentPass()->getViewport();
-    // geometry.viewport carries the fast-tracked clip bounds; the pass
-    // viewport can still be the full framebuffer.
-    auto viewBounds = shape.geometry.viewport;
-    viewBounds.intersect(vp);
-    if (viewBounds.invalid()) return;
-
-    auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
-    auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBBox, shape.geometry.matrix) : shape.geometry.fillBBox;
-    bbox.intersect(viewBounds);
-    if (bbox.invalid()) return;
-
-    const Fill::ColorStop* stops = nullptr;
-    auto colorStopCnt = fill->colorStops(&stops);
-    auto stopCnt = min(colorStopCnt, static_cast<uint32_t>(MAX_GRADIENT_STOPS));
-    if (stopCnt < 1) return;
-
-    GlRenderTarget* dstCopyFbo = nullptr;
-    auto type = fill->type();
-    auto radial = type == Type::RadialGradient;
-    auto conic = type == Type::ConicGradient;
-    auto viewRegion = viewportRegion(vp, bbox);
-
-    RenderTypes taskType = RT_None;
-    auto blendSource = BlendSource::LinearGradient;
-
-    float x, y, r, fx, fy, fr, angle;
-
-    if (type == Type::LinearGradient) {
-        taskType = RT_LinGradient;
-    } else if (radial) {
-        auto radialFill = static_cast<const RadialGradient*>(fill);
-        radialFill->radial(&x, &y, &r, &fx, &fy, &fr);
-        // Uncorrectable radial gradients use the last stop as a solid color.
-        if (!CONST_RADIAL(radialFill)->correct(fx, fy, fr)) {
-            auto& stop = stops[colorStopCnt - 1];
-            RenderColor color = {stop.r, stop.g, stop.b, stop.a};
-            auto solidFlag = (flag & RenderUpdateFlag::GradientStroke) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Color;
-            drawPrimitive(shape, color, solidFlag, depth);
-            return;
-        }
-
-        taskType = RT_RadGradient;
-        blendSource = BlendSource::RadialGradient;
-    } else if (conic) {
-        static_cast<const ConicGradient*>(fill)->conic(&x, &y, &angle);
-        taskType = RT_ConGradient;
-        blendSource = BlendSource::ConicGradient;
-    } else return;
-
-    auto task = createPrimitiveTask(taskType, blendSource, viewRegion, dstCopyFbo);
-    auto viewMatrix = _viewMatrix(shape.geometry, currentPass()->getViewMatrix(), flag);
-
-    task->setViewMatrix(viewMatrix);
-    task->setDrawDepth(depth);
-
-    task->setViewport(viewRegion);
-
-    // transform buffer (inverse fill-space transform)
-    float invMat3[GL_MAT3_STD140_SIZE];
-    Matrix inv;
-    inverse(&fill->transform(), &inv);
-    if (!(flag & RenderUpdateFlag::GradientStroke)) {
-        // World-space meshes need inverse model before gradient lookup. Local
-        // gradient strokes already pass local positions to TransformInfo.
-        Matrix invShape;
-        inverse(&shape.geometry.matrix, &invShape);
-        inv = inv * invShape;
-    }
-    if (conic) inv = tvg::gpuConicTransform({x, y}, angle) * inv;
-    getMatrix3Std140(inv, invMat3);
-
-    float transformInfo[GL_MAT3_STD140_SIZE];
-    memcpy(transformInfo, invMat3, GL_MAT3_STD140_BYTES);
-    auto transformOffset = mGpuBuffer.push(transformInfo, sizeof(transformInfo), true);
-
-    task->addBindResource(GlBindingResource{
-        0,
-        GlShaderUniformBlock::TransformInfo,
-        mGpuBuffer.getBufferId(),
-        transformOffset,
-        sizeof(transformInfo),
-    });
-
-    auto alpha = shape.opacity / 255.f;
-
-    if (flag & RenderUpdateFlag::GradientStroke) {
-        auto strokeWidth = shape.geometry.strokeRenderWidth;
-        if (strokeWidth < MIN_GL_STROKE_WIDTH) {
-            alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
-        }
-    }
-
-    // gradient block
-    GlBindingResource gradientBinding{};
-    bool opaque;
-
-    if (type == Type::LinearGradient) {
-        auto linearFill = static_cast<const LinearGradient*>(fill);
-
-        GlLinearGradientBlock gradientBlock;
-        opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, fill->spread(), alpha);
-
-        float x1, x2, y1, y2;
-        linearFill->linear(&x1, &y1, &x2, &y2);
-
-        gradientBlock.startPos[0] = x1;
-        gradientBlock.startPos[1] = y1;
-        gradientBlock.stopPos[0] = x2;
-        gradientBlock.stopPos[1] = y2;
-
-        gradientBinding = GlBindingResource{
-            2,
-            GlShaderUniformBlock::GradientInfo,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlLinearGradientBlock), true),
-            sizeof(GlLinearGradientBlock),
-        };
-    } else if (radial) {
-        GlRadialGradientBlock gradientBlock;
-        opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, fill->spread(), alpha);
-
-        gradientBlock.centerPos[0] = fx;
-        gradientBlock.centerPos[1] = fy;
-        gradientBlock.centerPos[2] = x;
-        gradientBlock.centerPos[3] = y;
-        gradientBlock.radius[0] = fr;
-        gradientBlock.radius[1] = r;
-
-        gradientBinding = GlBindingResource{
-            2,
-            GlShaderUniformBlock::GradientInfo,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlRadialGradientBlock), true),
-            sizeof(GlRadialGradientBlock),
-        };
-    } else {
-        GlConicGradientBlock gradientBlock;
-        opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, FillSpread::Pad, alpha);
-
-        gradientBinding = GlBindingResource{
-            2,
-            GlShaderUniformBlock::GradientInfo,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlConicGradientBlock), true),
-            sizeof(GlConicGradientBlock),
-        };
-    }
-
-    task->addBindResource(gradientBinding);
-
-    // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
-    bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
-
-    auto stencilMode = shape.geometry.stencilMode(flag);
-    if (stroke && (mBlendMethod != BlendMethod::Normal || opaque)) stencilMode = GlStencilMode::None;
-    auto preparation = mStencilCoverBatch.prepare(*this, task, shape, flag, stencilMode, nullptr, viewBounds);
-
-    mStencilCoverBatch.draw(currentPass(), task, preparation);
-}
-
-
-void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds)
-{
-    if (viewBounds.invalid()) return;
-
-    // Clip is a render boundary.
-    mStencilCoverBatch.clear();
-
-    // Clip masks must stay inside the target paint view bounds. Fast-tracked
-    // Lottie clips narrow geometry.viewport while the pass viewport remains
-    // full-size; using the pass viewport here can affect neighboring animations.
-    auto identityVertexOffset = mGpuBuffer.push((void*)IDENTITY_VERTEX, sizeof(IDENTITY_VERTEX));
-    auto identityIndexOffset = mGpuBuffer.pushIndex((void*)RECT_INDEX, sizeof(RECT_INDEX));
-
-    Array<int32_t> clipDepths(clips.count);
-    clipDepths.count = clips.count;
-
-    for (int32_t i = clips.count - 1; i >= 0; i--) {
-        clipDepths[i] = currentPass()->nextDrawDepth();
-    }
-
-    const auto& passViewport = currentPass()->getViewport();
-    const auto& viewMatrix = currentPass()->getViewMatrix();
-    const auto viewRegion = viewportRegion(passViewport, viewBounds);
-
-    for (uint32_t i = 0; i < clips.count; ++i) {
-        auto shape = static_cast<GlShape*>(clips[i]);
-        auto flag = (shape->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
-
-        auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
-        clipTask->setDrawDepth(clipDepths[i]);
-        clipTask->setViewMatrix(_viewMatrix(shape->geometry, viewMatrix, flag));
-        shape->geometry.draw(clipTask, &mGpuBuffer, flag);
-
-        auto clipBounds = shape->geometry.bounds();
-        clipBounds.intersect(viewBounds);
-        clipTask->setViewport(viewportRegion(passViewport, clipBounds));
-
-        auto maskTask = new GlRenderTask(mPrograms[RT_Stencil]);
-
-        maskTask->setDrawDepth(clipDepths[i]);
-        maskTask->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), identityVertexOffset, GL_FLOAT, GL_FALSE, mGpuBuffer.getBufferId()});
-        maskTask->setDrawRange(identityIndexOffset, RECT_INDEX_COUNT);
-        maskTask->setViewport(viewRegion);
-
-        currentPass()->addRenderTask(new GlClipTask(clipTask, maskTask));
-    }
 }
 
 
@@ -1052,30 +730,6 @@ bool GlRenderer::sync()
 }
 
 
-bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
-{
-    if (!data) return false;
-
-    auto shape = static_cast<GlShape*>(data);
-    if (!shape->valid.stroke) return false;
-
-    tvg::BBox bbox;
-    bbox.init();
-    auto& vertexes = shape->geometry.stroke.vertex;
-    for (uint32_t i = 0; i < vertexes.count / 2; i++) {
-        Point vert = {vertexes[i * 2 + 0], vertexes[i * 2 + 1]};
-        vert *= m;
-        bbox = {min(bbox.min, vert), max(bbox.max, vert)};
-    }
-
-    pt4[0] = bbox.min;
-    pt4[1] = {bbox.max.x, bbox.min.y};
-    pt4[2] = bbox.max;
-    pt4[3] = {bbox.min.x, bbox.max.y};
-    return true;
-}
-
-
 RenderRegion GlRenderer::region(RenderData data)
 {
     return data ? static_cast<GlDrawable*>(data)->geometry.bounds() : RenderRegion{};
@@ -1209,7 +863,7 @@ bool GlRenderer::renderImage(void* data)
     bbox.intersect(vp);
     if (bbox.invalid()) return true;
     if (!image->geometry.drawable(RenderUpdateFlag::Image)) return true;
-    if (_skipRender(image->clips)) return true;  // TODO: move this in prepare() stage?
+    if (skipClips(image->clips)) return true;  // TODO: move this in prepare() stage?
 
     auto drawDepth = currentPass()->nextDrawDepth();
 
@@ -1252,54 +906,6 @@ bool GlRenderer::renderImage(void* data)
         auto task = new GlRenderTask(mPrograms[RT_Stencil]);
         image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
         endBlendingCompose(task);
-    }
-
-    return true;
-}
-
-
-bool GlRenderer::renderShape(RenderData data)
-{
-    auto shape = static_cast<GlShape*>(data);
-    if (currentPass()->isEmpty() || (!shape->valid.fill && !shape->valid.stroke)) return true;
-
-    auto bbox = shape->geometry.viewport;
-    bbox.intersect(currentPass()->getViewport());
-    if (bbox.invalid()) return true;
-    if (_skipRender(shape->clips)) return true;  // TODO: move this in prepare() stage?
-
-    int32_t drawDepth1 = 0, drawDepth2 = 0;
-    if (shape->valid.fill) drawDepth1 = currentPass()->nextDrawDepth();
-    if (shape->valid.stroke) drawDepth2 = currentPass()->nextDrawDepth();
-
-    if (!shape->clips.empty()) drawClip(shape->clips, bbox);
-
-    auto processFill = [&]() {
-        if (shape->valid.fill) {
-            if (const auto& gradient = shape->rshape->fill) {
-                drawPrimitive(*shape, gradient, RenderUpdateFlag::Gradient, drawDepth1);
-            } else if (shape->rshape->color.a > 0) {
-                drawPrimitive(*shape, shape->rshape->color, RenderUpdateFlag::Color, drawDepth1);
-            }
-        }
-    };
-
-    auto processStroke = [&]() {
-        if (shape->valid.stroke) {
-            if (const auto& gradient = shape->rshape->strokeFill()) {
-                drawPrimitive(*shape, gradient, RenderUpdateFlag::GradientStroke, drawDepth2);
-            } else if (shape->rshape->stroke->color.a > 0) {
-                drawPrimitive(*shape, shape->rshape->stroke->color, RenderUpdateFlag::Stroke, drawDepth2);
-            }
-        }
-    };
-
-    if (shape->rshape->strokeFirst()) {
-        processStroke();
-        processFill();
-    } else {
-        processFill();
-        processStroke();
     }
 
     return true;
@@ -1350,41 +956,6 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     return image;
 }
 
-RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
-{
-    auto shape = static_cast<GlShape*>(data);
-    if (!shape) {
-        shape = new GlShape;
-        shape->rshape = &rshape;
-        flags = RenderUpdateFlag::All;
-    }
-
-    if (shape->prepare(flags, {float(surface.w), float(surface.h)}, opacity, clipper)) return shape;
-
-    if (flags & RenderUpdateFlag::Path) shape->geometry = GlGeometry();
-
-    shape->geometry.transform(transform);
-    shape->geometry.viewport = vport;
-
-    auto updateStroke = (flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && shape->geometry.optStrokePath.empty();
-    auto updatePath = (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) || updateStroke;
-
-    if (updatePath) {
-        shape->geometry.prepare(rshape);
-        shape->valid.fill = false;
-        if (shape->geometry.tesselateShape(*(shape->rshape), shape->multiplier)) {
-            shape->valid.fill = true;
-        }
-        shape->valid.stroke = shape->geometry.tesselateStroke(*(shape->rshape));
-    }
-
-    shape->opacity = float(opacity) * shape->multiplier;
-
-    if (flags & RenderUpdateFlag::Clip) shape->clips = clips;
-
-    return shape;
-}
-
 
 bool GlRenderer::preUpdate()
 {
@@ -1422,20 +993,6 @@ Result GlRenderer::dirtyRegions(Region* regions, TVG_UNUSED uint32_t cnt) const
 {
     *regions = {0, 0, int32_t(surface.w), int32_t(surface.h)};
     return Result::Success;
-}
-
-bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
-{
-    if (!data) return false;
-    auto shape = (GlShape*)data;
-    if (shape->opacity == 0) return false;
-    const auto& bbox = shape->geometry.bounds();
-    if (region.intersected(bbox)) {
-        if (region.contained(bbox)) return true;
-        GlIntersector intersector;
-        return intersector.intersect(shape, RenderRegion::intersect(region, bbox));
-    }
-    return false;
 }
 
 
