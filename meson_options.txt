@@ -9,6 +9,11 @@ option('partial',
    value: true,
    description: 'Enable Partial Rendering in thorvg')
 
+option('analytic_aa',
+   type: 'boolean',
+   value: true,
+   description: 'Enable Analytic AA instead of MSAA in the GL engine')
+
 option('loaders',
    type: 'array',
    choices: ['', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'otf', 'webp', 'media', 'all'],
