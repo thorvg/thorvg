@@ -315,6 +315,7 @@
         typedef void (*PFNGLDELETETEXTURESPROC)(GLsizei n, const GLuint *textures);
         typedef void (*PFNGLGENTEXTURESPROC)(GLsizei n, GLuint *textures);
         typedef void (*PFNGLDRAWARRAYSPROC)(GLenum mode, GLint first, GLsizei count);
+        typedef void (*PFNGLTEXSUBIMAGE2DPROC)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels);
     #endif /* GL_VERSION_1_1 */
 
     #ifndef GL_VERSION_1_2
@@ -877,10 +878,15 @@
         typedef void (*PFNGLFRAMEBUFFERTEXTURE2DPROC)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
         typedef void (*PFNGLFRAMEBUFFERRENDERBUFFERPROC)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
         typedef void (*PFNGLBLITFRAMEBUFFERPROC)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
         typedef void (*PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+#endif
         typedef void (*PFNGLBINDVERTEXARRAYPROC)(GLuint array);
         typedef void (*PFNGLDELETEVERTEXARRAYSPROC)(GLsizei n, const GLuint *arrays);
         typedef void (*PFNGLGENVERTEXARRAYSPROC)(GLsizei n, GLuint *arrays);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        typedef void (*PFNGLRENDERBUFFERSTORAGEPROC)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+#endif
     #endif /* GL_VERSION_3_0 */
 
     #ifndef GL_VERSION_3_1
@@ -948,6 +954,10 @@
         #define GL_INVALID_INDEX                  0xFFFFFFFFu
         typedef GLuint (*PFNGLGETUNIFORMBLOCKINDEXPROC)(GLuint program, const GLchar *uniformBlockName);
         typedef void (*PFNGLUNIFORMBLOCKBINDINGPROC)(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        typedef void (*PFNGLDRAWARRAYSINSTANCEDPROC)(GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
+        typedef void (*PFNGLVERTEXATTRIBDIVISORPROC)(GLuint index, GLuint divisor);
+#endif
     #endif /* GL_VERSION_3_1 */
 
     #if defined(_WIN32) && !defined(__CYGWIN__) && defined(THORVG_GL_TARGET_GL)
@@ -995,6 +1005,7 @@
     extern PFNGLDELETETEXTURESPROC    glDeleteTextures;
     extern PFNGLGENTEXTURESPROC       glGenTextures;
     extern PFNGLDRAWARRAYSPROC        glDrawArrays;
+    extern PFNGLTEXSUBIMAGE2DPROC     glTexSubImage2D;
 
     //GL_VERSION_1_2
 
@@ -1058,14 +1069,23 @@
     extern PFNGLFRAMEBUFFERTEXTURE2DPROC                glFramebufferTexture2D;
     extern PFNGLFRAMEBUFFERRENDERBUFFERPROC             glFramebufferRenderbuffer;
     extern PFNGLBLITFRAMEBUFFERPROC                     glBlitFramebuffer;
-    extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC      glRenderbufferStorageMultisample;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
+    extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC       glRenderbufferStorageMultisample;
+#endif
     extern PFNGLBINDVERTEXARRAYPROC                     glBindVertexArray;
     extern PFNGLDELETEVERTEXARRAYSPROC                  glDeleteVertexArrays;
     extern PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    extern PFNGLRENDERBUFFERSTORAGEPROC                 glRenderbufferStorage;
+#endif
 
     //GL_VERSION_3_1
     extern PFNGLGETUNIFORMBLOCKINDEXPROC      glGetUniformBlockIndex;
     extern PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    extern PFNGLDRAWARRAYSINSTANCEDPROC       glDrawArraysInstanced;
+    extern PFNGLVERTEXATTRIBDIVISORPROC       glVertexAttribDivisor;
+#endif
 
     #if defined(_WIN32) && !defined(__CYGWIN__) && defined(THORVG_GL_TARGET_GL)
         extern PFNWGLGETCURRENTCONTEXTPROC  tvgWglGetCurrentContext;

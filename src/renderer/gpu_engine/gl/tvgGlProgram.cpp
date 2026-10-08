@@ -33,6 +33,9 @@ static const char* const UNIFORM_NAMES[] = {
     "uDstTexture",
     "uMaskTexture",
     "uTexture",
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    "uCoverageTexture",
+#endif
 };
 
 static const char* const UNIFORM_BLOCK_NAMES[] = {
@@ -43,6 +46,10 @@ static const char* const UNIFORM_BLOCK_NAMES[] = {
     "BlendRegion",
     "GradientInfo",
     "ColorInfo",
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    "TransformInfo",
+    "CoverageInfo",
+#endif
 };
 
 static_assert(sizeof(UNIFORM_NAMES) / sizeof(UNIFORM_NAMES[0]) == static_cast<uint32_t>(GlShaderUniform::Count), "Missing uniform name");
