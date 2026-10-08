@@ -2371,7 +2371,7 @@ TVG_API Tvg_Result tvg_scene_clear_effects(Tvg_Paint scene);
  * @param[in] scene The scene object.
  * @param[in] sigma The blur radius (sigma) value. Must be >= 0.
  * @param[in] direction Blur direction: 0 = both directions, 1 = horizontal only, 2 = vertical only.
- * @param[in] border Border handling method: 0 = duplicate, 1 = wrap.
+ * @param[in] border Reserved for border handling. Currently ignored.
  * @param[in] quality Visual quality level [0 - 100].
  *
  * @since 1.0
