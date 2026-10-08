@@ -323,6 +323,14 @@ static SwOutline* _genOutline(const RenderShape* rshape, SwMpool* mpool, unsigne
     auto path = outline->path;
     if (path->empty() || path->cmds.empty() || path->cmds.first() == PathCommand::CubicTo) return nullptr;
 
+    //reject malformed paths whose commands consume more points than available.
+    size_t required = 0;
+    ARRAY_FOREACH(cmd, path->cmds) {
+        if (*cmd == PathCommand::MoveTo || *cmd == PathCommand::LineTo) ++required;
+        else if (*cmd == PathCommand::CubicTo) required += 3;
+    }
+    if (required > path->pts.count) return nullptr;
+
     outline->fillRule = rshape->rule;
     return outline;
 }

@@ -188,4 +188,39 @@ TEST_CASE("GL Viewport", "[tvgGlCanvas]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+#ifdef THORVG_LOTTIE_LOADER_SUPPORT
+
+TEST_CASE("GL Lottie Malformed Draw", "[tvgGlCanvas]")
+{
+    TestGLEngine engine(700, 100);
+
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        const char* names[] = {"poc1.json", "poc2.json"};
+
+        auto canvas = unique_ptr<GlCanvas>(GlCanvas::gen());
+        REQUIRE(canvas);
+        engine.target(canvas.get());
+
+        for (auto name : names) {
+            char buf[100];
+            snprintf(buf, sizeof(buf), TEST_DIR"/%s", name);
+            auto animation = Animation::gen();
+            REQUIRE(animation);
+            if (animation->picture()->load(buf) == Result::Success) {
+                animation->frame(0.0f);
+                REQUIRE(canvas->add(animation->picture()) == Result::Success);
+                canvas->update();
+                canvas->draw(true);
+                canvas->sync();
+                REQUIRE(canvas->remove() == Result::Success);
+            }
+            delete(animation);
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+#endif
+
 #endif

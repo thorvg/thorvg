@@ -463,4 +463,33 @@ TEST_CASE("Lottie Embedded Fonts Share", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Malformed Draw", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        const char* names[] = {"poc1.json", "poc2.json"};
+
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen());
+        uint32_t buffer[700*100] = {};
+        canvas->target(buffer, 700, 700, 100, ColorSpace::ARGB8888);
+
+        for (auto name : names) {
+            char buf[100];
+            snprintf(buf, sizeof(buf), TEST_DIR"/%s", name);
+            auto animation = Animation::gen();
+            REQUIRE(animation);
+            if (animation->picture()->load(buf) == Result::Success) {
+                animation->frame(0.0f);
+                REQUIRE(canvas->add(animation->picture()) == Result::Success);
+                canvas->update();
+                canvas->draw(true);
+                canvas->sync();
+                REQUIRE(canvas->remove() == Result::Success);
+            }
+            delete(animation);
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif

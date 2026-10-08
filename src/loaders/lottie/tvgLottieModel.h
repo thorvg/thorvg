@@ -817,9 +817,13 @@ struct LottieGradient : LottieObject
         if (!colorStops.populated) {
             auto count = colorStops.count;  //colorstop count can be modified after population
             if (colorStops.frames) {
+                //frames may yield different stop counts; keep the smallest so every frame's data stays in bounds.
+                uint32_t least = UINT32_MAX;
                 ARRAY_FOREACH(v, *colorStops.frames) {
-                    colorStops.count = populate(v->value, count);
+                    auto populated = populate(v->value, count);
+                    if (populated < least) least = populated;
                 }
+                colorStops.count = (least == UINT32_MAX) ? 0 : least;
             } else {
                 colorStops.count = populate(colorStops.value, count);
             }
