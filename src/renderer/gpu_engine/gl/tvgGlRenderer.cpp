@@ -152,14 +152,18 @@ GlRenderer::~GlRenderer()
 }
 
 
-GlProgram* GlRenderer::createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend)
+GlProgram* GlRenderer::createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend, bool batch)
 {
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     auto tail = blend ? COVERAGE_BLEND_FRAG_MAIN : COVERAGE_FRAG_MAIN;
     auto length = strlen(COVERAGE_FRAG_HEADER) + strlen(fragSrc) + strlen(tail) + 1;
     auto source = tvg::malloc<char>(length);
     snprintf(source, length, "%s%s%s", COVERAGE_FRAG_HEADER, fragSrc, tail);
-    auto program = new GlProgram(COVERAGE_VERT_SHADER, source);
+    auto vertexLength = strlen(COVERAGE_VERT_SHADER) + 32;
+    auto vertex = tvg::malloc<char>(vertexLength);
+    snprintf(vertex, vertexLength, "%s%s", batch ? "#define COVERAGE_BATCH\n" : "", COVERAGE_VERT_SHADER);
+    auto program = new GlProgram(vertex, source);
+    tvg::free(vertex);
     tvg::free(source);
     mStateCache.useProgram(program->getProgramId());
     program->setSampler(GlShaderUniform::CoverageTexture, 1);
@@ -221,7 +225,7 @@ void GlRenderer::initShaders()
     auto colorVertShader = COLOR_VERT_SHADER;
     auto gradientVertShader = GRADIENT_VERT_SHADER;
 #endif
-    mPrograms.push(createShapeProgram(colorVertShader, COLOR_FRAG_SHADER));
+    mPrograms.push(createShapeProgram(colorVertShader, COLOR_FRAG_SHADER, false, true));
     mPrograms.push(createShapeProgram(gradientVertShader, linearGradientFragShader));
     mPrograms.push(createShapeProgram(gradientVertShader, radialGradientFragShader));
     mPrograms.push(createShapeProgram(gradientVertShader, conicGradientFragShader));

@@ -240,7 +240,7 @@ struct GlRenderer : RenderMethod
     ~GlRenderer();
 
     void initShaders();
-    GlProgram* createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend = false);
+    GlProgram* createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend = false, bool batch = false);
     static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
     static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);

@@ -22,7 +22,68 @@
 
 #include "tvgGlRenderer.h"
 
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+void GlSolidBatch::draw(GlRenderer& renderer, const GlCoverageMap& coverage, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds)
+{
+    // Matches CoverageInfo in COVERAGE_VERT_SHADER. One map can own many run instances.
+    struct MapInfo
+    {
+        float bounds[4];
+        int32_t atlas[4];
+        float color[4];
+    };
+    struct BatchInfo
+    {
+        int32_t format[4];
+        MapInfo maps[64];
+    };
+
+    auto pass = renderer.currentPass();
+    auto program = renderer.mPrograms[GlRenderer::RT_Color];
+    auto runs = coverage.format == GlCoverageFormat::Runs;
+    if (!task || pass->lastTask() != task || task->program != program || texId != coverage.region.texture ||
+        coverageFormat != coverage.format || !(this->viewBounds == viewBounds) || coverageCount == 64) {
+        task = new GlRenderTask(program);
+        task->setViewMatrix(pass->getViewMatrix());
+        task->useDrawArrays = true;
+        task->indexCnt = 6;
+        task->setViewport(viewRegion);
+
+        BatchInfo info = {};
+        info.format[0] = runs ? 1 : 0;
+        coverageOffset = renderer.mGpuBuffer.push(&info, sizeof(info), true);
+        task->addBindResource(GlBindingResource{4, GlShaderUniformBlock::CoverageInfo, renderer.mGpuBuffer.getBufferId(), coverageOffset, sizeof(info)});
+        GlRenderer::bindCoverageTextures(task, coverage.region.texture, runs);
+        pass->addRenderTask(task);
+        this->viewBounds = viewBounds;
+        texId = coverage.region.texture;
+        coverageFormat = coverage.format;
+        coverageCount = 0;
+    }
+
+    auto& bounds = coverage.map.bounds;
+    auto& rect = coverage.region.rect;
+    MapInfo info = {{float(bounds.sx()), float(bounds.sy()), float(bounds.w()), float(bounds.h())},
+                    {rect.sx(), rect.sy(), rect.sw(), int32_t(task->instanceCount)},
+                    {color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f}};
+    renderer.mGpuBuffer.update(coverageOffset + sizeof(int32_t) * 4 + coverageCount * sizeof(MapInfo), &info, sizeof(info));
+
+    auto count = runs ? coverage.runCount : 1u;
+    void* indices = nullptr;
+    auto offset = renderer.mGpuBuffer.reserveAux(count, &indices);
+    memset(indices, coverageCount, count);
+    if (coverageCount == 0) {
+        task->addVertexLayout(GlVertexLayout{0, 1, 1, offset, GL_UNSIGNED_BYTE, GL_FALSE, renderer.mGpuBuffer.getAuxBufferId(), 1});
+    }
+    ++coverageCount;
+    task->instanceCount += count;
+    task->setDrawDepth(depth);
+    auto viewport = task->viewport;
+    viewport.add(viewRegion);
+    viewport.intersect(viewBounds);
+    task->setViewport(viewport);
+}
+#else
 void GlSolidBatch::draw(GlRenderer& renderer, GlShape& shape, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds)
 {
     auto buffer = &shape.geometry.fill;

@@ -32,7 +32,9 @@ struct GlRenderer;
 struct GlSolidBatch
 {
     void clear() { *this = {}; }
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    void draw(GlRenderer& renderer, const GlCoverageMap& coverage, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
+#else
     void draw(GlRenderer& renderer, GlShape& sdata, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
 #endif
     void draw(GlRenderer& renderer, GlImage& image, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);
@@ -70,6 +72,11 @@ struct GlSolidBatch
     uint32_t vertexCount = 0;
     GLuint texId = 0;
     uint32_t opacity = 0;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    uint32_t coverageCount = 0;
+    uint32_t coverageOffset = 0;
+    GlCoverageFormat coverageFormat = GlCoverageFormat::Dense;
+#endif
 };
 
 #endif /* _TVG_GL_SOLID_BATCH_H_ */

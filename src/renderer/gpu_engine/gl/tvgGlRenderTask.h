@@ -38,6 +38,9 @@ struct GlVertexLayout
     GLboolean normalized = GL_FALSE;
     // VBO supplying this attribute. ThorVG layouts must always provide it.
     GLuint arrayBufferId = 0;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    uint32_t divisor = 0;
+#endif
 };
 
 enum struct GlBindingType
@@ -100,6 +103,9 @@ struct GlRenderTask
     Array<GlBindingResource> bindResources;
     uint32_t arrayOffset = 0;
     GLenum arrayMode = GL_TRIANGLES;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    uint32_t instanceCount = 0;
+#endif
     Matrix viewMatrix = {};
     float vertexColor[4] = {0.f, 0.f, 0.f, 0.f};
     bool useViewMatrix = false;

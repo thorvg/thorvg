@@ -107,6 +107,12 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     if (bbox.invalid()) return;
 
     auto viewRegion = viewportRegion(vp, bbox);
+    if (mBlendMethod == BlendMethod::Normal) {
+        RenderColor color = {c.r, c.g, c.b, MULTIPLY(c.a, shape.opacity)};
+        mSolidBatch.draw(*this, coverage, color, depth, viewRegion, viewportRegion(vp, viewBounds));
+        return;
+    }
+
     GlRenderTarget* dstCopyFbo = nullptr;
     auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo);
     bindCoverage(task, coverage);

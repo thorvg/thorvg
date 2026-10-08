@@ -30,6 +30,18 @@ const char* COVERAGE_VERT_SHADER = R"(
 uniform float uDepth;
 uniform mat3 uViewMatrix;
 uniform highp usampler2D uCoverageRuns;
+#ifdef COVERAGE_BATCH
+layout(location = 0) in float aCoverageIndex;
+struct CoverageMap {
+    vec4 bounds;
+    ivec4 atlas;  // page origin, packed row width, first instance
+    vec4 color;
+};
+layout(std140) uniform CoverageInfo {
+    ivec4 format;
+    CoverageMap maps[64];
+} uCoverageInfo;
+#else
 layout(location = 1) in vec4 aColor;
 layout(std140) uniform CoverageInfo {
     vec4 bounds;
@@ -38,6 +50,7 @@ layout(std140) uniform CoverageInfo {
 layout(std140) uniform TransformInfo {
     mat3 invTransform;
 } uTransformInfo;
+#endif
 out vec4 vColor;
 out vec2 vPos;
 out vec2 vCoverageCoord;
@@ -49,11 +62,20 @@ void main()
     const vec2 corners[6] = vec2[6](vec2(0, 0), vec2(0, 1), vec2(1, 0),
                                    vec2(1, 0), vec2(0, 1), vec2(1, 1));
     vec2 corner = corners[gl_VertexID % 6];
+#ifdef COVERAGE_BATCH
+    CoverageMap map = uCoverageInfo.maps[int(aCoverageIndex)];
+    vec4 bounds = map.bounds;
+    ivec4 atlas = map.atlas;
+    int runs = uCoverageInfo.format.x;
+    int index = gl_InstanceID - atlas.w;
+    vColor = map.color;
+#else
     vec4 bounds = uCoverageInfo.bounds;
     ivec4 atlas = uCoverageInfo.atlas;
     int runs = atlas.w;
     int index = gl_VertexID / 6;
     vColor = aColor;
+#endif
     vCoverageAtlas = ivec3(atlas.xy, runs);
     vec2 pos;
     if (runs != 0) {
@@ -68,7 +90,9 @@ void main()
     vCoverageCoord = pos;
     pos += bounds.xy;
     gl_Position = vec4((uViewMatrix * vec3(pos, 1.0)).xy, uDepth, 1.0);
+#ifndef COVERAGE_BATCH
     vPos = (uTransformInfo.invTransform * vec3(pos, 1.0)).xy;
+#endif
 }
 )";
 

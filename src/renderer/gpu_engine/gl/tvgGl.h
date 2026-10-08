@@ -1160,6 +1160,10 @@
         #define GL_INVALID_INDEX                  0xFFFFFFFFu
         typedef GLuint (*PFNGLGETUNIFORMBLOCKINDEXPROC)(GLuint program, const GLchar *uniformBlockName);
         typedef void (*PFNGLUNIFORMBLOCKBINDINGPROC)(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        typedef void (*PFNGLDRAWARRAYSINSTANCEDPROC)(GLenum mode, GLint first, GLsizei count, GLsizei instancecount);
+        typedef void (*PFNGLVERTEXATTRIBDIVISORPROC)(GLuint index, GLuint divisor);
+#endif
         //typedef void (*PFNGLDRAWELEMENTSINSTANCEDPROC)(GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount);
         //typedef void (*PFNGLTEXBUFFERPROC)(GLenum target, GLenum internalformat, GLuint buffer);
         //typedef void (*PFNGLPRIMITIVERESTARTINDEXPROC)(GLuint index);
@@ -1500,6 +1504,10 @@
     //GL_VERSION_3_1
     extern PFNGLGETUNIFORMBLOCKINDEXPROC      glGetUniformBlockIndex;
     extern PFNGLUNIFORMBLOCKBINDINGPROC       glUniformBlockBinding;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    extern PFNGLDRAWARRAYSINSTANCEDPROC       glDrawArraysInstanced;
+    extern PFNGLVERTEXATTRIBDIVISORPROC       glVertexAttribDivisor;
+#endif
     //extern PFNGLDRAWELEMENTSINSTANCEDPROC     glDrawElementsInstanced;
     //extern PFNGLTEXBUFFERPROC                 glTexBuffer;
     //extern PFNGLPRIMITIVERESTARTINDEXPROC     glPrimitiveRestartIndex;
