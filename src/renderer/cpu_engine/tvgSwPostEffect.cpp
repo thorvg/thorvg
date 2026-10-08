@@ -42,12 +42,6 @@ struct SwGaussianBlur
     int extends;
 };
 
-static inline int _gaussianEdgeWrap(int end, int idx)
-{
-    auto r = idx % (end + 1);
-    return (r < 0) ? (end + 1) + r : r;
-}
-
 static inline int _gaussianEdgeExtend(int end, int idx)
 {
     if (idx < 0) return 0;
@@ -55,14 +49,6 @@ static inline int _gaussianEdgeExtend(int end, int idx)
     return idx;
 }
 
-template<int border>
-static inline int _gaussianRemap(int end, int idx)
-{
-    if (border == 1) return _gaussianEdgeWrap(end, idx);
-    return _gaussianEdgeExtend(end, idx);
-}
-
-template<int border = 0>
 static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, int32_t dimension, bool flipped)
 {
     if (flipped) {
@@ -88,15 +74,15 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
         const auto scale = _mm_set1_ps(iarr);
 
         for (int x = l; x < r; ++x) {
-            auto id = (_gaussianRemap<border>(end, x) + p) * 4;
+            auto id = (_gaussianEdgeExtend(end, x) + p) * 4;
             uint32_t pixel;
             memcpy(&pixel, src + id, sizeof(pixel));
             acc = _mm_add_epi32(acc, _mm_cvtepu8_epi32(_mm_cvtsi32_si128(pixel)));
         }
 
         for (int x = 0; x < w; ++x, ++r, ++l) {
-            auto rid = (_gaussianRemap<border>(end, r) + p) * 4;
-            auto lid = (_gaussianRemap<border>(end, l) + p) * 4;
+            auto rid = (_gaussianEdgeExtend(end, r) + p) * 4;
+            auto lid = (_gaussianEdgeExtend(end, l) + p) * 4;
             uint32_t right, left;
             memcpy(&right, src + rid, sizeof(right));
             memcpy(&left, src + lid, sizeof(left));
@@ -114,7 +100,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
         const auto scale = vdupq_n_f32(iarr);
 
         for (int x = l; x < r; ++x) {
-            auto id = (_gaussianRemap<border>(end, x) + p) * 4;
+            auto id = (_gaussianEdgeExtend(end, x) + p) * 4;
             uint32_t pixel;
             memcpy(&pixel, src + id, sizeof(pixel));
             auto channels = vmovl_u16(vget_low_u16(vmovl_u8(vcreate_u8(pixel))));
@@ -122,8 +108,8 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
         }
 
         for (int x = 0; x < w; ++x, ++r, ++l) {
-            auto rid = (_gaussianRemap<border>(end, r) + p) * 4;
-            auto lid = (_gaussianRemap<border>(end, l) + p) * 4;
+            auto rid = (_gaussianEdgeExtend(end, r) + p) * 4;
+            auto lid = (_gaussianEdgeExtend(end, l) + p) * 4;
             uint32_t right, left;
             memcpy(&right, src + rid, sizeof(right));
             memcpy(&left, src + lid, sizeof(left));
@@ -141,7 +127,7 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
 
         //initial accumulation
         for (int x = l; x < r; ++x) {
-            auto id = (_gaussianRemap<border>(end, x) + p) * 4;
+            auto id = (_gaussianEdgeExtend(end, x) + p) * 4;
             acc[0] += src[id++];
             acc[1] += src[id++];
             acc[2] += src[id++];
@@ -149,8 +135,8 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
         }
         //perform filtering
         for (int x = 0; x < w; ++x, ++r, ++l) {
-            auto rid = (_gaussianRemap<border>(end, r) + p) * 4;
-            auto lid = (_gaussianRemap<border>(end, l) + p) * 4;
+            auto rid = (_gaussianEdgeExtend(end, r) + p) * 4;
+            auto lid = (_gaussianEdgeExtend(end, l) + p) * 4;
             acc[0] += src[rid++] - src[lid++];
             acc[1] += src[rid++] - src[lid++];
             acc[2] += src[rid++] - src[lid++];
@@ -306,7 +292,7 @@ bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffec
     auto back = buffer.buf32;
     auto swapped = false;
 
-    TVGLOG("SW_ENGINE", "GaussianFilter region(%d, %d, %d, %d) params(%f %d %d), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->sigma, params->direction, params->border, data->level);
+    TVGLOG("SW_ENGINE", "GaussianFilter region(%d, %d, %d, %d) params(%f %d), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->sigma, params->direction, data->level);
 
     /* It is best to take advantage of the Gaussian blur’s separable property
        by dividing the process into two passes. horizontal and vertical.
