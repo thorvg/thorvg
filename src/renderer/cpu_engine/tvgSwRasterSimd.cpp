@@ -236,6 +236,7 @@ void avxRasterUnpremultiply(uint32_t* buffer, uint32_t width)
         auto pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(buffer + x));
         auto alpha = _mm256_srli_epi32(pixels, 24);
         auto unchanged = _mm256_or_si256(_mm256_cmpeq_epi32(alpha, full), _mm256_cmpeq_epi32(alpha, _mm256_setzero_si256()));
+        if (_mm256_movemask_epi8(unchanged) == -1) continue;
         auto divisor = _mm256_cvtepi32_ps(_mm256_max_epi32(alpha, one));
         auto result = _mm256_slli_epi32(alpha, 24);
         for (int shift = 0; shift < 24; shift += 8) {
@@ -382,6 +383,8 @@ void neonRasterUnpremultiply(uint32_t* buffer, uint32_t width)
     for (; x + 4 <= width; x += 4) {
         auto pixels = vld1q_u32(buffer + x);
         auto alpha = vshrq_n_u32(pixels, 24);
+        auto unchanged = vorrq_u32(vceqq_u32(alpha, mask), vceqq_u32(alpha, vdupq_n_u32(0)));
+        if (vget_lane_u64(vreinterpret_u64_u32(vand_u32(vget_low_u32(unchanged), vget_high_u32(unchanged))), 0) == UINT64_MAX) continue;
         auto divisor = vmaxq_u32(alpha, one);
         auto divisorFloat = vcvtq_f32_u32(divisor);
         auto reciprocal = vrecpeq_f32(divisorFloat);
@@ -399,7 +402,6 @@ void neonRasterUnpremultiply(uint32_t* buffer, uint32_t width)
             quotient = vaddq_u32(quotient, vandq_u32(vcgeq_u32(numerator, vaddq_u32(product, divisor)), one));
             result = vorrq_u32(result, vshlq_u32(vminq_u32(quotient, mask), bits));
         }
-        auto unchanged = vorrq_u32(vceqq_u32(alpha, mask), vceqq_u32(alpha, vdupq_n_u32(0)));
         vst1q_u32(buffer + x, vbslq_u32(unchanged, pixels, result));
     }
     cRasterUnpremultiply(buffer + x, width - x);
