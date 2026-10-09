@@ -562,6 +562,8 @@ void LottieBuilder::updateStar(LottiePolyStar* star, float frameNo, Matrix* tran
     static constexpr auto POLYSTAR_MAGIC_NUMBER = 0.47829f / 0.28f;
 
     auto ptsCnt = star->ptsCnt(frameNo, tween, exps);
+    if (ptsCnt < 1.0f) return;
+
     auto innerRadius = star->innerRadius(frameNo, tween, exps);
     auto outerRadius = star->outerRadius(frameNo, tween, exps);
     auto innerRoundness = star->innerRoundness(frameNo, tween, exps) * 0.01f;
@@ -674,7 +676,9 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
 {
     static constexpr auto POLYGON_MAGIC_NUMBER = 0.25f;
 
-    auto ptsCnt = size_t(floor(star->ptsCnt(frameNo, tween, exps)));
+    auto ptsCnt = int(floor(star->ptsCnt(frameNo, tween, exps)));
+    if (ptsCnt < 1) return;
+
     auto radius = star->outerRadius(frameNo, tween, exps);
     auto outerRoundness = star->outerRoundness(frameNo, tween, exps) * 0.01f;
 
@@ -706,7 +710,7 @@ void LottieBuilder::updatePolygon(LottieGroup* parent, LottiePolyStar* star, flo
     shape->moveTo(in.x, in.y);
 
     auto coeff = anglePerPoint * radius * outerRoundness * POLYGON_MAGIC_NUMBER;
-    for (size_t i = 0; i < ptsCnt; i++) {
+    for (int i = 0; i < ptsCnt; i++) {
         auto previousX = x;
         auto previousY = y;
         x = (radius * cosf(angle));
