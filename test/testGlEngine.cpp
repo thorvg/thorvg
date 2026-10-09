@@ -555,4 +555,41 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("GL Shape Intersection", "[tvgGlEngine]")
+{
+    TestGLEngine engine;
+
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
+        REQUIRE(canvas);
+        engine.target(canvas.get());
+
+        // An open path ">" with a stroke and no fill
+        auto shape = Shape::gen();
+        REQUIRE(shape);
+        REQUIRE(shape->moveTo(5, 5) == Result::Success);
+        REQUIRE(shape->lineTo(15, 10) == Result::Success);
+        REQUIRE(shape->lineTo(5, 15) == Result::Success);
+        REQUIRE(shape->strokeWidth(2) == Result::Success);
+        REQUIRE(shape->strokeFill(255, 0, 0) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+
+        // Case1. The stroke is hit
+        REQUIRE(shape->intersects(10, 7) == true);
+
+        // Case2. The implicitly closed interior is not hit without a fill
+        REQUIRE(shape->intersects(8, 10) == false);
+
+        // Case3. The interior is hit once filled
+        REQUIRE(shape->fill(0, 0, 255) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(shape->intersects(8, 10) == true);
+
+        REQUIRE(canvas->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
