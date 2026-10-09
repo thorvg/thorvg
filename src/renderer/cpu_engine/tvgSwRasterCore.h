@@ -36,7 +36,7 @@ bool cRasterTranslucentRect(SwSurface*, const RenderRegion&, const RenderColor&)
 bool cRasterABGRtoARGB(RenderSurface*);
 void cRasterGaussianFilterRow(uint8_t*, const uint8_t*, int32_t, int32_t, float);
 
-#if defined(THORVG_AVX_SUPPORT) || defined(THORVG_NEON_SUPPORT)
+#if defined(THORVG_AVX_SUPPORT) || defined(THORVG_NEON_SUPPORT) || defined(THORVG_WASM_SIMD_SUPPORT)
     extern uint32_t (*rasterDownScaler)(const uint32_t*, uint32_t, uint32_t, uint32_t, float, float, int32_t, int32_t, int32_t);
     extern void (*rasterUnpremultiply)(uint32_t*, uint32_t);
     extern void (*rasterPremultiply)(uint32_t*, uint32_t);

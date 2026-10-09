@@ -80,7 +80,7 @@ static void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_
             auto p = &in[y * stride];
             auto q = &out[y];
             auto by = std::min(h, y + BLOCK) - y;
-#if defined(THORVG_AVX_SUPPORT) || defined(THORVG_NEON_SUPPORT)
+#if defined(THORVG_AVX_SUPPORT) || defined(THORVG_NEON_SUPPORT) || defined(THORVG_WASM_SIMD_SUPPORT)
             if (bx == BLOCK && by == BLOCK && rasterGaussianXYFlipBlock) {
                 rasterGaussianXYFlipBlock(p, q, stride);
                 continue;

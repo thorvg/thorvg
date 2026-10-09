@@ -57,6 +57,18 @@
     bool neonRasterABGRtoARGB(RenderSurface* surface);
     void neonRasterGaussianFilterRow(uint8_t* dst, const uint8_t* src, int32_t w, int32_t dimension, float iarr);
     void neonRasterGaussianXYFlipBlock(const uint32_t* src, uint32_t* dst, int32_t stride);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    uint32_t wasmRasterDownScaler(const uint32_t* img, uint32_t stride, uint32_t w, TVG_UNUSED uint32_t h, float sx, TVG_UNUSED float sy, int32_t miny, int32_t maxy, int32_t n);
+    void wasmRasterUnpremultiply(uint32_t* buffer, uint32_t width);
+    void wasmRasterPremultiply(uint32_t* buffer, uint32_t width);
+    void wasmRasterTranslucentPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
+    void wasmRasterSolidPixels(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity);
+    void wasmRasterSolidPixel32(uint32_t* dst, uint32_t val, uint32_t offset, int32_t len);
+    bool wasmRasterTranslucentRle(SwSurface* surface, const SwRle* rle, const RenderRegion& bbox, const RenderColor& c);
+    bool wasmRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const RenderColor& c);
+    bool wasmRasterABGRtoARGB(RenderSurface* surface);
+    void wasmRasterGaussianFilterRow(uint8_t* dst, const uint8_t* src, int32_t w, int32_t dimension, float iarr);
+    void wasmRasterGaussianXYFlipBlock(const uint32_t* src, uint32_t* dst, int32_t stride);
 #endif
 
 /************************************************************************/
@@ -256,7 +268,7 @@ bool cRasterABGRtoARGB(RenderSurface* surface)
 /* Runtime Dispatch                                                     */
 /************************************************************************/
 
-#if defined(THORVG_AVX_SUPPORT) || defined(THORVG_NEON_SUPPORT)
+#if defined(THORVG_AVX_SUPPORT) || defined(THORVG_NEON_SUPPORT) || defined(THORVG_WASM_SIMD_SUPPORT)
     uint32_t (*rasterDownScaler)(const uint32_t*, uint32_t, uint32_t, uint32_t, float, float, int32_t, int32_t, int32_t) = cRasterDownScaler;
     void (*rasterUnpremultiply)(uint32_t*, uint32_t) = cRasterUnpremultiply;
     void (*rasterPremultiply)(uint32_t*, uint32_t) = cRasterPremultiply;
@@ -317,5 +329,18 @@ void rasterInit()
     rasterGaussianFilterRow = neonRasterGaussianFilterRow;
     rasterGaussianXYFlipBlock = neonRasterGaussianXYFlipBlock;
     TVGLOG("SW_ENGINE", "Run NEON Vectorization.");
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    rasterDownScaler = wasmRasterDownScaler;
+    rasterUnpremultiply = wasmRasterUnpremultiply;
+    rasterPremultiply = wasmRasterPremultiply;
+    rasterTranslucentPixels = wasmRasterTranslucentPixels;
+    rasterSolidPixels = wasmRasterSolidPixels;
+    rasterSolidPixel32 = wasmRasterSolidPixel32;
+    rasterTranslucentRle = wasmRasterTranslucentRle;
+    rasterTranslucentRect = wasmRasterTranslucentRect;
+    rasterABGRtoARGB = wasmRasterABGRtoARGB;
+    rasterGaussianFilterRow = wasmRasterGaussianFilterRow;
+    rasterGaussianXYFlipBlock = wasmRasterGaussianXYFlipBlock;
+    TVGLOG("SW_ENGINE", "Run WebAssembly SIMD Vectorization.");
 #endif
 }
