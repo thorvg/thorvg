@@ -164,9 +164,9 @@ static jerry_value_t _color(RGB32 rgb)
 {
     //OPTIMIZE: used a typed buffer instead of a object hash
     auto value = jerry_object();
-    auto r = jerry_number((float)rgb.r);
-    auto g = jerry_number((float)rgb.g);
-    auto b = jerry_number((float)rgb.b);
+    auto r = jerry_number(rgb.r / 255.0f);
+    auto g = jerry_number(rgb.g / 255.0f);
+    auto b = jerry_number(rgb.b / 255.0f);
     jerry_object_set_index(value, 0, r);
     jerry_object_set_index(value, 1, g);
     jerry_object_set_index(value, 2, b);
@@ -227,7 +227,11 @@ static RGB32 _color(jerry_value_t obj)
     auto r = jerry_object_get_index(obj, 0);
     auto g = jerry_object_get_index(obj, 1);
     auto b = jerry_object_get_index(obj, 2);
-    out = {jerry_value_as_int32(r), jerry_value_as_int32(g), jerry_value_as_int32(b)};
+    out = {
+      remap255<int32_t>(jerry_value_as_number(r)),
+      remap255<int32_t>(jerry_value_as_number(g)),
+      remap255<int32_t>(jerry_value_as_number(b))
+    };
     jerry_value_free(r);
     jerry_value_free(g);
     jerry_value_free(b);
