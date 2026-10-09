@@ -39,13 +39,13 @@
 The following primitives are supported by ThorVG: <br />
  
 - **Lines & Shapes**: rectangles, circles, paths, and arbitrary vector geometry
-- **Filling**: solid colors and linear, radial, and conic gradients
+- **Filling**: solid colors / linear, radial, and conic gradients
 - **Stroking**: stroke width, joins, caps, dash patterns, and trimming
 - **Scene Management**: retained-mode scene graph and hierarchical transformations
 - **Composition**: W3C compositing and blending modes, masking, clipping, and nested scenes
-- **Text**: Unicode, scalable TTF/OTF fonts, and multi-line text layout
+- **Text**: unicode, scalable TTF/OTF fonts, and multi-line text layout
 - **Images**: SVG, PNG, JPEG, WebP, and raw bitmaps
-- **Effects**: blur, drop shadow, tint, tritone, color replacement, and fill effects
+- **Effects**: Gaussian & motion blur, drop shadow, tint, tritone, color replacement, and fill effects
 - **Animations**: Lottie (JSON) playback and rendering
 
 <p align="center">
@@ -80,6 +80,10 @@ If your program includes the main renderer, you can seamlessly utilize ThorVG AP
 
 ### CPU Rasterization
 ThorVG is optimized for CPU-based rasterization, with a strong focus on vector rendering in environments where GPU resources are limited, unavailable, or intentionally avoided. In representative CPU benchmarks, ThorVG demonstrates **an average of ~2.9× faster performance** to a widely-used vector graphics engine across common vector rendering workloads. The advantage is particularly clear in geometry-heavy scenarios such as rectangles, strokes, rotations, and circle rendering.
+
+#### SIMD Acceleration
+
+ThorVG provides native SIMD acceleration through **AVX2 (x86/x64)** and **NEON (ARM)**, further enhancing CPU rasterization performance across supported architectures. These optimizations accelerate key rendering operations, delivering an average performance improvement of approximately **30%** across a diverse set of rendering benchmarks. SIMD acceleration is integrated directly into ThorVG's software rendering pipeline, with scalar fallbacks ensuring compatibility across platforms without SIMD support.
 
 #### Performance Overview
 <p align="center">
