@@ -1739,22 +1739,15 @@ void LottieParser::captureSlots(const char* key)
     auto begin = getPos();
     auto end = getPos();
     auto depth = 1;
-    auto invalid = true;
 
     //get slots string
-    while (++end) {
-        if (*end == '}') {
-            --depth;
-            if (depth == 0) {
-                invalid = false;
-                break;
-            }
-        } else if (*end == '{') {
-            ++depth;
-        }
+    while (depth > 0 && *end != '\0') {
+        ++end;
+        if (*end == '}') --depth;
+        else if (*end == '{') ++depth;
     }
 
-    if (invalid) {
+    if (depth > 0) {
         TVGERR("LOTTIE", "Invalid Slots!");
         skip();
         return;
