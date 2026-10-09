@@ -818,7 +818,14 @@ struct LottieGradient : LottieObject
             auto count = colorStops.count;  //colorstop count can be modified after population
             if (colorStops.frames) {
                 ARRAY_FOREACH(v, *colorStops.frames) {
-                    colorStops.count = populate(v->value, count);
+                    auto cnt = populate(v->value, count);
+                    if (v != colorStops.frames->data && cnt != colorStops.count) {
+                        TVGLOG("LOTTIE", "Gradient disabled: inconsistent stop counts");
+                        colorStops.release();
+                        colorStops.count = 0;
+                        break;
+                    }
+                    colorStops.count = cnt;
                 }
             } else {
                 colorStops.count = populate(colorStops.value, count);
