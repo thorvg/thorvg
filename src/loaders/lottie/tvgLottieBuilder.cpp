@@ -404,8 +404,6 @@ static bool _draw(LottieGroup* parent, LottieShape* shape, RenderContext* ctx)
 
 static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>* pooler, RenderContext* ctx)
 {
-    path->ref();  //prevent pooler returns the same path.
-
     Array<Shape*> propagators;
     propagators.push(ctx->propagator);
     Array<Shape*> shapes;
@@ -455,7 +453,6 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
         }
         shapes.clear();
     }
-    path->unref();
 }
 
 void LottieBuilder::appendRect(LottieRect* rect, Shape* shape, Point& pos, Point& size, float r, bool clockwise, RenderContext* ctx)
@@ -490,9 +487,11 @@ void LottieBuilder::updateRect(LottieGroup* parent, LottieObject** child, float 
         appendRect(rect, ctx->merging, pos, size, r, rect->clockwise, ctx);
     } else {
         auto shape = rect->pooling();
+        shape->ref();  //prevent modifiers from reusing the output shape.
         shape->reset();
         appendRect(rect, shape, pos, size, r, rect->clockwise, ctx);
         _repeat(parent, shape, rect, ctx);
+        shape->unref();
     }
 }
 
@@ -527,9 +526,11 @@ void LottieBuilder::updateEllipse(LottieGroup* parent, LottieObject** child, flo
         appendCircle(ellipse, ctx->merging, pos, size, ellipse->clockwise, ctx);
     } else {
         auto shape = ellipse->pooling();
+        shape->ref();  //prevent modifiers from reusing the output shape.
         shape->reset();
         appendCircle(ellipse, shape, pos, size, ellipse->clockwise, ctx);
         _repeat(parent, shape, ellipse, ctx);
+        shape->unref();
     }
 }
 
@@ -544,9 +545,11 @@ void LottieBuilder::updatePath(LottieGroup* parent, LottieObject** child, float 
         PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
     } else {
         auto shape = path->pooling();
+        shape->ref();  //prevent modifiers from reusing the output shape.
         shape->reset();
         path->pathset(frameNo, to<ShapeImpl>(shape)->rs.path, ctx->transform, tween, exps, ctx->modifiers);
         _repeat(parent, shape, path, ctx);
+        shape->unref();
     }
 }
 
@@ -763,10 +766,12 @@ void LottieBuilder::updatePolystar(LottieGroup* parent, LottieObject** child, fl
         PAINT(ctx->merging)->mark(RenderUpdateFlag::Path);
     } else {
         auto shape = star->pooling();
+        shape->ref();  //prevent modifiers from reusing the output shape.
         shape->reset();
         if (star->type == LottiePolyStar::Star) updateStar(star, frameNo, (identity ? nullptr : &matrix), shape, ctx, tween, exps);
         else updatePolygon(star, frameNo, (identity  ? nullptr : &matrix), shape, ctx, tween, exps);
         _repeat(parent, shape, star, ctx);
+        shape->unref();
     }
 }
 
