@@ -348,15 +348,10 @@ void LottiePathSet::modifiedPath(float frameNo, RenderPath& out, Matrix* transfo
     float t;
 
     if (dispatch(frameNo, path, frame, t)) {
-        if (modifier) {
-            RenderPath in;
-            path->convert(in);
-            modifier->path(in, out, transform);
-            in.dismiss();
-        } else {
-            _copy(path, out.cmds);
-            _copy(path, out.pts, transform);
-        }
+        RenderPath in;
+        path->convert(in);
+        modifier->path(in, out, transform);
+        in.dismiss();
         return;
     }
 
@@ -375,7 +370,7 @@ void LottiePathSet::modifiedPath(float frameNo, RenderPath& out, Matrix* transfo
         in.pts.push(pt);
     }
 
-    if (modifier) modifier->path(in, out, nullptr);
+    modifier->path(in, out, nullptr);
 
     in.cmds.data = nullptr;
 }
