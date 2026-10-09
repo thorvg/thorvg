@@ -172,39 +172,11 @@ void WebPSamplerProcessPlane(const uint8_t* y, int y_stride,
 // Sampling functions to convert rows of YUV to RGB(A)
 extern WebPSamplerRowFunc WebPSamplers[/* MODE_LAST */];
 
-// YUV444->RGB converters
-typedef void (*WebPYUV444Converter)(const uint8_t* y,
-                                    const uint8_t* u, const uint8_t* v,
-                                    uint8_t* dst, int len);
-
-extern WebPYUV444Converter WebPYUV444Converters[/* MODE_LAST */];
-
 // Must be called before using the WebPUpsamplers[] (and for premultiplied
 // colorspaces like rgbA, rgbA4444, etc)
 void WebPInitUpsamplers(void);
 // Must be called before using WebPSamplers[]
 void WebPInitSamplers(void);
-// Must be called before using WebPYUV444Converters[]
-void WebPInitYUV444Converters(void);
-
-//------------------------------------------------------------------------------
-// Rescaler
-
-struct WebPRescaler;
-
-// Import a row of data and save its contribution in the rescaler.
-// 'channel' denotes the channel number to be imported.
-extern void (*WebPRescalerImportRow)(struct WebPRescaler* const wrk,
-                                     const uint8_t* const src, int channel);
-
-// Export one row (starting at x_out position) from rescaler.
-extern void (*WebPRescalerExportRow)(struct WebPRescaler* const wrk, int x_out);
-
-// Plain-C implementation, as fall-back.
-extern void WebPRescalerExportRowC(struct WebPRescaler* const wrk, int x_out);
-
-// Must be called first before using the above.
-void WebPRescalerDspInit(void);
 
 //------------------------------------------------------------------------------
 // Utilities for processing transparent channel.
@@ -219,30 +191,6 @@ extern void (*WebPApplyAlphaMultiply)(
 extern int (*WebPDispatchAlpha)(const uint8_t* alpha, int alpha_stride,
                                 int width, int height,
                                 uint8_t* dst, int dst_stride);
-
-// Pre-Multiply operation transforms x into x * A / 255  (where x=Y,R,G or B).
-// Un-Multiply operation transforms x into x * 255 / A.
-
-// Pre-Multiply or Un-Multiply (if 'inverse' is true) argb values in a row.
-extern void (*WebPMultARGBRow)(uint32_t* const ptr, int width, int inverse);
-
-// Same a WebPMultARGBRow(), but for several rows.
-void WebPMultARGBRows(uint8_t* ptr, int stride, int width, int num_rows,
-                      int inverse);
-
-// Same for a row of single values, with side alpha values.
-extern void (*WebPMultRow)(uint8_t* const ptr, const uint8_t* const alpha,
-                           int width, int inverse);
-
-// Same a WebPMultRow(), but for several 'num_rows' rows.
-void WebPMultRows(uint8_t* ptr, int stride,
-                  const uint8_t* alpha, int alpha_stride,
-                  int width, int num_rows, int inverse);
-
-// Plain-C versions, used as fallback by some implementations.
-void WebPMultRowC(uint8_t* const ptr, const uint8_t* const alpha,
-                  int width, int inverse);
-void WebPMultARGBRowC(uint32_t* const ptr, int width, int inverse);
 
 // To be called first before using the above.
 void WebPInitAlphaProcessing(void);
