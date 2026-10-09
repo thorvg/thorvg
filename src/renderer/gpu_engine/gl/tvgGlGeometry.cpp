@@ -48,7 +48,8 @@ bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Po
 bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
 {
     const auto& geometry = shape->geometry;
-    auto validFill = shape->valid.fill && !geometry.fill.index.empty();
+    // the fill is tessellated regardless of its paint (clippers need it), so skip it if nothing is filled
+    auto validFill = shape->valid.fill && !geometry.fill.index.empty() && (shape->rshape->fill || shape->rshape->color.a > 0);
     auto validStroke = shape->valid.stroke && !geometry.stroke.index.empty();
     if (!validFill && !validStroke) return false;
 
