@@ -27,8 +27,10 @@
 /************************************************************************/
 
 static thread_local SwMpool* _pool = nullptr;
+static thread_local uint32_t _poolGen = 0;
 static Array<SwMpool*> _pools;
 static uint32_t _threads = 0;
+static uint32_t _gen = 1;
 static StrictKey _key;
 
 /************************************************************************/
@@ -37,9 +39,10 @@ static StrictKey _key;
 
 SwMpool* mpoolReq()
 {
-    if (!_pool) {
+    ScopedLock lock(_key);
+    if (!_pool || _poolGen != _gen) {
         _pool = new SwMpool(_threads);
-        ScopedLock lock(_key);
+        _poolGen = _gen;
         _pools.push(_pool);
     }
     return _pool;
@@ -52,9 +55,10 @@ void mpoolInit(uint32_t threads)
 
 void mpoolTerm()
 {
-    for (auto p : _pools) {
+    ScopedLock lock(_key);
+    for (auto p : _pools)
         delete p;
-        _pool = nullptr;
-    }
     _pools.reset();
+    _pool = nullptr;
+    ++_gen;
 }
