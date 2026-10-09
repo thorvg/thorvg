@@ -176,6 +176,38 @@ static bool _update(LottieTransform* transform, float frameNo, Matrix& matrix, u
 }
 
 
+static void _mergeOps(RenderPath& out, const RenderPath& path, const RenderMerge::Operand& from, const RenderMerge::Operand& to)
+{
+    out.cmds.data = path.cmds.data + from.cmds;
+    out.cmds.count = to.cmds - from.cmds;
+    out.pts.data = path.pts.data + from.pts;
+    out.pts.count = to.pts - from.pts;
+}
+
+
+static void _invertMask(RenderPath& path, RenderPath& plane, LottieComposition* comp, LottieLayer* layer)
+{
+    Matrix im;
+
+    if (plane.empty() && inverse(&layer->cache.matrix, &im)) {
+        //the mask paths should not touch the edges
+        auto w = std::max(layer->w, comp->w);
+        auto h = std::max(layer->h, comp->h);
+        Point pts[] = {{-w, -h}, {2.0f * w, -h}, {2.0f * w, 2.0f * h}, {-w, 2.0f * h}};
+
+        for (auto& pt : pts) pt *= im;
+
+        plane.moveTo(pts[0]);
+        plane.lineTo(pts[1]);
+        plane.lineTo(pts[2]);
+        plane.lineTo(pts[3]);
+        plane.close();
+    }
+
+    if (!tvg::pathop(plane, path, path, PathOp::Subtract)) path.clear();
+}
+
+
 void LottieBuilder::updateTransform(LottieLayer* layer, float frameNo)
 {
     if (!layer) return;
@@ -838,6 +870,106 @@ void LottieBuilder::updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject*
 }
 
 
+void LottieBuilder::collectMerge(RenderContext* ctx)
+{
+    auto merge = ctx->merge;
+
+    if (merge->target != ctx->merging) {
+        if (merge->target) {
+            auto op = merge->operands.last().op;
+            resolveMerge(ctx);
+            merge->operands.push({0, 0, op, true});
+        }
+        merge->target = ctx->merging;
+    }
+    if (!merge->target || merge->joined) return;
+
+    auto& path = to<ShapeImpl>(merge->target)->rs.path;
+    auto& last = merge->operands.last();
+    if (path.cmds.count > last.cmds) merge->operands.push({path.cmds.count, path.pts.count, last.op, false});
+}
+
+
+void LottieBuilder::resolveMerge(RenderContext* ctx)
+{
+    auto merge = ctx->merge;
+    if (!merge->target) return;
+
+    auto& path = to<ShapeImpl>(merge->target)->rs.path;
+    RenderMerge::Operand end = {path.cmds.count, path.pts.count, PathOp::Add, false};
+    RenderMerge::Operand from = end, to = end;
+    RenderPath out, lhs, rhs;
+    auto count = 0;
+    auto inherited = false;
+
+    for (auto operand = merge->operands.end() - 1; operand >= merge->operands.begin(); --operand) {
+        if (inherited || operand->cmds < end.cmds) {
+            if (count == 0) {
+                from = *operand;
+                to = end;
+            } else {
+                if (count == 1) _mergeOps(lhs, path, from, to);
+                _mergeOps(rhs, path, *operand, end);
+                if (!tvg::pathop((count == 1) ? lhs : out, rhs, out, operand->op)) out.clear();
+            }
+            ++count;
+        }
+        inherited = false;
+        end = *operand;
+        if (!operand->head) continue;
+
+        if (count > 1) {
+            path.cmds.count = operand->cmds;
+            path.pts.count = operand->pts;
+            path.cmds.push(out.cmds);
+            path.pts.push(out.pts);
+        }
+        inherited = (count > 0);
+        count = 0;
+        end = {path.cmds.count, path.pts.count, PathOp::Add, false};
+    }
+
+    lhs.dismiss();
+    rhs.dismiss();
+    merge->operands.clear();
+    PAINT(merge->target)->mark(RenderUpdateFlag::Path);
+}
+
+
+void LottieBuilder::updateMergePath(TVG_UNUSED LottieGroup* parent, LottieObject** child, TVG_UNUSED float frameNo, TVG_UNUSED Inlist<RenderContext>& contexts, RenderContext* ctx)
+{
+    auto mergePath = static_cast<LottieMergePath*>(*child);
+
+    if (mergePath->mode == LottieMergePath::Merge) {
+        if (ctx->merge) ctx->merge->joined = true;
+        return;
+    }
+
+    if (!ctx->merge) {
+        ctx->merge = new RenderMerge;
+        ctx->merge->target = ctx->merging;
+    }
+
+    RenderMerge::Operand operand = {0, 0, PathOp::Add, true};
+
+    switch (mergePath->mode) {
+        case LottieMergePath::Subtract: operand.op = PathOp::Subtract; break;
+        case LottieMergePath::Intersect: operand.op = PathOp::Intersect; break;
+        case LottieMergePath::Exclude: operand.op = PathOp::Difference; break;
+        default: break;
+    }
+
+    if (ctx->merge->target) {
+        auto& path = to<ShapeImpl>(ctx->merge->target)->rs.path;
+        operand.cmds = path.cmds.count;
+        operand.pts = path.pts.count;
+    }
+
+    ctx->merge->operands.push(operand);
+    ctx->merge->joined = false;
+}
+
+
 void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<RenderContext>& contexts)
 {
     contexts.head->begin = parent->children.end() - 1;
@@ -905,6 +1037,10 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                     updateOffsetPath(parent, child, frameNo, contexts, ctx);
                     break;
                 }
+                case LottieObject::MergePath: {
+                    updateMergePath(parent, child, frameNo, contexts, ctx);
+                    break;
+                }
                 case LottieObject::PuckerBloat: {
                     updatePuckerBloat(parent, child, frameNo, contexts, ctx);
                     break;
@@ -916,9 +1052,12 @@ void LottieBuilder::updateChildren(LottieGroup* parent, float frameNo, Inlist<Re
                 default: break;
             }
 
+            if (ctx->merge) collectMerge(ctx);
+
             //stop processing for those invisible contents
             if (stop || ctx->propagator->opacity() == 0) break;
         }
+        if (ctx->merge) resolveMerge(ctx);
         delete(ctx);
     }
 }
@@ -1350,7 +1489,7 @@ void LottieBuilder::updateText(LottieLayer* layer, float frameNo)
 }
 
 
-void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
+void LottieBuilder::updateMasks(LottieComposition* comp, LottieLayer* layer, float frameNo)
 {
     if (layer->masks.empty()) return;
 
@@ -1361,9 +1500,9 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         layer->scene = scene;
     }
 
+    RenderPath plane, operand;
     Shape* pShape = nullptr;
-    MaskMethod pMethod;
-    uint8_t pOpacity;
+    auto folding = false;
 
     ARRAY_FOREACH(p, layer->masks) {
         auto mask = *p;
@@ -1372,41 +1511,54 @@ void LottieBuilder::updateMasks(LottieLayer* layer, float frameNo)
         auto method = mask->method;
         auto opacity = mask->opacity(frameNo);
         auto expand = mask->expand(frameNo);
+        auto lead = !pShape;
+        auto foldable = (opacity == 255 && mask->opacity.frameCnt() <= 1 && method != MaskMethod::Lighten && method != MaskMethod::Darken);
+        auto inverted = lead && !foldable && method == MaskMethod::Subtract;
+        auto fresh = lead || !folding || !foldable;
 
-        //the first mask
-        if (!pShape) {
-            pShape = layer->pooling();
-            to<ShapeImpl>(pShape)->reset();
-            auto compMethod = (method == MaskMethod::Subtract || method == MaskMethod::InvAlpha) ? MaskMethod::InvAlpha : MaskMethod::Alpha;
-            //Cheaper. Replace the masking with a clipper
-            if (!layer->effect && layer->masks.count == 1 && compMethod == MaskMethod::Alpha) {
-                layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
-                layer->scene->clip(pShape);
-            } else {
-                layer->scene->mask(pShape, compMethod);
-            }
-        //Chain mask composition
-        } else if (pMethod != method || pOpacity != opacity || (method != MaskMethod::Subtract && method != MaskMethod::Difference)) {
+        //a run of foldable masks collapses into a single path, the rest keeps chaining
+        if (fresh) {
             auto shape = layer->pooling();
             to<ShapeImpl>(shape)->reset();
-            pShape->mask(shape, method);
+            PAINT(shape)->mark(RenderUpdateFlag::Path);
+            shape->fill(255, 255, 255, opacity);
+            shape->transform(layer->cache.matrix);
+            //Cheaper. Replace the masking with a clipper
+            if (lead && !inverted && !layer->effect && layer->masks.count == 1) {
+                layer->scene->opacity(MULTIPLY(layer->scene->opacity(), opacity));
+                layer->scene->clip(shape);
+            } else if (lead) {
+                layer->scene->mask(shape, inverted ? MaskMethod::InvAlpha : MaskMethod::Alpha);
+            } else {
+                pShape->mask(shape, method);
+            }
             pShape = shape;
+            folding = foldable;
         }
 
-        pShape->fill(255, 255, 255, opacity);
-        pShape->transform(layer->cache.matrix);
+        auto& path = to<ShapeImpl>(pShape)->rs.path;
+        auto& cur = fresh ? path : operand;
+        operand.clear();
 
         //Default Masking
         if (expand == 0.0f) {
-            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps);
+            mask->pathset(frameNo, cur, nullptr, tween, exps);
         //Masking with Expansion (Offset)
         } else {
             //TODO: Once path direction support is implemented, ensure that the direction is ignored here
             auto offset = LottieOffsetModifier(expand);
-            mask->pathset(frameNo, to<ShapeImpl>(pShape)->rs.path, nullptr, tween, exps, &offset);
+            mask->pathset(frameNo, cur, nullptr, tween, exps, &offset);
         }
-        pOpacity = opacity;
-        pMethod = method;
+
+        if (mask->inverse != (lead && !inverted && method == MaskMethod::Subtract)) _invertMask(cur, plane, comp, layer);
+
+        if (fresh) continue;
+
+        auto op = PathOp::Add;
+        if (method == MaskMethod::Subtract) op = PathOp::Subtract;
+        else if (method == MaskMethod::Intersect) op = PathOp::Intersect;
+        else if (method == MaskMethod::Difference) op = PathOp::Difference;
+        if (!tvg::pathop(path, cur, path, op)) path.clear();
     }
 }
 
@@ -1599,7 +1751,7 @@ void LottieBuilder::updateLayer(LottieComposition* comp, Scene* scene, LottieLay
         }
     }
 
-    updateMasks(layer, frameNo);
+    updateMasks(comp, layer, frameNo);
 
     updateEffect(layer, frameNo, comp->quality);
 

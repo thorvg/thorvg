@@ -498,6 +498,7 @@ LottieGroup::LottieGroup(LottieObject::Type type) : LottieObject(type)
     reqFragment = false;
     buildDone = false;
     trimpath = false;
+    mergepath = false;
     visible = false;
     allowMerge = true;
 }
@@ -530,6 +531,7 @@ void LottieGroup::prepare()
         auto child = static_cast<LottieObject*>(*c);
 
         if (child->type == LottieObject::Type::Trimpath) trimpath = true;
+        else if (child->type == LottieObject::Type::MergePath) mergepath = true;
 
         /* Figure out if this group is a simple path drawing.
            In that case, the rendering context can be sharable with the parent's. */
@@ -570,7 +572,7 @@ void LottieGroup::prepare()
     }
 
     //Reverse the drawing order if this group has a trimpath.
-    if (!trimpath) return;
+    if (!trimpath || mergepath) return;
 
     for (uint32_t i = 0; i < children.count - 1; ) {
         auto child2 = children[i + 1];
