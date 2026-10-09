@@ -546,12 +546,9 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion
     auto src = simg->buf32 + (bbox.min.y * sstride + bbox.min.x);
     auto dst = dimg->buf32 + (bbox.min.y * dstride + bbox.min.x);
 
-    // TODO: openmp optimization?
-    for (auto y = 0; y < (bbox.max.y - bbox.min.y); ++y) {
-        rasterTranslucentPixel32(dst, src, bbox.max.x - bbox.min.x, 255);
-        src += sstride;
-        dst += dstride;
-    }
+    #pragma omp parallel for
+    for (auto y = 0; y < (bbox.max.y - bbox.min.y); ++y)
+        rasterTranslucentPixel32(dst + y * dstride, src + y * sstride, bbox.max.x - bbox.min.x, 255);
 }
 
 static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, int dw, int dh, const RenderRegion& bbox, const SwPoint& offset, uint8_t opacity, bool direct)
