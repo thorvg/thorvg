@@ -158,6 +158,7 @@ static bool _compositeMaskImage(SwSurface* surface, const SwImage& image, const 
 #include "tvgSwRasterC.h"
 #include "tvgSwRasterAvx.h"
 #include "tvgSwRasterNeon.h"
+#include "tvgSwRasterWasm.h"
 
 static inline uint32_t _sampleSize(float scale)
 {
@@ -202,6 +203,8 @@ static uint32_t _interpDownScaler(const uint32_t* img, uint32_t stride, uint32_t
     return avxInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
 #elif defined(THORVG_NEON_SUPPORT)
     return neonInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    return wasmInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
 #else
     return cInterpDownScaler(img, stride, w, h, sx, sy, miny, maxy, n);
 #endif
@@ -324,6 +327,8 @@ static bool _rasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox,
     return avxRasterTranslucentRect(surface, bbox, c);
 #elif defined(THORVG_NEON_SUPPORT)
     return neonRasterTranslucentRect(surface, bbox, c);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    return wasmRasterTranslucentRect(surface, bbox, c);
 #else
     return cRasterTranslucentRect(surface, bbox, c);
 #endif
@@ -495,6 +500,8 @@ static bool _rasterTranslucentRle(SwSurface* surface, const SwRle* rle, const Re
     return avxRasterTranslucentRle(surface, rle, bbox, c);
 #elif defined(THORVG_NEON_SUPPORT)
     return neonRasterTranslucentRle(surface, rle, bbox, c);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    return wasmRasterTranslucentRle(surface, rle, bbox, c);
 #else
     return cRasterTranslucentRle(surface, rle, bbox, c);
 #endif
@@ -1288,6 +1295,8 @@ void rasterTranslucentPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_
     avxRasterTranslucentPixels(dst, src, len, opacity);
 #elif defined(THORVG_NEON_SUPPORT)
     neonRasterTranslucentPixels(dst, src, len, opacity);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    wasmRasterTranslucentPixels(dst, src, len, opacity);
 #else
     cRasterTranslucentPixels(dst, src, len, opacity);
 #endif
@@ -1299,6 +1308,8 @@ void rasterPixel32(uint32_t* dst, uint32_t* src, uint32_t len, uint8_t opacity)
     avxRasterPixels(dst, src, len, opacity);
 #elif defined(THORVG_NEON_SUPPORT)
     neonRasterPixels(dst, src, len, opacity);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    wasmRasterPixels(dst, src, len, opacity);
 #else
     cRasterPixels(dst, src, len, opacity);
 #endif
@@ -1310,6 +1321,8 @@ void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len)
     avxRasterGrayscale8(dst, val, offset, len);
 #elif defined(THORVG_NEON_SUPPORT)
     neonRasterGrayscale8(dst, val, offset, len);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    wasmRasterGrayscale8(dst, val, offset, len);
 #else
     cRasterPixels(dst, val, offset, len);
 #endif
@@ -1321,6 +1334,8 @@ void rasterPixel32(uint32_t *dst, uint32_t val, uint32_t offset, int32_t len)
     avxRasterPixel32(dst, val, offset, len);
 #elif defined(THORVG_NEON_SUPPORT)
     neonRasterPixel32(dst, val, offset, len);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    wasmRasterPixel32(dst, val, offset, len);
 #else
     cRasterPixels(dst, val, offset, len);
 #endif
@@ -1402,6 +1417,8 @@ void rasterUnpremultiply(RenderSurface* surface)
         avxRasterUnpremultiply(buffer, surface->w);
 #elif defined(THORVG_NEON_SUPPORT)
         neonRasterUnpremultiply(buffer, surface->w);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+        wasmRasterUnpremultiply(buffer, surface->w);
 #else
         cRasterUnpremultiply(buffer, surface->w);
 #endif
@@ -1424,6 +1441,8 @@ void rasterPremultiply(RenderSurface* surface)
         avxRasterPremultiply(dst, surface->w);
 #elif defined(THORVG_NEON_SUPPORT)
         neonRasterPremultiply(dst, surface->w);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+        wasmRasterPremultiply(dst, surface->w);
 #else
         cRasterPremultiply(dst, surface->w);
 #endif
@@ -1534,6 +1553,8 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
         return avxRasterABGRtoARGB(surface);
 #elif defined(THORVG_NEON_SUPPORT)
         return neonRasterABGRtoARGB(surface);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+        return wasmRasterABGRtoARGB(surface);
 #else
         return cRasterABGRtoARGB(surface);
 #endif
@@ -1544,6 +1565,8 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to)
         return avxRasterABGRtoARGB(surface);
 #elif defined(THORVG_NEON_SUPPORT)
         return neonRasterABGRtoARGB(surface);
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+        return wasmRasterABGRtoARGB(surface);
 #else
         return cRasterABGRtoARGB(surface);
 #endif

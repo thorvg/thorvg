@@ -51,6 +51,21 @@ if get_option('simd')
             simd_type = cpu_family == 'arm' ? 'neon-arm' : 'neon-aarch'
             config_h.set10('THORVG_NEON_SUPPORT', true)
         endif
+    # WebAssembly SIMD
+    elif cpu_family == 'wasm32' or cpu_family == 'wasm64'
+        candidate_flags = ['-msimd128']
+
+        if cpp.compiles('''
+            #include <wasm_simd128.h>
+            int main() {
+                v128_t a = wasm_i32x4_splat(1);
+                return wasm_i32x4_extract_lane(wasm_i32x4_mul(a, a), 0);
+            }
+        ''', args: candidate_flags, name: 'WebAssembly SIMD raster support')
+            simd_flags = candidate_flags
+            simd_type = 'wasm-simd128'
+            config_h.set10('THORVG_WASM_SIMD_SUPPORT', true)
+        endif
     endif
 endif
 
@@ -59,6 +74,7 @@ source_file = [
    'tvgSwRasterC.h',
    'tvgSwRasterAvx.h',
    'tvgSwRasterNeon.h',
+   'tvgSwRasterWasm.h',
    'tvgSwRasterTexmap.h',
    'tvgSwBlendOp.cpp',
    'tvgSwFill.cpp',

@@ -28,6 +28,8 @@
     #include <immintrin.h>
 #elif defined(THORVG_NEON_SUPPORT)
     #include <arm_neon.h>
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+    #include <wasm_simd128.h>
 #endif
 
 /************************************************************************/
@@ -122,6 +124,30 @@ static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t 
             memcpy(dst + i, &pixel, sizeof(pixel));
             i += 4;
         }
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+        auto acc = wasm_i32x4_const_splat(0);
+        const auto scale = wasm_f32x4_splat(iarr);
+        const auto bias = wasm_f32x4_const_splat(8388608.0f);
+        const auto mantissa = wasm_i32x4_const_splat(0x007fffff);
+
+        for (int x = l; x < r; ++x) {
+            auto id = (_gaussianEdgeExtend(end, x) + p) * 4;
+            acc = wasm_i32x4_add(acc, wasm_u32x4_extend_low_u16x8(wasm_u16x8_extend_low_u8x16(wasm_v128_load32_zero(src + id))));
+        }
+
+        for (int x = 0; x < w; ++x, ++r, ++l) {
+            auto rid = (_gaussianEdgeExtend(end, r) + p) * 4;
+            auto lid = (_gaussianEdgeExtend(end, l) + p) * 4;
+            auto added = wasm_u32x4_extend_low_u16x8(wasm_u16x8_extend_low_u8x16(wasm_v128_load32_zero(src + rid)));
+            auto removed = wasm_u32x4_extend_low_u16x8(wasm_u16x8_extend_low_u8x16(wasm_v128_load32_zero(src + lid)));
+            acc = wasm_i32x4_add(acc, wasm_i32x4_sub(added, removed));
+            //truncate without i32x4.trunc_sat: round to the nearest integer in the mantissa, then step back if it went up
+            auto scaled = wasm_f32x4_mul(wasm_f32x4_convert_i32x4(acc), scale);
+            auto values = wasm_v128_and(wasm_f32x4_add(scaled, bias), mantissa);
+            values = wasm_i32x4_add(values, wasm_f32x4_gt(wasm_f32x4_convert_i32x4(values), scaled));
+            wasm_v128_store32_lane(dst + i, wasm_i8x16_shuffle(values, values, 0, 4, 8, 12, 0, 4, 8, 12, 0, 4, 8, 12, 0, 4, 8, 12), 0);
+            i += 4;
+        }
 #else
         int acc[4] = {0, 0, 0, 0};      //sliding accumulator
 
@@ -207,6 +233,25 @@ void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_t w, in
                         vst1q_u32(d + stride, vcombine_u32(vget_low_u32(t0.val[1]), vget_low_u32(t1.val[1])));
                         vst1q_u32(d + 2 * stride, vcombine_u32(vget_high_u32(t0.val[0]), vget_high_u32(t1.val[0])));
                         vst1q_u32(d + 3 * stride, vcombine_u32(vget_high_u32(t0.val[1]), vget_high_u32(t1.val[1])));
+                    }
+                }
+#elif defined(THORVG_WASM_SIMD_SUPPORT)
+                for (int32_t i = 0; i < BLOCK; i += 4) {
+                    for (int32_t j = 0; j < BLOCK; j += 4) {
+                        auto s = p + i + j * stride;
+                        auto d = q + i * stride + j;
+                        auto r0 = wasm_v128_load(s);
+                        auto r1 = wasm_v128_load(s + stride);
+                        auto r2 = wasm_v128_load(s + 2 * stride);
+                        auto r3 = wasm_v128_load(s + 3 * stride);
+                        auto t0 = wasm_i32x4_shuffle(r0, r1, 0, 4, 1, 5);
+                        auto t1 = wasm_i32x4_shuffle(r0, r1, 2, 6, 3, 7);
+                        auto t2 = wasm_i32x4_shuffle(r2, r3, 0, 4, 1, 5);
+                        auto t3 = wasm_i32x4_shuffle(r2, r3, 2, 6, 3, 7);
+                        wasm_v128_store(d, wasm_i64x2_shuffle(t0, t2, 0, 2));
+                        wasm_v128_store(d + stride, wasm_i64x2_shuffle(t0, t2, 1, 3));
+                        wasm_v128_store(d + 2 * stride, wasm_i64x2_shuffle(t1, t3, 0, 2));
+                        wasm_v128_store(d + 3 * stride, wasm_i64x2_shuffle(t1, t3, 1, 3));
                     }
                 }
 #else
