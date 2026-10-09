@@ -1733,28 +1733,22 @@ LottieProperty* LottieParser::parse(LottieSlot* slot)
 void LottieParser::captureSlots(const char* key)
 {
     tvg::free(slots);
+    slots = nullptr;
 
     // TODO: Replace with immediate parsing, once the slot spec is confirmed by the LAC
 
     auto begin = getPos();
     auto end = getPos();
     auto depth = 1;
-    auto invalid = true;
 
     //get slots string
-    while (++end) {
-        if (*end == '}') {
-            --depth;
-            if (depth == 0) {
-                invalid = false;
-                break;
-            }
-        } else if (*end == '{') {
-            ++depth;
-        }
+    while (depth > 0 && *end != '\0') {
+        ++end;
+        if (*end == '}') --depth;
+        else if (*end == '{') ++depth;
     }
 
-    if (invalid) {
+    if (depth > 0) {
         TVGERR("LOTTIE", "Invalid Slots!");
         skip();
         return;
