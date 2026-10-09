@@ -77,3 +77,4 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Ralf Preininger @rpreininger
 - Daniel Brát @LonerDan
 - Mao Shengrong @suda-morris
+- Alexander Musienko @dnepromell
