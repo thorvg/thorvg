@@ -222,7 +222,19 @@ void GlComposeTask::run(GlStateCache& state)
     state.clearDepth(0.0);
     state.depthMask(GL_TRUE);
 
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    if (partial) {
+        // Partial rendering keeps the colors outside of the regions. All draws use depths below 1.0
+        // with GL_GREATER, so the maximum depth rejects any draw outside of the regions.
+        state.clearDepth(1.0);
+        GL_CHECK(glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        state.clearDepth(0.0);
+        ARRAY_FOREACH(p, *partial) {
+            state.scissor(p->sx(), fbo->height - p->max.y, p->sw(), p->sh());
+            GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        }
+    } else {
+        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    }
     state.depthMask(GL_FALSE);
     state.viewport(0, 0, renderWidth, renderHeight);
     state.scissor(0, 0, renderWidth, renderHeight);

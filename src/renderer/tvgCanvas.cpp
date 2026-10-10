@@ -193,7 +193,6 @@ GlCanvas* GlCanvas::gen(EngineOption op) noexcept
 {
 #ifdef THORVG_GL_ENGINE_SUPPORT
     if (engineInit > 0) {
-        if (op & EngineOption::SmartRender) TVGLOG("RENDERER", "GlCanvas doesn't support Smart Rendering");
         if (op & EngineOption::Aliased) TVGLOG("RENDERER", "GlCanvas doesn't support Aliased");
         auto renderer = GlRenderer::gen(TaskScheduler::threads(), op);
         if (!renderer) return nullptr;

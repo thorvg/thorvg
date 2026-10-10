@@ -140,6 +140,7 @@ struct GlComposeTask : GlRenderTask
     Array<GlRenderTask*> tasks;
     uint32_t renderWidth = 0;
     uint32_t renderHeight = 0;
+    const Array<RenderRegion>* partial = nullptr;  // the only regions to redraw, the rest is retained
     bool clearBuffer = true;
 };
 

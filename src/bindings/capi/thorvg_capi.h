@@ -571,8 +571,6 @@ TVG_API Tvg_Result tvg_swcanvas_set_target(Tvg_Canvas canvas, uint32_t* buffer, 
  *
  * @return A new canvas object.
  *
- * @note Currently, it does not support @c TVG_ENGINE_OPTION_SMART_RENDER. The request will be ignored.
- *
  * @see enum Tvg_Engine_Option
  *
  * @since 1.0
