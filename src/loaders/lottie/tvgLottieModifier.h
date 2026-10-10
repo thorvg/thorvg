@@ -97,7 +97,7 @@ private:
     };
 
     RenderPath& modify(const RenderPath& in, RenderPath& out, Matrix* transform);
-    void cubic(RenderPath& path, Point* pts, State& state, float offset, float threshold, bool& degeneratedLine3);
+    void cubic(RenderPath& path, Point* pts, State& state, float offset, float threshold, uint32_t& pending);
     bool intersected(Line& line1, Line& line2, Point& intersection, bool& inside);
     Line shift(Point& p1, Point& p2, float offset);
     void line(RenderPath& out, PathCommand* inCmds, uint32_t inCmdsCnt, Point* inPts, uint32_t& curPt, uint32_t curCmd, State& state, float offset, bool degenerated);
