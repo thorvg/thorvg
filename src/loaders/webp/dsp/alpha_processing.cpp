@@ -238,52 +238,6 @@ static void ApplyAlphaMultiply(uint8_t* rgba, int alpha_first,
 #undef MULTIPLIER
 #undef PREMULTIPLY
 
-// rgbA4444
-
-#define MULTIPLIER(a)  ((a) * 0x1111)    // 0x1111 ~= (1 << 16) / 15
-
-static WEBP_INLINE uint8_t dither_hi(uint8_t x) {
-  return (x & 0xf0) | (x >> 4);
-}
-
-static WEBP_INLINE uint8_t dither_lo(uint8_t x) {
-  return (x & 0x0f) | (x << 4);
-}
-
-static WEBP_INLINE uint8_t multiply(uint8_t x, uint32_t m) {
-  return (x * m) >> 16;
-}
-
-static WEBP_INLINE void ApplyAlphaMultiply4444(uint8_t* rgba4444,
-                                               int w, int h, int stride,
-                                               int rg_byte_pos /* 0 or 1 */) {
-  while (h-- > 0) {
-    int i;
-    for (i = 0; i < w; ++i) {
-      const uint32_t rg = rgba4444[2 * i + rg_byte_pos];
-      const uint32_t ba = rgba4444[2 * i + (rg_byte_pos ^ 1)];
-      const uint8_t a = ba & 0x0f;
-      const uint32_t mult = MULTIPLIER(a);
-      const uint8_t r = multiply(dither_hi(rg), mult);
-      const uint8_t g = multiply(dither_lo(rg), mult);
-      const uint8_t b = multiply(dither_hi(ba), mult);
-      rgba4444[2 * i + rg_byte_pos] = (r & 0xf0) | ((g >> 4) & 0x0f);
-      rgba4444[2 * i + (rg_byte_pos ^ 1)] = (b & 0xf0) | a;
-    }
-    rgba4444 += stride;
-  }
-}
-#undef MULTIPLIER
-
-static void ApplyAlphaMultiply_16b(uint8_t* rgba4444,
-                                   int w, int h, int stride) {
-#ifdef WEBP_SWAP_16BIT_CSP
-  ApplyAlphaMultiply4444(rgba4444, w, h, stride, 1);
-#else
-  ApplyAlphaMultiply4444(rgba4444, w, h, stride, 0);
-#endif
-}
-
 static int DispatchAlpha(const uint8_t* alpha, int alpha_stride,
                          int width, int height,
                          uint8_t* dst, int dst_stride) {
@@ -304,7 +258,6 @@ static int DispatchAlpha(const uint8_t* alpha, int alpha_stride,
 }
 
 void (*WebPApplyAlphaMultiply)(uint8_t*, int, int, int, int);
-void (*WebPApplyAlphaMultiply4444)(uint8_t*, int, int, int);
 int (*WebPDispatchAlpha)(const uint8_t*, int, int, int, uint8_t*, int);
 
 //------------------------------------------------------------------------------
@@ -322,7 +275,6 @@ WEBP_TSAN_IGNORE_FUNCTION void WebPInitAlphaProcessing(void) {
   WebPMultARGBRow = WebPMultARGBRowC;
   WebPMultRow = WebPMultRowC;
   WebPApplyAlphaMultiply = ApplyAlphaMultiply;
-  WebPApplyAlphaMultiply4444 = ApplyAlphaMultiply_16b;
   WebPDispatchAlpha = DispatchAlpha;
 
   // If defined, use CPUInfo() to overwrite some pointers with faster versions.
