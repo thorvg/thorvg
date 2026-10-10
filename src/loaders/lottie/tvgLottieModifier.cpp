@@ -343,11 +343,12 @@ void LottieOffsetModifier::line(RenderPath& out, PathCommand* inCmds, uint32_t i
     ++curPt;
 }
 
-void LottieOffsetModifier::cubic(RenderPath& path, Point* pts, State& state, float offset, float threshold, bool& degeneratedLine3)
+void LottieOffsetModifier::cubic(RenderPath& path, Point* pts, State& state, float offset, float threshold, uint32_t& pending)
 {
     Point intersect{};
     Array<Bezier> stack{5};
     bool degeneratedLine1{};
+    bool degeneratedLine3{};
     bool inside{};
     stack.push({pts[0], pts[1], pts[2], pts[3]});
 
@@ -368,10 +369,10 @@ void LottieOffsetModifier::cubic(RenderPath& path, Point* pts, State& state, flo
         auto line2 = shift(bezier.ctrl1, bezier.ctrl2, offset);
 
         //line3 from the previous iteration was degenerated to a point - calculate intersection with the last valid line (state.line)
-        if (degeneratedLine3) {
-            intersected(degeneratedLine1 ? line2 : line1, state.line, intersect, inside);
-            path.pts.push(intersect);
-            path.pts.push(intersect);
+        if (pending == path.pts.count && !state.moveto) {
+            //parallel lines have no intersection - keep the end of the last valid line instead of a stale intersect
+            if (!intersected(degeneratedLine1 ? line2 : line1, state.line, intersect, inside)) intersect = state.line.pt2;
+            path.pts[path.pts.count - 2] = path.pts[path.pts.count - 1] = intersect;
         }
 
         degeneratedLine3 = tvg::zero(bezier.ctrl2 - bezier.end);
@@ -390,7 +391,11 @@ void LottieOffsetModifier::cubic(RenderPath& path, Point* pts, State& state, flo
             path.pts.push(intersect);
         }
 
-        if (!degeneratedLine3) {
+        if (degeneratedLine3) {
+            path.pts.push(line3.pt2);
+            path.pts.push(line3.pt2);
+            pending = path.pts.count;
+        } else {
             intersected(line2, line3, intersect, inside);
             path.pts.push(intersect);
             path.pts.push(line3.pt2);
@@ -419,7 +424,7 @@ RenderPath& LottieOffsetModifier::modify(const RenderPath& in, RenderPath& out, 
     State state;
     auto offset = clockwise(in.pts.data, in.pts.count) ? this->offset : -this->offset;
     auto threshold = 1.0f / fabsf(offset) + 1.0f;
-    bool degeneratedLine3{};
+    uint32_t pending{};
 
     for (uint32_t iCmd = 0, iPt = 0; iCmd < in.cmds.count; ++iCmd) {
         switch (in.cmds[iCmd]) {
@@ -440,7 +445,7 @@ RenderPath& LottieOffsetModifier::modify(const RenderPath& in, RenderPath& out, 
                     ++iPt;
                     continue;
                 }
-                cubic(path, in.pts.data + iPt - 1, state, offset, threshold, degeneratedLine3);
+                cubic(path, in.pts.data + iPt - 1, state, offset, threshold, pending);
                 iPt += 3;
                 break;
             }
