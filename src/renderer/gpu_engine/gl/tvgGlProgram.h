@@ -50,7 +50,7 @@ enum class GlShaderUniformBlock : uint8_t
     Count,
 };
 
-struct GlProgram
+struct GlProgram : Allocator
 {
     GlProgram(const char* vertSrc, const char* fragSrc);
     ~GlProgram();

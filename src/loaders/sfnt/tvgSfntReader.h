@@ -45,7 +45,7 @@ struct SfntGlyphMetrics : SfntGlyph
     RenderPath path;     //outline path
 };
 
-struct SfntReader
+struct SfntReader : Allocator
 {
     uint8_t* data = nullptr;
     uint32_t size = 0;

@@ -26,7 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgPicture.h"
 
-struct Animation::Impl
+struct Animation::Impl : Allocator
 {
     Picture* picture = nullptr;
 

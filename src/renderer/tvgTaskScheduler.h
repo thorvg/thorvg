@@ -40,7 +40,7 @@ namespace tvg {
 
 using ThreadID = std::thread::id;
 
-struct Task
+struct Task : Allocator
 {
 private:
     mutex                   mtx;
@@ -88,7 +88,7 @@ private:
 
 using ThreadID = uint8_t;
 
-struct Task
+struct Task : Allocator
 {
 public:
     INLIST_ITEM(Task);

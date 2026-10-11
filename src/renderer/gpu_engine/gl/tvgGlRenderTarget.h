@@ -26,7 +26,7 @@
 #include "tvgGlCommon.h"
 #include "tvgGlStateCache.h"
 
-struct GlRenderTarget
+struct GlRenderTarget : Allocator
 {
     GlRenderTarget();
     ~GlRenderTarget();
@@ -46,7 +46,7 @@ private:
 };
 
 
-struct GlRenderTargetPool
+struct GlRenderTargetPool : Allocator
 {
     GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, GlStateCache& state);
     ~GlRenderTargetPool();
