@@ -878,14 +878,21 @@ bool gpuPointInAnyMesh(const Point& p, const void* vertices, const uint32_t* ind
     return false;
 }
 
-bool gpuPointInEvenOddMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count)
+// The fill mesh is the stencil geometry: a triangle fan per contour. The stencil adds +1/-1 per triangle by its
+// orientation (NonZero) or flips per triangle (EvenOdd). Summing the signed edge crossings of every triangle gives
+// the same winding, because the fan's inner edges are crossed once in each direction and cancel out.
+bool gpuPointInFillMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count, FillRule rule)
 {
     uint32_t crossings = 0;
+    int32_t winding = 0;
 
     auto intersects = [&](const Point& p1, const Point& p2) {
         if ((p1.y < p.y) == (p2.y < p.y)) return;
         auto intersectionX = (p2.x - p1.x) * (p.y - p1.y) / (p2.y - p1.y) + p1.x;
-        if (intersectionX > p.x) ++crossings;
+        if (intersectionX > p.x) {
+            ++crossings;
+            winding += (p2.y > p1.y) ? 1 : -1;
+        }
     };
 
     Point p0, p1, p2;
@@ -897,7 +904,8 @@ bool gpuPointInEvenOddMesh(const Point& p, const void* vertices, const uint32_t*
         intersects(p1, p2);
         intersects(p2, p0);
     }
-    return (crossings % 2) == 1;
+    if (rule == FillRule::EvenOdd) return (crossings % 2) == 1;
+    return winding != 0;
 }
 
 }  // namespace tvg
