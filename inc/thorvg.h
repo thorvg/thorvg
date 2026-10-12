@@ -2610,18 +2610,19 @@ struct TVG_API Initializer final
     /**
      * @brief Initializes the ThorVG engine runtime.
      *
-     * ThorVG requires an active runtime environment for rendering operations.
-     * This function sets up an internal task scheduler and creates a specified number
-     * of worker threads to enable parallel rendering.
+     * Sets up the internal task scheduler and launches the specified
+     * number of worker threads for parallel rendering operations.
      *
-     * @param[in] threads The number of worker threads to launch.
-     *                    A value of 0 indicates that only the main thread will be used.
+     * @param[in] threads The number of worker threads to create.
+     *                    A value of 0 disables worker threads, executing rendering tasks on the calling thread.
      *
      * @return Result indicating success or failure of initialization.
      *
-     * @note This function uses internal reference counting to allow multiple init() calls.
-     *       However, the number of threads is fixed during the first successful initialization
-     *       and cannot be changed in subsequent calls.
+     * @note Initialization is reference-counted. Each successful call increments the reference count.
+     *       The worker thread count is determined by the first successful initialization and remains
+     *       unchanged until the engine is fully terminated.
+     *
+     * @warning Each pair of init() and term() calls must be made from the same thread.
      *
      * @see Initializer::term()
      */
@@ -2630,12 +2631,15 @@ struct TVG_API Initializer final
     /**
      * @brief Terminates the ThorVG engine.
      *
-     * Cleans up resources and stops any internal threads initialized by init().
+     * Releases internal resources and shuts down worker threads initialized by Initializer::init().
      *
-     * @retval Result::InsufficientCondition Returned if there is nothing to terminate (e.g., init() was not called).
+     * @retval Result::InsufficientCondition If the engine is not initialized.
      *
-     * @note The initializer maintains a reference count for safe repeated use.
-     *       Only the final call to term() will fully shut down the engine.
+     * @note Initialization is reference-counted. Each call to term() decrements the reference count,
+     *       and the engine is fully terminated only when the count reaches zero.
+     *
+     * @warning Each pair of init() and term() calls must be made from the same thread.
+     *
      * @see Initializer::init()
      */
     static Result term() noexcept;

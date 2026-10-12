@@ -443,15 +443,19 @@ typedef bool (*Tvg_Picture_Asset_Resolver)(Tvg_Paint paint, const char* src, voi
 /**
  * @brief Initializes the ThorVG engine.
  *
- * ThorVG requires an active runtime environment to operate.
- * Internally, it utilizes a task scheduler to efficiently parallelize rendering operations.
- * You can specify the number of worker threads using the @p threads parameter.
- * During initialization, ThorVG will spawn the specified number of threads.
+ * Sets up the internal task scheduler and launches the specified
+ * number of worker threads for parallel rendering operations.
  *
- * @param[in] threads The number of worker threads to create. A value of zero indicates that only the main thread will be used.
+ * @param[in] threads The number of worker threads to create. A value of 0 disables worker threads.
  *
- * @note The initializer uses internal reference counting to track multiple calls.
- *       The number of threads is fixed on the first call to tvg_engine_init() and cannot be changed in subsequent calls.
+ * @return Tvg_Result indicating success or failure of initialization.
+ *
+ * @note Initialization is reference-counted. Each successful call increments the reference count.
+ *       The worker thread count is determined by the first successful initialization and remains
+ *       unchanged until the engine is fully terminated.
+ *
+ * @warning Each @ref tvg_engine_init() call must be paired with a @ref tvg_engine_term() call on the same thread.
+ *
  * @see tvg_engine_term()
  */
 TVG_API Tvg_Result tvg_engine_init(unsigned threads);
@@ -459,11 +463,15 @@ TVG_API Tvg_Result tvg_engine_init(unsigned threads);
 /**
  * @brief Terminates the ThorVG engine.
  *
- * Cleans up resources and stops any internal threads initialized by tvg_engine_init().
+ * Releases internal resources and shuts down worker threads initialized by tvg_engine_init().
  *
- * @retval TVG_RESULT_INSUFFICIENT_CONDITION Returned if there is nothing to terminate (e.g., tvg_engine_init() was not called).
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the engine is not initialized.
  *
- * @note The initializer maintains a reference count for safe repeated use. Only the final call to tvg_engine_term() will fully shut down the engine.
+ * @note Initialization is reference-counted. Each call to @ref tvg_engine_term() decrements the reference count,
+ *       and the engine is fully terminated only when the count reaches zero.
+ *
+ * @warning Each @ref tvg_engine_init() call must be paired with a @ref tvg_engine_term() call on the same thread.
+ *
  * @see tvg_engine_init()
  */
 TVG_API Tvg_Result tvg_engine_term(void);
