@@ -36,7 +36,7 @@ bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Po
         const auto& geometry = clip->geometry;
         if (clip->valid.fill) {
             auto p = geometry.fillWorld ? pt : pt * geometry.itransform();
-            if (!geometry.fillBBox.inside(p) || !gpuPointInEvenOddMesh(p, geometry.fill.vertex.data, geometry.fill.index.data, geometry.fill.index.count)) return false;
+            if (!geometry.fillBBox.inside(p) || !gpuPointInFillMesh(p, geometry.fill.vertex.data, geometry.fill.index.data, geometry.fill.index.count, geometry.fillRule)) return false;
         } else if (clip->valid.stroke) {
             auto p = pt * geometry.itransform();
             if (!geometry.strokeBBox.inside(p) || !gpuPointInAnyMesh(p, geometry.stroke.vertex.data, geometry.stroke.index.data, geometry.stroke.index.count)) return false;
@@ -64,7 +64,7 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
             auto hit = false;
             if (validFill) {
                 auto p = geometry.fillWorld ? pt : pt * itransform;
-                hit = geometry.fillBBox.inside(p) && gpuPointInEvenOddMesh(p, geometry.fill.vertex.data, geometry.fill.index.data, geometry.fill.index.count);
+                hit = geometry.fillBBox.inside(p) && gpuPointInFillMesh(p, geometry.fill.vertex.data, geometry.fill.index.data, geometry.fill.index.count, geometry.fillRule);
             }
             if (!hit && validStroke) {
                 auto p = pt * itransform;

@@ -78,7 +78,7 @@ struct WgIntersector
         ARRAY_FOREACH(c, clips) {
             auto clip = static_cast<const WgShape*>(*c);
             const auto& mesh = clip->shape.mesh;
-            if (!clip->shape.bbox.inside(pt) || !gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count)) return false;
+            if (!clip->shape.bbox.inside(pt) || !gpuPointInFillMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count, clip->fillRule)) return false;
         }
         return true;
     }
@@ -99,7 +99,7 @@ struct WgIntersector
             for (int32_t x = 0; x < sizeX; x++) {
                 Point pt{(float)x + region.xMin, (float)py + region.yMin};
                 const auto& mesh = shape->shape.mesh;
-                auto hit = validFill ? shape->shape.bbox.inside(pt) && gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count) : false;
+                auto hit = validFill ? shape->shape.bbox.inside(pt) && gpuPointInFillMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count, shape->fillRule) : false;
                 if (!hit && validStroke) {
                     auto p = pt * itransform;
                     const auto& mesh = shape->stroke.mesh;
