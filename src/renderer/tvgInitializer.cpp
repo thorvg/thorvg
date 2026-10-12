@@ -21,6 +21,7 @@
  */
 
 #include "tvgCommon.h"
+#include "tvgLock.h"
 #include "tvgTaskScheduler.h"
 #include "tvgLoaderMgr.h"
 
@@ -46,7 +47,7 @@ namespace tvg {
 }
 
 static uint16_t _version = 0;
-
+static StrictKey _key;
 
 static bool _buildVersionInfo(uint32_t* major, uint32_t* minor, uint32_t* micro)
 {
@@ -82,12 +83,14 @@ static bool _buildVersionInfo(uint32_t* major, uint32_t* minor, uint32_t* micro)
 
 Result Initializer::init(uint32_t threads) noexcept
 {
+    ScopedLock lock(_key);
     if (engineInit++ > 0) return Result::Success;
 
     if (!_buildVersionInfo(nullptr, nullptr, nullptr)) return Result::Unknown;
 
     if (!LoaderMgr::init()) return Result::Unknown;
 
+    // TODO: TaskScheduler would hinder multithreaded use of ThorVG.
     TaskScheduler::init(threads);
 
     return Result::Success;
@@ -96,6 +99,8 @@ Result Initializer::init(uint32_t threads) noexcept
 
 Result Initializer::term() noexcept
 {
+    ScopedLock lock(_key);
+
     if (engineInit == 0) return Result::InsufficientCondition;
 
     if (--engineInit > 0) return Result::Success;
