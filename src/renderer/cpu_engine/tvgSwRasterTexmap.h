@@ -94,17 +94,17 @@ static void _rasterBlendingPolygonImageSegment(TexmapCtx& ctx, int yStart, int y
     float dx, u, v;
     uint32_t* buf;
 
-    if (yStart < ctx.bbox.min.y) yStart = ctx.bbox.min.y;
-    if (yEnd > ctx.bbox.max.y) yEnd = ctx.bbox.max.y;
+    if (yStart < ctx.bbox.yMin) yStart = ctx.bbox.yMin;
+    if (yEnd > ctx.bbox.yMax) yEnd = ctx.bbox.yMax;
 
     y = yStart;
 
     while (y < yEnd) {
-        x1 = std::max((int32_t)_xa, ctx.bbox.min.x);
-        x2 = std::min((int32_t)_xb, ctx.bbox.max.x);
+        x1 = std::max((int32_t)_xa, ctx.bbox.xMin);
+        x2 = std::min((int32_t)_xb, ctx.bbox.xMax);
 
         //Range allowed
-        if ((x2 - x1) >= 1 && (x1 < ctx.bbox.max.x) && (x2 > ctx.bbox.min.x)) {
+        if ((x2 - x1) >= 1 && (x1 < ctx.bbox.xMax) && (x2 > ctx.bbox.xMin)) {
             //Perform subtexel pre-stepping on UV
             dx = 1 - (_xa - x1);
             u = _ua + dx * _dudx;
@@ -193,17 +193,17 @@ static void _rasterPolygonImageSegment32(TexmapCtx& ctx, int yStart, int yEnd, b
     auto alpha = matting ? ctx.surface->alpha(ctx.surface->compositor->method) : nullptr;
     uint8_t* cmp = nullptr;
 
-    if (yStart < ctx.bbox.min.y) yStart = ctx.bbox.min.y;
-    if (yEnd > ctx.bbox.max.y) yEnd = ctx.bbox.max.y;
+    if (yStart < ctx.bbox.yMin) yStart = ctx.bbox.yMin;
+    if (yEnd > ctx.bbox.yMax) yEnd = ctx.bbox.yMax;
 
     y = yStart;
 
     while (y < yEnd) {
-        x1 = std::max((int32_t)_xa, ctx.bbox.min.x);
-        x2 = std::min((int32_t)_xb, ctx.bbox.max.x);
+        x1 = std::max((int32_t)_xa, ctx.bbox.xMin);
+        x2 = std::min((int32_t)_xb, ctx.bbox.xMax);
 
         //Range allowed
-        if ((x2 - x1) >= 1 && (x1 < ctx.bbox.max.x) && (x2 > ctx.bbox.min.x)) {
+        if ((x2 - x1) >= 1 && (x1 < ctx.bbox.xMax) && (x2 > ctx.bbox.xMin)) {
             //Perform subtexel pre-stepping on UV
             dx = 1 - (_xa - x1);
             u = _ua + dx * _dudx;
@@ -296,17 +296,17 @@ static void _rasterPolygonImageSegment8(TexmapCtx& ctx, int yStart, int yEnd, TV
     uint8_t* buf;
     uint8_t px;
 
-    if (yStart < ctx.bbox.min.y) yStart = ctx.bbox.min.y;
-    if (yEnd > ctx.bbox.max.y) yEnd = ctx.bbox.max.y;
+    if (yStart < ctx.bbox.yMin) yStart = ctx.bbox.yMin;
+    if (yEnd > ctx.bbox.yMax) yEnd = ctx.bbox.yMax;
 
     y = yStart;
 
     while (y < yEnd) {
-        x1 = std::max((int32_t)_xa, ctx.bbox.min.x);
-        x2 = std::min((int32_t)_xb, ctx.bbox.max.x);
+        x1 = std::max((int32_t)_xa, ctx.bbox.xMin);
+        x2 = std::min((int32_t)_xb, ctx.bbox.xMax);
 
         //Range allowed
-        if ((x2 - x1) >= 1 && (x1 < ctx.bbox.max.x) && (x2 > ctx.bbox.min.x)) {
+        if ((x2 - x1) >= 1 && (x1 < ctx.bbox.xMax) && (x2 > ctx.bbox.xMin)) {
             //Perform subtexel pre-stepping on UV
             dx = 1 - (_xa - x1);
             u = _ua + dx * _dudx;
@@ -427,7 +427,7 @@ static void _rasterPolygonImage(TexmapCtx& ctx, Polygon& polygon, bool needAA)
 
         //Draw upper segment if possibly visible
         if (yi[0] < yi[1]) {
-            off_y = y[0] < ctx.bbox.min.y ? (ctx.bbox.min.y - y[0]) : 0;
+            off_y = y[0] < ctx.bbox.yMin ? (ctx.bbox.yMin - y[0]) : 0;
             ctx.xa += (off_y * ctx.dxdya);
             ctx.ua += (off_y * ctx.dudya);
             ctx.va += (off_y * ctx.dvdya);
@@ -448,7 +448,7 @@ static void _rasterPolygonImage(TexmapCtx& ctx, Polygon& polygon, bool needAA)
         }
         //Draw lower segment if possibly visible
         if (yi[1] < yi[2]) {
-            off_y = y[1] < ctx.bbox.min.y ? (ctx.bbox.min.y - y[1]) : 0;
+            off_y = y[1] < ctx.bbox.yMin ? (ctx.bbox.yMin - y[1]) : 0;
             if (!upper) {
                 ctx.xa += (off_y * ctx.dxdya);
                 ctx.ua += (off_y * ctx.dudya);
@@ -475,7 +475,7 @@ static void _rasterPolygonImage(TexmapCtx& ctx, Polygon& polygon, bool needAA)
 
         //Draw upper segment if possibly visible
         if (yi[0] < yi[1]) {
-            off_y = y[0] < ctx.bbox.min.y ? (ctx.bbox.min.y - y[0]) : 0;
+            off_y = y[0] < ctx.bbox.yMin ? (ctx.bbox.yMin - y[0]) : 0;
             ctx.xb += (off_y * ctx.dxdyb);
 
             // Set slopes along left edge and perform subpixel pre-stepping
@@ -499,7 +499,7 @@ static void _rasterPolygonImage(TexmapCtx& ctx, Polygon& polygon, bool needAA)
         }
         //Draw lower segment if possibly visible
         if (yi[1] < yi[2]) {
-            off_y = y[1] < ctx.bbox.min.y ? (ctx.bbox.min.y - y[1]) : 0;
+            off_y = y[1] < ctx.bbox.yMin ? (ctx.bbox.yMin - y[1]) : 0;
             if (!upper) ctx.xb += (off_y * ctx.dxdyb);
 
             // Set slopes along left edge and perform subpixel pre-stepping

@@ -141,6 +141,19 @@ typedef struct
 } Tvg_Matrix;
 
 /**
+ * @brief A data structure representing an axis-aligned rectangular region.
+ *
+ * The region is defined by its minimum and maximum x and y coordinates.
+ *
+ * @note Experimental API
+ */
+typedef struct
+{
+    int32_t xMin, yMin;
+    int32_t xMax, yMax;
+} Tvg_Region;
+
+/**
  * @brief Enumeration specifying the methods of combining the 8-bit color channels into 32-bit color.
  *
  * @ingroup ThorVGCapi_Canvas
@@ -840,6 +853,40 @@ TVG_API Tvg_Result tvg_canvas_draw(Tvg_Canvas canvas, bool clear);
  * @see tvg_canvas_draw()
  */
 TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas canvas);
+
+/**
+ * @brief Returns the number of dirty regions of the canvas.
+ *
+ * @param[in] canvas The canvas object.
+ *
+ * @return The number of regions available for retrieval, or zero if @p canvas is NULL.
+ *
+ * @note This function must be called after @ref tvg_canvas_draw() and before @ref tvg_canvas_sync().
+ * @note This function is useful when @c TVG_ENGINE_OPTION_SMART_RENDER is enabled.
+ * @note Experimental API
+ *
+ * @see tvg_canvas_get_dirty_regions()
+ */
+TVG_API uint32_t tvg_canvas_get_dirty_regions_cnt(Tvg_Canvas canvas);
+
+/**
+ * @brief Retrieves the dirty regions of the canvas.
+ *
+ * @param[in] canvas The canvas object.
+ * @param[out] regions An array to receive the dirty regions.
+ * @param[in] cnt The number of Tvg_Region elements that the array can hold.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT If @p canvas or @p regions is @c NULL, or @p cnt is zero.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If called outside the interval after tvg_canvas_draw() and before tvg_canvas_sync().
+ * @retval TVG_RESULT_NOT_SUPPORTED If the active rendering backend does not support @c TVG_ENGINE_OPTION_SMART_RENDER.
+ *
+ * @note This function must be called after @ref tvg_canvas_draw() and before @ref tvg_canvas_sync().
+ * @note This function is useful when @c TVG_ENGINE_OPTION_SMART_RENDER is enabled.
+ * @note Experimental API
+ *
+ * @see tvg_canvas_get_dirty_regions_cnt()
+ */
+TVG_API Tvg_Result tvg_canvas_get_dirty_regions(Tvg_Canvas canvas, Tvg_Region* regions, uint32_t cnt);
 
 /**
  * @brief Sets the drawing region of the canvas.

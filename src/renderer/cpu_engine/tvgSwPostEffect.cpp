@@ -44,11 +44,11 @@ static inline int _gaussianEdgeExtend(int end, int idx)
 static void _gaussianFilter(uint8_t* dst, uint8_t* src, int32_t stride, int32_t w, int32_t h, const RenderRegion& bbox, int32_t dimension, bool flipped)
 {
     if (flipped) {
-        src += (bbox.min.x * stride + bbox.min.y) << 2;
-        dst += (bbox.min.x * stride + bbox.min.y) << 2;
+        src += (bbox.xMin * stride + bbox.yMin) << 2;
+        dst += (bbox.xMin * stride + bbox.yMin) << 2;
     } else {
-        src += (bbox.min.y * stride + bbox.min.x) << 2;
-        dst += (bbox.min.y * stride + bbox.min.x) << 2;
+        src += (bbox.yMin * stride + bbox.xMin) << 2;
+        dst += (bbox.yMin * stride + bbox.xMin) << 2;
     }
 
     auto iarr = 1.0f / (dimension + dimension + 1);
@@ -64,11 +64,11 @@ static void _gaussianXYFlip(uint32_t* src, uint32_t* dst, int32_t stride, int32_
     constexpr int32_t BLOCK = 8;  // experimental decision
 
     if (flipped) {
-        src += ((bbox.min.x * stride) + bbox.min.y);
-        dst += ((bbox.min.y * stride) + bbox.min.x);
+        src += ((bbox.xMin * stride) + bbox.yMin);
+        dst += ((bbox.yMin * stride) + bbox.xMin);
     } else {
-        src += ((bbox.min.y * stride) + bbox.min.x);
-        dst += ((bbox.min.x * stride) + bbox.min.y);
+        src += ((bbox.yMin * stride) + bbox.xMin);
+        dst += ((bbox.xMin * stride) + bbox.yMin);
     }
 
     #pragma omp parallel for
@@ -131,12 +131,12 @@ bool effectGaussianBlurRegion(RenderEffectGaussianBlur* params)
     auto extra = static_cast<SwGaussianBlur*>(params->rd)->extends;
 
     if (params->direction != 2) {
-        bbox.min.x = -extra;
-        bbox.max.x = extra;
+        bbox.xMin = -extra;
+        bbox.xMax = extra;
     }
     if (params->direction != 1) {
-        bbox.min.y = -extra;
-        bbox.max.y = extra;
+        bbox.yMin = -extra;
+        bbox.yMax = extra;
     }
 
     return true;
@@ -159,14 +159,14 @@ bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffec
     auto& buffer = surface->compositor->image;
     auto data = static_cast<SwGaussianBlur*>(params->rd);
     auto& bbox = cmp->bbox;
-    auto w = (bbox.max.x - bbox.min.x);
-    auto h = (bbox.max.y - bbox.min.y);
+    auto w = (bbox.xMax - bbox.xMin);
+    auto h = (bbox.yMax - bbox.yMin);
     auto stride = cmp->image.stride;
     auto front = cmp->image.buf32;
     auto back = buffer.buf32;
     auto swapped = false;
 
-    TVGLOG("SW_ENGINE", "GaussianFilter region(%d, %d, %d, %d) params(%f %d), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->sigma, params->direction, data->level);
+    TVGLOG("SW_ENGINE", "GaussianFilter region(%d, %d, %d, %d) params(%f %d), level(%d)", bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax, params->sigma, params->direction, data->level);
 
     /* It is best to take advantage of the Gaussian blur’s separable property
        by dividing the process into two passes. horizontal and vertical.
@@ -269,7 +269,7 @@ void effectMotionBlurUpdate(RenderEffectMotionBlur* params, const Matrix& transf
 bool effectMotionBlurRegion(RenderEffectMotionBlur* params)
 {
     auto data = static_cast<SwMotionBlur*>(params->rd);
-    params->extend = {{-data->extent.x, -data->extent.y}, {data->extent.x, data->extent.y}};
+    params->extend = {-data->extent.x, -data->extent.y, data->extent.x, data->extent.y};
     return true;
 }
 
@@ -279,11 +279,11 @@ bool effectMotionBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectM
     auto data = static_cast<SwMotionBlur*>(params->rd);
     auto& bbox = cmp->bbox;
     auto stride = cmp->image.stride;
-    auto w = bbox.max.x - bbox.min.x;
-    auto h = bbox.max.y - bbox.min.y;
+    auto w = bbox.xMax - bbox.xMin;
+    auto h = bbox.yMax - bbox.yMin;
     auto divisor = uint64_t(data->count) * 65536;
-    auto src = cmp->image.buf32 + bbox.min.y * stride + bbox.min.x;
-    auto dst = buffer.buf32 + bbox.min.y * stride + bbox.min.x;
+    auto src = cmp->image.buf32 + bbox.yMin * stride + bbox.xMin;
+    auto dst = buffer.buf32 + bbox.yMin * stride + bbox.xMin;
 
     #pragma omp parallel for
     for (int32_t y = 0; y < h; ++y) {
@@ -330,11 +330,11 @@ struct SwDropShadow : SwGaussianBlur
 static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, int h, const RenderRegion& bbox, int32_t dimension, uint32_t color, bool flipped)
 {
     if (flipped) {
-        src += (bbox.min.x * stride + bbox.min.y);
-        dst += (bbox.min.x * stride + bbox.min.y);
+        src += (bbox.xMin * stride + bbox.yMin);
+        dst += (bbox.xMin * stride + bbox.yMin);
     } else {
-        src += (bbox.min.y * stride + bbox.min.x);
-        dst += (bbox.min.y * stride + bbox.min.x);
+        src += (bbox.yMin * stride + bbox.xMin);
+        dst += (bbox.yMin * stride + bbox.xMin);
     }
     auto iarr = 1.0f / (dimension + dimension + 1);
     auto end = w - 1;
@@ -365,8 +365,8 @@ static void _dropShadowFilter(uint32_t* dst, uint32_t* src, int stride, int w, i
 
 static void _shift(uint32_t** dst, uint32_t** src, int dstride, int sstride, int wmax, int hmax, const RenderRegion& bbox, SwPoint offset, SwSize& size)
 {
-    size.w = bbox.max.x - bbox.min.x;
-    size.h = bbox.max.y - bbox.min.y;
+    size.w = bbox.xMax - bbox.xMin;
+    size.h = bbox.yMax - bbox.yMin;
 
     //shift
     if (offset.x < 0) {
@@ -389,8 +389,8 @@ static void _shift(uint32_t** dst, uint32_t** src, int dstride, int sstride, int
 // TODO: simd & openmp optimization?
 static void _dropShadowNoFilter(uint32_t* dst, uint32_t* src, int dstride, int sstride, int dw, int dh, const RenderRegion& bbox, const SwPoint& offset, uint32_t color, uint8_t opacity, bool direct)
 {
-    src += (bbox.min.y * sstride + bbox.min.x);
-    dst += (bbox.min.y * dstride + bbox.min.x);
+    src += (bbox.yMin * sstride + bbox.xMin);
+    dst += (bbox.yMin * dstride + bbox.xMin);
 
     SwSize size;
     _shift(&dst, &src, dstride, sstride, dw, dh, bbox, offset, size);
@@ -417,12 +417,12 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion
     _dropShadowNoFilter(dimg->buf32, simg->buf32, dstride, sstride, dimg->w, dimg->h, bbox, offset, color, 255, false);
 
     //original image
-    auto src = simg->buf32 + (bbox.min.y * sstride + bbox.min.x);
-    auto dst = dimg->buf32 + (bbox.min.y * dstride + bbox.min.x);
+    auto src = simg->buf32 + (bbox.yMin * sstride + bbox.xMin);
+    auto dst = dimg->buf32 + (bbox.yMin * dstride + bbox.xMin);
 
     // TODO: openmp optimization?
-    for (auto y = 0; y < (bbox.max.y - bbox.min.y); ++y) {
-        rasterTranslucentPixels(dst, src, bbox.max.x - bbox.min.x, 255);
+    for (auto y = 0; y < (bbox.yMax - bbox.yMin); ++y) {
+        rasterTranslucentPixels(dst, src, bbox.xMax - bbox.xMin, 255);
         src += sstride;
         dst += dstride;
     }
@@ -430,8 +430,8 @@ static void _dropShadowNoFilter(SwImage* dimg, SwImage* simg, const RenderRegion
 
 static void _dropShadowShift(uint32_t* dst, uint32_t* src, int dstride, int sstride, int dw, int dh, const RenderRegion& bbox, const SwPoint& offset, uint8_t opacity, bool direct)
 {
-    src += (bbox.min.y * sstride + bbox.min.x);
-    dst += (bbox.min.y * dstride + bbox.min.x);
+    src += (bbox.yMin * sstride + bbox.xMin);
+    dst += (bbox.yMin * dstride + bbox.xMin);
 
     SwSize size;
     _shift(&dst, &src, dstride, sstride, dw, dh, bbox, offset, size);
@@ -452,14 +452,16 @@ bool effectDropShadowRegion(RenderEffectDropShadow* params)
     auto& offset = static_cast<SwDropShadow*>(params->rd)->offset;
     auto extra = static_cast<SwDropShadow*>(params->rd)->extends;
 
-    bbox.min = {-extra, -extra};
-    bbox.max = {extra, extra};
+    bbox.xMin = -extra;
+    bbox.yMin = -extra;
+    bbox.xMax = extra;
+    bbox.yMax = extra;
 
-    if (offset.x < 0) bbox.min.x += (int32_t) offset.x;
-    else bbox.max.x += offset.x;
+    if (offset.x < 0) bbox.xMin += (int32_t)offset.x;
+    else bbox.xMax += offset.x;
 
-    if (offset.y < 0) bbox.min.y += (int32_t) offset.y;
-    else bbox.max.y += offset.y;
+    if (offset.y < 0) bbox.yMin += (int32_t)offset.y;
+    else bbox.yMax += offset.y;
 
     return true;
 }
@@ -488,8 +490,8 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
 
     auto data = static_cast<SwDropShadow*>(params->rd);
     auto& bbox = cmp->bbox;
-    auto w = (bbox.max.x - bbox.min.x);
-    auto h = (bbox.max.y - bbox.min.y);
+    auto w = (bbox.xMax - bbox.xMin);
+    auto h = (bbox.yMax - bbox.yMin);
 
     //outside the screen
     if (abs(data->offset.x) >= w || abs(data->offset.y) >= h) return true;
@@ -502,7 +504,7 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
 
     auto opacity = direct ? MULTIPLY(params->color[3], cmp->opacity) : params->color[3];
 
-    TVGLOG("SW_ENGINE", "DropShadow region(%d, %d, %d, %d) params(%f %f %f), level(%d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->angle, params->distance, params->sigma, data->level);
+    TVGLOG("SW_ENGINE", "DropShadow region(%d, %d, %d, %d) params(%f %f %f), level(%d)", bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax, params->angle, params->distance, params->sigma, data->level);
 
     //no filter required
     if (data->extends == 0)  {
@@ -546,13 +548,13 @@ bool effectDropShadow(SwCompositor* cmp, SwSurface* surface[2], const RenderEffe
     }
 
     //draw to the intermediate surface
-    rasterClear(surface[1], bbox.min.x, bbox.min.y, w, h);
+    rasterClear(surface[1], bbox.xMin, bbox.yMin, w, h);
     _dropShadowShift(buffer[1]->buf32, cmp->image.buf32, buffer[1]->stride, cmp->image.stride, buffer[1]->w, buffer[1]->h, bbox, data->offset, opacity, direct);
     std::swap(cmp->image.buf32, buffer[1]->buf32);
 
     //compositing shadow and body
-    auto s = buffer[0]->buf32 + (bbox.min.y * buffer[0]->stride + bbox.min.x);
-    auto d = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+    auto s = buffer[0]->buf32 + (bbox.yMin * buffer[0]->stride + bbox.xMin);
+    auto d = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
 
     // TODO: openmp optimization?
     for (auto y = 0; y < h; ++y) {
@@ -579,15 +581,15 @@ bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
     auto opacity = direct ? MULTIPLY(params->color[3], cmp->opacity) : params->color[3];
 
     auto& bbox = cmp->bbox;
-    auto w = size_t(bbox.max.x - bbox.min.x);
-    auto h = size_t(bbox.max.y - bbox.min.y);
+    auto w = size_t(bbox.xMax - bbox.xMin);
+    auto h = size_t(bbox.yMax - bbox.yMin);
     auto color = cmp->recoverSfc->join(params->color[0], params->color[1], params->color[2], 255);
 
-    TVGLOG("SW_ENGINE", "Fill region(%d, %d, %d, %d), param(%d %d %d %d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->color[0], params->color[1], params->color[2], params->color[3]);
+    TVGLOG("SW_ENGINE", "Fill region(%d, %d, %d, %d), param(%d %d %d %d)", bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax, params->color[0], params->color[1], params->color[2], params->color[3]);
 
     if (direct) {
-        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.min.y * cmp->recoverSfc->stride + bbox.min.x);
-        auto sbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.yMin * cmp->recoverSfc->stride + bbox.xMin);
+        auto sbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             auto src = sbuffer;
@@ -601,7 +603,7 @@ bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
         }
         cmp->valid = true;  //no need the subsequent composition
     } else {
-        auto dbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        auto dbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             for (size_t x = 0; x < w; ++x, ++dst) {
@@ -626,18 +628,18 @@ void effectTintUpdate(RenderEffectTint* params)
 bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
 {
     auto& bbox = cmp->bbox;
-    auto w = size_t(bbox.max.x - bbox.min.x);
-    auto h = size_t(bbox.max.y - bbox.min.y);
+    auto w = size_t(bbox.xMax - bbox.xMin);
+    auto h = size_t(bbox.yMax - bbox.yMin);
     auto black = cmp->recoverSfc->join(params->black[0], params->black[1], params->black[2], 255);
     auto white = cmp->recoverSfc->join(params->white[0], params->white[1], params->white[2], 255);
     auto opacity = cmp->opacity;
     auto luma = cmp->recoverSfc->alphas[2];  //luma function
 
-    TVGLOG("SW_ENGINE", "Tint region(%d, %d, %d, %d), param(%d %d %d, %d %d %d, %d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->black[0], params->black[1], params->black[2], params->white[0], params->white[1], params->white[2], params->intensity);
+    TVGLOG("SW_ENGINE", "Tint region(%d, %d, %d, %d), param(%d %d %d, %d %d %d, %d)", bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax, params->black[0], params->black[1], params->black[2], params->white[0], params->white[1], params->white[2], params->intensity);
 
     if (direct) {
-        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.min.y * cmp->recoverSfc->stride + bbox.min.x);
-        auto sbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.yMin * cmp->recoverSfc->stride + bbox.xMin);
+        auto sbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             auto src = sbuffer;
@@ -651,7 +653,7 @@ bool effectTint(SwCompositor* cmp, const RenderEffectTint* params, bool direct)
         }
         cmp->valid = true;  //no need the subsequent composition
     } else {
-        auto dbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        auto dbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             for (size_t x = 0; x < w; ++x, ++dst) {
@@ -690,19 +692,19 @@ void effectTritoneUpdate(RenderEffectTritone* params)
 bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool direct)
 {
     auto& bbox = cmp->bbox;
-    auto w = size_t(bbox.max.x - bbox.min.x);
-    auto h = size_t(bbox.max.y - bbox.min.y);
+    auto w = size_t(bbox.xMax - bbox.xMin);
+    auto h = size_t(bbox.yMax - bbox.yMin);
     auto shadow = cmp->recoverSfc->join(params->shadow[0], params->shadow[1], params->shadow[2], 255);
     auto midtone = cmp->recoverSfc->join(params->midtone[0], params->midtone[1], params->midtone[2], 255);
     auto highlight = cmp->recoverSfc->join(params->highlight[0], params->highlight[1], params->highlight[2], 255);
     auto opacity = cmp->opacity;
     auto luma = cmp->recoverSfc->alphas[2];  //luma function
 
-    TVGLOG("SW_ENGINE", "Tritone region(%d, %d, %d, %d), param(%d %d %d, %d %d %d, %d %d %d, %d)", bbox.min.x, bbox.min.y, bbox.max.x, bbox.max.y, params->shadow[0], params->shadow[1], params->shadow[2], params->midtone[0], params->midtone[1], params->midtone[2], params->highlight[0], params->highlight[1], params->highlight[2], params->blender);
+    TVGLOG("SW_ENGINE", "Tritone region(%d, %d, %d, %d), param(%d %d %d, %d %d %d, %d %d %d, %d)", bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax, params->shadow[0], params->shadow[1], params->shadow[2], params->midtone[0], params->midtone[1], params->midtone[2], params->highlight[0], params->highlight[1], params->highlight[2], params->blender);
 
     if (direct) {
-        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.min.y * cmp->recoverSfc->stride + bbox.min.x);
-        auto sbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        auto dbuffer = cmp->recoverSfc->buf32 + (bbox.yMin * cmp->recoverSfc->stride + bbox.xMin);
+        auto sbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             auto src = sbuffer;
@@ -720,7 +722,7 @@ bool effectTritone(SwCompositor* cmp, const RenderEffectTritone* params, bool di
         }
         cmp->valid = true;  //no need the subsequent composition
     } else {
-        auto dbuffer = cmp->image.buf32 + (bbox.min.y * cmp->image.stride + bbox.min.x);
+        auto dbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
         for (size_t y = 0; y < h; ++y) {
             auto dst = dbuffer;
             if (params->blender == 0) {

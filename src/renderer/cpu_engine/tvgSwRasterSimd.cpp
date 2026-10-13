@@ -125,7 +125,7 @@ bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, cons
     // 32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
-        auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
+        auto buffer = surface->buf32 + (bbox.yMin * surface->stride) + bbox.xMin;
         uint32_t ialpha = 255 - c.a;
         auto avxColor = _mm256_set1_epi32(color);
         auto avxIalpha = _mm256_set1_epi32(ialpha + 1);
@@ -143,7 +143,7 @@ bool avxRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, cons
         }
     // 8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        auto buffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
+        auto buffer = surface->buf8 + (bbox.yMin * surface->stride) + bbox.xMin;
         const auto ialpha = static_cast<uint8_t>(~c.a);
         const auto mask = _mm256_set1_epi16(0x00ff);
         const auto avxIalpha = _mm256_set1_epi16(ialpha);
@@ -582,7 +582,7 @@ bool neonRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, con
     // 32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
-        auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
+        auto buffer = surface->buf32 + (bbox.yMin * surface->stride) + bbox.xMin;
         auto ialpha = 255 - c.a;
         auto vColor = vdup_n_u32(color);
         auto vIalpha = vdup_n_u8((uint8_t)ialpha);
@@ -611,7 +611,7 @@ bool neonRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, con
         }
     // 8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        auto buffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
+        auto buffer = surface->buf8 + (bbox.yMin * surface->stride) + bbox.xMin;
         const auto ialpha = static_cast<uint8_t>(~c.a);
         const auto vIalpha = vdup_n_u8(ialpha);
         const auto vAlpha = vdupq_n_u8(c.a);

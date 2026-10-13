@@ -52,12 +52,12 @@ bool GlEffect::region(RenderEffectGaussianBlur* effect)
 {
     auto gaussianBlur = (GlGaussianBlur*)effect->rd;
     if (effect->direction != 2) {
-        effect->extend.min.x = -gaussianBlur->extend;
-        effect->extend.max.x = +gaussianBlur->extend;
+        effect->extend.xMin = -gaussianBlur->extend;
+        effect->extend.xMax = +gaussianBlur->extend;
     }
     if (effect->direction != 1) {
-        effect->extend.min.y = -gaussianBlur->extend;
-        effect->extend.max.y = +gaussianBlur->extend;
+        effect->extend.yMin = -gaussianBlur->extend;
+        effect->extend.yMax = +gaussianBlur->extend;
     }
     return true;
 };
@@ -97,7 +97,7 @@ GlRenderTask* GlEffect::render(RenderEffectGaussianBlur* effect, GlRenderTarget*
     // create gaussian blur tasks
     auto task = new GlGaussianBlurTask(dstFbo, dstCopyFbo0, dstCopyFbo1);
     task->effect = effect;
-    task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
+    task->setViewport({0, 0, vp.sw(), vp.sh()});
     // horizontal blur task and geometry
     task->horzTask = new GlRenderTask(pBlurH);
     task->horzTask->addBindResource(GlBindingResource{0, GlShaderUniformBlock::Gaussian, gpuBuffer->getBufferId(), blurOffset, sizeof(GlGaussianBlur)});
@@ -147,7 +147,7 @@ bool GlEffect::region(RenderEffectMotionBlur* effect)
     auto blur = static_cast<const GlMotionBlur*>(effect->rd);
     auto x = int32_t(ceilf(fabsf(blur->offset[0]) * 0.5f));
     auto y = int32_t(ceilf(fabsf(blur->offset[1]) * 0.5f));
-    effect->extend = {{-x, -y}, {x, y}};
+    effect->extend = {-x, -y, x, y};
     return true;
 }
 
@@ -161,7 +161,7 @@ GlRenderTask* GlEffect::render(RenderEffectMotionBlur* effect, GlRenderTarget* d
     auto viewportOffset = gpuBuffer->push(viewport, sizeof(viewport), true);
 
     auto task = new GlEffectTask(pMotionBlur, dstFbo, dstCopyFbo);
-    task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
+    task->setViewport({0, 0, vp.sw(), vp.sh()});
     task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::Params, gpuBuffer->getBufferId(), paramsOffset, sizeof(GlMotionBlur)});
     task->addBindResource(GlBindingResource{1, GlShaderUniformBlock::Viewport, gpuBuffer->getBufferId(), viewportOffset, sizeof(viewport)});
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
@@ -183,10 +183,10 @@ struct GlDropShadow: GlGaussianBlur {
 bool GlEffect::region(RenderEffectDropShadow* effect)
 {
     auto gaussianBlur = (GlDropShadow*)effect->rd;
-    effect->extend.min.x = -gaussianBlur->extend;
-    effect->extend.max.x = +gaussianBlur->extend;
-    effect->extend.min.y = -gaussianBlur->extend;
-    effect->extend.max.y = +gaussianBlur->extend;
+    effect->extend.xMin = -gaussianBlur->extend;
+    effect->extend.xMax = +gaussianBlur->extend;
+    effect->extend.yMin = -gaussianBlur->extend;
+    effect->extend.yMax = +gaussianBlur->extend;
     return true;
 };
 
@@ -237,7 +237,7 @@ GlRenderTask* GlEffect::render(RenderEffectDropShadow* effect, GlRenderTarget* d
     // create gaussian blur tasks
     auto task = new GlEffectDropShadowTask(pDropShadow, dstFbo, dstCopyFbo0, dstCopyFbo1);
     task->effect = (RenderEffectDropShadow*)effect;
-    task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
+    task->setViewport({0, 0, vp.sw(), vp.sh()});
     task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::DropShadow, gpuBuffer->getBufferId(), paramsOffset, sizeof(GlDropShadow)});
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
     task->setDrawRange(ioffset, 6);
@@ -351,7 +351,7 @@ GlRenderTask* GlEffect::render(RenderEffect* effect, GlRenderTarget* dstFbo, Arr
 
     // create and setup task
     auto task = new GlEffectTask(program, dstFbo, dstCopyFbo);
-    task->setViewport({{0, 0}, {vp.sw(), vp.sh()}});
+    task->setViewport({0, 0, vp.sw(), vp.sh()});
     task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::Params, gpuBuffer->getBufferId(), paramsOffset, sizeof(GlEffectParams)});
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), voffset, GL_FLOAT, GL_FALSE, gpuBuffer->getBufferId()});
     task->setDrawRange(ioffset, 6);

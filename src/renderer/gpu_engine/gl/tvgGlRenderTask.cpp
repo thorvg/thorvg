@@ -127,8 +127,8 @@ void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
 void GlRenderTask::setViewport(const RenderRegion &viewport)
 {
     this->viewport = viewport;
-    this->viewport.max.x = std::max(viewport.min.x, viewport.max.x);
-    this->viewport.max.y = std::max(viewport.min.y, viewport.max.y);
+    this->viewport.xMax = std::max(viewport.xMin, viewport.xMax);
+    this->viewport.yMax = std::max(viewport.yMin, viewport.yMax);
 }
 
 
@@ -309,14 +309,14 @@ void GlSceneBlendTask::run(GlStateCache& state)
     state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo);
     state.viewport(0, 0, dstCopyFbo->width, dstCopyFbo->height);
     state.scissor(0, 0, dstCopyFbo->width, dstCopyFbo->height);
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
+    GL_CHECK(glBlitFramebuffer(vp.xMin, vp.yMin, vp.xMax, vp.yMax, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
 #else // TODO: create partial buffer when MSAA is disabled
     state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, dstCopyFbo->resolvedFbo);
-    if (vp.min.x != 0 || vp.min.y != 0 || dstCopyFbo->width != static_cast<uint32_t>(vp.w()) || dstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(state, dstCopyFbo->width, dstCopyFbo->height);
+    if (vp.xMin != 0 || vp.yMin != 0 || dstCopyFbo->width != static_cast<uint32_t>(vp.w()) || dstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(state, dstCopyFbo->width, dstCopyFbo->height);
     state.bindFramebuffer(GL_READ_FRAMEBUFFER, srcFbo->fbo);
     state.viewport(0, 0, width, height);
-    state.scissor(vp.min.x, vp.min.y, vp.w(), vp.h());
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    state.scissor(vp.xMin, vp.yMin, vp.w(), vp.h());
+    GL_CHECK(glBlitFramebuffer(vp.xMin, vp.yMin, vp.xMax, vp.yMax, vp.xMin, vp.yMin, vp.xMax, vp.yMax, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 #endif
 
     state.bindFramebuffer(GL_FRAMEBUFFER, targetFbo);
@@ -428,12 +428,12 @@ void GlComplexBlendTask::run(GlStateCache& state)
     // copy the current fbo to the dstCopyFbo
     state.viewport(0, 0, dstVp.w(), dstVp.h());
     state.scissor(0, 0, dstVp.w(), dstVp.h());
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
+    GL_CHECK(glBlitFramebuffer(vp.xMin, vp.yMin, vp.xMax, vp.yMax, 0, 0, vp.w(), vp.h(), GL_COLOR_BUFFER_BIT, GL_LINEAR));
 #else // TODO: create partial buffer when MSAA is disabled
-    if (vp.min.x != 0 || vp.min.y != 0 || dstCopyFbo->width != static_cast<uint32_t>(vp.w()) || dstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(state, dstCopyFbo->width, dstCopyFbo->height);
+    if (vp.xMin != 0 || vp.yMin != 0 || dstCopyFbo->width != static_cast<uint32_t>(vp.w()) || dstCopyFbo->height != static_cast<uint32_t>(vp.h())) clearColorTarget(state, dstCopyFbo->width, dstCopyFbo->height);
     state.viewport(0, 0, width, height);
-    state.scissor(vp.min.x, vp.min.y, vp.w(), vp.h());
-    GL_CHECK(glBlitFramebuffer(vp.min.x, vp.min.y, vp.max.x, vp.max.y, vp.min.x, vp.min.y, vp.max.x, vp.max.y, GL_COLOR_BUFFER_BIT, GL_NEAREST));
+    state.scissor(vp.xMin, vp.yMin, vp.w(), vp.h());
+    GL_CHECK(glBlitFramebuffer(vp.xMin, vp.yMin, vp.xMax, vp.yMax, vp.xMin, vp.yMin, vp.xMax, vp.yMax, GL_COLOR_BUFFER_BIT, GL_NEAREST));
 #endif
 
     state.bindFramebuffer(GL_FRAMEBUFFER, dstFbo->fbo);
