@@ -133,21 +133,6 @@ struct AssetSrc
     }
 };
 
-static inline RGB32 operator-(const RGB32& lhs, const RGB32& rhs)
-{
-    return {lhs.r - rhs.r, lhs.g - rhs.g, lhs.b - rhs.b};
-}
-
-static inline RGB32 operator+(const RGB32& lhs, const RGB32& rhs)
-{
-    return {lhs.r + rhs.r, lhs.g + rhs.g, lhs.b + rhs.b};
-}
-
-static inline RGB32 operator*(const RGB32& lhs, float rhs)
-{
-    return {(int32_t)nearbyintf(lhs.r * rhs), (int32_t)nearbyintf(lhs.g * rhs), (int32_t)nearbyintf(lhs.b * rhs)};
-}
-
 static inline RGB32 lerp(const RGB32& s, const RGB32& e, float t)
 {
     return {
