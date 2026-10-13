@@ -524,6 +524,28 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
         REQUIRE(canvas);
         engine.target(canvas.get());
 
+        // Fill rule: a circle and a rect in one path, both clockwise, overlapping at x 45..60
+        auto gen = [&](FillRule rule) {
+            auto shape = Shape::gen();
+            REQUIRE(shape->appendCircle(35, 50, 25, 25) == Result::Success);
+            REQUIRE(shape->appendRect(45, 25, 50, 50) == Result::Success);
+            REQUIRE(shape->fill(255, 255, 255) == Result::Success);
+            REQUIRE(shape->fillRule(rule) == Result::Success);
+            REQUIRE(canvas->add(shape) == Result::Success);
+            return shape;
+        };
+        auto nonZero = gen(FillRule::NonZero);
+        auto evenOdd = gen(FillRule::EvenOdd);
+        REQUIRE(canvas->update() == Result::Success);
+
+        // Either rule fills where only one contour covers the point
+        REQUIRE(nonZero->intersects(20, 50, 1, 1) == true);
+        REQUIRE(evenOdd->intersects(80, 50, 1, 1) == true);
+
+        // The overlap has winding 2: filled with NonZero, a hole with EvenOdd
+        REQUIRE(nonZero->intersects(52, 50, 1, 1) == true);
+        REQUIRE(evenOdd->intersects(52, 50, 1, 1) == false);
+
         ifstream file(TEST_DIR "/rawimage_250x375.raw");
         if (!file.is_open()) return;
         auto data = (uint32_t*)malloc(sizeof(uint32_t) * (250 * 375));
@@ -551,45 +573,6 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
 
         free(data);
 
-    }
-    REQUIRE(Initializer::term() == Result::Success);
-}
-
-TEST_CASE("GL Fill Rule Intersection", "[tvgGlEngine]")
-{
-    TestGLEngine engine;
-
-    REQUIRE(Initializer::init() == Result::Success);
-    {
-        auto canvas = unique_ptr<GlCanvas>(GlCanvas::gen());
-        REQUIRE(canvas);
-        engine.target(canvas.get());
-
-        // A circle and a rect in one path, both clockwise, overlapping at x 45..60
-        auto gen = [&](FillRule rule) {
-            auto shape = Shape::gen();
-            REQUIRE(shape->appendCircle(35, 50, 25, 25) == Result::Success);
-            REQUIRE(shape->appendRect(45, 25, 50, 50) == Result::Success);
-            REQUIRE(shape->fill(255, 255, 255) == Result::Success);
-            REQUIRE(shape->fillRule(rule) == Result::Success);
-            REQUIRE(canvas->add(shape) == Result::Success);
-            return shape;
-        };
-        auto nonZero = gen(FillRule::NonZero);
-        auto evenOdd = gen(FillRule::EvenOdd);
-        REQUIRE(canvas->update() == Result::Success);
-
-        // Either rule fills where only one contour covers the point
-        REQUIRE(nonZero->intersects(20, 50, 1, 1) == true);
-        REQUIRE(nonZero->intersects(80, 50, 1, 1) == true);
-        REQUIRE(evenOdd->intersects(20, 50, 1, 1) == true);
-        REQUIRE(evenOdd->intersects(80, 50, 1, 1) == true);
-
-        // The overlap has winding 2: filled with NonZero, a hole with EvenOdd
-        REQUIRE(nonZero->intersects(52, 50, 1, 1) == true);
-        REQUIRE(evenOdd->intersects(52, 50, 1, 1) == false);
-
-        REQUIRE(canvas->sync() == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
