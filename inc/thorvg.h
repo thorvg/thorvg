@@ -1066,7 +1066,7 @@ struct TVG_API Canvas
      *
      * @return The number of regions available for retrieval.
      *
-     * @note This function is useful when @c EngineOption::SmartRender is enabled.
+     * @note If the active rendering backend does not support @c EngineOption::SmartRender, this function returns 1.
      * @note This function must be called after @ref Canvas::draw() and before @ref Canvas::sync().
      * @note Experimental API
      *
@@ -1082,9 +1082,9 @@ struct TVG_API Canvas
      *
      * @retval Result::InvalidArguments If @p regions is @c nullptr or @p cnt is zero.
      * @retval Result::InsufficientCondition If called outside the interval after Canvas::draw() and before Canvas::sync().
-     * @retval Result::NonSupport If the active rendering backend does not support @c EngineOption::SmartRender.
      *
-     * @note This function is useful when @c EngineOption::SmartRender is enabled.
+     * @note If the active rendering backend does not support @c EngineOption::SmartRender,
+     *       a single region covering the entire render target is returned.
      * @note Experimental API
      *
      * @see Canvas::dirtyRegions()
