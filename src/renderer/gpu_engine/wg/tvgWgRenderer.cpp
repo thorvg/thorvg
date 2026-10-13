@@ -740,12 +740,13 @@ bool WgRenderer::partial(TVG_UNUSED bool disable)
 
 uint32_t WgRenderer::dirtyRegions() const
 {
-    return 0;
+    return 1;
 }
 
-Result WgRenderer::dirtyRegions(TVG_UNUSED Region* regions, TVG_UNUSED uint32_t cnt) const
+Result WgRenderer::dirtyRegions(Region* regions, TVG_UNUSED uint32_t cnt) const
 {
-    return Result::NonSupport;
+    *regions = {0, 0, int32_t(mSurface.w), int32_t(mSurface.h)};
+    return Result::Success;
 }
 
 bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)

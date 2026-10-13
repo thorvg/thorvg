@@ -862,7 +862,7 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas canvas);
  * @return The number of regions available for retrieval, or zero if @p canvas is NULL.
  *
  * @note This function must be called after @ref tvg_canvas_draw() and before @ref tvg_canvas_sync().
- * @note This function is useful when @c TVG_ENGINE_OPTION_SMART_RENDER is enabled.
+ * @note If the active rendering backend does not support @c TVG_ENGINE_OPTION_SMART_RENDER, this function returns 1.
  * @note Experimental API
  *
  * @see tvg_canvas_get_dirty_regions()
@@ -878,10 +878,10 @@ TVG_API uint32_t tvg_canvas_get_dirty_regions_cnt(Tvg_Canvas canvas);
  *
  * @retval TVG_RESULT_INVALID_ARGUMENT If @p canvas or @p regions is @c NULL, or @p cnt is zero.
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION If called outside the interval after tvg_canvas_draw() and before tvg_canvas_sync().
- * @retval TVG_RESULT_NOT_SUPPORTED If the active rendering backend does not support @c TVG_ENGINE_OPTION_SMART_RENDER.
  *
  * @note This function must be called after @ref tvg_canvas_draw() and before @ref tvg_canvas_sync().
- * @note This function is useful when @c TVG_ENGINE_OPTION_SMART_RENDER is enabled.
+ * @note If the active rendering backend does not support @c TVG_ENGINE_OPTION_SMART_RENDER,
+ *       a single region covering the entire render target is returned.
  * @note Experimental API
  *
  * @see tvg_canvas_get_dirty_regions_cnt()
