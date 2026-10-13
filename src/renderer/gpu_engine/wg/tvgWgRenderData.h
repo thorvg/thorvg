@@ -119,7 +119,7 @@ struct WgShape : WgPaint
     {
         auto& min = bbox.min;
         auto& max = bbox.max;
-        return {{int32_t(nearbyint(min.x)), int32_t(nearbyint(min.y))}, {int32_t(nearbyint(max.x)), int32_t(nearbyint(max.y))}};
+        return {int32_t(nearbyint(min.x)), int32_t(nearbyint(min.y)), int32_t(nearbyint(max.x)), int32_t(nearbyint(max.y))};
     }
 
     Type type() override { return Type::Shape; };

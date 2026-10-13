@@ -158,24 +158,22 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
 
 RenderRegion WgCompositor::shrinkRenderRegion(const RenderRegion& rect)
 {
-    return {
-        {std::max(0, std::min((int32_t)width, rect.min.x)), std::max(0, std::min((int32_t)height, rect.min.y))},
-        {std::max(0, std::min((int32_t)width, rect.max.x)), std::max(0, std::min((int32_t)height, rect.max.y))}
-    };
+    return {std::max(0, std::min((int32_t)width, rect.xMin)), std::max(0, std::min((int32_t)height, rect.yMin)),
+            std::max(0, std::min((int32_t)width, rect.xMax)), std::max(0, std::min((int32_t)height, rect.yMax))};
 }
 
 
 void WgCompositor::copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src)
 {
-    const RenderRegion region = {{0, 0}, {(int32_t)src->width, (int32_t)src->height}};
+    const RenderRegion region = {0, 0, (int32_t)src->width, (int32_t)src->height};
     copyTexture(dst, src, region);
 }
 
 
 void WgCompositor::copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src, const RenderRegion& region)
 {
-    const WGPUTexelCopyTextureInfo texSrc { .texture = src->texture, .origin = { .x = (uint32_t)region.min.x, .y = (uint32_t)region.min.y } };
-    const WGPUTexelCopyTextureInfo texDst { .texture = dst->texture, .origin = { .x = (uint32_t)region.min.x, .y = (uint32_t)region.min.y } };
+    const WGPUTexelCopyTextureInfo texSrc{.texture = src->texture, .origin = {.x = (uint32_t)region.xMin, .y = (uint32_t)region.yMin}};
+    const WGPUTexelCopyTextureInfo texDst{.texture = dst->texture, .origin = {.x = (uint32_t)region.xMin, .y = (uint32_t)region.yMin}};
     const WGPUExtent3D copySize { .width = region.w(), .height = region.h(), .depthOrArrayLayers = 1 };
     wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
 }

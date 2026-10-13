@@ -259,7 +259,7 @@ RenderRegion GlRenderer::viewportRegion(const RenderRegion& vp, const RenderRegi
     auto h = bbox.sh();
     auto yGl = vp.sh() - y - h;
 
-    return {{x, yGl}, {x + w, yGl + h}};
+    return {x, yGl, x + w, yGl + h};
 }
 
 static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, RenderUpdateFlag flag)
@@ -621,7 +621,7 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 
     auto x = vp.sx();
     auto y = currentPass()->getViewport().sh() - vp.sy() - vp.sh();
-    stencilTask->setViewport({{x, y}, {x + vp.sw(), y + vp.sh()}});
+    stencilTask->setViewport({x, y, x + vp.sw(), y + vp.sh()});
 
     stencilTask->setDrawDepth(currentPass()->nextDrawDepth());
     stencilTask->setViewMatrix(currentPass()->getViewMatrix());
@@ -763,7 +763,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 
 void GlRenderer::prepareBlitTask(GlBlitTask* task)
 {
-    prepareCmpTask(task, {{0, 0}, {int32_t(surface.w), int32_t(surface.h)}}, surface.w, surface.h);
+    prepareCmpTask(task, {0, 0, int32_t(surface.w), int32_t(surface.h)}, surface.w, surface.h);
     task->addBindResource(GlBindingResource{0, task->colorTex, GlShaderUniform::SourceTexture});
 }
 
@@ -810,7 +810,7 @@ void GlRenderer::prepareCmpTask(GlRenderTask* task, const RenderRegion& vp, uint
     task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, mGpuBuffer.getBufferId()});
     task->setDrawRange(indexOffset, RECT_INDEX_COUNT);
     y = (passVp.sh() - y - h);
-    task->setViewport({{x, y}, {x + w, y + h}});
+    task->setViewport({x, y, x + w, y + h});
 }
 
 
@@ -991,7 +991,7 @@ Result GlRenderer::target(void* display, void* surface, void* context, int32_t i
     // reused by the new context, so do not carry any binding assumptions over.
     mStateCache.invalidate();
 
-    mRootTarget.viewport = {{0, 0}, {int32_t(this->surface.w), int32_t(this->surface.h)}};
+    mRootTarget.viewport = {0, 0, int32_t(this->surface.w), int32_t(this->surface.h)};
     mRootTarget.init(mStateCache, this->surface.w, this->surface.h, mTargetFboId);
     mStateCache.invalidate();
 
@@ -1029,7 +1029,7 @@ bool GlRenderer::sync()
     prepareBlitTask(task);
 
     task->clearBuffer = mClearBuffer;
-    task->targetViewport = {{0, 0}, {int32_t(surface.w), int32_t(surface.h)}};
+    task->targetViewport = {0, 0, int32_t(surface.w), int32_t(surface.h)};
 
     if (mGpuBuffer.flushToGPU(mStateCache)) {
         mGpuBuffer.bind(mStateCache);
@@ -1407,12 +1407,21 @@ void GlRenderer::damage(TVG_UNUSED RenderData rd, TVG_UNUSED const RenderRegion&
 }
 
 
-bool GlRenderer::partial(bool disable)
+bool GlRenderer::partial(TVG_UNUSED bool disable)
 {
     //TODO
     return false;
 }
 
+uint32_t GlRenderer::dirtyRegions() const
+{
+    return 0;
+}
+
+Result GlRenderer::dirtyRegions(TVG_UNUSED Region* regions, TVG_UNUSED uint32_t cnt) const
+{
+    return Result::NonSupport;
+}
 
 bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
 {

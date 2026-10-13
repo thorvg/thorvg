@@ -283,14 +283,14 @@ bool RenderPath::bounds(const Matrix* m, BBox& box)
 
 void RenderRegion::intersect(const RenderRegion& rhs)
 {
-    if (min.x < rhs.min.x) min.x = rhs.min.x;
-    if (min.y < rhs.min.y) min.y = rhs.min.y;
-    if (max.x > rhs.max.x) max.x = rhs.max.x;
-    if (max.y > rhs.max.y) max.y = rhs.max.y;
+    if (xMin < rhs.xMin) xMin = rhs.xMin;
+    if (yMin < rhs.yMin) yMin = rhs.yMin;
+    if (xMax > rhs.xMax) xMax = rhs.xMax;
+    if (yMax > rhs.yMax) yMax = rhs.yMax;
 
     // Not intersected: collapse to zero-area region
-    if (max.x < min.x) max.x = min.x;
-    if (max.y < min.y) max.y = min.y;
+    if (xMax < xMin) xMax = xMin;
+    if (yMax < yMin) yMax = yMin;
 }
 
 #ifdef THORVG_PARTIAL_RENDER_SUPPORT
@@ -311,11 +311,13 @@ void RenderDirtyRegion::init(uint32_t w, uint32_t h)
             auto& partition = partitions[y * cnt + x];
             partition.list[0].reserve(64);
             auto& region = partition.region;
-            region.min = {x * px, y * py};
-            region.max = {region.min.x + px, region.min.y + py};
+            region.xMin = x * px;
+            region.yMin = y * py;
+            region.xMax = region.xMin + px;
+            region.yMax = region.yMin + py;
             //leftovers
-            if (x == cnt -1) region.max.x += lx;
-            if (y == cnt -1) region.max.y += ly;
+            if (x == cnt - 1) region.xMax += lx;
+            if (y == cnt - 1) region.yMax += ly;
         }
     }
 }
@@ -325,7 +327,7 @@ bool RenderDirtyRegion::add(const RenderRegion& bbox)
 {
     for (int idx = 0; idx < PARTITIONING; ++idx) {
         auto& partition = partitions[idx];
-        if (bbox.max.y <= partition.region.min.y) break;
+        if (bbox.yMax <= partition.region.yMin) break;
         if (bbox.intersected(partition.region)) {
             ScopedLock lock(key);
             partition.list[partition.current].push(RenderRegion::intersect(bbox, partition.region));
@@ -369,18 +371,18 @@ void RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, Re
     uint32_t cnt = 0;
 
     //subtract top
-    if (rhs.min.y < lhs.min.y) {
-        temp[cnt++] = {{rhs.min.x, rhs.min.y}, {rhs.max.x, lhs.min.y}};
-        rhs.min.y = lhs.min.y;
+    if (rhs.yMin < lhs.yMin) {
+        temp[cnt++] = {rhs.xMin, rhs.yMin, rhs.xMax, lhs.yMin};
+        rhs.yMin = lhs.yMin;
     }
     //subtract bottom
-    if (rhs.max.y > lhs.max.y) {
-        temp[cnt++] = {{rhs.min.x, lhs.max.y}, {rhs.max.x, rhs.max.y}};
-        rhs.max.y = lhs.max.y;
+    if (rhs.yMax > lhs.yMax) {
+        temp[cnt++] = {rhs.xMin, lhs.yMax, rhs.xMax, rhs.yMax};
+        rhs.yMax = lhs.yMax;
     }
     //subtract right
-    if (rhs.max.x > lhs.max.x) {
-        temp[cnt++] = {{lhs.max.x, rhs.min.y}, {rhs.max.x, rhs.max.y}};
+    if (rhs.xMax > lhs.xMax) {
+        temp[cnt++] = {lhs.xMax, rhs.yMin, rhs.xMax, rhs.yMax};
     }
 
     //Please reserve memory enough with targets.reserve()
@@ -399,9 +401,9 @@ void RenderDirtyRegion::subdivide(Array<RenderRegion>& targets, uint32_t idx, Re
     targets.count += (cnt - 1);
 
     //sorting by x coord again, only for the updated region
-    while (dst < targets.end() && dst->min.x < rhs.max.x) ++dst;
+    while (dst < targets.end() && dst->xMin < rhs.xMax) ++dst;
     stable_sort(&targets[idx], dst, [](const RenderRegion& a, const RenderRegion& b) -> bool {
-        return a.min.x < b.min.x;
+        return a.xMin < b.xMin;
     });
 }
 
@@ -425,7 +427,7 @@ void RenderDirtyRegion::commit()
 
         //sorting by x coord. guarantee the stable performance: O(NlogN)
         stable_sort(targets.begin(), targets.end(), [](const RenderRegion& a, const RenderRegion& b) -> bool {
-            return a.min.x < b.min.x;
+            return a.xMin < b.xMin;
         });
 
         //Optimized using sweep-line algorithm: O(NlogN)
@@ -437,7 +439,7 @@ void RenderDirtyRegion::commit()
             for (uint32_t j = i + 1; j < targets.count; ++j) {
                 auto& rhs = targets[j];
                 if (rhs.invalid()) continue;
-                if (lhs.max.x < rhs.min.x) break;   //line sweeping
+                if (lhs.xMax < rhs.xMin) break;  // line sweeping
 
                 //fully overlapped. drop lhs
                 if (rhs.contained(lhs)) {
@@ -450,19 +452,19 @@ void RenderDirtyRegion::commit()
                     continue;
                 }
                 //just merge & expand on x axis
-                if (lhs.min.y == rhs.min.y && lhs.max.y == rhs.max.y) {
-                    if (lhs.max.x >= rhs.min.x) {
-                        lhs.max.x = rhs.max.x;
+                if (lhs.yMin == rhs.yMin && lhs.yMax == rhs.yMax) {
+                    if (lhs.xMax >= rhs.xMin) {
+                        lhs.xMax = rhs.xMax;
                         rhs = {};
                         j = i;   //lhs dirty region has been damaged, try again.
                         continue;
                     }
                 }
                 //just merge & expand on y axis
-                if (lhs.min.x == rhs.min.x && lhs.max.x == rhs.max.x) {
-                    if (lhs.min.y <= rhs.max.y && rhs.min.y <= lhs.max.y) {
-                        rhs.min.y = std::min(lhs.min.y, rhs.min.y);
-                        rhs.max.y = std::max(lhs.max.y, rhs.max.y);
+                if (lhs.xMin == rhs.xMin && lhs.xMax == rhs.xMax) {
+                    if (lhs.yMin <= rhs.yMax && rhs.yMin <= lhs.yMax) {
+                        rhs.yMin = std::min(lhs.yMin, rhs.yMin);
+                        rhs.yMax = std::max(lhs.yMax, rhs.yMax);
                         merged = true;
                         break;
                     }

@@ -766,8 +766,8 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     rw.area = 0;
     rw.cover = 0;
     rw.invalid = true;
-    rw.cellMin = {bbox.min.x, bbox.min.y};
-    rw.cellMax = {bbox.max.x, bbox.max.y};
+    rw.cellMin = {bbox.xMin, bbox.yMin};
+    rw.cellMax = {bbox.xMax, bbox.yMax};
     rw.cellXCnt = rw.cellMax.x - rw.cellMin.x;
     rw.cellYCnt = rw.cellMax.y - rw.cellMin.y;
     rw.outline = outline;
@@ -870,8 +870,8 @@ SwRle* rleRender(const RenderRegion* bbox)
     rle->spans.count = bbox->h();
 
     //cheaper without push()
-    auto x = bbox->min.x;
-    auto y = bbox->min.y;
+    auto x = bbox->xMin;
+    auto y = bbox->yMin;
     auto len = (int32_t)bbox->w();
 
     ARRAY_FOREACH(p, rle->spans) {
@@ -962,9 +962,6 @@ bool rleClip(SwRle *rle, const RenderRegion* clip)
 {
     if (rle->spans.empty() || clip->invalid()) return false;
 
-    auto& min = clip->min;
-    auto& max = clip->max;
-
     Array<SwSpan> out;
     out.reserve(rle->spans.count);
     auto data = out.data;
@@ -972,14 +969,14 @@ bool rleClip(SwRle *rle, const RenderRegion* clip)
     int32_t x, len;
 
     for (auto p = rle->fetch(*clip, &end); p < end; ++p) {
-        if (p->y >= max.y) break;
-        if (p->y < min.y || p->x >= max.x || (p->x + p->len) <= min.x) continue;
-        if (p->x < min.x) {
-            x = min.x;
-            len = std::min(p->len - (x - p->x), (max.x - x));
+        if (p->y >= clip->yMax) break;
+        if (p->y < clip->yMin || p->x >= clip->xMax || (p->x + p->len) <= clip->xMin) continue;
+        if (p->x < clip->xMin) {
+            x = clip->xMin;
+            len = std::min(p->len - (x - p->x), (clip->xMax - x));
         } else {
             x = p->x;
-            len = std::min(p->len, max.x - x);
+            len = std::min(p->len, clip->xMax - x);
         }
         if (len > 0) {
             *data = {x, p->y, len, p->coverage};
@@ -996,13 +993,10 @@ bool rleIntersect(const SwRle* rle, const RenderRegion& region)
 {
     if (!rle || rle->spans.empty()) return false;
 
-    auto& min = region.min;
-    auto& max = region.max;
-
     const SwSpan* end;
     for (auto p = rle->fetch(region, &end); p < end; ++p) {
-        if (p->y >= max.y) break;
-        if (p->y < min.y || p->x >= max.x || (p->x + p->len) <= min.x) continue;
+        if (p->y >= region.yMax) break;
+        if (p->y < region.yMin || p->x >= region.xMax || (p->x + p->len) <= region.xMin) continue;
         return true;
     }
     return false;

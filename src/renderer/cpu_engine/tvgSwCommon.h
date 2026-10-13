@@ -125,8 +125,8 @@ struct SwSpan
 
     bool fetch(const RenderRegion& bbox, int32_t& x, int32_t& len) const
     {
-        x = std::max((int32_t)this->x, bbox.min.x);
-        len = std::min((int32_t)(this->x + this->len), bbox.max.x) - x;
+        x = std::max((int32_t)this->x, bbox.xMin);
+        len = std::min((int32_t)(this->x + this->len), bbox.xMax) - x;
         return (len > 0) ? true : false;
     }
 };
@@ -137,7 +137,7 @@ struct SwRle
 
     const SwSpan* fetch(const RenderRegion& bbox, const SwSpan** end) const
     {
-        return fetch(bbox.min.y, bbox.max.y - 1, end);
+        return fetch(bbox.yMin, bbox.yMax - 1, end);
     }
 
     const SwSpan* fetch(int32_t min, int32_t max, const SwSpan** end) const

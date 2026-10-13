@@ -275,6 +275,12 @@ bool SwRenderer::sync()
     }
     tasks.clear();
 
+    if (rendered) {
+        dirtyRegion.clear();
+        fulldraw = false;
+        rendered = false;
+    }
+
     return true;
 }
 
@@ -354,9 +360,7 @@ bool SwRenderer::postRender()
         rasterUnpremultiplySurface(surface);
     }
 
-    dirtyRegion.clear();
-    fulldraw = false;
-
+    rendered = true;
     return true;
 }
 
@@ -374,6 +378,27 @@ bool SwRenderer::partial(bool disable)
     return dirtyRegion.deactivate(disable);
 }
 
+uint32_t SwRenderer::dirtyRegions() const
+{
+    return (fulldraw || dirtyRegion.deactivated()) ? 1 : dirtyRegion.count();
+}
+
+Result SwRenderer::dirtyRegions(Region* regions, uint32_t cnt) const
+{
+    if (fulldraw || dirtyRegion.deactivated()) {
+        *regions = {0, 0, int32_t(surface->w), int32_t(surface->h)};
+        return Result::Success;
+    }
+
+    for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
+        ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
+            *regions++ = *p;
+            if (--cnt == 0) return Result::Success;
+        }
+    }
+
+    return Result::Success;
+}
 
 bool SwRenderer::renderImage(RenderData data)
 {
@@ -415,7 +440,7 @@ bool SwRenderer::renderImage(RenderData data)
             for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
                 if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
                 ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-                    if (task->curBox.max.x <= p->min.x) break;   //dirtyRegion is sorted in x order
+                    if (task->curBox.xMax <= p->xMin) break;  // dirtyRegion is sorted in x order
                     if (task->curBox.intersected(*p)) {
                         auto bbox = RenderRegion::intersect(task->curBox, *p);
                         raster(surface, task->image, task->transform, bbox, task->opacity);
@@ -471,7 +496,7 @@ bool SwRenderer::renderShape(RenderData data)
             for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
                 if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
                 ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-                    if (task->curBox.max.x <= p->min.x) break;   //dirtyRegion is sorted in x order
+                    if (task->curBox.xMax <= p->xMin) break;  // dirtyRegion is sorted in x order
                     if (task->rshape->strokeFirst()) {
                         if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
                         if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
@@ -628,7 +653,7 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
 
 RenderCompositor* SwRenderer::target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags)
 {
-    auto bbox = RenderRegion::intersect(region, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
+    auto bbox = RenderRegion::intersect(region, {0, 0, int32_t(surface->w), int32_t(surface->h)});
     if (bbox.invalid()) return nullptr;
 
     auto cmp = request(CHANNEL_SIZE(cs), (flags & CompositionFlag::PostProcessing));
@@ -718,10 +743,10 @@ bool SwRenderer::intersectsImage(RenderData data, const RenderRegion& region)
     auto rad = tvg::radian(task->transform);
     if (rad > 0.0f && rad < MATH_PI) {
         Point aabb[4];
-        aabb[0] = {(float)region.min.x, (float)region.min.y};
-        aabb[1] = {(float)region.max.x, (float)region.min.y};
-        aabb[2] = {(float)region.max.x, (float)region.max.y};
-        aabb[3] = {(float)region.min.x, (float)region.max.y};
+        aabb[0] = {(float)region.xMin, (float)region.yMin};
+        aabb[1] = {(float)region.xMax, (float)region.yMin};
+        aabb[2] = {(float)region.xMax, (float)region.yMax};
+        aabb[3] = {(float)region.xMin, (float)region.yMax};
 
         Point obb[4];
         obb[0] = Point{0.0f, 0.0f} * task->transform;
@@ -831,7 +856,7 @@ SwTask* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const A
     if (task->disposed) return task;
 
     task->renderer = this;
-    task->clipBox = RenderRegion::intersect(vport, {{0, 0}, {int32_t(surface->w), int32_t(surface->h)}});
+    task->clipBox = RenderRegion::intersect(vport, {0, 0, int32_t(surface->w), int32_t(surface->h)});
     task->transform = transform;
     task->clips = clips;
     task->dirtyRegion = &dirtyRegion;

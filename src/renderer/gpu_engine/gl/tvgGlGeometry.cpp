@@ -59,7 +59,7 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
     for (int32_t y = 0; y < sizeY; y++) {
         auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
         for (int32_t x = 0; x < sizeX; x++) {
-            Point pt{(float)x + region.min.x, (float)py + region.min.y};
+            Point pt{(float)x + region.xMin, (float)py + region.yMin};
             auto hit = false;
             if (validFill) {
                 auto p = geometry.fillWorld ? pt : pt * itransform;
@@ -93,7 +93,7 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
     for (int32_t y = 0; y < sizeY; y++) {
         auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
         for (int32_t x = 0; x < sizeX; x++) {
-            Point pt{(float)x + region.min.x, (float)py + region.min.y};
+            Point pt{(float)x + region.xMin, (float)py + region.yMin};
             if (gpuPointInQuad(pt, triangle) && intersect(image->clips, pt)) return true;
         }
     }
@@ -243,7 +243,7 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
     fill.index.push(1);
     fill.index.push(3);
 
-    fillBBox = gpuTransformBounds(RenderRegion{{0, 0}, {int32_t(image->w), int32_t(image->h)}}, matrix);
+    fillBBox = gpuTransformBounds(RenderRegion{0, 0, int32_t(image->w), int32_t(image->h)}, matrix);
 }
 
 void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const

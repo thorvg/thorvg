@@ -49,7 +49,7 @@ Stroker::Stroker(GlGeometryBuffer* buffer, float width, StrokeCap cap, StrokeJoi
 
 RenderRegion Stroker::bounds() const
 {
-    return {{int32_t(floor(mLeftTop.x)), int32_t(floor(mLeftTop.y))}, {int32_t(ceil(mRightBottom.x)), int32_t(ceil(mRightBottom.y))}};
+    return {int32_t(floor(mLeftTop.x)), int32_t(floor(mLeftTop.y)), int32_t(ceil(mRightBottom.x)), int32_t(ceil(mRightBottom.y))};
 }
 
 
@@ -510,7 +510,7 @@ void BWTessellator::tessellate(const RenderPath& path)
 
 RenderRegion BWTessellator::bounds() const
 {
-    return {{int32_t(floor(bbox.min.x)), int32_t(floor(bbox.min.y))}, {int32_t(ceil(bbox.max.x)), int32_t(ceil(bbox.max.y))}};
+    return {int32_t(floor(bbox.min.x)), int32_t(floor(bbox.min.y)), int32_t(ceil(bbox.max.x)), int32_t(ceil(bbox.max.y))};
 }
 
 

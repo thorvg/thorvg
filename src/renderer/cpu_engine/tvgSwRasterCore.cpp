@@ -212,7 +212,7 @@ bool cRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const 
     //32bits channels
     if (surface->channelSize == sizeof(uint32_t)) {
         auto color = surface->join(c.r, c.g, c.b, c.a);
-        auto buffer = surface->buf32 + (bbox.min.y * surface->stride) + bbox.min.x;
+        auto buffer = surface->buf32 + (bbox.yMin * surface->stride) + bbox.xMin;
         auto ialpha = 255 - c.a;
         for (uint32_t y = 0; y < bbox.h(); ++y) {
             auto dst = &buffer[y * surface->stride];
@@ -222,7 +222,7 @@ bool cRasterTranslucentRect(SwSurface* surface, const RenderRegion& bbox, const 
         }
     //8bit grayscale
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        auto buffer = surface->buf8 + (bbox.min.y * surface->stride) + bbox.min.x;
+        auto buffer = surface->buf8 + (bbox.yMin * surface->stride) + bbox.xMin;
         auto ialpha = ~c.a;
         for (uint32_t y = 0; y < bbox.h(); ++y) {
             auto dst = &buffer[y * surface->stride];
