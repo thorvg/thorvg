@@ -107,10 +107,10 @@ void WgShaderTypeVec4f::update(const ColorSpace colorSpace, uint8_t o)
 
 void WgShaderTypeVec4f::update(const RenderRegion& r)
 {
-    vec[0] = r.min.x;
-    vec[1] = r.min.y;
-    vec[2] = r.max.x - 1;
-    vec[3] = r.max.y - 1;
+    vec[0] = r.xMin;
+    vec[1] = r.yMin;
+    vec[2] = r.xMax - 1;
+    vec[3] = r.yMax - 1;
 }
 
 //************************************************************************

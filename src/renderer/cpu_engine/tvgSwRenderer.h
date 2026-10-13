@@ -72,6 +72,8 @@ struct SwRenderer : RenderMethod
     //partial rendering
     void damage(RenderData rd, const RenderRegion& region) override;
     bool partial(bool disable) override;
+    uint32_t dirtyRegions() const override;
+    Result dirtyRegions(Region* regions, uint32_t cnt) const override;
 
     SwRenderer(uint32_t threads, EngineOption op);
     static bool term();
@@ -82,6 +84,7 @@ struct SwRenderer : RenderMethod
 
 private:
     bool                 fulldraw = true;             //buffer is cleared (need to redraw full screen)
+    bool                 rendered = false;            //draw completed and awaits sync
     Array<SwTask*>       tasks;                       //async task list
     Array<SwSurface*>    compositors;                 //render targets cache list
     RenderDirtyRegion    dirtyRegion;                 //partial rendering support

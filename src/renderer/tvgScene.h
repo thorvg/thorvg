@@ -115,7 +115,7 @@ struct SceneImpl : Scene
 
         if (fixed) {
             auto pt = fsize * transform;
-            vport.intersect({{int32_t(round(transform.e13)), int32_t(round(transform.e23))}, {int32_t(round(pt.x)), int32_t(round(pt.y))}});
+            vport.intersect({int32_t(round(transform.e13)), int32_t(round(transform.e23)), int32_t(round(pt.x)), int32_t(round(pt.y))});
         } else {
             vdirty = true;
         }
@@ -169,13 +169,13 @@ struct SceneImpl : Scene
         vdirty = false;
 
         //Merge regions
-        RenderRegion pRegion = {{INT32_MAX, INT32_MAX}, {0, 0}};
+        RenderRegion pRegion = {INT32_MAX, INT32_MAX, 0, 0};
         for (auto paint : paints) {
             auto region = paint->pImpl->bounds();
-            if (region.min.x < pRegion.min.x) pRegion.min.x = region.min.x;
-            if (pRegion.max.x < region.max.x) pRegion.max.x = region.max.x;
-            if (region.min.y < pRegion.min.y) pRegion.min.y = region.min.y;
-            if (pRegion.max.y < region.max.y) pRegion.max.y = region.max.y;
+            if (region.xMin < pRegion.xMin) pRegion.xMin = region.xMin;
+            if (pRegion.xMax < region.xMax) pRegion.xMax = region.xMax;
+            if (region.yMin < pRegion.yMin) pRegion.yMin = region.yMin;
+            if (pRegion.yMax < region.yMax) pRegion.yMax = region.yMax;
         }
 
         //Extends the render region if post effects require
@@ -184,10 +184,10 @@ struct SceneImpl : Scene
                 auto effect = *p;
                 if (!effect->valid || !impl.renderer->region(effect)) continue;
                 // Each effect expands the output of the preceding effects.
-                pRegion.min.x += effect->extend.min.x;
-                pRegion.min.y += effect->extend.min.y;
-                pRegion.max.x += effect->extend.max.x;
-                pRegion.max.y += effect->extend.max.y;
+                pRegion.xMin += effect->extend.xMin;
+                pRegion.yMin += effect->extend.yMin;
+                pRegion.xMax += effect->extend.xMax;
+                pRegion.yMax += effect->extend.yMax;
             }
         }
 

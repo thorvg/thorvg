@@ -212,7 +212,7 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
                 stroke.bbox = bbox;
                 stroke.bboxMesh.bbox(bbox.min, bbox.max);
                 auto strokeBounds = gpuTransformBounds(stroker.bounds(), transform);
-                expand({{(float)strokeBounds.min.x, (float)strokeBounds.min.y}, {(float)strokeBounds.max.x, (float)strokeBounds.max.y}});
+                expand({{(float)strokeBounds.xMin, (float)strokeBounds.yMin}, {(float)strokeBounds.xMax, (float)strokeBounds.yMax}});
             }
         }
     }

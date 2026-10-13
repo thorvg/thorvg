@@ -266,4 +266,107 @@ TEST_CASE("Multi-Threading", "[tvgSwCanvas]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Dirty regions lifecycle", "[tvgSwCanvas]")
+{
+    REQUIRE(Initializer::init(2) == Result::Success);
+    {
+        for (auto option : {EngineOption::SmartRender, EngineOption::None}) {
+            auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen(option));
+            REQUIRE(canvas);
+            Region regions[2] = {};
+            REQUIRE(canvas->dirtyRegions() == 0);
+            REQUIRE(canvas->dirtyRegions(regions, 2) == Result::InsufficientCondition);
+            REQUIRE(canvas->dirtyRegions(nullptr, 1) == Result::InvalidArguments);
+            REQUIRE(canvas->dirtyRegions(regions, 0) == Result::InvalidArguments);
+
+            uint32_t buffer[80 * 60] = {};
+            REQUIRE(canvas->target(buffer, 80, 80, 60, ColorSpace::ARGB8888) == Result::Success);
+            auto shape = Shape::gen();
+            REQUIRE(shape->appendRect(5, 7, 10, 12) == Result::Success);
+            REQUIRE(shape->fill(255, 0, 0) == Result::Success);
+            REQUIRE(canvas->add(shape) == Result::Success);
+
+            for (bool clear : {false, true}) {
+                REQUIRE(canvas->update() == Result::Success);
+                REQUIRE(canvas->dirtyRegions() == 0);
+                REQUIRE(canvas->dirtyRegions(regions, 2) == Result::InsufficientCondition);
+                REQUIRE(canvas->draw(clear) == Result::Success);
+                REQUIRE(canvas->dirtyRegions() == 1);
+                REQUIRE(canvas->dirtyRegions(nullptr, 1) == Result::InvalidArguments);
+                REQUIRE(canvas->dirtyRegions(regions, 0) == Result::InvalidArguments);
+                REQUIRE(regions[0].xMin == 0);
+                REQUIRE(canvas->dirtyRegions(regions, 2) == Result::Success);
+                REQUIRE(regions[0].xMin == 0);
+                REQUIRE(regions[0].yMin == 0);
+                REQUIRE(regions[0].xMax == 80);
+                REQUIRE(regions[0].yMax == 60);
+                REQUIRE(regions[1].xMin == 0);
+                REQUIRE(regions[1].yMin == 0);
+                REQUIRE(regions[1].xMax == 0);
+                REQUIRE(regions[1].yMax == 0);
+                REQUIRE(canvas->dirtyRegions() == 1);
+                REQUIRE(canvas->sync() == Result::Success);
+                REQUIRE(canvas->dirtyRegions() == 0);
+                REQUIRE(canvas->dirtyRegions(regions, 2) == Result::InsufficientCondition);
+                regions[0] = {};
+            }
+        }
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+#ifdef THORVG_PARTIAL_RENDER_SUPPORT
+TEST_CASE("Dirty regions partial updates", "[tvgSwCanvas]")
+{
+    REQUIRE(Initializer::init(2) == Result::Success);
+    {
+        auto canvas = unique_ptr<SwCanvas>(SwCanvas::gen(EngineOption::SmartRender));
+        REQUIRE(canvas);
+        uint32_t buffer[100 * 80] = {};
+        REQUIRE(canvas->target(buffer, 100, 100, 80, ColorSpace::ARGB8888) == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+        auto shape = Shape::gen();
+        REQUIRE(shape->appendCircle(15, 15, 10, 10) == Result::Success);
+        REQUIRE(shape->fill(255, 0, 0) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+
+        Region region = {};
+        REQUIRE(canvas->dirtyRegions() == 1);
+        REQUIRE(canvas->dirtyRegions(&region, 1) == Result::Success);
+        REQUIRE(region.xMin == 0);
+        REQUIRE(region.yMin == 0);
+        REQUIRE(region.xMax == 100);
+        REQUIRE(region.yMax == 80);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        shape->translate(10, 10);
+
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw() == Result::Success);
+
+        const Region expected[] = {
+            {5, 5, 25, 20},
+            {25, 15, 35, 20},
+            {5, 20, 25, 25},
+            {15, 25, 25, 35},
+            {25, 20, 35, 35}};
+        Region regions[5] = {};
+        REQUIRE(canvas->dirtyRegions() == 5);
+        REQUIRE(canvas->dirtyRegions(regions, 5) == Result::Success);
+        for (uint32_t i = 0; i < 5; ++i) {
+            REQUIRE(regions[i].xMin == expected[i].xMin);
+            REQUIRE(regions[i].yMin == expected[i].yMin);
+            REQUIRE(regions[i].xMax == expected[i].xMax);
+            REQUIRE(regions[i].yMax == expected[i].yMax);
+        }
+        REQUIRE(canvas->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+#endif
+
 #endif

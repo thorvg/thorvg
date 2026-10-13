@@ -36,24 +36,24 @@ static bool eligible(const WgShape* rdata, BlendMethod blendMethod, RenderRegion
     const auto& bbox = rdata->bbox;
     if (!std::isfinite(bbox.min.x) || !std::isfinite(bbox.min.y) || !std::isfinite(bbox.max.x) || !std::isfinite(bbox.max.y)) return false;
 
-    const auto minX = tvg::clamp(static_cast<double>(bbox.min.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
-    const auto minY = tvg::clamp(static_cast<double>(bbox.min.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
-    const auto maxX = tvg::clamp(static_cast<double>(bbox.max.x), static_cast<double>(rdata->viewport.min.x), static_cast<double>(rdata->viewport.max.x));
-    const auto maxY = tvg::clamp(static_cast<double>(bbox.max.y), static_cast<double>(rdata->viewport.min.y), static_cast<double>(rdata->viewport.max.y));
+    const auto minX = tvg::clamp(static_cast<double>(bbox.min.x), static_cast<double>(rdata->viewport.xMin), static_cast<double>(rdata->viewport.xMax));
+    const auto minY = tvg::clamp(static_cast<double>(bbox.min.y), static_cast<double>(rdata->viewport.yMin), static_cast<double>(rdata->viewport.yMax));
+    const auto maxX = tvg::clamp(static_cast<double>(bbox.max.x), static_cast<double>(rdata->viewport.xMin), static_cast<double>(rdata->viewport.xMax));
+    const auto maxY = tvg::clamp(static_cast<double>(bbox.max.y), static_cast<double>(rdata->viewport.yMin), static_cast<double>(rdata->viewport.yMax));
     if (maxX <= minX || maxY <= minY) return false;
 
-    bounds = {{static_cast<int32_t>(std::floor(minX)), static_cast<int32_t>(std::floor(minY))}, {static_cast<int32_t>(std::ceil(maxX)), static_cast<int32_t>(std::ceil(maxY))}};
+    bounds = {static_cast<int32_t>(std::floor(minX)), static_cast<int32_t>(std::floor(minY)), static_cast<int32_t>(std::ceil(maxX)), static_cast<int32_t>(std::ceil(maxY))};
 
     return true;
 }
 
 static bool intersects(const WgStencilBatch& batch, const RenderRegion& bounds)
 {
-    const auto min = batch.ySorted ? bounds.min.y : bounds.min.x;
-    const auto max = batch.ySorted ? bounds.max.y : bounds.max.x;
+    const auto min = batch.ySorted ? bounds.yMin : bounds.xMin;
+    const auto max = batch.ySorted ? bounds.yMax : bounds.xMax;
     ARRAY_FOREACH(p, batch.bounds) {
-        const auto pMin = batch.ySorted ? (*p).min.y : (*p).min.x;
-        if ((batch.ySorted ? (*p).max.y : (*p).max.x) <= min) continue;
+        const auto pMin = batch.ySorted ? (*p).yMin : (*p).xMin;
+        if ((batch.ySorted ? (*p).yMax : (*p).xMax) <= min) continue;
         if (pMin >= max) break;
         if ((*p).intersected(bounds)) return true;
     }
@@ -63,9 +63,9 @@ static bool intersects(const WgStencilBatch& batch, const RenderRegion& bounds)
 static void addBounds(WgStencilBatch& batch, const RenderRegion& bounds)
 {
     auto p = batch.bounds.count;
-    const auto min = batch.ySorted ? bounds.min.y : bounds.min.x;
+    const auto min = batch.ySorted ? bounds.yMin : bounds.xMin;
     batch.bounds.push(bounds);
-    while (p > 0 && (batch.ySorted ? batch.bounds[p - 1].min.y : batch.bounds[p - 1].min.x) > min) {
+    while (p > 0 && (batch.ySorted ? batch.bounds[p - 1].yMin : batch.bounds[p - 1].xMin) > min) {
         batch.bounds[p] = batch.bounds[p - 1];
         --p;
     }

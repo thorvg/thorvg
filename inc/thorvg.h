@@ -360,6 +360,18 @@ struct Matrix
     float e31, e32, e33;
 };
 
+/**
+ * @brief A data structure representing an axis-aligned rectangular region.
+ *
+ * The region is defined by its minimum and maximum x and y coordinates.
+ *
+ * @note Experimental API
+ */
+struct Region
+{
+    int32_t xMin, yMin;
+    int32_t xMax, yMax;
+};
 
 /**
  * @brief Describes the font metrics of a text object.
@@ -1048,6 +1060,36 @@ struct TVG_API Canvas
      * @see Canvas::draw()
      */
     Result sync() noexcept;
+
+    /**
+     * @brief Returns the number of dirty regions of the canvas.
+     *
+     * @return The number of regions available for retrieval.
+     *
+     * @note This function is useful when @c EngineOption::SmartRender is enabled.
+     * @note This function must be called after @ref Canvas::draw() and before @ref Canvas::sync().
+     * @note Experimental API
+     *
+     * @see Canvas::dirtyRegions(Region*, uint32_t)
+     */
+    uint32_t dirtyRegions() const noexcept;
+
+    /**
+     * @brief Retrieves the dirty regions of the canvas.
+     *
+     * @param[out] regions An array to receive the dirty regions.
+     * @param[in] cnt The number of Region elements that the array can hold.
+     *
+     * @retval Result::InvalidArguments If @p regions is @c nullptr or @p cnt is zero.
+     * @retval Result::InsufficientCondition If called outside the interval after Canvas::draw() and before Canvas::sync().
+     * @retval Result::NonSupport If the active rendering backend does not support @c EngineOption::SmartRender.
+     *
+     * @note This function is useful when @c EngineOption::SmartRender is enabled.
+     * @note Experimental API
+     *
+     * @see Canvas::dirtyRegions()
+     */
+    Result dirtyRegions(Region* regions, uint32_t cnt) const noexcept;
 
     _TVG_PUBLIC_DTOR_PIMPL(Canvas);
 };

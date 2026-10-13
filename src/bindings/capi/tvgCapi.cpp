@@ -163,6 +163,17 @@ TVG_API Tvg_Result tvg_canvas_sync(Tvg_Canvas canvas)
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+TVG_API uint32_t tvg_canvas_get_dirty_regions_cnt(Tvg_Canvas canvas)
+{
+    if (canvas) return reinterpret_cast<const Canvas*>(canvas)->dirtyRegions();
+    return 0;
+}
+
+TVG_API Tvg_Result tvg_canvas_get_dirty_regions(Tvg_Canvas canvas, Tvg_Region* regions, uint32_t cnt)
+{
+    if (canvas) return (Tvg_Result) reinterpret_cast<const Canvas*>(canvas)->dirtyRegions(reinterpret_cast<Region*>(regions), cnt);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API Tvg_Result tvg_canvas_set_viewport(Tvg_Canvas canvas, int32_t x, int32_t y, int32_t w, int32_t h)
 {

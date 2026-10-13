@@ -61,15 +61,15 @@ RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix
 {
     if (bounds.invalid()) return bounds;
 
-    auto lt = Point{float(bounds.min.x), float(bounds.min.y)} * matrix;
-    auto lb = Point{float(bounds.min.x), float(bounds.max.y)} * matrix;
-    auto rt = Point{float(bounds.max.x), float(bounds.min.y)} * matrix;
-    auto rb = Point{float(bounds.max.x), float(bounds.max.y)} * matrix;
+    auto lt = Point{float(bounds.xMin), float(bounds.yMin)} * matrix;
+    auto lb = Point{float(bounds.xMin), float(bounds.yMax)} * matrix;
+    auto rt = Point{float(bounds.xMax), float(bounds.yMin)} * matrix;
+    auto rb = Point{float(bounds.xMax), float(bounds.yMax)} * matrix;
 
     auto min = tvg::min(tvg::min(lt, lb), tvg::min(rt, rb));
     auto max = tvg::max(tvg::max(lt, lb), tvg::max(rt, rb));
 
-    return RenderRegion{{int32_t(floor(min.x)), int32_t(floor(min.y))}, {int32_t(ceil(max.x)), int32_t(ceil(max.y))}};
+    return RenderRegion{int32_t(floor(min.x)), int32_t(floor(min.y)), int32_t(ceil(max.x)), int32_t(ceil(max.y))};
 }
 
 struct ThinPathTracker

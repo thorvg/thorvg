@@ -47,24 +47,24 @@ struct StencilCoverVertex
 static void addStencilCoverPositionLayout(GlRenderTask* task, GlStageBuffer* gpuBuffer, const RenderRegion& bbox)
 {
     float vertex[] = {
-        float(bbox.min.x), float(bbox.min.y),
-        float(bbox.min.x), float(bbox.max.y),
-        float(bbox.max.x), float(bbox.min.y),
-        float(bbox.max.x), float(bbox.min.y),
-        float(bbox.min.x), float(bbox.max.y),
-        float(bbox.max.x), float(bbox.max.y)};
+        float(bbox.xMin), float(bbox.yMin),
+        float(bbox.xMin), float(bbox.yMax),
+        float(bbox.xMax), float(bbox.yMin),
+        float(bbox.xMax), float(bbox.yMin),
+        float(bbox.xMin), float(bbox.yMax),
+        float(bbox.xMax), float(bbox.yMax)};
     task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), gpuBuffer->pushAux(vertex, sizeof(vertex)), GL_FLOAT, GL_FALSE, gpuBuffer->getAuxBufferId()});
 }
 
 static void addStencilCoverSolidLayout(GlRenderTask* task, GlStageBuffer* gpuBuffer, const RenderRegion& bbox, const RenderColor& color)
 {
     StencilCoverVertex vertex[] = {
-        {float(bbox.min.x), float(bbox.min.y), color},
-        {float(bbox.min.x), float(bbox.max.y), color},
-        {float(bbox.max.x), float(bbox.min.y), color},
-        {float(bbox.max.x), float(bbox.min.y), color},
-        {float(bbox.min.x), float(bbox.max.y), color},
-        {float(bbox.max.x), float(bbox.max.y), color}};
+        {float(bbox.xMin), float(bbox.yMin), color},
+        {float(bbox.xMin), float(bbox.yMax), color},
+        {float(bbox.xMax), float(bbox.yMin), color},
+        {float(bbox.xMax), float(bbox.yMin), color},
+        {float(bbox.xMin), float(bbox.yMax), color},
+        {float(bbox.xMax), float(bbox.yMax), color}};
     auto vertexOffset = gpuBuffer->pushAux(vertex, sizeof(vertex));
     auto auxBuffer = gpuBuffer->getAuxBufferId();
     task->addVertexLayout(GlVertexLayout{0, 2, sizeof(StencilCoverVertex), vertexOffset, GL_FLOAT, GL_FALSE, auxBuffer});
@@ -164,11 +164,11 @@ GlStencilCoverBatch::Preparation GlStencilCoverBatch::prepare(GlRenderer& render
 
 bool GlStencilCoverBatch::intersects(const RenderRegion& bounds) const
 {
-    auto min = ySorted ? bounds.min.y : bounds.min.x;
-    auto max = ySorted ? bounds.max.y : bounds.max.x;
+    auto min = ySorted ? bounds.yMin : bounds.xMin;
+    auto max = ySorted ? bounds.yMax : bounds.xMax;
     ARRAY_FOREACH(p, this->bounds) {
-        auto pMin = ySorted ? (*p).min.y : (*p).min.x;
-        if ((ySorted ? (*p).max.y : (*p).max.x) <= min) continue;
+        auto pMin = ySorted ? (*p).yMin : (*p).xMin;
+        if ((ySorted ? (*p).yMax : (*p).xMax) <= min) continue;
         if (pMin >= max) break;
         if ((*p).intersected(bounds)) return true;
     }
@@ -179,9 +179,9 @@ bool GlStencilCoverBatch::intersects(const RenderRegion& bounds) const
 void GlStencilCoverBatch::addBounds(const RenderRegion& bounds)
 {
     auto p = this->bounds.count;
-    auto min = ySorted ? bounds.min.y : bounds.min.x;
+    auto min = ySorted ? bounds.yMin : bounds.xMin;
     this->bounds.grow(1);
-    while (p > 0 && (ySorted ? this->bounds[p - 1].min.y : this->bounds[p - 1].min.x) > min) {
+    while (p > 0 && (ySorted ? this->bounds[p - 1].yMin : this->bounds[p - 1].xMin) > min) {
         this->bounds[p] = this->bounds[p - 1];
         --p;
     }

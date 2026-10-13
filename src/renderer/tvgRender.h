@@ -100,64 +100,63 @@ struct RenderCompositor
     uint8_t opacity;
 };
 
-struct RenderRegion
+struct RenderRegion : Region
 {
-    struct {
-        int32_t x, y;
-    } min, max;
+    RenderRegion() = default;
+    constexpr RenderRegion(int32_t xMin, int32_t yMin, int32_t xMax, int32_t yMax) : Region{xMin, yMin, xMax, yMax} {}
 
     static constexpr RenderRegion intersect(const RenderRegion& lhs, const RenderRegion& rhs)
     {
-        RenderRegion ret = {{std::max(lhs.min.x, rhs.min.x), std::max(lhs.min.y, rhs.min.y)}, {std::min(lhs.max.x, rhs.max.x), std::min(lhs.max.y, rhs.max.y)}};
+        RenderRegion ret = {std::max(lhs.xMin, rhs.xMin), std::max(lhs.yMin, rhs.yMin), std::min(lhs.xMax, rhs.xMax), std::min(lhs.yMax, rhs.yMax)};
         // Not intersected: collapse to zero-area region
-        if (ret.min.x > ret.max.x) ret.max.x = ret.min.x;
-        if (ret.min.y > ret.max.y) ret.max.y = ret.min.y;
+        if (ret.xMin > ret.xMax) ret.xMax = ret.xMin;
+        if (ret.yMin > ret.yMax) ret.yMax = ret.yMin;
         return ret;
     }
 
     static constexpr RenderRegion add(const RenderRegion& lhs, const RenderRegion& rhs)
     {
-        return {{std::min(lhs.min.x, rhs.min.x), std::min(lhs.min.y, rhs.min.y)}, {std::max(lhs.max.x, rhs.max.x), std::max(lhs.max.y, rhs.max.y)}};
+        return {std::min(lhs.xMin, rhs.xMin), std::min(lhs.yMin, rhs.yMin), std::max(lhs.xMax, rhs.xMax), std::max(lhs.yMax, rhs.yMax)};
     }
 
     void intersect(const RenderRegion& rhs);
 
     void add(const RenderRegion& rhs)
     {
-        if (rhs.min.x < min.x) min.x = rhs.min.x;
-        if (rhs.min.y < min.y) min.y = rhs.min.y;
-        if (rhs.max.x > max.x) max.x = rhs.max.x;
-        if (rhs.max.y > max.y) max.y = rhs.max.y;
+        if (rhs.xMin < xMin) xMin = rhs.xMin;
+        if (rhs.yMin < yMin) yMin = rhs.yMin;
+        if (rhs.xMax > xMax) xMax = rhs.xMax;
+        if (rhs.yMax > yMax) yMax = rhs.yMax;
     }
 
     bool inside(const Point& pt) const
     {
-        return (pt.x >= min.x && pt.x < max.x && pt.y >= min.y && pt.y < max.y);
+        return (pt.x >= xMin && pt.x < xMax && pt.y >= yMin && pt.y < yMax);
     }
 
     bool contained(const RenderRegion& rhs) const
     {
-        return (min.x <= rhs.min.x && max.x >= rhs.max.x && min.y <= rhs.min.y && max.y >= rhs.max.y);
+        return (xMin <= rhs.xMin && xMax >= rhs.xMax && yMin <= rhs.yMin && yMax >= rhs.yMax);
     }
 
     bool intersected(const RenderRegion& rhs) const
     {
-        return (rhs.min.x < max.x && rhs.max.x > min.x && rhs.min.y < max.y && rhs.max.y > min.y);
+        return (rhs.xMin < xMax && rhs.xMax > xMin && rhs.yMin < yMax && rhs.yMax > yMin);
     }
 
     bool operator==(const RenderRegion& rhs) const
     {
-        return (min.x == rhs.min.x && min.y == rhs.min.y && max.x == rhs.max.x && max.y == rhs.max.y);
+        return (xMin == rhs.xMin && yMin == rhs.yMin && xMax == rhs.xMax && yMax == rhs.yMax);
     }
 
-    void reset() { min.x = min.y = max.x = max.y = 0; }
-    bool valid() const { return (max.x > min.x && max.y > min.y); }
+    void reset() { xMin = yMin = xMax = yMax = 0; }
+    bool valid() const { return (xMax > xMin && yMax > yMin); }
     bool invalid() const { return !valid(); }
 
-    int32_t sx() const { return min.x; }
-    int32_t sy() const { return min.y; }
-    int32_t sw() const { return max.x - min.x; }
-    int32_t sh() const { return max.y - min.y; }
+    int32_t sx() const { return xMin; }
+    int32_t sy() const { return yMin; }
+    int32_t sw() const { return xMax - xMin; }
+    int32_t sh() const { return yMax - yMin; }
 
     uint32_t x() const { return (uint32_t) sx(); }
     uint32_t y() const { return (uint32_t) sy(); }
@@ -185,7 +184,7 @@ struct RenderRegion
             return on;
         }
 
-        bool deactivated()
+        bool deactivated() const
         {
             return (!support || disabled);
         }
@@ -195,9 +194,18 @@ struct RenderRegion
             return partitions[idx].region;
         }
 
-        const Array<RenderRegion>& get(int idx)
+        const Array<RenderRegion>& get(int idx) const
         {
             return partitions[idx].list[partitions[idx].current];
+        }
+
+        uint32_t count() const
+        {
+            uint32_t count = 0;
+            for (int idx = 0; idx < PARTITIONING; ++idx) {
+                count += get(idx).count;
+            }
+            return count;
         }
 
     private:
@@ -225,10 +233,15 @@ struct RenderRegion
         bool add(TVG_UNUSED const RenderRegion& bbox) { return true; }
         bool add(TVG_UNUSED const RenderRegion& prv, TVG_UNUSED const RenderRegion& cur) { return true; }
         void clear() {}
+        uint32_t count() const { return 0; }
         bool deactivate(TVG_UNUSED bool on) { return true; }
-        bool deactivated() { return true; }
+        bool deactivated() const { return true; }
         const RenderRegion& partition(TVG_UNUSED int idx) { static RenderRegion tmp{}; return tmp; }
-        const Array<RenderRegion>& get(TVG_UNUSED int idx) { static Array<RenderRegion> tmp; return tmp; }
+        const Array<RenderRegion>& get(TVG_UNUSED int idx) const
+        {
+            static Array<RenderRegion> tmp;
+            return tmp;
+        }
     };
 #endif
 
@@ -697,6 +710,8 @@ public:
     //partial rendering
     virtual void damage(RenderData rd, const RenderRegion& region) = 0;
     virtual bool partial(bool disable) = 0;
+    virtual uint32_t dirtyRegions() const = 0;
+    virtual Result dirtyRegions(Region* regions, uint32_t cnt) const = 0;
 };
 
 static inline bool MASK_REGION_MERGING(MaskMethod method)

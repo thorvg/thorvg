@@ -97,7 +97,7 @@ struct WgIntersector
         for (int32_t y = 0; y < sizeY; y++) {
             auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
             for (int32_t x = 0; x < sizeX; x++) {
-                Point pt{(float)x + region.min.x, (float)py + region.min.y};
+                Point pt{(float)x + region.xMin, (float)py + region.yMin};
                 const auto& mesh = shape->shape.mesh;
                 auto hit = validFill ? shape->shape.bbox.inside(pt) && gpuPointInEvenOddMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count) : false;
                 if (!hit && validStroke) {
@@ -126,7 +126,7 @@ struct WgIntersector
         for (int32_t y = 0; y < sizeY; y++) {
             auto py = (y % 2 == 0) ? y : sizeY - y - sizeY % 2;
             for (int32_t x = 0; x < sizeX; x++) {
-                Point pt{(float)x + region.min.x, (float)py + region.min.y};
+                Point pt{(float)x + region.xMin, (float)py + region.yMin};
                 if (gpuPointInQuad(pt, triangle) && intersect(image->clips, pt)) return true;
             }
         }
@@ -331,7 +331,7 @@ bool WgRenderer::preRender()
 
     // create root compose settings
     WgCompose* compose = new WgCompose();
-    compose->aabb = {{0, 0}, {(int32_t)mSurface.w, (int32_t)mSurface.h}};
+    compose->aabb = {0, 0, (int32_t)mSurface.w, (int32_t)mSurface.h};
     compose->blend = BlendMethod::Normal;
     compose->method = MaskMethod::None;
     compose->opacity = 255;
@@ -670,25 +670,25 @@ bool WgRenderer::region(RenderEffect* effect)
     if (effect->type == SceneEffect::GaussianBlur) {
         auto gaussian = (RenderEffectGaussianBlur*)effect;
         if (gaussian->direction != 2) {
-            gaussian->extend.min.x = -rdata->extend;
-            gaussian->extend.max.x = +rdata->extend;
+            gaussian->extend.xMin = -rdata->extend;
+            gaussian->extend.xMax = +rdata->extend;
         }
         if (gaussian->direction != 1) {
-            gaussian->extend.min.y = -rdata->extend;
-            gaussian->extend.max.y = +rdata->extend;
+            gaussian->extend.yMin = -rdata->extend;
+            gaussian->extend.yMax = +rdata->extend;
         }
         return true;
     } else if (effect->type == SceneEffect::DropShadow) {
         auto dropShadow = (RenderEffectDropShadow*)effect;
-        dropShadow->extend.min.x = -std::ceil(rdata->extend + std::abs(rdata->offset.x));
-        dropShadow->extend.min.y = -std::ceil(rdata->extend + std::abs(rdata->offset.y));
-        dropShadow->extend.max.x = +std::floor(rdata->extend + std::abs(rdata->offset.x));
-        dropShadow->extend.max.y = +std::floor(rdata->extend + std::abs(rdata->offset.y));
+        dropShadow->extend.xMin = -std::ceil(rdata->extend + std::abs(rdata->offset.x));
+        dropShadow->extend.yMin = -std::ceil(rdata->extend + std::abs(rdata->offset.y));
+        dropShadow->extend.xMax = +std::floor(rdata->extend + std::abs(rdata->offset.x));
+        dropShadow->extend.yMax = +std::floor(rdata->extend + std::abs(rdata->offset.y));
         return true;
     } else if (effect->type == SceneEffect::MotionBlur) {
         auto x = int32_t(ceilf(fabsf(rdata->offset.x) * 0.5f));
         auto y = int32_t(ceilf(fabsf(rdata->offset.y) * 0.5f));
-        effect->extend = {{-x, -y}, {x, y}};
+        effect->extend = {-x, -y, x, y};
         return true;
     }
     return false;
@@ -732,20 +732,29 @@ void WgRenderer::damage(TVG_UNUSED RenderData rd, TVG_UNUSED const RenderRegion&
 }
 
 
-bool WgRenderer::partial(bool disable)
+bool WgRenderer::partial(TVG_UNUSED bool disable)
 {
     //TODO
     return false;
 }
 
+uint32_t WgRenderer::dirtyRegions() const
+{
+    return 0;
+}
+
+Result WgRenderer::dirtyRegions(TVG_UNUSED Region* regions, TVG_UNUSED uint32_t cnt) const
+{
+    return Result::NonSupport;
+}
 
 bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
 {
     if (!data) return false;
     auto shape = (WgShape*)data;
     RenderRegion bbox = {
-        {(int32_t)shape->bbox.min.x, (int32_t)shape->bbox.min.y},
-        {(int32_t)shape->bbox.max.x, (int32_t)shape->bbox.max.y}};
+        (int32_t)shape->bbox.min.x, (int32_t)shape->bbox.min.y,
+        (int32_t)shape->bbox.max.x, (int32_t)shape->bbox.max.y};
     if (region.intersected(bbox)) {
         if (region.contained(bbox)) return true;
         WgIntersector intersector;
