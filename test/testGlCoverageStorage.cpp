@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -400,19 +401,222 @@ void atlasChecks(Validation& validation, GlRenderer& renderer, const WglTarget& 
     validation.check(glGetError() == GL_NO_ERROR, "atlas lifecycle has no GL error");
 }
 
+uint8_t coveragePixel(const CoverageMap& map, uint32_t x, uint32_t y)
+{
+    if (!map.data || int32_t(x) < map.bounds.min.x || int32_t(y) < map.bounds.min.y ||
+        int32_t(x) >= map.bounds.max.x || int32_t(y) >= map.bounds.max.y) return 0;
+    return map.data[size_t(y - map.bounds.min.y) * map.stride + x - map.bounds.min.x];
+}
+
+std::array<double, 4> paintColor(const RenderColor& color, const Fill* fill, const Matrix& transform,
+                                 uint8_t opacity, uint32_t x, uint32_t y)
+{
+    if (!fill) return {{color.r / 255.0, color.g / 255.0, color.b / 255.0, MULTIPLY(color.a, opacity) / 255.0}};
+
+    Matrix inverseShape, inverseFill;
+    inverse(&transform, &inverseShape);
+    inverse(&fill->transform(), &inverseFill);
+    Point position = {x + 0.5f, y + 0.5f};
+    position *= inverseFill * inverseShape;
+    double t = 0.0;
+    if (fill->type() == Type::LinearGradient) {
+        float x1, y1, x2, y2;
+        static_cast<const LinearGradient*>(fill)->linear(&x1, &y1, &x2, &y2);
+        t = ((position.x - x1) * (x2 - x1) + (position.y - y1) * (y2 - y1)) /
+            ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+    } else if (fill->type() == Type::RadialGradient) {
+        float cx, cy, radius;
+        static_cast<const RadialGradient*>(fill)->radial(&cx, &cy, &radius);
+        t = std::hypot(position.x - cx, position.y - cy) / radius;
+    } else {
+        float cx, cy, angle;
+        static_cast<const ConicGradient*>(fill)->conic(&cx, &cy, &angle);
+        t = (std::atan2(position.y - cy, position.x - cx) - angle * 3.141592653589793 / 180.0) /
+            (2.0 * 3.141592653589793);
+        t -= std::floor(t);
+    }
+    t = std::max(0.0, std::min(1.0, t));
+    const Fill::ColorStop* stops;
+    fill->colorStops(&stops);
+    const auto& first = stops[0];
+    const auto& last = stops[1];
+    return {{(first.r * (1.0 - t) + last.r * t) / 255.0,
+             (first.g * (1.0 - t) + last.g * t) / 255.0,
+             (first.b * (1.0 - t) + last.b * t) / 255.0,
+             (first.a * (1.0 - t) + last.a * t) * opacity / (255.0 * 255.0)}};
+}
+
+std::vector<uint8_t> drawCase(Validation& validation, GlRenderer& renderer, const WglTarget& target,
+                            const std::string& label, RenderShape& rshape, GlCoverageFormat format,
+                            uint8_t opacity = 255, const Matrix& transform = identity(),
+                            const RenderRegion& viewport = {{0, 0}, {Width, Height}}, uint32_t tolerance = 0,
+                            const RenderColor* background = nullptr)
+{
+    renderer.viewport(viewport);
+    Array<RenderData> clips;
+    validation.check(renderer.preUpdate(), label + " preUpdate");
+    RenderShape backdrop;
+    GlShape* backgroundShape = nullptr;
+    if (background) {
+        backdrop.path.addRect(0.0f, 0.0f, Width, Height, 0.0f, 0.0f, true);
+        backdrop.color = *background;
+        backgroundShape = static_cast<GlShape*>(renderer.prepare(backdrop, nullptr, identity(), clips, 255, RenderUpdateFlag::All, false));
+        validation.check(backgroundShape != nullptr, label + " background prepare");
+    }
+    auto shape = static_cast<GlShape*>(renderer.prepare(rshape, nullptr, transform, clips, opacity, RenderUpdateFlag::All, false));
+    if (!validation.check(shape != nullptr, label + " prepare")) return {};
+    validation.check(renderer.postUpdate(), label + " postUpdate");
+    const auto& active = rshape.color.a || rshape.fill ? shape->fillCoverage : shape->strokeCoverage;
+    validation.check(active.status == CoverageStatus::Ready && active.map.data && active.region.texture && active.format == format,
+                     label + " uses expected ready atlas format");
+    validation.check(renderer.preRender(), label + " preRender");
+    if (backgroundShape) {
+        validation.check(renderer.renderShape(backgroundShape), label + " background renderShape");
+        validation.check(renderer.blend(BlendMethod::Multiply), label + " Multiply blend");
+    }
+    validation.check(renderer.renderShape(shape), label + " renderShape");
+    if (background) renderer.blend(BlendMethod::Normal);
+    validation.check(renderer.postRender(), label + " postRender");
+    validation.check(renderer.sync(), label + " sync");
+
+    // The root target stores premultiplied RGBA with OpenGL's bottom-up row order.
+    renderer.mStateCache.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, renderer.mRootTarget.colorTex);
+    std::vector<uint8_t> frame(size_t(Width) * Height * 4);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    target.getTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, frame.data());
+    uint32_t maxError = 0, partial = 0;
+    size_t firstMismatch = frame.size();
+    for (uint32_t y = 0; y < Height; ++y) {
+        for (uint32_t x = 0; x < Width; ++x) {
+            std::array<uint8_t, 4> expected = background ? std::array<uint8_t, 4>{{background->r, background->g, background->b, background->a}} :
+                                                        std::array<uint8_t, 4>{{0, 0, 0, 0}};
+            auto composite = [&](bool stroke) {
+                auto coverage = coveragePixel(stroke ? shape->strokeCoverage.map : shape->fillCoverage.map, x, y);
+                if (!coverage || (stroke && !rshape.stroke)) return;
+                auto color = paintColor(stroke ? rshape.stroke->color : rshape.color,
+                                        stroke ? rshape.stroke->fill : rshape.fill, transform, opacity, x, y);
+                auto alpha = color[3] * coverage / 255.0;
+                for (uint32_t channel = 0; channel < 4; ++channel) {
+                    auto source = channel == 3 ? 255.0 : color[channel] * (background ? expected[channel] : 255.0);
+                    auto value = source * alpha + expected[channel] * (1.0 - alpha);
+                    expected[channel] = uint8_t(std::max(0.0, std::min(255.0, std::round(value))));
+                }
+            };
+            composite(rshape.strokeFirst());
+            composite(!rshape.strokeFirst());
+            auto coverage = background ? coveragePixel(active.map, x, y) : expected[3];
+            partial += coverage > 0 && coverage < 255;
+            auto offset = (size_t(Height - 1 - y) * Width + x) * 4;
+            for (uint32_t channel = 0; channel < 4; ++channel) {
+                auto error = uint32_t(std::abs(int(frame[offset + channel]) - int(expected[channel])));
+                maxError = std::max(maxError, error);
+                if (error > tolerance && firstMismatch == frame.size()) firstMismatch = (size_t(y) * Width + x) * 4 + channel;
+            }
+        }
+    }
+    if (firstMismatch != frame.size()) {
+        std::cerr << label << ": first RGBA difference at " << firstMismatch / 4 % Width << ',' << firstMismatch / 4 / Width
+                  << " channel " << firstMismatch % 4 << "; max error=" << maxError << '\n';
+    }
+    validation.check(maxError <= tolerance, label + " rendered RGBA matches CPU coverage and paint over entire target");
+    validation.check(opacity == 0 || partial > 0, label + " includes partial coverage or opacity");
+    validation.check(glGetError() == GL_NO_ERROR, label + " no GL error");
+    std::cout << "draw," << label << ",max_channel_error," << maxError << '\n';
+    if (backgroundShape) renderer.dispose(backgroundShape);
+    renderer.dispose(shape);
+    return frame;
+}
+
+void drawChecks(Validation& validation, GlRenderer& renderer, const WglTarget& target)
+{
+    RenderShape dense, runs;
+    dense.path.moveTo({121.2f, 91.35f}); dense.path.lineTo({122.4f, 91.55f});
+    dense.path.lineTo({121.6f, 92.45f}); dense.path.close();
+    dense.stroke = new RenderStroke;
+    dense.stroke->width = 0.55f;
+    dense.stroke->join = StrokeJoin::Round;
+    runs.path.addRect(41.25f, 35.5f, 145.5f, 100.25f, 0.0f, 0.0f, true);
+    runs.stroke = new RenderStroke;
+    runs.stroke->width = 9.25f;
+    for (auto shape : {&dense, &runs}) {
+        auto format = shape == &dense ? GlCoverageFormat::Dense : GlCoverageFormat::Runs;
+        auto name = shape == &dense ? "dense" : "runs";
+        shape->color = {255, 255, 255, 255};
+        shape->stroke->color = {};
+        drawCase(validation, renderer, target, std::string(name) + "-fill", *shape, format);
+        shape->color = {};
+        shape->stroke->color = {255, 255, 255, 255};
+        drawCase(validation, renderer, target, std::string(name) + "-stroke", *shape, format);
+    }
+    runs.color = {213, 47, 101, 176};
+    runs.stroke->color = {23, 139, 221, 208};
+    auto fillFirst = drawCase(validation, renderer, target, "color-opacity-fill-first", runs, GlCoverageFormat::Runs, 147, identity(),
+                              {{0, 0}, {Width, Height}}, 2);
+    runs.stroke->first = true;
+    auto strokeFirst = drawCase(validation, renderer, target, "color-opacity-stroke-first", runs, GlCoverageFormat::Runs, 147, identity(),
+                                {{0, 0}, {Width, Height}}, 2);
+    validation.check(fillFirst != strokeFirst, "strokeFirst changes overlapping fill and stroke colors");
+    auto transform = identity();
+    transform.e13 = -25.125f; transform.e23 = 18.375f;
+    drawCase(validation, renderer, target, "translated-offset-viewport", runs, GlCoverageFormat::Runs, 147, transform,
+             {{61, 42}, {158, 109}}, 2);
+    drawCase(validation, renderer, target, "zero-opacity", runs, GlCoverageFormat::Runs, 0);
+
+    const Fill::ColorStop stops[] = {{0.0f, 217, 39, 91, 96}, {1.0f, 21, 183, 231, 208}};
+    auto gradientTransform = identity();
+    gradientTransform.e13 = 7.25f; gradientTransform.e23 = -4.5f;
+    transform.e13 = 11.375f; transform.e23 = -8.125f;
+    for (auto type : {Type::LinearGradient, Type::RadialGradient, Type::ConicGradient}) {
+        Fill* gradient = nullptr;
+        const char* name = nullptr;
+        if (type == Type::LinearGradient) {
+            auto linear = LinearGradient::gen();
+            linear->linear(40.0f, 30.0f, 190.0f, 30.0f);
+            gradient = linear; name = "linear";
+        } else if (type == Type::RadialGradient) {
+            auto radial = RadialGradient::gen();
+            radial->radial(40.0f, 30.0f, 150.0f, 40.0f, 30.0f, 0.0f);
+            gradient = radial; name = "radial";
+        } else {
+            auto conic = ConicGradient::gen();
+            // Keep the seam outside the path so the reference uses ordinary interpolation.
+            conic->conic(0.0f, 0.0f, 0.0f);
+            gradient = conic; name = "conic";
+        }
+        gradient->colorStops(stops, 2);
+        gradient->transform(gradientTransform);
+        runs.color = {}; runs.stroke->color = {};
+        runs.fill = gradient;
+        drawCase(validation, renderer, target, std::string(name) + "-gradient-fill", runs, GlCoverageFormat::Runs, 173, transform,
+                 {{0, 0}, {Width, Height}}, 2);
+        runs.fill = nullptr;
+        runs.stroke->fill = gradient;
+        drawCase(validation, renderer, target, std::string(name) + "-gradient-stroke", runs, GlCoverageFormat::Runs, 173, transform,
+                 {{0, 0}, {Width, Height}}, 2);
+        runs.stroke->fill = nullptr;
+        delete gradient;
+    }
+    runs.color = {128, 192, 64, 255};
+    const RenderColor background = {96, 144, 208, 255};
+    drawCase(validation, renderer, target, "multiply-coverage", runs, GlCoverageFormat::Runs, 255, identity(),
+             {{0, 0}, {Width, Height}}, 2, &background);
+    renderer.viewport({{0, 0}, {Width, Height}});
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
     Validation validation;
-    bool capture = false, updatesOnly = false;
+    bool capture = false, updatesOnly = false, drawOnly = false;
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "--capture") capture = true;
         else if (std::string(argv[i]) == "--updates-only") updatesOnly = true;
+        else if (std::string(argv[i]) == "--draw-only") drawOnly = true;
         else if (validation.directory.empty()) validation.directory = argv[i];
-        else { std::cerr << "Usage: tvgCoverageStorageTests [output-directory] [--capture|--updates-only]\n"; return 2; }
+        else { std::cerr << "Usage: tvgCoverageStorageTests [output-directory] [--capture|--updates-only|--draw-only]\n"; return 2; }
     }
-    if (!validation.directory.empty()) {
+    if (!validation.directory.empty() && !drawOnly) {
         if (!CreateDirectoryA(validation.directory.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS) {
             std::cerr << "Cannot create output directory\n"; return 2;
         }
@@ -432,6 +636,13 @@ int main(int argc, char** argv)
     }
     renderer->viewport({{0, 0}, {Width, Height}});
     std::cerr << "GL renderer: " << glGetString(GL_RENDERER) << "; version: " << glGetString(GL_VERSION) << "; texture labels: " << bool(target.objectLabel) << '\n';
+    if (drawOnly) {
+        drawChecks(validation, *renderer, target);
+        renderer.reset();
+        validation.check(Initializer::term() == Result::Success, "terminate");
+        std::cout << "coverage drawing: checks=" << validation.checks << " failures=" << validation.failures << '\n';
+        return validation.failures ? 1 : 0;
+    }
     std::array<RenderShape, 8> rshapes;
     std::array<GlShape*, 8> prepared = {};
     shapes(rshapes);
@@ -555,6 +766,7 @@ int main(int argc, char** argv)
         validation.read(*renderer, target, prepared[1]->strokeCoverage, "target-reset-stroke");
     }
     for (auto shape : prepared) if (shape) renderer->dispose(shape);
+    drawChecks(validation, *renderer, target);
     renderer.reset();
     validation.check(Initializer::term() == Result::Success, "terminate");
     std::cerr << "coverage storage: maps=" << validation.maps << " page_textures=" << validation.textures.size() << " cropped_dense_bytes=" << validation.denseBytes

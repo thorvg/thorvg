@@ -215,6 +215,7 @@ struct GlRenderer : RenderMethod
     GlCoverageAtlas coverageAtlas;
     Inlist<GlShape> coverageShapes;
     bool uploadCoverage(GlCoverageMap& coverage);
+    void bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage);
 #endif
 
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient, ConicGradient };
@@ -223,13 +224,12 @@ struct GlRenderer : RenderMethod
     ~GlRenderer();
 
     void initShaders();
+    GlProgram* createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend = false);
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
-#endif
     void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
 
     GlRenderPass* currentPass();

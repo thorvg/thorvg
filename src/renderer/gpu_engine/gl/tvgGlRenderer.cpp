@@ -89,9 +89,31 @@ bool GlRenderer::uploadCoverage(GlCoverageMap& coverage)
     coverage.byteSize = packed.byteSize;
     return true;
 }
+
+void GlRenderer::bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage)
+{
+    auto& bounds = coverage.map.bounds;
+    auto& rect = coverage.region.rect;
+    auto runs = coverage.format == GlCoverageFormat::Runs;
+    struct {
+        float bounds[4];
+        int32_t atlas[4];
+    } info = {{float(bounds.sx()), float(bounds.sy()), float(bounds.w()), float(bounds.h())},
+              {rect.sx(), rect.sy(), rect.sw(), runs ? 1 : 0}};
+
+    task->setViewMatrix(currentPass()->getViewMatrix());
+    task->useDrawArrays = true;
+    task->indexCnt = runs ? coverage.runCount * 6 : 6;
+    task->addBindResource(GlBindingResource{4, GlShaderUniformBlock::CoverageInfo, mGpuBuffer.getBufferId(),
+                                          mGpuBuffer.push(&info, sizeof(info), true), sizeof(info)});
+    task->addBindResource(GlBindingResource{runs ? 2u : 1u, coverage.region.texture,
+                                          runs ? GlShaderUniform::CoverageRuns : GlShaderUniform::CoverageTexture});
+    // WebGL validates both active sampler types, including the unused branch.
+    task->addBindResource(GlBindingResource{runs ? 1u : 2u, 0,
+                                          runs ? GlShaderUniform::CoverageTexture : GlShaderUniform::CoverageRuns});
+}
 #endif
 
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
 static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopColors, const Fill::ColorStop* stops, uint32_t stopCnt, FillSpread spread, float alpha)
 {
     stopInfo[1] = NOISE_LEVEL;
@@ -116,7 +138,6 @@ static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopCo
     stopInfo[0] = nStops;
     return opaque;
 }
-#endif
 
 static bool _skipRender(const Array<RenderData>& clips)
 {
@@ -221,6 +242,24 @@ GlRenderer::~GlRenderer()
 }
 
 
+GlProgram* GlRenderer::createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend)
+{
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto tail = blend ? COVERAGE_BLEND_FRAG_MAIN : COVERAGE_FRAG_MAIN;
+    auto length = strlen(COVERAGE_FRAG_HEADER) + strlen(fragSrc) + strlen(tail) + 1;
+    auto source = tvg::malloc<char>(length);
+    snprintf(source, length, "%s%s%s", COVERAGE_FRAG_HEADER, fragSrc, tail);
+    auto program = new GlProgram(COVERAGE_VERT_SHADER, source);
+    tvg::free(source);
+    mStateCache.useProgram(program->getProgramId());
+    program->setSampler(GlShaderUniform::CoverageTexture, 1);
+    program->setSampler(GlShaderUniform::CoverageRuns, 2);
+    return program;
+#else
+    return new GlProgram(vertSrc, fragSrc);
+#endif
+}
+
 void GlRenderer::initShaders()
 {
     mPrograms.reserve((int)RT_None);
@@ -266,16 +305,16 @@ void GlRenderer::initShaders()
     );
 
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
-    mPrograms.push(nullptr);
-    mPrograms.push(nullptr);
-    mPrograms.push(nullptr);
-    mPrograms.push(nullptr);
+    const char* colorVertShader = nullptr;
+    const char* gradientVertShader = nullptr;
 #else
-    mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, conicGradientFragShader));
+    auto colorVertShader = COLOR_VERT_SHADER;
+    auto gradientVertShader = GRADIENT_VERT_SHADER;
 #endif
+    mPrograms.push(createShapeProgram(colorVertShader, COLOR_FRAG_SHADER));
+    mPrograms.push(createShapeProgram(gradientVertShader, linearGradientFragShader));
+    mPrograms.push(createShapeProgram(gradientVertShader, radialGradientFragShader));
+    mPrograms.push(createShapeProgram(gradientVertShader, conicGradientFragShader));
     mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
 
     // compose Renderer
@@ -319,7 +358,6 @@ static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, 
     return viewMatrix;
 }
 
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
 GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
 {
     dstCopyFbo = nullptr;
@@ -358,9 +396,11 @@ void GlRenderer::bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCo
 
 void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdateFlag flag, int32_t depth)
 {
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (!shape.geometry.drawable(flag)) return;
 
     auto blendShape = (mBlendMethod != BlendMethod::Normal);
+#endif
     auto vp = currentPass()->getViewport();
     // geometry.viewport carries the fast-tracked clip bounds; the pass
     // viewport can still be the full framebuffer.
@@ -369,11 +409,18 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     if (viewBounds.invalid()) return;
 
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto& coverage = stroke ? shape.strokeCoverage : shape.fillCoverage;
+    if (!coverage.region.texture) return;
+    auto bbox = coverage.map.bounds;
+#else
     auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBBox, shape.geometry.matrix) : shape.geometry.fillBBox;
+#endif
     bbox.intersect(viewBounds);
     if (bbox.invalid()) return;
 
     auto viewRegion = viewportRegion(vp, bbox);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     auto stencilMode = shape.geometry.stencilMode(flag);
 
     if (!stroke && !blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
@@ -382,15 +429,21 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     }
 
     if (!shape.clips.empty()) mSolidBatch.clear();
+#endif
 
     GlRenderTarget* dstCopyFbo = nullptr;
     auto task = createPrimitiveTask(RT_Color, BlendSource::Solid, viewRegion, dstCopyFbo);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    bindCoverage(task, coverage);
+#else
     auto viewMatrix = _viewMatrix(shape.geometry, currentPass()->getViewMatrix(), flag);
 
     task->setViewMatrix(viewMatrix);
+#endif
     task->setDrawDepth(depth);
 
     auto a = MULTIPLY(c.a, shape.opacity);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (flag & RenderUpdateFlag::Stroke) {
         auto strokeWidth = shape.geometry.strokeRenderWidth;
         if (strokeWidth < MIN_GL_STROKE_WIDTH) {
@@ -405,18 +458,29 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     }
 
     if (stencilMode == GlStencilMode::None) task->setVertexColor(color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f);
+#else
+    task->setVertexColor(c.r / 255.f, c.g / 255.f, c.b / 255.f, a / 255.f);
+#endif
     task->setViewport(viewRegion);
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     auto preparation = mStencilCoverBatch.prepare(*this, task, shape, flag, stencilMode, &color, viewBounds);
+#endif
     // Keep BlendRegion on the existing solid-shape blend UBO slot.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 2);
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    currentPass()->addRenderTask(task);
+#else
     mStencilCoverBatch.draw(currentPass(), task, preparation);
+#endif
 }
 
 void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFlag flag, int32_t depth)
 {
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (!shape.geometry.drawable(flag)) return;
+#endif
 
     auto vp = currentPass()->getViewport();
     // geometry.viewport carries the fast-tracked clip bounds; the pass
@@ -426,7 +490,13 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     if (viewBounds.invalid()) return;
 
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto& coverage = stroke ? shape.strokeCoverage : shape.fillCoverage;
+    if (!coverage.region.texture) return;
+    auto bbox = coverage.map.bounds;
+#else
     auto bbox = stroke ? gpuTransformBounds(shape.geometry.strokeBBox, shape.geometry.matrix) : shape.geometry.fillBBox;
+#endif
     bbox.intersect(viewBounds);
     if (bbox.invalid()) return;
 
@@ -469,9 +539,13 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     } else return;
 
     auto task = createPrimitiveTask(taskType, blendSource, viewRegion, dstCopyFbo);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    bindCoverage(task, coverage);
+#else
     auto viewMatrix = _viewMatrix(shape.geometry, currentPass()->getViewMatrix(), flag);
 
     task->setViewMatrix(viewMatrix);
+#endif
     task->setDrawDepth(depth);
 
     task->setViewport(viewRegion);
@@ -480,7 +554,10 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     float invMat3[GL_MAT3_STD140_SIZE];
     Matrix inv;
     inverse(&fill->transform(), &inv);
-    if (!(flag & RenderUpdateFlag::GradientStroke)) {
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
+    if (!(flag & RenderUpdateFlag::GradientStroke))
+#endif
+    {
         // World-space meshes need inverse model before gradient lookup. Local
         // gradient strokes already pass local positions to TransformInfo.
         Matrix invShape;
@@ -504,12 +581,14 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 
     auto alpha = shape.opacity / 255.f;
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (flag & RenderUpdateFlag::GradientStroke) {
         auto strokeWidth = shape.geometry.strokeRenderWidth;
         if (strokeWidth < MIN_GL_STROKE_WIDTH) {
             alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
         }
     }
+#endif
 
     // gradient block
     GlBindingResource gradientBinding{};
@@ -572,15 +651,17 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    currentPass()->addRenderTask(task);
+#else
     auto stencilMode = shape.geometry.stencilMode(flag);
     if (stroke && (mBlendMethod != BlendMethod::Normal || opaque)) stencilMode = GlStencilMode::None;
     auto preparation = mStencilCoverBatch.prepare(*this, task, shape, flag, stencilMode, nullptr, viewBounds);
 
     mStencilCoverBatch.draw(currentPass(), task, preparation);
+#endif
 }
 
-
-#endif
 
 void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds)
 {
@@ -814,7 +895,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
             break;
     }
 
-    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
+    mPrograms[shaderInd] = createShapeProgram(vertShader, fragShader, true);
     return mPrograms[shaderInd];
 }
 
@@ -1124,14 +1205,11 @@ bool GlRenderer::sync()
 
 bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 {
-#ifdef THORVG_ANALYTIC_AA_SUPPORT
-    return false;
-#else
     if (!data) return false;
 
     auto shape = static_cast<GlShape*>(data);
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
-    return false;  // Use the shape bounds fallback until analytic drawing is implemented.
+    return false;  // Coverage has no stroke mesh; use the shape bounds fallback.
 #else
     if (!shape->valid.stroke) return false;
 
@@ -1340,10 +1418,6 @@ bool GlRenderer::renderImage(void* data)
 
 bool GlRenderer::renderShape(RenderData data)
 {
-#ifdef THORVG_ANALYTIC_AA_SUPPORT
-    // This milestone prepares coverage only; shape drawing is not implemented.
-    return false;
-#else
     auto shape = static_cast<GlShape*>(data);
     if (currentPass()->isEmpty() || (!shape->valid.fill && !shape->valid.stroke)) return true;
 
@@ -1387,7 +1461,6 @@ bool GlRenderer::renderShape(RenderData data)
     }
 
     return true;
-#endif
 }
 
 

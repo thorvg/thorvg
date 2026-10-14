@@ -25,6 +25,89 @@
 
 #define TVG_COMPOSE_SHADER(shader) #shader
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+const char* COVERAGE_VERT_SHADER = R"(
+uniform float uDepth;
+uniform mat3 uViewMatrix;
+uniform highp usampler2D uCoverageRuns;
+layout(location = 1) in vec4 aColor;
+layout(std140) uniform CoverageInfo {
+    vec4 bounds;
+    ivec4 atlas;  // page origin, packed row width, run format
+} uCoverageInfo;
+layout(std140) uniform TransformInfo {
+    mat3 invTransform;
+} uTransformInfo;
+out vec4 vColor;
+out vec2 vPos;
+out vec2 vCoverageCoord;
+flat out float vCoverage;
+
+void main()
+{
+    const vec2 corners[6] = vec2[6](vec2(0, 0), vec2(0, 1), vec2(1, 0),
+                                   vec2(1, 0), vec2(0, 1), vec2(1, 1));
+    vec2 corner = corners[gl_VertexID % 6];
+    vec2 pos;
+    if (uCoverageInfo.atlas.w != 0) {
+        int index = gl_VertexID / 6;
+        ivec2 coord = uCoverageInfo.atlas.xy + ivec2(index % uCoverageInfo.atlas.z, index / uCoverageInfo.atlas.z);
+        uvec4 run = texelFetch(uCoverageRuns, coord, 0);
+        pos = vec2(run.xy) + corner * vec2(run.z, 1);
+        vCoverage = float(run.w) / 255.0;
+    } else {
+        pos = corner * uCoverageInfo.bounds.zw;
+        vCoverage = 1.0;
+    }
+    vCoverageCoord = pos;
+    pos += uCoverageInfo.bounds.xy;
+    gl_Position = vec4((uViewMatrix * vec3(pos, 1.0)).xy, uDepth, 1.0);
+    vPos = (uTransformInfo.invTransform * vec3(pos, 1.0)).xy;
+    vColor = aColor;
+}
+)";
+
+const char* COVERAGE_FRAG_HEADER = R"(
+uniform highp sampler2D uCoverageTexture;
+layout(std140) uniform CoverageInfo {
+    vec4 bounds;
+    ivec4 atlas;
+} uCoverageInfo;
+in vec2 vCoverageCoord;
+flat in float vCoverage;
+
+float coverage()
+{
+    if (uCoverageInfo.atlas.w != 0) return vCoverage;
+    return texelFetch(uCoverageTexture, uCoverageInfo.atlas.xy + ivec2(vCoverageCoord), 0).r;
+}
+#define main paintMain
+)";
+
+const char* COVERAGE_FRAG_MAIN = R"(
+#undef main
+void main()
+{
+    float c = coverage();
+    if (c == 0.0) discard;
+    paintMain();
+    FragColor *= c;
+}
+)";
+
+const char* COVERAGE_BLEND_FRAG_MAIN = R"(
+#undef main
+void main()
+{
+    float c = coverage();
+    if (c == 0.0) discard;
+    paintMain();
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    FragColor = mix(texture(uDstTexture, uv), FragColor, c);
+}
+)";
+#endif
+
 #ifndef THORVG_ANALYTIC_AA_SUPPORT
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n

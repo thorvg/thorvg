@@ -23,7 +23,12 @@
 #ifndef _TVG_GL_SHADERSRC_H_
 #define _TVG_GL_SHADERSRC_H_
 
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+extern const char* COVERAGE_VERT_SHADER;
+extern const char* COVERAGE_FRAG_HEADER;
+extern const char* COVERAGE_FRAG_MAIN;
+extern const char* COVERAGE_BLEND_FRAG_MAIN;
+#else
 extern const char* COLOR_VERT_SHADER;
 extern const char* GRADIENT_VERT_SHADER;
 #endif
