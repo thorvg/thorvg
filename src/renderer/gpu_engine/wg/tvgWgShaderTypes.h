@@ -92,7 +92,7 @@ struct WgShaderTypeGradientData
 {
     uint8_t data[WG_TEXTURE_GRADIENT_SIZE * 4];
 
-    void update(const Fill* fill);
+    bool update(const Fill* fill);
 };
 
 #define WG_GAUSSIAN_KERNEL_SIZE_MAX (128.0f)  // gaussian params: sigma, scale, extend

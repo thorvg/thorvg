@@ -147,13 +147,13 @@ void WgShaderTypeGradSettings::update(const Fill* fill, const Matrix* transform)
 // WgShaderTypeGradientData
 //************************************************************************
 
-void WgShaderTypeGradientData::update(const Fill* fill)
+bool WgShaderTypeGradientData::update(const Fill* fill)
 {
     const Fill::ColorStop* stops = nullptr;
     auto stopCnt = fill->colorStops(&stops);
     if (stopCnt == 0) {
         std::memset(data, 0, sizeof(data));
-        return;
+        return false;
     }
 
     auto assign = [](uint8_t* dst, const Fill::ColorStop& color) {
@@ -163,9 +163,11 @@ void WgShaderTypeGradientData::update(const Fill* fill)
     static Array<Fill::ColorStop> sstops(stopCnt);
     sstops.clear();
     sstops.push(stops[0]);
+    auto opaque = stops[0].a == 255;
 
     // filter by increasing offset
     for (uint32_t i = 1; i < stopCnt; i++) {
+        opaque &= stops[i].a == 255;
         if (sstops.last().offset < stops[i].offset) sstops.push(stops[i]);
         else if (sstops.last().offset == stops[i].offset) sstops.last() = stops[i];
     }
@@ -197,6 +199,7 @@ void WgShaderTypeGradientData::update(const Fill* fill)
     for (uint32_t ti = range_s; ti < range_e; ti++, dst += 4) {
         assign(dst, colorStopLast);
     }
+    return opaque;
 }
 
 //************************************************************************
