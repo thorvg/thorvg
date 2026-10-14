@@ -197,9 +197,8 @@ void WgStroker::close()
     if (overlapFree) mProbe.addEdge(mState.firstPtDir);
     join(mState.firstPtDir, len, mState.firstIndex);
     overlapFree &= mProbe.convex;
-    auto first = mState.firstPt;
-    mState = {};
-    mState.firstPt = mState.prevPt = first;
+    mState.firstLength = 0.0f;
+    mState.prevPt = mState.firstPt;
 }
 
 void WgStroker::join(const Point& dir, float len, uint32_t index)
@@ -263,16 +262,17 @@ void WgStroker::round(const Point& prev, const Point& curr, const Point& center,
     }
 
     auto arcAngle = endAngle - startAngle;
-    auto count = gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale);
+    auto count = std::max(2u, gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale));
 
     auto c = mBuffer->vbuffer.count;
     mBuffer->vbuffer.push(apex);
     auto pi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(prev);
     auto step = (endAngle - startAngle) / (count - 1);
 
-    for (uint32_t i = 1; i + 1 < count; i++) {
+    for (uint32_t i = 1; i < count; i++) {
         auto angle = startAngle + step * i;
-        Point out = {center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
+        // Keep the shared edge exact so adjacent arcs and segments do not overlap.
+        auto out = (i + 1 == count) ? curr : Point{center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
         auto oi = mBuffer->vbuffer.count; mBuffer->vbuffer.push(out);
 
         mBuffer->ibuffer.push(c);
@@ -286,13 +286,6 @@ void WgStroker::round(const Point& prev, const Point& curr, const Point& center,
         mRightBottom.x = std::max(mRightBottom.x, out.x);
         mRightBottom.y = std::max(mRightBottom.y, out.y);
     }
-
-    // Keep the shared edge exact so adjacent arcs and segments do not overlap.
-    auto oi = mBuffer->vbuffer.count;
-    mBuffer->vbuffer.push(curr);
-    mBuffer->ibuffer.push(c);
-    mBuffer->ibuffer.push(pi);
-    mBuffer->ibuffer.push(oi);
 }
 
 
