@@ -29,7 +29,7 @@
 #include "tvgMath.h"
 #include "tvgGpuCommon.h"
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
-#include "tvgGlCoverage.h"
+#include "tvgGlCoverageAtlas.h"
 #include "tvgInlist.h"
 #endif
 
@@ -163,9 +163,9 @@ struct GlCoverageMap
 {
     CoverageMap map;
     CoverageStatus status = CoverageStatus::Empty;
-    GLuint texture = 0;
+    GlCoverageRegion region;
     GlCoverageFormat format = GlCoverageFormat::Dense;
-    uint32_t width = 0, height = 0, runCount = 0;
+    uint32_t runCount = 0;
     size_t byteSize = 0;
 };
 #endif

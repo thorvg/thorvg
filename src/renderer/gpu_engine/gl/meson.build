@@ -31,6 +31,7 @@ source_file = [
 
 if get_option('analytic_aa')
     source_file += ['tvgGlCoverage.cpp', 'tvgGlCoverage.h',
+                    'tvgGlCoverageAtlas.cpp', 'tvgGlCoverageAtlas.h',
                     'coverage/tvgCoverage.h', 'coverage/tvgCoverage.cpp']
     # CPU builds already provide these unchanged geometry entry points.
     if not cpu_engine

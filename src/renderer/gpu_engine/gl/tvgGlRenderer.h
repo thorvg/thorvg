@@ -212,6 +212,7 @@ struct GlRenderer : RenderMethod
 
     TextureMgr textures;
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
+    GlCoverageAtlas coverageAtlas;
     Inlist<GlShape> coverageShapes;
     bool uploadCoverage(GlCoverageMap& coverage);
 #endif

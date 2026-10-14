@@ -57,6 +57,7 @@ struct WglTarget
     void (APIENTRY *getTexImage)(GLenum, GLint, GLenum, GLenum, void*) = nullptr;
     void (APIENTRY *getTexLevelParameteriv)(GLenum, GLint, GLenum, GLint*) = nullptr;
     void (APIENTRY *objectLabel)(GLenum, GLuint, GLsizei, const char*) = nullptr;
+    GLboolean (APIENTRY *isTexture)(GLuint) = nullptr;
 
     bool init()
     {
@@ -97,7 +98,8 @@ struct WglTarget
         getTexImage = procedure<decltype(getTexImage)>("glGetTexImage");
         getTexLevelParameteriv = procedure<decltype(getTexLevelParameteriv)>("glGetTexLevelParameteriv");
         objectLabel = procedure<decltype(objectLabel)>("glObjectLabel");
-        return getTexImage && getTexLevelParameteriv;
+        isTexture = procedure<decltype(isTexture)>("glIsTexture");
+        return getTexImage && getTexLevelParameteriv && isTexture;
     }
 
     ~WglTarget()
@@ -111,6 +113,77 @@ struct WglTarget
         if (windowClass) UnregisterClassW(className, GetModuleHandleW(nullptr));
     }
 };
+
+struct GlCalls
+{
+    uint32_t created = 0, allocated = 0, uploaded = 0, bound = 0;
+    PFNGLGENTEXTURESPROC generate = glGenTextures;
+    PFNGLTEXIMAGE2DPROC image = glTexImage2D;
+    PFNGLTEXSUBIMAGE2DPROC subImage = glTexSubImage2D;
+    PFNGLBINDTEXTUREPROC bind = glBindTexture;
+    static GlCalls* active;
+
+    GlCalls()
+    {
+        active = this;
+        glGenTextures = [](GLsizei count, GLuint* textures) { active->created += count; active->generate(count, textures); };
+        glTexImage2D = [](GLenum target, GLint level, GLint format, GLsizei width, GLsizei height, GLint border, GLenum sourceFormat, GLenum type, const void* data) {
+            ++active->allocated; active->image(target, level, format, width, height, border, sourceFormat, type, data);
+        };
+        glTexSubImage2D = [](GLenum target, GLint level, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data) {
+            ++active->uploaded; active->subImage(target, level, x, y, width, height, format, type, data);
+        };
+        glBindTexture = [](GLenum target, GLuint texture) { ++active->bound; active->bind(target, texture); };
+    }
+
+    ~GlCalls()
+    {
+        glGenTextures = generate; glTexImage2D = image; glTexSubImage2D = subImage; glBindTexture = bind;
+        active = nullptr;
+    }
+};
+
+GlCalls* GlCalls::active = nullptr;
+
+bool sameRegion(const GlCoverageRegion& a, const GlCoverageRegion& b)
+{
+    return a.texture == b.texture && a.rect == b.rect;
+}
+
+bool overlaps(const GlCoverageRegion& a, const GlCoverageRegion& b)
+{
+    return a.texture == b.texture && a.rect.min.x < b.rect.max.x && b.rect.min.x < a.rect.max.x &&
+           a.rect.min.y < b.rect.max.y && b.rect.min.y < a.rect.max.y;
+}
+
+struct Readback
+{
+    GLint width = 0, height = 0, format = 0, redBits = 0;
+    std::vector<uint8_t> bytes;
+};
+
+Readback readRegion(GlStateCache& state, const WglTarget& target, const GlCoverageRegion& region, GlCoverageFormat format)
+{
+    Readback result;
+    state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, region.texture);
+    target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &result.width);
+    target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &result.height);
+    target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &result.format);
+    target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &result.redBits);
+    if (region.rect.min.x < 0 || region.rect.min.y < 0 || !region.rect.valid() ||
+        region.rect.max.x > result.width || region.rect.max.y > result.height) return result;
+    auto runs = format == GlCoverageFormat::Runs;
+    auto bytes = runs ? 8u : 1u;
+    std::vector<uint8_t> page(size_t(result.width) * result.height * bytes);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    target.getTexImage(GL_TEXTURE_2D, 0, runs ? GL_RGBA_INTEGER : GL_RED, runs ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE, page.data());
+    result.bytes.resize(size_t(region.rect.w()) * region.rect.h() * bytes);
+    for (uint32_t y = 0; y < region.rect.h(); ++y) {
+        auto src = page.data() + (size_t(region.rect.min.y + y) * result.width + region.rect.min.x) * bytes;
+        memcpy(result.bytes.data() + size_t(y) * region.rect.w() * bytes, src, size_t(region.rect.w()) * bytes);
+    }
+    return result;
+}
 
 void shapes(std::array<RenderShape, 8>& out)
 {
@@ -146,11 +219,13 @@ void shapes(std::array<RenderShape, 8>& out)
 struct Validation
 {
     uint32_t checks = 0, failures = 0, maps = 0;
-    size_t denseBytes = 0, gpuBytes = 0;
+    size_t denseBytes = 0, payloadBytes = 0, reservedBytes = 0;
     std::string directory;
     std::ofstream csv, svg;
     std::set<GLuint> textures;
     std::set<const void*> buffers;
+    std::vector<GlCoverageRegion> regions;
+    std::vector<GlCoverageFormat> formats;
 
     bool check(bool value, const std::string& message)
     {
@@ -185,24 +260,19 @@ struct Validation
     bool read(GlRenderer& renderer, const WglTarget& target, const GlCoverageMap& coverage, const std::string& label, bool record = false)
     {
         const auto& map = coverage.map;
-        if (!check(coverage.status == CoverageStatus::Ready && map.data && coverage.texture, label + " owns ready CPU/GPU map")) return false;
-        renderer.mStateCache.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, coverage.texture);
-        GLint width = 0, height = 0, format = 0, redBits = 0;
-        target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-        target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-        target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
-        target.getTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &redBits);
+        const auto& region = coverage.region;
+        if (!check(coverage.status == CoverageStatus::Ready && map.data && region.texture, label + " owns ready CPU map and atlas region")) return false;
+        auto readback = readRegion(renderer.mStateCache, target, region, coverage.format);
         auto runs = coverage.format == GlCoverageFormat::Runs;
-        if (!check(width == int32_t(coverage.width) && height == int32_t(coverage.height) &&
-                   format == (runs ? GL_RGBA16UI : GL_R8) && redBits == (runs ? 16 : 8), label + " allocated dimensions and format")) return false;
+        if (!check(readback.bytes.size() == coverage.byteSize && readback.format == (runs ? GL_RGBA16UI : GL_R8) &&
+                   readback.redBits == (runs ? 16 : 8), label + " region fits page of the expected format")) return false;
         auto dense = size_t(map.stride) * map.bounds.h();
-        if (!check(map.stride == map.bounds.w() && coverage.byteSize == size_t(width) * height * (runs ? 8 : 1) &&
-                   (runs ? coverage.byteSize < dense : coverage.byteSize == dense), label + " allocation includes padding and never expands dense storage")) return false;
+        if (!check(map.stride == map.bounds.w() && coverage.byteSize == size_t(region.rect.w()) * region.rect.h() * (runs ? 8 : 1) &&
+                   (runs ? coverage.byteSize < dense : coverage.byteSize == dense), label + " payload includes record padding and never expands dense storage")) return false;
         std::vector<uint8_t> restored(dense, 0);
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
         if (runs) {
             std::vector<uint16_t> records(coverage.byteSize / sizeof(uint16_t));
-            target.getTexImage(GL_TEXTURE_2D, 0, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, records.data());
+            memcpy(records.data(), readback.bytes.data(), coverage.byteSize);
             if (!check(coverage.runCount <= records.size() / 4, label + " run count fits texture")) return false;
             for (uint32_t i = 0; i < coverage.runCount; ++i) {
                 auto span = records.data() + i * 4;
@@ -212,12 +282,20 @@ struct Validation
             }
             check(std::all_of(records.begin() + coverage.runCount * 4, records.end(), [](uint16_t value) { return value == 0; }), label + " trailing records are zero");
         } else {
-            check(width == int32_t(map.stride) && height == int32_t(map.bounds.h()), label + " dense texture matches cropped bounds");
-            target.getTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, restored.data());
+            check(region.rect.w() == map.stride && region.rect.h() == map.bounds.h(), label + " dense region matches cropped bounds");
+            restored = readback.bytes;
         }
         auto exact = check(glGetError() == GL_NO_ERROR && memcmp(restored.data(), map.data, dense) == 0, label + " GPU bytes exactly reconstruct CPU coverage");
         if (!record) return exact;
-        check(textures.insert(coverage.texture).second && buffers.insert(map.data).second, label + " has independent storage");
+        check(buffers.insert(map.data).second, label + " has independent CPU storage");
+        for (uint32_t i = 0; i < regions.size(); ++i) {
+            check(!overlaps(region, regions[i]), label + " atlas region does not overlap another map");
+            if (region.texture == regions[i].texture) check(coverage.format == formats[i], label + " shares only with the same format");
+        }
+        regions.push_back(region);
+        formats.push_back(coverage.format);
+        auto pageBytes = size_t(readback.width) * readback.height * (runs ? 8 : 1);
+        if (textures.insert(region.texture).second) reservedBytes += pageBytes;
         uint32_t nonzero = 0, partial = 0;
         for (auto value : restored) { nonzero += value != 0; partial += value > 0 && value < 255; }
         bool top = false, bottom = false, left = false, right = false;
@@ -226,8 +304,9 @@ struct Validation
         check(top && bottom && left && right, label + " tightly cropped coverage");
         check(partial > 0, label + " retains antialiased boundary pixels");
         std::ostringstream row;
-        row << label << ',' << coverage.texture << ',' << map.bounds.min.x << ',' << map.bounds.min.y << ',' << map.bounds.max.x << ',' << map.bounds.max.y
-            << ',' << nonzero << ',' << partial << ',' << dense << ',' << (runs ? "RGBA16UI-runs" : "R8") << ',' << width << ',' << height
+        row << label << ',' << region.texture << ',' << map.bounds.min.x << ',' << map.bounds.min.y << ',' << map.bounds.max.x << ',' << map.bounds.max.y
+            << ',' << nonzero << ',' << partial << ',' << dense << ',' << (runs ? "RGBA16UI-runs" : "R8") << ',' << readback.width << ',' << readback.height << ',' << pageBytes
+            << ',' << region.rect.min.x << ',' << region.rect.min.y << ',' << region.rect.w() << ',' << region.rect.h()
             << ',' << coverage.runCount << ',' << coverage.byteSize << ',' << std::fixed << std::setprecision(3)
             << (100.0 * (dense - coverage.byteSize) / dense) << ',' << (exact ? 1 : 0) << '\n';
         std::cout << row.str();
@@ -239,10 +318,87 @@ struct Validation
             check(bool(pgm), label + " PGM saved");
         }
         edgePatch(map, label);
-        ++maps; denseBytes += dense; gpuBytes += coverage.byteSize;
+        ++maps; denseBytes += dense; payloadBytes += coverage.byteSize;
         return exact;
     }
 };
+
+void atlasChecks(Validation& validation, GlRenderer& renderer, const WglTarget& target)
+{
+    GlCoverageAtlas atlas;
+    GlCoverageData packed;
+    GlCoverageRegion first, neighbor, full, pending, reused, runNeighbor;
+    std::array<uint8_t, 64> a, b;
+    a.fill(31); b.fill(79);
+    packed.width = packed.height = 8;
+    packed.byteSize = a.size();
+    auto update = [&](const void* data, GlCoverageRegion& region, const char* label) {
+        packed.data = data;
+        return validation.check(atlas.update(packed, region), label);
+    };
+    if (!update(a.data(), first, "allocate first atlas region") || !update(b.data(), neighbor, "allocate neighbor atlas region")) {
+        atlas.clear(renderer.mStateCache);
+        return;
+    }
+    validation.check(first.texture == neighbor.texture && !overlaps(first, neighbor), "small dense maps share one page without overlap");
+    auto original = first;
+    a.fill(0);
+    atlas.flush(renderer.mStateCache);
+    auto page = readRegion(renderer.mStateCache, target, first, packed.format);
+    if (!validation.check(page.width > 0 && page.height > 0 && page.bytes.size() == a.size(), "atlas page readback dimensions")) {
+        atlas.clear(renderer.mStateCache);
+        return;
+    }
+    validation.check(std::all_of(page.bytes.begin(), page.bytes.end(), [](uint8_t value) { return value == 31; }), "atlas stages bytes independently of caller storage");
+    a.fill(42);
+    {
+        GlCalls calls;
+        update(a.data(), first, "update existing atlas region");
+        atlas.flush(renderer.mStateCache);
+        validation.check(calls.created == 0 && calls.allocated == 0 && calls.uploaded == 1 && calls.bound <= 1, "same size update uploads once without new texture storage");
+    }
+    validation.check(sameRegion(first, original), "same size and format preserve atlas region");
+    validation.check(readRegion(renderer.mStateCache, target, first, packed.format).bytes == std::vector<uint8_t>(a.begin(), a.end()), "region update reaches GPU");
+    validation.check(readRegion(renderer.mStateCache, target, neighbor, packed.format).bytes == std::vector<uint8_t>(b.begin(), b.end()), "region update preserves neighboring bytes");
+
+    packed.width = page.width;
+    packed.height = page.height;
+    packed.byteSize = size_t(packed.width) * packed.height;
+    std::vector<uint8_t> wholePage(packed.byteSize, 133);
+    if (update(wholePage.data(), full, "allocate full page region")) {
+        validation.check(full.texture != first.texture, "page rollover preserves existing regions");
+        atlas.flush(renderer.mStateCache);
+        validation.check(readRegion(renderer.mStateCache, target, full, packed.format).bytes == wholePage, "rollover page contains exact bytes");
+        auto retired = full;
+        atlas.release(full);
+        validation.check(!full.texture && !full.rect.valid(), "release clears region handle");
+        update(wholePage.data(), pending, "allocate before synchronized reclaim");
+        atlas.flush(renderer.mStateCache);
+        validation.check(!overlaps(retired, pending), "released region remains unavailable before sync");
+        validation.check(readRegion(renderer.mStateCache, target, retired, packed.format).bytes == wholePage, "released region remains intact before sync");
+        validation.check(renderer.sync(), "sync before atlas reclaim");
+        atlas.reclaim();
+        update(wholePage.data(), reused, "allocate after synchronized reclaim");
+        validation.check(sameRegion(retired, reused), "released full page is reusable after sync");
+    }
+
+    const uint16_t record[] = {0, 0, 8, 94};
+    packed.width = packed.height = packed.runCount = 1;
+    packed.byteSize = sizeof(record);
+    packed.format = GlCoverageFormat::Runs;
+    update(record, first, "switch atlas region format");
+    update(record, runNeighbor, "allocate same-format run neighbor");
+    atlas.flush(renderer.mStateCache);
+    auto runs = readRegion(renderer.mStateCache, target, first, packed.format);
+    validation.check(first.texture != original.texture && runs.format == GL_RGBA16UI, "format switch uses a different page of the correct format");
+    validation.check(runs.bytes.size() == sizeof(record) && memcmp(runs.bytes.data(), record, sizeof(record)) == 0, "format switch preserves exact run bytes");
+    validation.check(first.texture == runNeighbor.texture && !overlaps(first, runNeighbor), "run maps share a page without overlap");
+    validation.check(readRegion(renderer.mStateCache, target, neighbor, GlCoverageFormat::Dense).bytes == std::vector<uint8_t>(b.begin(), b.end()), "format switch preserves dense neighbor");
+    std::set<GLuint> pages = {original.texture, pending.texture, reused.texture, first.texture};
+    atlas.clear(renderer.mStateCache);
+    for (auto texture : pages) if (texture) validation.check(target.isTexture(texture) == GL_FALSE, "atlas clear releases page texture");
+    validation.check(glGetError() == GL_NO_ERROR, "atlas lifecycle has no GL error");
+}
 
 } // namespace
 
@@ -286,16 +442,29 @@ int main(int argc, char** argv)
         for (uint32_t i = 0; i < prepared.size(); ++i) {
             prepared[i] = static_cast<GlShape*>(renderer->prepare(rshapes[i], prepared[i], transform, clips, 255, RenderUpdateFlag::All, false));
             if (!validation.check(prepared[i] != nullptr, "shape prepare")) continue;
-            if (target.objectLabel) {
-                auto fill = "shape" + std::to_string(i) + "#fill", stroke = "shape" + std::to_string(i) + "#stroke";
-                if (prepared[i]->fillCoverage.texture) target.objectLabel(GL_TEXTURE, prepared[i]->fillCoverage.texture, -1, fill.c_str());
-                if (prepared[i]->strokeCoverage.texture) target.objectLabel(GL_TEXTURE, prepared[i]->strokeCoverage.texture, -1, stroke.c_str());
-            }
         }
         validation.check(renderer->postUpdate(), "postUpdate");
+        if (target.objectLabel) {
+            for (auto shape : prepared) if (shape) {
+                for (auto coverage : {&shape->fillCoverage, &shape->strokeCoverage}) {
+                    auto label = "coverage-page" + std::to_string(coverage->region.texture) + (coverage->format == GlCoverageFormat::Runs ? "#RGBA16UI" : "#R8");
+                    if (coverage->region.texture) target.objectLabel(GL_TEXTURE, coverage->region.texture, -1, label.c_str());
+                }
+            }
+        }
     };
-    prepareAll();
-    const char* header = "map,texture,min_x,min_y,max_x,max_y,nonzero_pixels,partial_pixels,cropped_dense_bytes,gpu_format,gpu_width,gpu_height,run_count,gpu_bytes,reduction_percent,exact\n";
+    {
+        GlCalls calls;
+        prepareAll();
+        std::set<GLuint> pages;
+        for (auto shape : prepared) if (shape) {
+            if (shape->fillCoverage.region.texture) pages.insert(shape->fillCoverage.region.texture);
+            if (shape->strokeCoverage.region.texture) pages.insert(shape->strokeCoverage.region.texture);
+        }
+        validation.check(calls.created == pages.size() && calls.allocated == pages.size() && calls.uploaded == pages.size() && calls.bound == pages.size(), "first batch creates, allocates, uploads and binds once per page");
+        validation.check(pages.size() < 16, "sixteen maps use fewer page textures");
+    }
+    const char* header = "map,page_texture,min_x,min_y,max_x,max_y,nonzero_pixels,partial_pixels,cropped_dense_bytes,gpu_format,page_width,page_height,page_reserved_bytes,region_x,region_y,region_width,region_height,run_count,payload_bytes,payload_reduction_percent,exact\n";
     std::cout << header;
     if (validation.csv) validation.csv << header;
     for (uint32_t i = 0; !updatesOnly && i < prepared.size(); ++i) {
@@ -321,42 +490,75 @@ int main(int argc, char** argv)
         }
     }
     if (prepared[0]) {
+        auto fillRegion = prepared[0]->fillCoverage.region, strokeRegion = prepared[0]->strokeCoverage.region;
+        auto fillBuffer = prepared[0]->fillCoverage.map.data, strokeBuffer = prepared[0]->strokeCoverage.map.data;
+        {
+            GlCalls calls;
+            renderer->prepare(rshapes[0], prepared[0], transform, clips, 255, RenderUpdateFlag::None, false);
+            validation.check(renderer->postUpdate(), "unchanged postUpdate");
+            validation.check(calls.created == 0 && calls.allocated == 0 && calls.uploaded == 0 && calls.bound == 0, "unchanged prepare has no texture calls");
+        }
+        validation.check(sameRegion(fillRegion, prepared[0]->fillCoverage.region) && sameRegion(strokeRegion, prepared[0]->strokeCoverage.region) &&
+                         fillBuffer == prepared[0]->fillCoverage.map.data && strokeBuffer == prepared[0]->strokeCoverage.map.data, "unchanged prepare preserves CPU maps and atlas regions");
         GLuint unpackBuffer = 0;
         glGenBuffers(1, &unpackBuffer); glBindBuffer(GL_PIXEL_UNPACK_BUFFER, unpackBuffer);
         glBufferData(GL_PIXEL_UNPACK_BUFFER, 256, nullptr, GL_STATIC_DRAW);
         const GLenum parameters[] = {GL_UNPACK_ALIGNMENT, GL_UNPACK_ROW_LENGTH, GL_UNPACK_SKIP_PIXELS, GL_UNPACK_SKIP_ROWS, GL_UNPACK_SWAP_BYTES};
         const GLint values[] = {8, 17, 2, 3, GL_TRUE};
         for (uint32_t i = 0; i < 5; ++i) glPixelStorei(parameters[i], values[i]);
-        renderer->prepare(rshapes[0], prepared[0], transform, clips, 255, RenderUpdateFlag::All, false);
+        {
+            GlCalls calls;
+            renderer->prepare(rshapes[0], prepared[0], transform, clips, 255, RenderUpdateFlag::All, false);
+            validation.check(renderer->postUpdate(), "host unpack postUpdate");
+            auto pages = fillRegion.texture == strokeRegion.texture ? 1u : 2u;
+            validation.check(calls.created == 0 && calls.allocated == 0 && calls.uploaded == pages && calls.bound <= pages, "same size renderer update uploads once per dirty page without new storage");
+        }
+        validation.check(sameRegion(fillRegion, prepared[0]->fillCoverage.region) && sameRegion(strokeRegion, prepared[0]->strokeCoverage.region), "same size prepare preserves atlas regions");
         for (uint32_t i = 0; i < 5; ++i) { GLint actual; glGetIntegerv(parameters[i], &actual); validation.check(actual == values[i], "host unpack state restored"); }
         GLint actualBuffer; glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &actualBuffer);
         validation.check(actualBuffer == int32_t(unpackBuffer), "host unpack buffer restored");
         validation.read(*renderer, target, prepared[0]->fillCoverage, "host-unpack-fill");
         validation.read(*renderer, target, prepared[0]->strokeCoverage, "host-unpack-stroke");
+        if (prepared[1]) validation.read(*renderer, target, prepared[1]->fillCoverage, "unchanged-neighbor-fill");
         for (uint32_t i = 0; i < 5; ++i) glPixelStorei(parameters[i], i == 0 ? 4 : 0);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glDeleteBuffers(1, &unpackBuffer);
         renderer->sync();
         auto previous = prepared[0]->fillCoverage.map.bounds;
         transform.e13 = 9; transform.e23 = -3;
         renderer->prepare(rshapes[0], prepared[0], transform, clips, 255, RenderUpdateFlag::Transform, false);
+        validation.check(renderer->postUpdate(), "geometry update postUpdate");
         validation.check(!(prepared[0]->fillCoverage.map.bounds == previous), "geometry update changes map bounds");
         validation.read(*renderer, target, prepared[0]->fillCoverage, "updated-fill");
         validation.read(*renderer, target, prepared[0]->strokeCoverage, "updated-stroke");
         delete rshapes[0].stroke; rshapes[0].stroke = nullptr;
         renderer->prepare(rshapes[0], prepared[0], transform, clips, 255, RenderUpdateFlag::Stroke, false);
+        validation.check(renderer->postUpdate(), "stroke removal postUpdate");
         validation.check(prepared[0]->strokeCoverage.status == CoverageStatus::Empty && !prepared[0]->strokeCoverage.map.data &&
-                         !prepared[0]->strokeCoverage.texture && !prepared[0]->strokeCoverage.byteSize, "removing stroke clears owned CPU/GPU storage");
+                         !prepared[0]->strokeCoverage.region.texture && !prepared[0]->strokeCoverage.byteSize, "removing stroke clears CPU map and atlas region");
         validation.read(*renderer, target, prepared[0]->fillCoverage, "no-stroke-fill");
         rshapes[0].path.clear();
         renderer->prepare(rshapes[0], prepared[0], transform, clips, 255, RenderUpdateFlag::Path, false);
+        validation.check(renderer->postUpdate(), "empty path postUpdate");
         validation.check(prepared[0]->fillCoverage.status == CoverageStatus::Empty && !prepared[0]->fillCoverage.map.data &&
-                         !prepared[0]->fillCoverage.texture && !prepared[0]->fillCoverage.byteSize, "empty path clears owned CPU/GPU storage");
+                         !prepared[0]->fillCoverage.region.texture && !prepared[0]->fillCoverage.byteSize, "empty path clears CPU map and atlas region");
     }
-    if (!updatesOnly) validation.check(validation.maps == 16 && validation.gpuBytes < validation.denseBytes, "eight shapes own sixteen exact maps with reduced GPU allocation");
+    if (!updatesOnly) validation.check(validation.maps == 16 && validation.textures.size() < validation.maps && validation.payloadBytes < validation.denseBytes, "sixteen exact independent maps share pages with compact payloads");
+    atlasChecks(validation, *renderer, target);
+    if (prepared[1]) {
+        auto buffer = prepared[1]->fillCoverage.map.data;
+        validation.check(renderer->target(nullptr, target.dc, target.context, 0, Width, Height, ColorSpace::ABGR8888S) == Result::Success, "reset renderer target");
+        for (auto shape : prepared) if (shape) validation.check(!shape->fillCoverage.region.texture && !shape->strokeCoverage.region.texture, "target reset clears atlas region handles");
+        renderer->prepare(rshapes[1], prepared[1], identity(), clips, 255, RenderUpdateFlag::None, false);
+        validation.check(renderer->postUpdate(), "target reset postUpdate");
+        validation.check(prepared[1]->fillCoverage.map.data == buffer, "target reset preserves CPU coverage");
+        validation.read(*renderer, target, prepared[1]->fillCoverage, "target-reset-fill");
+        validation.read(*renderer, target, prepared[1]->strokeCoverage, "target-reset-stroke");
+    }
     for (auto shape : prepared) if (shape) renderer->dispose(shape);
     renderer.reset();
     validation.check(Initializer::term() == Result::Success, "terminate");
-    std::cerr << "coverage storage: maps=" << validation.maps << " cropped_dense_bytes=" << validation.denseBytes << " gpu_bytes=" << validation.gpuBytes
+    std::cerr << "coverage storage: maps=" << validation.maps << " page_textures=" << validation.textures.size() << " cropped_dense_bytes=" << validation.denseBytes
+              << " payload_bytes=" << validation.payloadBytes << " page_reserved_bytes=" << validation.reservedBytes
               << " checks=" << validation.checks << " failures=" << validation.failures << '\n';
     return validation.failures ? 1 : 0;
 }

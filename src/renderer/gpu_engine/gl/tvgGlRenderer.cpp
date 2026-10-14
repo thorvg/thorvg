@@ -66,57 +66,25 @@ void GlImage::destroy(GlRenderer& renderer)
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
 void GlShape::destroy(GlRenderer& renderer)
 {
-    renderer.disposeTexture(fillCoverage.texture);
-    renderer.disposeTexture(strokeCoverage.texture);
+    renderer.coverageAtlas.release(fillCoverage.region);
+    renderer.coverageAtlas.release(strokeCoverage.region);
     renderer.coverageShapes.remove(this);
 }
 
 bool GlRenderer::uploadCoverage(GlCoverageMap& coverage)
 {
-    GLint maxSize;
-    GL_CHECK(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize));
     GlCoverageData packed;
-    if (coverage.status != CoverageStatus::Ready || !packGlCoverage(coverage.map, maxSize, packed)) {
-        disposeTexture(coverage.texture);
-        coverage.texture = 0;
-        coverage.width = coverage.height = coverage.runCount = 0;
+    if (coverage.status != CoverageStatus::Ready || !packGlCoverage(coverage.map, coverageAtlas.maxTextureSize(), packed)) {
+        coverageAtlas.release(coverage.region);
+        coverage.runCount = 0;
         coverage.byteSize = 0;
         return coverage.status == CoverageStatus::Empty;
     }
 
-    // Host pixel-unpack state must not alter the coverage bytes.
-    const GLenum parameters[] = {GL_UNPACK_ALIGNMENT, GL_UNPACK_ROW_LENGTH, GL_UNPACK_SKIP_PIXELS, GL_UNPACK_SKIP_ROWS};
-    GLint unpack[4], buffer;
-    for (uint32_t i = 0; i < 4; ++i) {
-        glGetIntegerv(parameters[i], &unpack[i]);
-        glPixelStorei(parameters[i], i == 0 ? 1 : 0);
-    }
-    glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &buffer);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-#ifdef THORVG_GL_TARGET_GL
-    GLint swapBytes;
-    glGetIntegerv(GL_UNPACK_SWAP_BYTES, &swapBytes);
-    glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
-#endif
-
-    if (!coverage.texture) GL_CHECK(glGenTextures(1, &coverage.texture));
-    mStateCache.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, coverage.texture);
-    auto runs = packed.format == GlCoverageFormat::Runs;
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, runs ? GL_RGBA16UI : GL_R8, packed.width, packed.height, 0,
-                         runs ? GL_RGBA_INTEGER : GL_RED, runs ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE, packed.data));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-
-    for (uint32_t i = 0; i < 4; ++i) glPixelStorei(parameters[i], unpack[i]);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer);
-#ifdef THORVG_GL_TARGET_GL
-    glPixelStorei(GL_UNPACK_SWAP_BYTES, swapBytes);
-#endif
+    // Queued draws must retain the previous bytes until sync().
+    if (!mRenderPassStack.empty()) coverageAtlas.release(coverage.region);
+    if (!coverageAtlas.update(packed, coverage.region)) return false;
     coverage.format = packed.format;
-    coverage.width = packed.width;
-    coverage.height = packed.height;
     coverage.runCount = packed.runCount;
     coverage.byteSize = packed.byteSize;
     return true;
@@ -194,12 +162,12 @@ void GlRenderer::flush()
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     INLIST_FOREACH(coverageShapes, shape) {
         for (auto coverage : {&shape->fillCoverage, &shape->strokeCoverage}) {
-            if (coverage->texture) glDeleteTextures(1, &coverage->texture);
-            coverage->texture = 0;
-            coverage->width = coverage->height = coverage->runCount = 0;
+            coverage->region = {};
+            coverage->runCount = 0;
             coverage->byteSize = 0;
         }
     }
+    coverageAtlas.clear(mStateCache);
 #endif
     clearDisposes();
 
@@ -1095,8 +1063,18 @@ bool GlRenderer::sync()
     // ThorVG-tracked assumption.
     mStateCache.invalidate();
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (mContext) currentContext();
+    coverageAtlas.flush(mStateCache);
+#endif
     //nothing to be done.
-    if (mRenderPassStack.empty()) return true;
+    if (mRenderPassStack.empty()) {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        coverageAtlas.reclaim();
+        mStateCache.invalidate();
+#endif
+        return true;
+    }
 
     currentContext();
 
@@ -1137,6 +1115,9 @@ bool GlRenderer::sync()
 
     delete task;
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    coverageAtlas.reclaim();
+#endif
     return true;
 }
 
@@ -1183,6 +1164,9 @@ bool GlRenderer::preRender()
     if (mRootTarget.invalid()) return false;
 
     currentContext();
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    coverageAtlas.flush(mStateCache);
+#endif
     if (!textures.flushPreprocess(mStateCache, mTargetFboId)) return false;
     if (mPrograms.empty()) initShaders();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
@@ -1471,10 +1455,10 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     auto updateFill = update || shape->geometry.fillRule != rshape.rule;
     if (updateFill) shape->fillCoverage.status = generateFillCoverage(rshape, transform, vport, shape->fillCoverage.map);
     if (update) shape->strokeCoverage.status = generateStrokeCoverage(rshape, transform, vport, shape->strokeCoverage.map);
-    if (updateFill || !shape->fillCoverage.texture) {
+    if (updateFill || !shape->fillCoverage.region.texture) {
         if (!uploadCoverage(shape->fillCoverage)) shape->fillCoverage.status = CoverageStatus::Error;
     }
-    if (update || !shape->strokeCoverage.texture) {
+    if (update || !shape->strokeCoverage.region.texture) {
         if (!uploadCoverage(shape->strokeCoverage)) shape->strokeCoverage.status = CoverageStatus::Error;
     }
     shape->geometry.transform(transform);
@@ -1526,6 +1510,9 @@ bool GlRenderer::preUpdate()
 
 bool GlRenderer::postUpdate()
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    coverageAtlas.flush(mStateCache);
+#endif
     return true;
 }
 
