@@ -189,8 +189,8 @@ uint32_t SfntReader::glyph(uint32_t codepoint)
     for (auto idx = 0; idx < entryCnt; ++idx) {
         auto entry = cmap + 4 + idx * 8;
         auto type = u16(entry) * 0100 + u16(entry + 2);
-        // Unicode BMP
-        if (type == 0003 || type == 0301) {
+        // Unicode BMP, including legacy Unicode 1.1 maps.
+        if (type == 0001 || type == 0003 || type == 0301) {
             auto table = cmap + u32(entry + 4);
             if (!validate(table, 6)) return -1;
             // Dispatch based on cmap format.

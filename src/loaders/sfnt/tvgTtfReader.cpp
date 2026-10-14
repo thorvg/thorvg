@@ -281,8 +281,11 @@ Result TtfReader::header()
     if (SfntReader::header() == Result::Success) {
         kern = table("kern");
         if (kern) {
-            if (!validate(kern, 4)) return Result::InvalidArguments;
-            if (u16(kern) != 0) return Result::InvalidArguments;
+            auto entry = static_cast<const uint8_t*>(bsearch("kern", data + 12, u16(4), 16, cmpu32));
+            auto length = u32(uint32_t(entry - data) + 12);
+            if (length < 4 || !validate(kern, length)) return Result::InvalidArguments;
+            kernEnd = kern + length;
+            if (u16(kern) != 0 && (length < 8 || u32(kern) != 0x00010000)) return Result::InvalidArguments;
         }
 
         loca = table("loca");
@@ -297,32 +300,32 @@ Result TtfReader::header()
 
 bool TtfReader::positioning(uint32_t lglyph, uint32_t rglyph, Point& out)
 {
-    #define HORIZONTAL_KERNING 0x01
-    #define MINIMUM_KERNING 0x02
-    #define CROSS_STREAM_KERNING 0x04
-
     auto kern = this->kern;
     if (!kern) return false;
 
-    // kern tables
-    auto tableCnt = u16(kern + 2);
-    kern += 4;
+    auto apple = u16(kern) != 0;
+    auto tableCnt = apple ? u32(kern + 4) : u16(kern + 2);
+    kern += apple ? 8 : 4;
 
-    while (tableCnt > 0) {
-        // read subtable header.
-        if (!validate(kern, 6)) return false;
-        auto length = u16(kern + 2);
-        auto format = u8(kern + 4);
-        auto flags = u8(kern + 5);
-        kern += 6;
+    while (tableCnt-- > 0) {
+        auto headerSize = apple ? 8U : 6U;
+        if (kernEnd - kern < headerSize) return false;
+        auto length = apple ? u32(kern) : u16(kern + 2);
+        if (length < headerSize || length > kernEnd - kern) return false;
+        auto next = kern + length;
+        auto coverage = u16(kern + 4);
+        auto format = apple ? coverage & 0xff : coverage >> 8;
+        auto horizontal = apple ? !(coverage & 0x8000) : (coverage & 0x01);
+        auto unsupported = apple ? (coverage & 0x2000) : (coverage & 0x02);
+        auto crossStream = apple ? (coverage & 0x4000) : (coverage & 0x04);
+        kern += headerSize;
 
-        if (format == 0 && (flags & HORIZONTAL_KERNING) && !(flags & MINIMUM_KERNING)) {
-            // read format 0 header.
-            if (!validate(kern, 8)) return false;
+        if (format == 0 && horizontal && !unsupported) {
+            if (next - kern < 8) return false;
             auto pairCnt = u16(kern);
             kern += 8;
+            if (pairCnt > (next - kern) / 6) return false;
 
-            // look up character code pair via binary search.
             uint8_t key[4];
             key[0] = (lglyph >> 8) & 0xff;
             key[1] = lglyph & 0xff;
@@ -330,15 +333,15 @@ bool TtfReader::positioning(uint32_t lglyph, uint32_t rglyph, Point& out)
             key[3] = rglyph & 0xff;
 
             auto match = bsearch(key, data + kern, pairCnt, 6, cmpu32);
-
             if (match) {
-                auto value = i16((uint32_t)((uint8_t*)match - data + 4));
-                if (flags & CROSS_STREAM_KERNING) out.y += value;
-                else out.x += value;
+                auto value = i16(uint32_t(static_cast<uint8_t*>(match) - data) + 4);
+                auto& offset = crossStream ? out.y : out.x;
+                if (crossStream && value == -32768) offset = 0;
+                else if (!apple && (coverage & 0x08)) offset = value;
+                else offset += value;
             }
         }
-        kern += length;
-        --tableCnt;
+        kern = next;
     }
 
     return true;

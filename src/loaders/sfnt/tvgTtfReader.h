@@ -38,6 +38,7 @@ private:
     uint32_t loca = 0;  // index to location
     uint32_t glyf = 0;  // glyph outline
     uint32_t kern = 0;  // kerning
+    uint32_t kernEnd = 0;
 
     uint32_t outlineOffset(uint32_t glyph);
     bool convert(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset, const Point& offset, uint16_t depth);
