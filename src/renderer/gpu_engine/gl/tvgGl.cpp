@@ -205,7 +205,9 @@ PFNGLVIEWPORTPROC               glViewport;
 //PFNGLFLUSHPROC                  glFlush;
 //PFNGLLOGICOPPROC                glLogicOp = nullptr
 //PFNGLPIXELSTOREFPROC            glPixelStoref;
-//PFNGLPIXELSTOREIPROC            glPixelStorei;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+PFNGLPIXELSTOREIPROC            glPixelStorei;
+#endif
 //PFNGLREADBUFFERPROC             glReadBuffer;
 //PFNGLREADPIXELSPROC             glReadPixels;
 //PFNGLGETBOOLEANVPROC            glGetBooleanv;
@@ -544,7 +546,9 @@ bool glInit()
     GL_FUNCTION_FETCH(glStencilOp, PFNGLSTENCILOPPROC);
     GL_FUNCTION_FETCH(glDepthFunc, PFNGLDEPTHFUNCPROC);
     // GL_FUNCTION_FETCH(glPixelStoref, PFNGLPIXELSTOREFPROC);
-    // GL_FUNCTION_FETCH(glPixelStorei, PFNGLPIXELSTOREIPROC);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    GL_FUNCTION_FETCH(glPixelStorei, PFNGLPIXELSTOREIPROC);
+#endif
     // GL_FUNCTION_FETCH(glReadBuffer, PFNGLREADBUFFERPROC);
     // GL_FUNCTION_FETCH(glReadPixels, PFNGLREADPIXELSPROC);
     // GL_FUNCTION_FETCH(glGetBooleanv, PFNGLGETBOOLEANVPROC);

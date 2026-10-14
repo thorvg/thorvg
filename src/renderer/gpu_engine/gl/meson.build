@@ -29,7 +29,15 @@ source_file = [
    'tvgGlStateCache.cpp',
 ]
 
-if not get_option('analytic_aa')
+if get_option('analytic_aa')
+    source_file += ['tvgGlCoverage.cpp', 'tvgGlCoverage.h',
+                    'coverage/tvgCoverage.h', 'coverage/tvgCoverage.cpp']
+    # CPU builds already provide these unchanged geometry entry points.
+    if not cpu_engine
+        source_file += ['../../cpu_engine/tvgSwShape.cpp', '../../cpu_engine/tvgSwStroke.cpp',
+                        '../../cpu_engine/tvgSwRle.cpp', '../../cpu_engine/tvgSwUtil.cpp']
+    endif
+else
     source_file += ['tvgGlTessellator.cpp', 'tvgGlTessellator.h',
                     'tvgGlStencilCoverBatch.cpp', 'tvgGlStencilCoverBatch.h']
 endif
@@ -46,6 +54,6 @@ else
 endif
 
 engine_dep += [declare_dependency(
-    include_directories : include_directories('.'),
+    include_directories : include_directories('.', 'coverage', '../../cpu_engine'),
     sources             : source_file,
 )]

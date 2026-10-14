@@ -28,6 +28,10 @@
 #include "tvgRender.h"
 #include "tvgMath.h"
 #include "tvgGpuCommon.h"
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+#include "tvgGlCoverage.h"
+#include "tvgInlist.h"
+#endif
 
 struct GlStageBuffer;
 struct GlRenderTask;
@@ -154,9 +158,27 @@ struct GlDrawable
     RenderUpdateFlag flags = RenderUpdateFlag::None;  // a backup flag for deferred update
 };
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+struct GlCoverageMap
+{
+    CoverageMap map;
+    CoverageStatus status = CoverageStatus::Empty;
+    GLuint texture = 0;
+    GlCoverageFormat format = GlCoverageFormat::Dense;
+    uint32_t width = 0, height = 0, runCount = 0;
+    size_t byteSize = 0;
+};
+#endif
+
 struct GlShape : GlDrawable
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    void destroy(GlRenderer& renderer) override;
+    INLIST_ITEM(GlShape);
+    GlCoverageMap fillCoverage, strokeCoverage;
+#else
     void destroy(GlRenderer& renderer) override {}
+#endif
 
     const RenderShape* rshape;
 #ifndef THORVG_ANALYTIC_AA_SUPPORT

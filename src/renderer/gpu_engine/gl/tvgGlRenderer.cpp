@@ -63,6 +63,66 @@ void GlImage::destroy(GlRenderer& renderer)
         renderer.disposeTexture(renderer.textures.release(surface, filter, texId));
 }
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+void GlShape::destroy(GlRenderer& renderer)
+{
+    renderer.disposeTexture(fillCoverage.texture);
+    renderer.disposeTexture(strokeCoverage.texture);
+    renderer.coverageShapes.remove(this);
+}
+
+bool GlRenderer::uploadCoverage(GlCoverageMap& coverage)
+{
+    GLint maxSize;
+    GL_CHECK(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize));
+    GlCoverageData packed;
+    if (coverage.status != CoverageStatus::Ready || !packGlCoverage(coverage.map, maxSize, packed)) {
+        disposeTexture(coverage.texture);
+        coverage.texture = 0;
+        coverage.width = coverage.height = coverage.runCount = 0;
+        coverage.byteSize = 0;
+        return coverage.status == CoverageStatus::Empty;
+    }
+
+    // Host pixel-unpack state must not alter the coverage bytes.
+    const GLenum parameters[] = {GL_UNPACK_ALIGNMENT, GL_UNPACK_ROW_LENGTH, GL_UNPACK_SKIP_PIXELS, GL_UNPACK_SKIP_ROWS};
+    GLint unpack[4], buffer;
+    for (uint32_t i = 0; i < 4; ++i) {
+        glGetIntegerv(parameters[i], &unpack[i]);
+        glPixelStorei(parameters[i], i == 0 ? 1 : 0);
+    }
+    glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &buffer);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+#ifdef THORVG_GL_TARGET_GL
+    GLint swapBytes;
+    glGetIntegerv(GL_UNPACK_SWAP_BYTES, &swapBytes);
+    glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
+#endif
+
+    if (!coverage.texture) GL_CHECK(glGenTextures(1, &coverage.texture));
+    mStateCache.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, coverage.texture);
+    auto runs = packed.format == GlCoverageFormat::Runs;
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, runs ? GL_RGBA16UI : GL_R8, packed.width, packed.height, 0,
+                         runs ? GL_RGBA_INTEGER : GL_RED, runs ? GL_UNSIGNED_SHORT : GL_UNSIGNED_BYTE, packed.data));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+    for (uint32_t i = 0; i < 4; ++i) glPixelStorei(parameters[i], unpack[i]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer);
+#ifdef THORVG_GL_TARGET_GL
+    glPixelStorei(GL_UNPACK_SWAP_BYTES, swapBytes);
+#endif
+    coverage.format = packed.format;
+    coverage.width = packed.width;
+    coverage.height = packed.height;
+    coverage.runCount = packed.runCount;
+    coverage.byteSize = packed.byteSize;
+    return true;
+}
+#endif
+
 #ifndef THORVG_ANALYTIC_AA_SUPPORT
 static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopColors, const Fill::ColorStop* stops, uint32_t stopCnt, FillSpread spread, float alpha)
 {
@@ -131,6 +191,16 @@ void GlRenderer::clearDisposes()
 
 void GlRenderer::flush()
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    INLIST_FOREACH(coverageShapes, shape) {
+        for (auto coverage : {&shape->fillCoverage, &shape->strokeCoverage}) {
+            if (coverage->texture) glDeleteTextures(1, &coverage->texture);
+            coverage->texture = 0;
+            coverage->width = coverage->height = coverage->runCount = 0;
+            coverage->byteSize = 0;
+        }
+    }
+#endif
     clearDisposes();
 
     mRootTarget.reset();
@@ -1079,6 +1149,9 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
     if (!data) return false;
 
     auto shape = static_cast<GlShape*>(data);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    return false;  // Use the shape bounds fallback until analytic drawing is implemented.
+#else
     if (!shape->valid.stroke) return false;
 
     tvg::BBox bbox;
@@ -1284,7 +1357,7 @@ bool GlRenderer::renderImage(void* data)
 bool GlRenderer::renderShape(RenderData data)
 {
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
-    // Shape drawing is deferred until coverage rendering is implemented.
+    // This milestone prepares coverage only; shape drawing is not implemented.
     return false;
 #else
     auto shape = static_cast<GlShape*>(data);
@@ -1385,11 +1458,33 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         shape = new GlShape;
         shape->rshape = &rshape;
         flags = RenderUpdateFlag::All;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        shape->geometry = GlGeometry();
+        coverageShapes.back(shape);
+#endif
     }
 
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
+    const auto& previous = shape->geometry.viewport;
+    auto changed = previous.min.x != vport.min.x || previous.min.y != vport.min.y || previous.max.x != vport.max.x || previous.max.y != vport.max.y;
+    auto update = changed || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Stroke));
+    auto updateFill = update || shape->geometry.fillRule != rshape.rule;
+    if (updateFill) shape->fillCoverage.status = generateFillCoverage(rshape, transform, vport, shape->fillCoverage.map);
+    if (update) shape->strokeCoverage.status = generateStrokeCoverage(rshape, transform, vport, shape->strokeCoverage.map);
+    if (updateFill || !shape->fillCoverage.texture) {
+        if (!uploadCoverage(shape->fillCoverage)) shape->fillCoverage.status = CoverageStatus::Error;
+    }
+    if (update || !shape->strokeCoverage.texture) {
+        if (!uploadCoverage(shape->strokeCoverage)) shape->strokeCoverage.status = CoverageStatus::Error;
+    }
     shape->geometry.transform(transform);
     shape->geometry.viewport = vport;
+    shape->geometry.fillRule = rshape.rule;
+    shape->geometry.fillWorld = true;
+    shape->geometry.fillBBox = shape->fillCoverage.map.bounds;
+    shape->geometry.strokeBBox = shape->strokeCoverage.map.bounds;
+    shape->valid.fill = shape->fillCoverage.status == CoverageStatus::Ready;
+    shape->valid.stroke = shape->strokeCoverage.status == CoverageStatus::Ready;
     shape->opacity = opacity;
 #else
     if (shape->prepare(flags, {float(surface.w), float(surface.h)}, opacity, clipper)) return shape;

@@ -289,6 +289,14 @@ GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag) const
 
 RenderRegion GlGeometry::bounds() const
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto bbox = fillBBox;
+    if (strokeBBox.valid()) {
+        if (bbox.valid()) bbox.add(strokeBBox);
+        else bbox = strokeBBox;
+    }
+    return bbox;
+#else
     auto bbox = RenderRegion{};
     auto valid = false;
 
@@ -309,4 +317,5 @@ RenderRegion GlGeometry::bounds() const
     }
 
     return bbox;
+#endif
 }

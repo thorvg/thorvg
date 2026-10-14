@@ -211,6 +211,10 @@ struct GlRenderer : RenderMethod
     void disposeTexture(GLuint texId);
 
     TextureMgr textures;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    Inlist<GlShape> coverageShapes;
+    bool uploadCoverage(GlCoverageMap& coverage);
+#endif
 
     enum class BlendSource { Image, Scene, Solid, LinearGradient, RadialGradient, ConicGradient };
 

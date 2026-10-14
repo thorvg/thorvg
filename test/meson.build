@@ -68,3 +68,48 @@ tests = executable('tvgUnitTests',
     dependencies : test_dep)
 
 test('Unit Tests', tests)
+
+if gl_engine and cpu_engine and get_option('analytic_aa')
+    coverage_includes = headers + [include_directories('../src/common'), include_directories('../src/renderer'),
+                                  include_directories('../src/renderer/gpu_engine/gl/coverage')]
+    if lib_type == 'static'
+        coverage_tests = executable('tvgCoverageTests', 'testGlCoverage.cpp',
+            include_directories: coverage_includes,
+            link_with: thorvg_lib,
+            cpp_args: test_compiler_flags,
+            dependencies: test_dep)
+    else
+        # The coverage adapter is internal; reuse the library objects without exporting it.
+        coverage_dependencies = []
+        foreach dep : thorvg_lib_dep
+            coverage_dependencies += dep.partial_dependency(compile_args: true, link_args: true, links: true)
+        endforeach
+        coverage_tests = executable('tvgCoverageTests', 'testGlCoverage.cpp',
+            include_directories: coverage_includes,
+            objects: thorvg_lib.extract_all_objects(recursive: true),
+            cpp_args: test_compiler_flags,
+            dependencies: coverage_dependencies)
+    endif
+    test('Coverage Maps', coverage_tests)
+
+    if host_machine.system() == 'windows' and gl_variant == 'OpenGL'
+        coverage_storage_includes = coverage_includes + [
+            include_directories('../src/renderer/gpu_engine'),
+            include_directories('../src/renderer/gpu_engine/gl')]
+        coverage_storage_dep = [cc.find_library('opengl32'), cc.find_library('gdi32'), cc.find_library('user32')]
+        if lib_type == 'static'
+            coverage_storage_tests = executable('tvgCoverageStorageTests', 'testGlCoverageStorage.cpp',
+                include_directories: coverage_storage_includes,
+                link_with: thorvg_lib,
+                cpp_args: test_compiler_flags,
+                dependencies: test_dep + coverage_storage_dep)
+        else
+            coverage_storage_tests = executable('tvgCoverageStorageTests', 'testGlCoverageStorage.cpp',
+                include_directories: coverage_storage_includes,
+                objects: thorvg_lib.extract_all_objects(recursive: true),
+                cpp_args: test_compiler_flags,
+                dependencies: coverage_dependencies + coverage_storage_dep)
+        endif
+        test('Coverage GPU Storage', coverage_storage_tests)
+    endif
+endif

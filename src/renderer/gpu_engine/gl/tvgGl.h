@@ -286,7 +286,9 @@
         //typedef void (*PFNGLFLUSHPROC)(void);
         //typedef void (*PFNGLLOGICOPPROC)(GLenum opcode);
         //typedef void (*PFNGLPIXELSTOREFPROC)(GLenum pname, GLfloat param);
-        //typedef void (*PFNGLPIXELSTOREIPROC)(GLenum pname, GLint param);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        typedef void (*PFNGLPIXELSTOREIPROC)(GLenum pname, GLint param);
+#endif
         //typedef void (*PFNGLREADBUFFERPROC)(GLenum src);
         //typedef void (*PFNGLREADPIXELSPROC)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void *pixels);
         //typedef void (*PFNGLGETBOOLEANVPROC)(GLenum pname, GLboolean *data);
@@ -1221,7 +1223,9 @@
     //extern PFNGLFLUSHPROC                  glFlush;
     //extern PFNGLLOGICOPPROC                glLogicOp;
     //extern PFNGLPIXELSTOREFPROC            glPixelStoref;
-    //extern PFNGLPIXELSTOREIPROC            glPixelStorei;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    extern PFNGLPIXELSTOREIPROC            glPixelStorei;
+#endif
     //extern PFNGLREADBUFFERPROC             glReadBuffer;
     //extern PFNGLREADPIXELSPROC             glReadPixels;
     //extern PFNGLGETBOOLEANVPROC            glGetBooleanv;
