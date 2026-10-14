@@ -311,6 +311,7 @@ struct Paint::Impl
     AccessorIterator* iterator();
     RenderData update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper = false);
     bool render(RenderMethod* renderer, CompositionFlag flag = CompositionFlag::Invalid);
+    bool needMaskComposition();
     Paint* duplicate(Paint* ret = nullptr);
 };
 

@@ -195,6 +195,28 @@ bool Paint::Impl::render(RenderMethod* renderer, CompositionFlag flag)
 }
 
 
+bool Paint::Impl::needMaskComposition()
+{
+    const Paint* target;
+    auto method = mask(&target);
+    if (!target) return false;
+
+    if ((target->pImpl->opacity == 255 || target->pImpl->opacity == 0) && target->type() == tvg::Type::Shape) {
+        auto shape = static_cast<const Shape*>(target);
+        if (!shape->fill()) {
+            uint8_t r, g, b, a;
+            shape->fill(&r, &g, &b, &a);
+            if (a == 0 || a == 255) {
+                if (method == MaskMethod::Luma || method == MaskMethod::InvLuma) {
+                    if ((r == 255 && g == 255 && b == 255) || (r == 0 && g == 0 && b == 0)) return false;
+                } else return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 RenderData Paint::Impl::update(RenderMethod* renderer, const Matrix& pm, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, bool clipper)
 {
     bool ret;
