@@ -1623,6 +1623,10 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
     ARRAY_FOREACH(p, comp->assets) {
         if (layer->rid != (*p)->id) continue;
         if (layer->type == LottieLayer::Precomp) {
+            if ((*p)->type != LottieObject::Composition) {
+                TVGERR("LOTTIE", "Precomp layer references a non-composition asset.");
+                break;
+            }
             auto asset = static_cast<LottieRootLayer*>(*p);
             if (_buildComposition(comp, asset)) {
                 layer->children = asset->children;
