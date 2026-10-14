@@ -22,6 +22,7 @@
 
 #include "tvgWgShaderSrc.h"
 #include "tvgWgPipelines.h"
+#include "tvgWgRenderData.h"
 #include <cstring>
 
 static const char* shaderBlendNames[]{
@@ -60,6 +61,12 @@ static WGPUVertexBufferLayout vertexBufferLayoutsSolid[]{vertexBufferLayoutPos, 
 static WGPUVertexBufferLayout vertexBufferLayoutsSolidBatch[]{vertexBufferLayoutPos, vertexBufferLayoutColorBatch};
 static WGPUVertexBufferLayout vertexBufferLayoutsShape[]{vertexBufferLayoutPos};
 static WGPUVertexBufferLayout vertexBufferLayoutsImage[]{vertexBufferLayoutPos, vertexBufferLayoutTex};
+
+static WGPUDepthStencilState _depthOnlyState(WGPUCompareFunction compare)
+{
+    const WGPUStencilFaceState stencil{.compare = WGPUCompareFunction_Always, .failOp = WGPUStencilOperation_Keep, .depthFailOp = WGPUStencilOperation_Keep, .passOp = WGPUStencilOperation_Keep};
+    return {.format = WGPUTextureFormat_Depth24PlusStencil8, .depthWriteEnabled = WGPUOptionalBool_False, .depthCompare = compare, .stencilFront = stencil, .stencilBack = stencil, .stencilReadMask = 0, .stencilWriteMask = 0};
+}
 
 WGPUShaderModule WgPipelines::createShaderModule(WGPUDevice device, const char* label, const char* code)
 {
@@ -154,6 +161,28 @@ WGPURenderPipeline WgPipelines::conicBlend(WgContext& context, BlendMethod metho
     auto index = (uint32_t)method;
     if (!conicBlends[index]) conicBlends[index] = createBlendPipeline(context, "The render pipeline conic blend", shaderConicBlend, shaderBlendNames[index], layoutGradientBlend, vertexBufferLayoutsShape, 1, WGPUCompareFunction_NotEqual);
     return conicBlends[index];
+}
+
+WGPURenderPipeline WgPipelines::clippedStroke(WgContext& context, WgRenderSettingsType type)
+{
+    auto index = uint32_t(type) - 1;
+    auto& pipeline = strokeClip[index];
+    if (!pipeline) {
+        const WGPUShaderModule shaders[]{shaderSolid, shaderLinear, shaderRadial, shaderConic};
+        const bool solid = type == WgRenderSettingsType::Solid;
+        const WGPUBlendComponent blendComponent{.operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_OneMinusSrcAlpha};
+        const WGPUBlendState blendState{.color = blendComponent, .alpha = blendComponent};
+        const auto depthStencilState = _depthOnlyState(WGPUCompareFunction_Equal);
+        const WGPUMultisampleState multisampleState{.count = 4, .mask = 0xFFFFFFFF, .alphaToCoverageEnabled = false};
+        pipeline = createRenderPipeline(
+            context.device, "The render pipeline clipped stroke",
+            shaders[index], "vs_main", "fs_main",
+            solid ? layoutSolid : layoutGradient,
+            solid ? vertexBufferLayoutsSolid : vertexBufferLayoutsShape, solid ? 2 : 1,
+            WGPUColorWriteMask_All, WGPUTextureFormat_RGBA8Unorm, blendState,
+            depthStencilState, multisampleState);
+    }
+    return pipeline;
 }
 
 WGPURenderPipeline WgPipelines::imageBlend(WgContext& context, BlendMethod method)
@@ -268,6 +297,7 @@ void WgPipelines::initialize(WgContext& context)
     // depth stencil state blend, compose and blit
     const WGPUDepthStencilState depthStencilStateShape = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False,  WGPUCompareFunction_NotEqual, WGPUStencilOperation_Zero);
     const WGPUDepthStencilState depthStencilStateScene = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False,  WGPUCompareFunction_Always, WGPUStencilOperation_Zero);
+    const auto depthStencilStateConv = _depthOnlyState(WGPUCompareFunction_Always);
 
     // shaders
     char shaderSourceBuff[16384]{};
@@ -346,17 +376,17 @@ void WgPipelines::initialize(WgContext& context)
     conic = createRenderPipeline(context.device, "The render pipeline conic", shaderConic, "vs_main", "fs_main", layoutGradient, vertexBufferLayoutsShape, 1,
                                  WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateShape, multisampleState);
     solidConv = createRenderPipeline(context.device, "The render pipeline solid", shaderSolid, "vs_main", "fs_main", layoutSolid, vertexBufferLayoutsSolid, 2,
-                                     WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateScene, multisampleState);
+                                     WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateConv, multisampleState);
     solidBatch = createRenderPipeline(context.device, "The render pipeline solid batch", shaderSolid, "vs_main", "fs_main", layoutSolid, vertexBufferLayoutsSolidBatch, 2,
                                       WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateScene, multisampleState);
     solidStencilBatch = createRenderPipeline(context.device, "The render pipeline solid stencil batch cover", shaderSolid, "vs_main", "fs_main", layoutSolid, vertexBufferLayoutsSolidBatch, 2,
                                              WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateShape, multisampleState);
     radialConv = createRenderPipeline(context.device, "The render pipeline radial", shaderRadial, "vs_main", "fs_main", layoutGradient, vertexBufferLayoutsShape, 1,
-                                      WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateScene, multisampleState);
+                                      WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateConv, multisampleState);
     linearConv = createRenderPipeline(context.device, "The render pipeline linear", shaderLinear, "vs_main", "fs_main", layoutGradient, vertexBufferLayoutsShape, 1,
-                                      WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateScene, multisampleState);
+                                      WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateConv, multisampleState);
     conicConv = createRenderPipeline(context.device, "The render pipeline conic", shaderConic, "vs_main", "fs_main", layoutGradient, vertexBufferLayoutsShape, 1,
-                                     WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateScene, multisampleState);
+                                     WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateConv, multisampleState);
     image = createRenderPipeline(context.device, "The render pipeline image", shaderImage, "vs_main", "fs_main", layoutImage, vertexBufferLayoutsImage, 2,
                                  WGPUColorWriteMask_All, offscreenTargetFormat, blendStateNrm, depthStencilStateShape, multisampleState);
     imageDirect = createRenderPipeline(context.device, "The render pipeline image direct", shaderImage, "vs_main", "fs_main", layoutImage, vertexBufferLayoutsImage, 2,
@@ -456,6 +486,8 @@ void WgPipelines::releaseGraphicHandles(WgContext& context)
         releaseRenderPipeline(solidBlends[i]);
     }
     // pipelines normal blend
+    for (auto& pipeline : strokeClip)
+        releaseRenderPipeline(pipeline);
     releaseRenderPipeline(scene);
     releaseRenderPipeline(image);
     releaseRenderPipeline(imageDirect);
