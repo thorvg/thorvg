@@ -65,6 +65,9 @@ void GlRenderTask::run(GlStateCache& state)
         assert(layout.arrayBufferId);
         if (layout.index == 1) hasVertexColorLayout = true;
         state.setVertexAttribPointer(layout.index, layout.size, layout.type, layout.normalized, layout.stride, layout.offset, layout.arrayBufferId);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        state.setVertexAttribDivisor(layout.index, layout.divisor);
+#endif
     }
     if (useVertexColor && !hasVertexColorLayout) state.setVertexAttrib4f(1, vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
     state.endVertexLayout();
@@ -80,6 +83,11 @@ void GlRenderTask::run(GlStateCache& state)
         }
     }
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (instanceCount) {
+        GL_CHECK(glDrawArraysInstanced(arrayMode, arrayOffset, indexCnt, instanceCount));
+    } else
+#endif
     if (useDrawArrays) {
         GL_CHECK(glDrawArrays(arrayMode, arrayOffset, indexCnt));
     } else {
@@ -119,6 +127,9 @@ void GlRenderTask::addBindResource(const GlBindingResource& binding)
 void GlRenderTask::setDrawRange(uint32_t offset, uint32_t count)
 {
     useDrawArrays = false;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    instanceCount = 0;
+#endif
     indexOffset = offset;
     indexCnt = count;
 }

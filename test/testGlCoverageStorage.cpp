@@ -146,6 +146,28 @@ struct GlCalls
 
 GlCalls* GlCalls::active = nullptr;
 
+struct InstancedCalls
+{
+    PFNGLDRAWARRAYSINSTANCEDPROC draw = glDrawArraysInstanced;
+    std::vector<GLsizei> instances;
+    bool quads = true;
+    static InstancedCalls* active;
+
+    InstancedCalls()
+    {
+        active = this;
+        glDrawArraysInstanced = [](GLenum mode, GLint first, GLsizei count, GLsizei instances) {
+            active->quads &= mode == GL_TRIANGLES && first == 0 && count == 6 && instances > 0;
+            active->instances.push_back(instances);
+            active->draw(mode, first, count, instances);
+        };
+    }
+
+    ~InstancedCalls() { glDrawArraysInstanced = draw; active = nullptr; }
+};
+
+InstancedCalls* InstancedCalls::active = nullptr;
+
 bool sameRegion(const GlCoverageRegion& a, const GlCoverageRegion& b)
 {
     return a.texture == b.texture && a.rect == b.rect;
@@ -446,6 +468,70 @@ std::array<double, 4> paintColor(const RenderColor& color, const Fill* fill, con
              (first.a * (1.0 - t) + last.a * t) * opacity / (255.0 * 255.0)}};
 }
 
+struct CoveragePaint
+{
+    const GlCoverageMap* coverage;
+    RenderColor color;
+    const Fill* fill;
+    Matrix transform;
+    uint8_t opacity;
+};
+
+void appendPaints(std::vector<CoveragePaint>& paints, const GlShape& shape, const RenderShape& rshape,
+                  const Matrix& transform, uint8_t opacity)
+{
+    for (auto stroke : {rshape.strokeFirst(), !rshape.strokeFirst()}) {
+        if (stroke && !rshape.stroke) continue;
+        auto color = stroke ? rshape.stroke->color : rshape.color;
+        auto fill = stroke ? rshape.stroke->fill : rshape.fill;
+        if (color.a || fill) paints.push_back({stroke ? &shape.strokeCoverage : &shape.fillCoverage, color, fill, transform, opacity});
+    }
+}
+
+std::vector<uint8_t> checkPixels(Validation& validation, GlRenderer& renderer, const WglTarget& target,
+                                 const std::string& label, const std::vector<CoveragePaint>& paints,
+                                 uint32_t tolerance, const RenderColor* background = nullptr)
+{
+    // The root target stores premultiplied RGBA with OpenGL's bottom-up row order.
+    renderer.mStateCache.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, renderer.mRootTarget.colorTex);
+    std::vector<uint8_t> frame(size_t(Width) * Height * 4);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    target.getTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, frame.data());
+    uint32_t maxError = 0;
+    size_t firstMismatch = frame.size();
+    for (uint32_t y = 0; y < Height; ++y) {
+        for (uint32_t x = 0; x < Width; ++x) {
+            std::array<uint8_t, 4> expected = background ? std::array<uint8_t, 4>{{background->r, background->g, background->b, background->a}} :
+                                                        std::array<uint8_t, 4>{{0, 0, 0, 0}};
+            for (const auto& paint : paints) {
+                auto coverage = coveragePixel(paint.coverage->map, x, y);
+                if (!coverage) continue;
+                auto color = paintColor(paint.color, paint.fill, paint.transform, paint.opacity, x, y);
+                auto alpha = color[3] * coverage / 255.0;
+                for (uint32_t channel = 0; channel < 4; ++channel) {
+                    auto source = channel == 3 ? 255.0 : color[channel] * (background ? expected[channel] : 255.0);
+                    auto value = source * alpha + expected[channel] * (1.0 - alpha);
+                    expected[channel] = uint8_t(std::max(0.0, std::min(255.0, std::round(value))));
+                }
+            }
+            auto offset = (size_t(Height - 1 - y) * Width + x) * 4;
+            for (uint32_t channel = 0; channel < 4; ++channel) {
+                auto error = uint32_t(std::abs(int(frame[offset + channel]) - int(expected[channel])));
+                maxError = std::max(maxError, error);
+                if (error > tolerance && firstMismatch == frame.size()) firstMismatch = (size_t(y) * Width + x) * 4 + channel;
+            }
+        }
+    }
+    if (firstMismatch != frame.size()) {
+        std::cerr << label << ": first RGBA difference at " << firstMismatch / 4 % Width << ',' << firstMismatch / 4 / Width
+                  << " channel " << firstMismatch % 4 << "; max error=" << maxError << '\n';
+    }
+    validation.check(maxError <= tolerance, label + " rendered RGBA matches CPU coverage and paint over entire target");
+    validation.check(glGetError() == GL_NO_ERROR, label + " no GL error");
+    std::cout << "draw," << label << ",max_channel_error," << maxError << '\n';
+    return frame;
+}
+
 std::vector<uint8_t> drawCase(Validation& validation, GlRenderer& renderer, const WglTarget& target,
                             const std::string& label, RenderShape& rshape, GlCoverageFormat format,
                             uint8_t opacity = 255, const Matrix& transform = identity(),
@@ -479,49 +565,12 @@ std::vector<uint8_t> drawCase(Validation& validation, GlRenderer& renderer, cons
     validation.check(renderer.postRender(), label + " postRender");
     validation.check(renderer.sync(), label + " sync");
 
-    // The root target stores premultiplied RGBA with OpenGL's bottom-up row order.
-    renderer.mStateCache.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, renderer.mRootTarget.colorTex);
-    std::vector<uint8_t> frame(size_t(Width) * Height * 4);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    target.getTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, frame.data());
-    uint32_t maxError = 0, partial = 0;
-    size_t firstMismatch = frame.size();
-    for (uint32_t y = 0; y < Height; ++y) {
-        for (uint32_t x = 0; x < Width; ++x) {
-            std::array<uint8_t, 4> expected = background ? std::array<uint8_t, 4>{{background->r, background->g, background->b, background->a}} :
-                                                        std::array<uint8_t, 4>{{0, 0, 0, 0}};
-            auto composite = [&](bool stroke) {
-                auto coverage = coveragePixel(stroke ? shape->strokeCoverage.map : shape->fillCoverage.map, x, y);
-                if (!coverage || (stroke && !rshape.stroke)) return;
-                auto color = paintColor(stroke ? rshape.stroke->color : rshape.color,
-                                        stroke ? rshape.stroke->fill : rshape.fill, transform, opacity, x, y);
-                auto alpha = color[3] * coverage / 255.0;
-                for (uint32_t channel = 0; channel < 4; ++channel) {
-                    auto source = channel == 3 ? 255.0 : color[channel] * (background ? expected[channel] : 255.0);
-                    auto value = source * alpha + expected[channel] * (1.0 - alpha);
-                    expected[channel] = uint8_t(std::max(0.0, std::min(255.0, std::round(value))));
-                }
-            };
-            composite(rshape.strokeFirst());
-            composite(!rshape.strokeFirst());
-            auto coverage = background ? coveragePixel(active.map, x, y) : expected[3];
-            partial += coverage > 0 && coverage < 255;
-            auto offset = (size_t(Height - 1 - y) * Width + x) * 4;
-            for (uint32_t channel = 0; channel < 4; ++channel) {
-                auto error = uint32_t(std::abs(int(frame[offset + channel]) - int(expected[channel])));
-                maxError = std::max(maxError, error);
-                if (error > tolerance && firstMismatch == frame.size()) firstMismatch = (size_t(y) * Width + x) * 4 + channel;
-            }
-        }
-    }
-    if (firstMismatch != frame.size()) {
-        std::cerr << label << ": first RGBA difference at " << firstMismatch / 4 % Width << ',' << firstMismatch / 4 / Width
-                  << " channel " << firstMismatch % 4 << "; max error=" << maxError << '\n';
-    }
-    validation.check(maxError <= tolerance, label + " rendered RGBA matches CPU coverage and paint over entire target");
-    validation.check(opacity == 0 || partial > 0, label + " includes partial coverage or opacity");
-    validation.check(glGetError() == GL_NO_ERROR, label + " no GL error");
-    std::cout << "draw," << label << ",max_channel_error," << maxError << '\n';
+    std::vector<CoveragePaint> paints;
+    appendPaints(paints, *shape, rshape, transform, opacity);
+    auto frame = checkPixels(validation, renderer, target, label, paints, tolerance, background);
+    validation.check(opacity < 255 || (active.map.data && std::any_of(active.map.data, active.map.data + size_t(active.map.stride) * active.map.bounds.h(),
+                                                                  [](uint8_t value) { return value > 0 && value < 255; })),
+                     label + " includes partial coverage or opacity");
     if (backgroundShape) renderer.dispose(backgroundShape);
     renderer.dispose(shape);
     return frame;
@@ -603,20 +652,189 @@ void drawChecks(Validation& validation, GlRenderer& renderer, const WglTarget& t
     renderer.viewport({{0, 0}, {Width, Height}});
 }
 
+struct BatchShape
+{
+    RenderShape* shape;
+    GlCoverageFormat format;
+    uint8_t opacity = 255;
+    Matrix transform = identity();
+    RenderSurface* image = nullptr;
+};
+
+std::vector<uint8_t> batchCase(Validation& validation, GlRenderer& renderer, const WglTarget& target,
+                              const std::string& label, const std::vector<BatchShape>& inputs,
+                              const std::vector<uint32_t>& mapsPerDraw)
+{
+    renderer.viewport({{0, 0}, {Width, Height}});
+    Array<RenderData> clips;
+    std::vector<GlShape*> prepared;
+    std::vector<RenderData> images;
+    std::vector<CoveragePaint> paints, solids;
+    validation.check(renderer.preUpdate(), label + " preUpdate");
+    for (const auto& input : inputs) {
+        auto shape = static_cast<GlShape*>(renderer.prepare(*input.shape, nullptr, input.transform, clips, input.opacity, RenderUpdateFlag::All, false));
+        prepared.push_back(shape);
+        auto image = input.image ? renderer.prepare(input.image, nullptr, input.transform, clips, input.opacity, FilterMethod::Nearest, RenderUpdateFlag::All) : nullptr;
+        images.push_back(image);
+        if (input.image) validation.check(image != nullptr, label + " image prepare");
+        if (!validation.check(shape != nullptr, label + " prepare")) continue;
+        auto first = paints.size();
+        appendPaints(paints, *shape, *input.shape, input.transform, input.opacity);
+        for (auto i = first; i < paints.size(); ++i) {
+            const auto& coverage = *paints[i].coverage;
+            validation.check(coverage.status == CoverageStatus::Ready && coverage.map.data && coverage.region.texture && coverage.format == input.format,
+                             label + " uses expected ready atlas format");
+            if (!paints[i].fill && !input.image) solids.push_back(paints[i]);
+        }
+    }
+    validation.check(renderer.postUpdate(), label + " postUpdate");
+    std::vector<GLsizei> expected;
+    uint32_t first = 0;
+    for (auto count : mapsPerDraw) {
+        if (!validation.check(count && first + count <= solids.size(), label + " expected draw fits solid maps")) break;
+        GLsizei instances = 0;
+        const auto& head = *solids[first].coverage;
+        for (uint32_t i = first; i < first + count; ++i) {
+            const auto& coverage = *solids[i].coverage;
+            validation.check(coverage.region.texture == head.region.texture && coverage.format == head.format,
+                             label + " expected batch shares texture and format");
+            instances += coverage.format == GlCoverageFormat::Runs ? coverage.runCount : 1;
+        }
+        expected.push_back(instances);
+        first += count;
+    }
+    validation.check(first == solids.size(), label + " expected draws cover every solid map");
+    {
+        InstancedCalls calls;
+        validation.check(renderer.preRender(), label + " preRender");
+        for (uint32_t i = 0; i < prepared.size(); ++i) {
+            if (images[i]) validation.check(renderer.renderImage(images[i]), label + " renderImage");
+            else if (prepared[i]) validation.check(renderer.renderShape(prepared[i]), label + " renderShape");
+        }
+        validation.check(renderer.postRender(), label + " postRender");
+        validation.check(renderer.sync(), label + " sync");
+        validation.check(calls.quads && calls.instances == expected, label + " actual GL instanced calls use six vertices and exact batch instance counts");
+        std::cout << "batch," << label << ",draws," << calls.instances.size() << ",instances";
+        for (auto count : calls.instances) std::cout << ',' << count;
+        std::cout << '\n';
+    }
+    auto frame = checkPixels(validation, renderer, target, label, paints, 2);
+    for (auto shape : prepared) if (shape) renderer.dispose(shape);
+    for (auto image : images) if (image) renderer.dispose(image);
+    return frame;
+}
+
+void batchShape(RenderShape& shape, bool dense, uint32_t index, bool stroke = false)
+{
+    if (dense) {
+        shape.path.moveTo({121.2f, 91.35f}); shape.path.lineTo({122.4f, 91.55f});
+        shape.path.lineTo({121.6f, 92.45f}); shape.path.close();
+    } else {
+        shape.path.addRect(41.25f, 35.5f, 145.5f, 100.25f, 0.0f, 0.0f, true);
+    }
+    const RenderColor colors[] = {{213, 47, 101, 176}, {23, 139, 221, 208}, {89, 203, 37, 152}};
+    shape.color = colors[index % 3];
+    if (stroke) {
+        shape.stroke = new RenderStroke;
+        shape.stroke->width = 9.25f;
+        shape.stroke->color = colors[(index + 1) % 3];
+    }
+}
+
+void batchChecks(Validation& validation, GlRenderer& renderer, const WglTarget& target)
+{
+    for (auto dense : {true, false}) {
+        std::array<RenderShape, 3> shapes;
+        std::vector<BatchShape> inputs;
+        for (uint32_t i = 0; i < shapes.size(); ++i) {
+            batchShape(shapes[i], dense, i);
+            auto transform = identity();
+            transform.e13 = i * (dense ? 0.25f : 7.125f);
+            transform.e23 = i * (dense ? 0.125f : 5.375f);
+            inputs.push_back({&shapes[i], dense ? GlCoverageFormat::Dense : GlCoverageFormat::Runs, uint8_t(147 + i * 17), transform});
+        }
+        batchCase(validation, renderer, target, dense ? "batch-dense-overlap" : "batch-runs-overlap", inputs, {3});
+    }
+    std::array<RenderShape, 2> stroked;
+    std::vector<BatchShape> strokes;
+    for (uint32_t i = 0; i < stroked.size(); ++i) {
+        batchShape(stroked[i], false, i, true);
+        auto transform = identity();
+        transform.e13 = i * 13.25f; transform.e23 = i * 7.5f;
+        strokes.push_back({&stroked[i], GlCoverageFormat::Runs, uint8_t(147 + i * 17), transform});
+    }
+    auto fillFirst = batchCase(validation, renderer, target, "batch-fill-first", strokes, {4});
+    for (auto& shape : stroked) shape.stroke->first = true;
+    auto strokeFirst = batchCase(validation, renderer, target, "batch-stroke-first", strokes, {4});
+    validation.check(fillFirst != strokeFirst, "batched strokeFirst changes overlapping colors");
+
+    std::array<RenderShape, 65> many;
+    std::vector<BatchShape> split;
+    for (uint32_t i = 0; i < many.size(); ++i) {
+        batchShape(many[i], true, i);
+        auto transform = identity();
+        transform.e13 = -109.0f + 17.0f * (i % 13);
+        transform.e23 = -79.0f + 20.0f * (i / 13);
+        split.push_back({&many[i], GlCoverageFormat::Dense, uint8_t(147 + i % 3 * 17), transform});
+    }
+    batchCase(validation, renderer, target, "batch-65-maps", split, {64, 1});
+
+    std::array<RenderShape, 3> interrupted;
+    std::vector<BatchShape> inputs;
+    for (uint32_t i = 0; i < interrupted.size(); ++i) {
+        batchShape(interrupted[i], false, i);
+        inputs.push_back({&interrupted[i], GlCoverageFormat::Runs, uint8_t(147 + i * 17)});
+    }
+    auto gradient = LinearGradient::gen();
+    gradient->linear(40.0f, 30.0f, 190.0f, 30.0f);
+    const Fill::ColorStop stops[] = {{0.0f, 217, 39, 91, 96}, {1.0f, 21, 183, 231, 208}};
+    gradient->colorStops(stops, 2);
+    interrupted[1].fill = gradient;
+    batchCase(validation, renderer, target, "batch-gradient-interruption", inputs, {1, 1});
+
+    std::array<RenderShape, 3> formats;
+    inputs.clear();
+    for (uint32_t i = 0; i < formats.size(); ++i) {
+        auto dense = i != 1;
+        batchShape(formats[i], dense, i);
+        inputs.push_back({&formats[i], dense ? GlCoverageFormat::Dense : GlCoverageFormat::Runs, uint8_t(147 + i * 17)});
+    }
+    batchCase(validation, renderer, target, "batch-format-interruption", inputs, {1, 1, 1});
+
+    std::array<uint32_t, 64> pixels;
+    pixels.fill(0xff25cb59);
+    RenderSurface image;
+    image.setup(pixels.data(), 8, 8, 8, 4, ColorSpace::ABGR8888S);
+    image.premultiplied = image.opaque = true;
+    std::array<RenderShape, 3> images;
+    inputs.clear();
+    for (uint32_t i = 0; i < images.size(); ++i) {
+        if (i == 1) {
+            images[i].path.addRect(0.0f, 0.0f, 8.0f, 8.0f, 0.0f, 0.0f, true);
+            images[i].color = {89, 203, 37, 255};
+        } else batchShape(images[i], true, i);
+        auto transform = identity();
+        if (i == 1) { transform.e13 = 120.0f; transform.e23 = 90.0f; }
+        inputs.push_back({&images[i], GlCoverageFormat::Dense, uint8_t(147 + i * 17), transform, i == 1 ? &image : nullptr});
+    }
+    batchCase(validation, renderer, target, "batch-image-interruption", inputs, {1, 1});
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
     Validation validation;
-    bool capture = false, updatesOnly = false, drawOnly = false;
+    bool capture = false, updatesOnly = false, drawOnly = false, batchOnly = false;
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "--capture") capture = true;
         else if (std::string(argv[i]) == "--updates-only") updatesOnly = true;
         else if (std::string(argv[i]) == "--draw-only") drawOnly = true;
+        else if (std::string(argv[i]) == "--batch-only") batchOnly = true;
         else if (validation.directory.empty()) validation.directory = argv[i];
-        else { std::cerr << "Usage: tvgCoverageStorageTests [output-directory] [--capture|--updates-only|--draw-only]\n"; return 2; }
+        else { std::cerr << "Usage: tvgCoverageStorageTests [output-directory] [--capture|--updates-only|--draw-only|--batch-only]\n"; return 2; }
     }
-    if (!validation.directory.empty() && !drawOnly) {
+    if (!validation.directory.empty() && !drawOnly && !batchOnly) {
         if (!CreateDirectoryA(validation.directory.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS) {
             std::cerr << "Cannot create output directory\n"; return 2;
         }
@@ -636,11 +854,12 @@ int main(int argc, char** argv)
     }
     renderer->viewport({{0, 0}, {Width, Height}});
     std::cerr << "GL renderer: " << glGetString(GL_RENDERER) << "; version: " << glGetString(GL_VERSION) << "; texture labels: " << bool(target.objectLabel) << '\n';
-    if (drawOnly) {
-        drawChecks(validation, *renderer, target);
+    if (drawOnly || batchOnly) {
+        if (batchOnly) batchChecks(validation, *renderer, target);
+        else drawChecks(validation, *renderer, target);
         renderer.reset();
         validation.check(Initializer::term() == Result::Success, "terminate");
-        std::cout << "coverage drawing: checks=" << validation.checks << " failures=" << validation.failures << '\n';
+        std::cout << "coverage " << (batchOnly ? "batching" : "drawing") << ": checks=" << validation.checks << " failures=" << validation.failures << '\n';
         return validation.failures ? 1 : 0;
     }
     std::array<RenderShape, 8> rshapes;
@@ -767,6 +986,7 @@ int main(int argc, char** argv)
     }
     for (auto shape : prepared) if (shape) renderer->dispose(shape);
     drawChecks(validation, *renderer, target);
+    if (!updatesOnly) batchChecks(validation, *renderer, target);
     renderer.reset();
     validation.check(Initializer::term() == Result::Success, "terminate");
     std::cerr << "coverage storage: maps=" << validation.maps << " page_textures=" << validation.textures.size() << " cropped_dense_bytes=" << validation.denseBytes

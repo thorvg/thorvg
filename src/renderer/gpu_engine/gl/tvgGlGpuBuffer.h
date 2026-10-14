@@ -53,6 +53,9 @@ struct GlStageBuffer
     uint32_t reserve(uint32_t size, void** dst, bool alignGpuOffset = false);
     uint32_t reserveAux(uint32_t size, void** dst);
     uint32_t reserveIndex(uint32_t size, void** dst);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    void update(uint32_t offset, const void* data, uint32_t size) { memcpy(mStageBuffer.data + offset, data, size); }
+#endif
     bool flushToGPU(GlStateCache& state);
     void bind(GlStateCache& state);
     void unbind(GlStateCache& state);

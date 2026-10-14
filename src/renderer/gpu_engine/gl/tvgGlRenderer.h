@@ -224,7 +224,7 @@ struct GlRenderer : RenderMethod
     ~GlRenderer();
 
     void initShaders();
-    GlProgram* createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend = false);
+    GlProgram* createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend = false, bool batch = false);
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
