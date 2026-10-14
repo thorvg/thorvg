@@ -399,6 +399,7 @@ _PARSE_TAG(BlendMethod, blendMode, BlendMode, blendModeTags, BlendMethod::Normal
  */
 static bool _parseDashArray(SvgParserContext* ctx, const char* str, SvgDash* dash)
 {
+    dash->array.clear();
     if (STR_AS(str, "none")) return true;
 
     char *end = nullptr;
@@ -1080,6 +1081,7 @@ static void _handleFillOpacityAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* no
 
 static void _handleTransformAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
+    tvg::free(node->transform);
     node->transform = _parseTransformationMatrix(value);
 }
 
@@ -1090,6 +1092,9 @@ static void _handleClipPathAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node,
     if (len >= 3 && !strncmp(value, "url", 3)) {
         tvg::free(style->clipPath.url);
         style->clipPath.url = _idFromUrl((const char*)(value + 3));
+    } else if (STR_AS(value, "none")) {
+        tvg::free(style->clipPath.url);
+        style->clipPath.url = nullptr;
     }
 }
 
@@ -1100,6 +1105,9 @@ static void _handleMaskAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, con
     if (len >= 3 && !strncmp(value, "url", 3)) {
         tvg::free(style->mask.url);
         style->mask.url = _idFromUrl((const char*)(value + 3));
+    } else if (STR_AS(value, "none")) {
+        tvg::free(style->mask.url);
+        style->mask.url = nullptr;
     }
 }
 
@@ -1307,7 +1315,9 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
     for (unsigned int i = 0; i < sizeof(styleTags) / sizeof(styleTags[0]); i++) {
         if (styleTags[i].sz - 1 == sz && !strncmp(styleTags[i].tag, key, sz)) {
             bool importance = false;
-            if (auto ptr = strstr(value, "!important")) {
+            auto ptr = strstr(value, "!important");
+            if (!ptr) ptr = strstr(value, "!IMPORTANT");
+            if (ptr) {
                 size_t size = ptr - value;
                 while (size > 0 && isspace(value[size - 1])) {
                     size--;
@@ -1367,11 +1377,8 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
     auto node = ctx->parser->node;
 
     if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "transform")) node->transform = _parseTransformationMatrix(value);
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else return _parseStyleAttr(ctx, key, value, false);
 
@@ -1390,8 +1397,6 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
 
     if (STR_AS(key, "style")) {
         return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    } else if (STR_AS(key, "transform")) {
-        node->transform = _parseTransformationMatrix(value);
     } else if (STR_AS(key, "id")) {
         _copyId(&node->id, value);
     } else if (STR_AS(key, "class")) {
@@ -1436,7 +1441,6 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
     if (_parseBox(key, value, &mask->box, mask->isPercentage)) return true;
 
     if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "transform")) node->transform = _parseTransformationMatrix(value);
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
     else if (STR_AS(key, "maskUnits")) { if (STR_AS(value, "userSpaceOnUse")) mask->userSpace = true; }
@@ -1454,7 +1458,7 @@ static bool _attrParseCssStyleNode(void* data, const char* key, const char* valu
     auto node = ctx->parser->node;
 
     if (STR_AS(key, "id")) _copyId(&node->id, value);
-    else return _parseStyleAttr(ctx, key, value, false);
+    else return _parseStyleAttr(ctx, key, value);
     return true;
 }
 
@@ -1744,8 +1748,6 @@ static bool _attrParsePathNode(void* data, const char* key, const char* value)
 
     if (STR_AS(key, "d")) _copyId(&path->path, value);  // Temporary: need to copy
     else if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
@@ -1798,8 +1800,6 @@ static bool _attrParseCircleNode(void* data, const char* key, const char* value)
     }
 
     if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
@@ -1854,8 +1854,6 @@ static bool _attrParseEllipseNode(void* data, const char* key, const char* value
     if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
     else if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else return _parseStyleAttr(ctx, key, value, false);
     return true;
@@ -1900,8 +1898,6 @@ static bool _attrParsePolygonNode(void* data, const char* key, const char* value
 
     if (STR_AS(key, "points")) return _attrParsePolygonPoints(value, polygon);
     else if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
@@ -1975,8 +1971,6 @@ static bool _attrParseRectNode(void* data, const char* key, const char* value)
     if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
     else if (STR_AS(key, "style")) ret = xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else ret = _parseStyleAttr(ctx, key, value, false);
 
@@ -2030,8 +2024,6 @@ static bool _attrParseLineNode(void* data, const char* key, const char* value)
     if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
     else if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else return _parseStyleAttr(ctx, key, value, false);
 
@@ -2096,11 +2088,8 @@ static bool _attrParseImageNode(void* data, const char* key, const char* value)
     } else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
     else if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
-    else if (STR_AS(key, "transform")) node->transform = _parseTransformationMatrix(value);
-    else return _parseStyleAttr(ctx, key, value);
+    else return _parseStyleAttr(ctx, key, value, false);
 
     return true;
 }
@@ -2334,8 +2323,6 @@ static bool _attrParseTextNode(void* data, const char* key, const char* value)
     if (STR_AS(key, "font-size")) text->fontSize = _toFontSize(ctx->parser, value);
     else if (STR_AS(key, "font-family")) svgUtilReplace(&text->fontFamily, value);
     else if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
-    else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
@@ -3765,10 +3752,17 @@ static void _svgLoaderParserXmlCssStyle(SvgParserContext* ctx, const char* conte
     SvgNode *node = nullptr;
 
     while (auto next = xmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
-        if ((method = _findGroupFactory(tag))) {
-            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) _copyId(&node->id, name);
-        } else if ((method = _findGraphicsFactory(tag))) {
-            if ((node = method(ctx, ctx->cssStyle, attrs, attrsLength, xmlParseW3CAttribute))) _copyId(&node->id, name);
+        if (!STR_AS(tag, "defs") && ((method = _findGroupFactory(tag)) || (method = _findGraphicsFactory(tag)))) {
+            if ((node = method(ctx, ctx->cssStyle, "", 0, xmlParseW3CAttribute))) {
+                _copyId(&node->id, name);
+                auto first = cssFindStyleNode(ctx->cssStyle, node->id, node->type);
+                ctx->parser->node = first;
+                xmlParseW3CAttribute(attrs, attrsLength, _attrParseCssStyleNode, ctx);
+                if (first != node) {
+                    ctx->cssStyle->child.pop();
+                    _free(node);
+                }
+            }
         } else if ((gradientMethod = _findGradientFactory(tag))) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "stop")) {
