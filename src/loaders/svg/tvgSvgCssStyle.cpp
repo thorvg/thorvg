@@ -32,6 +32,24 @@ static inline bool _isImportanceApplicable(const SvgStyleFlags& toFlagsImportanc
     return !(toFlagsImportance & flag) && (fromFlagsImportance & flag);
 }
 
+static bool _takesPrecedence(const SvgStyleProperty* from, const SvgStyleProperty* to, SvgStyleFlags flag, bool overwrite)
+{
+    if (overwrite) return !(to->flagsImportance & flag) || (from->flagsImportance & flag);
+    return !(to->flags & flag) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, flag);
+}
+
+static void _markCopied(SvgStyleProperty* to, const SvgStyleProperty* from, SvgStyleFlags flag)
+{
+    to->flags |= flag;
+    if (from->flagsImportance & flag) to->flagsImportance |= flag;
+}
+
+static void _replaceOrClearUrl(char** to, const char* from)
+{
+    tvg::free(*to);
+    *to = nullptr;
+    svgUtilReplace(to, from);
+}
 
 static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool overwrite)
 {
@@ -111,7 +129,7 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
     }
     if (((from->stroke.flags & SvgStrokeFlags::Dash) && !(keep & SvgStyleFlags::StrokeDashArray)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::StrokeDashArray)) {
-        if (!from->stroke.dash.array.empty()) {
+        if (from->stroke.flags & SvgStrokeFlags::Dash) {
             to->stroke.dash.array.clear();
             to->stroke.dash.array.reserve(from->stroke.dash.array.count);
             ARRAY_FOREACH(p, from->stroke.dash.array) to->stroke.dash.array.push(*p);
@@ -190,23 +208,21 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
 void cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite)
 {
     //Copy matrix attribute
-    if (from->transform && (overwrite ? !(to->style->flagsImportance & SvgStyleFlags::Transform) || (from->style->flagsImportance & SvgStyleFlags::Transform) :
-        !(to->style->flags & SvgStyleFlags::Transform) || _isImportanceApplicable(to->style->flagsImportance, from->style->flagsImportance, SvgStyleFlags::Transform))) {
+    if (from->transform && _takesPrecedence(from->style, to->style, SvgStyleFlags::Transform, overwrite)) {
         if (!to->transform) to->transform = tvg::malloc<Matrix>(sizeof(Matrix));
         *to->transform = *from->transform;
-        to->style->flags |= SvgStyleFlags::Transform;
-        if (from->style->flagsImportance & SvgStyleFlags::Transform) to->style->flagsImportance |= SvgStyleFlags::Transform;
+        _markCopied(to->style, from->style, SvgStyleFlags::Transform);
     }
     //Copy style attribute
     _copyStyle(to->style, from->style, overwrite);
 
-    if (from->style->clipPath.url && (!(to->style->flagsImportance & SvgStyleFlags::ClipPath) || (from->style->flagsImportance & SvgStyleFlags::ClipPath))) {
-        svgUtilReplace(&to->style->clipPath.url, from->style->clipPath.url);
-        if (from->style->flagsImportance & SvgStyleFlags::ClipPath) to->style->flagsImportance |= SvgStyleFlags::ClipPath;
+    if ((from->style->flags & SvgStyleFlags::ClipPath) && _takesPrecedence(from->style, to->style, SvgStyleFlags::ClipPath, overwrite)) {
+        _replaceOrClearUrl(&to->style->clipPath.url, from->style->clipPath.url);
+        _markCopied(to->style, from->style, SvgStyleFlags::ClipPath);
     }
-    if (from->style->mask.url && (!(to->style->flagsImportance & SvgStyleFlags::Mask) || (from->style->flagsImportance & SvgStyleFlags::Mask))) {
-        svgUtilReplace(&to->style->mask.url, from->style->mask.url);
-        if (from->style->flagsImportance & SvgStyleFlags::Mask) to->style->flagsImportance |= SvgStyleFlags::Mask;
+    if ((from->style->flags & SvgStyleFlags::Mask) && _takesPrecedence(from->style, to->style, SvgStyleFlags::Mask, overwrite)) {
+        _replaceOrClearUrl(&to->style->mask.url, from->style->mask.url);
+        _markCopied(to->style, from->style, SvgStyleFlags::Mask);
     }
 }
 
