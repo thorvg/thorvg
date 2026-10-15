@@ -815,15 +815,13 @@ static constexpr struct
 };
 
 
-/* parse transform attribute
- * https://www.w3.org/TR/SVG/coords.html#TransformAttribute
- */
-static Matrix* _parseTransformationMatrix(const char* value)
+// https://www.w3.org/TR/SVG/coords.html#TransformAttribute
+static void parseTransform(const char* value, Matrix*& out)
 {
     const int POINT_CNT = 8;
 
-    auto matrix = tvg::malloc<Matrix>(sizeof(Matrix));
-    tvg::identity(matrix);
+    if (!out) out = tvg::malloc<Matrix>(sizeof(Matrix));
+    tvg::identity(out);
 
     float points[POINT_CNT];
     int ptCount = 0;
@@ -856,14 +854,14 @@ static Matrix* _parseTransformationMatrix(const char* value)
         if (state == MatrixState::Matrix) {
             if (ptCount != 6) goto error;
             Matrix tmp = {points[0], points[2], points[4], points[1], points[3], points[5], 0, 0, 1};
-            *matrix *= tmp;
+            *out *= tmp;
         } else if (state == MatrixState::Translate) {
             if (ptCount == 1) {
                 Matrix tmp = {1, 0, points[0], 0, 1, 0, 0, 0, 1};
-                *matrix *= tmp;
+                *out *= tmp;
             } else if (ptCount == 2) {
                 Matrix tmp = {1, 0, points[0], 0, 1, points[1], 0, 0, 1};
-                *matrix *= tmp;
+                *out *= tmp;
             } else goto error;
         } else if (state == MatrixState::Rotate) {
             //Transform to signed.
@@ -873,14 +871,14 @@ static Matrix* _parseTransformationMatrix(const char* value)
             auto s = sinf(deg2rad(points[0]));
             if (ptCount == 1) {
                 Matrix tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
-                *matrix *= tmp;
+                *out *= tmp;
             } else if (ptCount == 3) {
                 Matrix tmp = { 1, 0, points[1], 0, 1, points[2], 0, 0, 1 };
-                *matrix *= tmp;
+                *out *= tmp;
                 tmp = { c, -s, 0, s, c, 0, 0, 0, 1 };
-                *matrix *= tmp;
+                *out *= tmp;
                 tmp = { 1, 0, -points[1], 0, 1, -points[2], 0, 0, 1 };
-                *matrix *= tmp;
+                *out *= tmp;
             } else {
                 goto error;
             }
@@ -890,23 +888,23 @@ static Matrix* _parseTransformationMatrix(const char* value)
             auto sy = sx;
             if (ptCount == 2) sy = points[1];
             Matrix tmp = { sx, 0, 0, 0, sy, 0, 0, 0, 1 };
-            *matrix *= tmp;
+            *out *= tmp;
         } else if (state == MatrixState::SkewX) {
             if (ptCount != 1) goto error;
             auto deg = tanf(deg2rad(points[0]));
             Matrix tmp = { 1, deg, 0, 0, 1, 0, 0, 0, 1 };
-            *matrix *= tmp;
+            *out *= tmp;
         } else if (state == MatrixState::SkewY) {
             if (ptCount != 1) goto error;
             auto deg = tanf(deg2rad(points[0]));
             Matrix tmp = { 1, 0, 0, deg, 1, 0, 0, 0, 1 };
-            *matrix *= tmp;
+            *out *= tmp;
         }
     }
-    return matrix;
+    return;
 error:
-    tvg::free(matrix);
-    return nullptr;
+    tvg::free(out);
+    out = nullptr;
 }
 
 
@@ -1095,8 +1093,7 @@ static void _handleFillOpacityAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* no
 
 static void _handleTransformAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
-    tvg::free(node->transform);
-    node->transform = _parseTransformationMatrix(value);
+    parseTransform(value, node->transform);
 }
 
 static void _handleClipPathAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
@@ -1735,7 +1732,7 @@ static bool _attrParsePatternNode(void* data, const char* key, const char* value
         if (!_parseNumber(&value, nullptr, &pattern->vbox.w) || !_parseNumber(&value, nullptr, &pattern->vbox.h)) return false;
         if (pattern->vbox.w > 0.0f && pattern->vbox.h > 0.0f) pattern->hasViewBox = true;
     } else if (STR_AS(key, "patternTransform")) {
-        pattern->transform = _parseTransformationMatrix(value);
+        parseTransform(value, pattern->transform);
     }
     return true;
 }
@@ -2667,7 +2664,7 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
         if (STR_AS(value, "userSpaceOnUse")) grad->userSpace = true;
         grad->flags = (grad->flags | SvgGradientFlags::GradientUnits);
     } else if (STR_AS(key, "gradientTransform")) {
-        grad->transform = _parseTransformationMatrix(value);
+        parseTransform(value, grad->transform);
     } else {
         return false;
     }
@@ -2932,7 +2929,7 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
         if (STR_AS(value, "userSpaceOnUse")) grad->userSpace = true;
         grad->flags = (grad->flags | SvgGradientFlags::GradientUnits);
     } else if (STR_AS(key, "gradientTransform")) {
-        grad->transform = _parseTransformationMatrix(value);
+        parseTransform(value, grad->transform);
     } else {
         return false;
     }

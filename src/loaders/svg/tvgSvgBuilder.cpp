@@ -653,7 +653,10 @@ static bool _recognizeShape(SvgNode* node, Shape* shape)
 static Paint* _shapeBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box& vBox, const string& svgPath)
 {
     auto shape = Shape::gen();
-    if (!_recognizeShape(node, shape)) return nullptr;
+    if (!_recognizeShape(node, shape)) {
+        Paint::rel(shape);
+        return nullptr;
+    }
     return _applyProperty(ctx, node, shape, vBox, svgPath, false);
 }
 
@@ -768,20 +771,16 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
         href += sizeof("data:") - 1;
         const char* mimetype;
         imageMimeTypeEncoding encoding;
-        if (!_isValidImageMimeTypeAndEncoding(&href, &mimetype, &encoding)) return nullptr; //not allowed mime type or encoding
+        if (!_isValidImageMimeTypeAndEncoding(&href, &mimetype, &encoding)) {  // not allowed mime type or encoding
+            Paint::rel(picture);
+            return nullptr;
+        }
         char *decoded = nullptr;
-        if (encoding == imageMimeTypeEncoding::base64) {
-            auto size = b64Decode(href, strlen(href), &decoded);
-            if (picture->load(decoded, size, mimetype) != Result::Success) {
-                tvg::free(decoded);
-                return nullptr;
-            }
-        } else {
-            auto size = svgUtilURLDecode(href, &decoded);
-            if (picture->load(decoded, size, mimetype) != Result::Success) {
-                tvg::free(decoded);
-                return nullptr;
-            }
+        auto size = (encoding == imageMimeTypeEncoding::base64) ? b64Decode(href, strlen(href), &decoded) : svgUtilURLDecode(href, &decoded);
+        if (picture->load(decoded, size, mimetype) != Result::Success) {
+            Paint::rel(picture);
+            tvg::free(decoded);
+            return nullptr;
         }
         ctx.images.push(decoded);
     } else {
@@ -791,6 +790,7 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
         const char *dot = strrchr(href, '.');
         if (dot && STR_AS(dot, ".svg")) {
             TVGLOG("SVG", "Embedded svg file is disabled.");
+            Paint::rel(picture);
             return nullptr;
         }
         string imagePath = href;
@@ -799,6 +799,7 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
             imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1)) + imagePath;
         }
         if (picture->load(imagePath.c_str()) != Result::Success) {
+            Paint::rel(picture);
             return nullptr;
         }
     }
