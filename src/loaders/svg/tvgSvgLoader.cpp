@@ -399,15 +399,22 @@ _PARSE_TAG(BlendMethod, blendMode, BlendMode, blendModeTags, BlendMethod::Normal
  */
 static bool _parseDashArray(SvgParserContext* ctx, const char* str, SvgDash* dash)
 {
-    dash->array.clear();
-    if (STR_AS(str, "none")) return true;
+    if (STR_AS(str, "none")) {
+        dash->array.clear();
+        return true;
+    }
 
     char *end = nullptr;
+    auto replaced = false;
 
     while (*str) {
         str = svgUtilSkipWhiteSpaceAndComma(str);
         auto parsedValue = toFloat(str, &end);
         if (str == end) break;
+        if (!replaced) {
+            dash->array.clear();
+            replaced = true;
+        }
         if (parsedValue < 0.0f) {
             dash->array.reset();
             return false;
@@ -977,11 +984,18 @@ static void _handlePaintAttr(SvgPaint* paint, const char* value)
     if (STR_AS(value, "currentColor")) {
         paint->curColor = true;
         paint->none = false;
+        tvg::free(paint->url);
+        paint->url = nullptr;
         return;
     }
     paint->color.a = 255;
     if (_toColor(value, paint->color.r, paint->color.g, paint->color.b, &paint->color.a, &paint->url)) {
         paint->none = false;
+        paint->curColor = false;
+        if (strncmp(value, "url", 3)) {
+            tvg::free(paint->url);
+            paint->url = nullptr;
+        }
     }
 }
 
@@ -1316,7 +1330,10 @@ static bool _parseStyleAttr(void* data, const char* key, const char* value, bool
         if (styleTags[i].sz - 1 == sz && !strncmp(styleTags[i].tag, key, sz)) {
             bool importance = false;
             auto ptr = strstr(value, "!important");
-            if (!ptr) ptr = strstr(value, "!IMPORTANT");
+            if (!ptr && style) {
+                auto upper = strstr(value, "!IMPORTANT");
+                if (upper && !*svgUtilSkipWhiteSpace(upper + 10, nullptr)) ptr = upper;
+            }
             if (ptr) {
                 size_t size = ptr - value;
                 while (size > 0 && isspace(value[size - 1])) {
@@ -3753,7 +3770,10 @@ static void _svgLoaderParserXmlCssStyle(SvgParserContext* ctx, const char* conte
 
     while (auto next = xmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
         if (!STR_AS(tag, "defs") && ((method = _findGroupFactory(tag)) || (method = _findGraphicsFactory(tag)))) {
-            if ((node = method(ctx, ctx->cssStyle, "", 0, xmlParseW3CAttribute))) {
+            auto global = ctx->parser->global;
+            node = method(ctx, ctx->cssStyle, "", 0, xmlParseW3CAttribute);
+            ctx->parser->global = global;
+            if (node) {
                 _copyId(&node->id, name);
                 auto first = cssFindStyleNode(ctx->cssStyle, node->id, node->type);
                 ctx->parser->node = first;
