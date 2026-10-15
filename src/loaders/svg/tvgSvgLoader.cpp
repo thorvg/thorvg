@@ -3789,7 +3789,7 @@ static void _svgLoaderParserXmlCssStyle(SvgParserContext* ctx, const char* conte
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
         } else if (STR_AS(tag, "stop")) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);
-        } else if (STR_AS(tag, "all")) {
+        } else if (STR_AS(tag, "all") && name) {
             char* tokPtr = nullptr;
             auto id = _parseName(name, ",", &tokPtr);
 
