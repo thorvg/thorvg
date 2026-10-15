@@ -1729,6 +1729,12 @@ void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, flo
 {
     if (layer->children.empty()) return;
 
+    auto audio = static_cast<LottieAudio*>(layer->children.first());
+    if (audio->type != LottieObject::Type::Audio) {
+        TVGERR("LOTTIE", "Expected audio data.");
+        return;
+    }
+
     auto ctrl = layer->audio();
     auto pos = layer->remap(comp, frameNo, exps);
     if (pos < 0.0f) active = false;    
@@ -1737,7 +1743,7 @@ void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, flo
 
     // audio condition is changed
     if ((active != ctrl->prevActive) || (active && !tvg::equal(value, ctrl->prevVolume))) {
-        auto& src = static_cast<LottieAudio*>(layer->children.first())->src;
+        auto& src = audio->src;
         auto offset = active ? pos / comp->frameRate : 0.0f;
         LottieAudioResolver info = {src.data, src.mimeType, src.size, offset, value, active, (src.size > 0)};
         audioResolver.func(info, audioResolver.data);
