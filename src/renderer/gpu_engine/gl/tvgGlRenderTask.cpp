@@ -339,6 +339,7 @@ void GlSceneBlendTask::run(GlStateCache& state)
 /* GlClipTask Class Implementation                                      */
 /************************************************************************/
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 void GlClipTask::run(GlStateCache& state)
 {
     state.enable(GL_STENCIL_TEST);
@@ -370,6 +371,7 @@ void GlClipTask::normalizeDrawDepth(int32_t maxDepth)
     clipTask->normalizeDrawDepth(maxDepth);
     maskTask->normalizeDrawDepth(maxDepth);
 }
+#endif
 
 /************************************************************************/
 /* GlDirectBlendTask Class Implementation                               */

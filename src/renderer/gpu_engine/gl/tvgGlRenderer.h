@@ -45,6 +45,9 @@ struct GlRenderer : RenderMethod
         RT_RadGradient,
         RT_ConGradient,
         RT_Image,
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        RT_ClipImage,
+#endif
         RT_MaskAlpha,
         RT_MaskAlphaInv,
         RT_MaskLuma,
@@ -214,6 +217,7 @@ struct GlRenderer : RenderMethod
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     GlCoverageAtlas coverageAtlas;
     Inlist<GlShape> coverageShapes;
+    Inlist<GlImage> coverageImages;
     bool uploadCoverage(GlCoverageMap& coverage);
     void bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage);
 #endif
@@ -230,7 +234,9 @@ struct GlRenderer : RenderMethod
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
+#endif
 
     GlRenderPass* currentPass();
 

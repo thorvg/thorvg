@@ -97,6 +97,7 @@ void main()
 )";
 
 const char* COVERAGE_FRAG_HEADER = R"(
+#define COVERAGE
 uniform highp sampler2D uCoverageTexture;
 in vec2 vCoverageCoord;
 flat in float vCoverage;
@@ -468,19 +469,27 @@ const char* IMAGE_VERT_SHADER = TVG_COMPOSE_SHADER(
     }                                                                                       \n
 );
 
-const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
-    layout(std140) uniform ColorInfo {                                                      \n
-        ivec4 params;                                                                       \n
-    } uColorInfo;                                                                           \n
-    uniform sampler2D uTexture;                                                             \n
-    in vec2 vUV;                                                                            \n
-    out vec4 FragColor;                                                                     \n
-                                                                                            \n
-    void main()                                                                             \n
-    {                                                                                       \n
-        FragColor = texture(uTexture, vUV) * float(uColorInfo.params.x) / 255.0;             \n
-   }                                                                                        \n
-);
+const char* IMAGE_FRAG_SHADER = R"(
+layout(std140) uniform ColorInfo {
+    ivec4 params;
+} uColorInfo;
+uniform sampler2D uTexture;
+#ifdef COVERAGE
+in vec2 vPos;
+#else
+in vec2 vUV;
+#endif
+out vec4 FragColor;
+
+void main()
+{
+#ifdef COVERAGE
+    vec2 vUV = vPos / vec2(textureSize(uTexture, 0));
+    if (any(lessThan(vUV, vec2(0))) || any(greaterThanEqual(vUV, vec2(1)))) discard;
+#endif
+    FragColor = texture(uTexture, vUV) * float(uColorInfo.params.x) / 255.0;
+}
+)";
 
 const char* MASK_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                   \n

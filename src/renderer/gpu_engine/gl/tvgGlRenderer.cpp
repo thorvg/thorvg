@@ -59,11 +59,60 @@ bool GlDrawable::prepare(RenderUpdateFlag& updateFlags, const Point& viewSize, u
 
 void GlImage::destroy(GlRenderer& renderer)
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    renderer.coverageAtlas.release(clipCoverage.region);
+    renderer.coverageImages.remove(this);
+#endif
     if (texId && (stamp == renderer.textures.stamp))
         renderer.disposeTexture(renderer.textures.release(surface, filter, texId));
 }
 
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
+static const GlCoverageMap& _clipMap(RenderData data)
+{
+    auto shape = static_cast<GlShape*>(data);
+    return shape->clipStroke ? shape->strokeCoverage : shape->fillCoverage;
+}
+
+static CoverageStatus _clipCoverage(CoverageMap& map, const Array<RenderData>& clips)
+{
+    auto bounds = map.bounds;
+    ARRAY_FOREACH(p, clips) {
+        const auto& clip = _clipMap(*p);
+        if (clip.status != CoverageStatus::Ready) {
+            map.reset();
+            return clip.status;
+        }
+        bounds.intersect(clip.map.bounds);
+    }
+    if (bounds.invalid()) {
+        map.reset();
+        return CoverageStatus::Empty;
+    }
+
+    auto source = map.data;
+    auto data = source ? source : tvg::malloc<uint8_t>(size_t(bounds.w()) * bounds.h());
+    if (!data) return CoverageStatus::Error;
+    auto out = data;
+    bool visible = false;
+    for (auto y = bounds.sy(); y < bounds.max.y; ++y) {
+        for (auto x = bounds.sx(); x < bounds.max.x; ++x) {
+            auto value = source ? source[size_t(y - map.bounds.sy()) * map.stride + x - map.bounds.sx()] : uint8_t(255);
+            ARRAY_FOREACH(p, clips) {
+                const auto& clip = _clipMap(*p).map;
+                value = MULTIPLY(value, clip.data[size_t(y - clip.bounds.sy()) * clip.stride + x - clip.bounds.sx()]);
+            }
+            *out++ = value;
+            visible |= value != 0;
+        }
+    }
+    map.data = data;
+    map.bounds = bounds;
+    map.stride = bounds.w();
+    if (!visible) map.reset();
+    return visible ? CoverageStatus::Ready : CoverageStatus::Empty;
+}
+
 void GlShape::destroy(GlRenderer& renderer)
 {
     renderer.coverageAtlas.release(fillCoverage.region);
@@ -139,6 +188,7 @@ static bool _packGradientBlock(float* stopInfo, float* stopPoints, float* stopCo
     return opaque;
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 static bool _skipRender(const Array<RenderData>& clips)
 {
     if (clips.empty()) return false;
@@ -153,6 +203,7 @@ static bool _skipRender(const Array<RenderData>& clips)
 
     return false;
 }
+#endif
 
 void GlRenderer::disposeTexture(GLuint texId)
 {
@@ -188,6 +239,7 @@ void GlRenderer::flush()
             coverage->byteSize = 0;
         }
     }
+    INLIST_FOREACH(coverageImages, image) image->clipCoverage.region = {};
     coverageAtlas.clear(mStateCache);
 #endif
     clearDisposes();
@@ -320,6 +372,9 @@ void GlRenderer::initShaders()
     mPrograms.push(createShapeProgram(gradientVertShader, radialGradientFragShader));
     mPrograms.push(createShapeProgram(gradientVertShader, conicGradientFragShader));
     mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    mPrograms.push(createShapeProgram(nullptr, IMAGE_FRAG_SHADER));
+#endif
 
     // compose Renderer
     mPrograms.push(new GlProgram(MASK_VERT_SHADER, MASK_ALPHA_FRAG_SHADER));
@@ -673,14 +728,13 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 }
 
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds)
 {
     if (viewBounds.invalid()) return;
 
     // Clip is a render boundary.
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
     mStencilCoverBatch.clear();
-#endif
 
     // Clip masks must stay inside the target paint view bounds. Fast-tracked
     // Lottie clips narrow geometry.viewport while the pass viewport remains
@@ -722,6 +776,7 @@ void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBoun
         currentPass()->addRenderTask(new GlClipTask(clipTask, maskTask));
     }
 }
+#endif
 
 
 GlRenderPass* GlRenderer::currentPass()
@@ -1377,7 +1432,13 @@ bool GlRenderer::renderImage(void* data)
     bbox.intersect(vp);
     if (bbox.invalid()) return true;
     if (!image->geometry.drawable(RenderUpdateFlag::Image)) return true;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto clipped = !image->clips.empty();
+    Matrix inverseImage;
+    if (clipped && (image->clipCoverage.status != CoverageStatus::Ready || !inverse(&image->geometry.matrix, &inverseImage))) return true;
+#else
     if (_skipRender(image->clips)) return true;  // TODO: move this in prepare() stage?
+#endif
 
     auto drawDepth = currentPass()->nextDrawDepth();
 
@@ -1387,14 +1448,25 @@ bool GlRenderer::renderImage(void* data)
         return true;
     }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (!image->clips.empty()) drawClip(image->clips, bbox);
-
-    auto task = new GlRenderTask(mPrograms[RT_Image]);
-    task->setDrawDepth(drawDepth);
-    image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
-
+#endif
     bool complexBlend = beginComplexBlending(bbox, image->geometry.bounds());
     if (complexBlend) vp = currentPass()->getViewport();
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto task = new GlRenderTask(mPrograms[clipped ? RT_ClipImage : RT_Image]);
+    if (clipped) {
+        bindCoverage(task, image->clipCoverage);
+        float matrix[GL_MAT3_STD140_SIZE];
+        getMatrix3Std140(inverseImage, matrix);
+        task->addBindResource(GlBindingResource{0, GlShaderUniformBlock::TransformInfo, mGpuBuffer.getBufferId(),
+                                              mGpuBuffer.push(matrix, sizeof(matrix), true), sizeof(matrix)});
+    } else image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
+#else
+    auto task = new GlRenderTask(mPrograms[RT_Image]);
+    image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
+#endif
+    task->setDrawDepth(drawDepth);
     task->setViewMatrix(currentPass()->getViewMatrix());
 
     uint32_t info[4] = {image->opacity, 0, 0, 0};
@@ -1434,13 +1506,17 @@ bool GlRenderer::renderShape(RenderData data)
     auto bbox = shape->geometry.viewport;
     bbox.intersect(currentPass()->getViewport());
     if (bbox.invalid()) return true;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (_skipRender(shape->clips)) return true;  // TODO: move this in prepare() stage?
+#endif
 
     int32_t drawDepth1 = 0, drawDepth2 = 0;
     if (shape->valid.fill) drawDepth1 = currentPass()->nextDrawDepth();
     if (shape->valid.stroke) drawDepth2 = currentPass()->nextDrawDepth();
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     if (!shape->clips.empty()) drawClip(shape->clips, bbox);
+#endif
 
     auto processFill = [&]() {
         if (shape->valid.fill) {
@@ -1488,14 +1564,21 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     if (!image) {
         image = new GlImage;
         flags = RenderUpdateFlag::All;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        coverageImages.back(image);
+#endif
     }
 
     auto cacheStale = image->texId && (image->stamp != textures.stamp);
     if (cacheStale) flags |= RenderUpdateFlag::Image;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (!clips.empty() && !image->clipCoverage.region.texture) flags |= RenderUpdateFlag::Clip;
+#endif
     if (image->prepare(flags, {float(this->surface.w), float(this->surface.h)}, opacity, false)) return image;
 
     if (cacheStale || image->texId == 0 || image->surface != surface || image->filter != filter) {
-        image->destroy(*this);
+        if (image->texId && image->stamp == textures.stamp)
+            disposeTexture(textures.release(image->surface, image->filter, image->texId));
         image->texId = textures.retain(mStateCache, surface, filter);
         image->surface = surface;
         image->filter = filter;
@@ -1514,6 +1597,17 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
     image->geometry.viewport = vport;
     image->opacity = opacity;
+
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    image->clipCoverage.map.reset();
+    image->clipCoverage.status = CoverageStatus::Empty;
+    if (!image->clips.empty()) {
+        image->clipCoverage.map.bounds = image->geometry.bounds();
+        image->clipCoverage.map.bounds.intersect(vport);
+        image->clipCoverage.status = _clipCoverage(image->clipCoverage.map, image->clips);
+    }
+    if (!uploadCoverage(image->clipCoverage)) image->clipCoverage.status = CoverageStatus::Error;
+#endif
 
     return image;
 }
@@ -1534,10 +1628,19 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     const auto& previous = shape->geometry.viewport;
     auto changed = previous.min.x != vport.min.x || previous.min.y != vport.min.y || previous.max.x != vport.max.x || previous.max.y != vport.max.y;
-    auto update = changed || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Stroke));
+    auto update = changed || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Stroke | RenderUpdateFlag::Clip));
     auto updateFill = update || shape->geometry.fillRule != rshape.rule;
-    if (updateFill) shape->fillCoverage.status = generateFillCoverage(rshape, transform, vport, shape->fillCoverage.map);
-    if (update) shape->strokeCoverage.status = generateStrokeCoverage(rshape, transform, vport, shape->strokeCoverage.map);
+    // Keep stroke selection even when clipping removes its entire coverage.
+    shape->clipStroke = rshape.stroke && !tvg::zero(rshape.stroke->width) && !tvg::zero(rshape.stroke->trim.begin - rshape.stroke->trim.end) &&
+                        rshape.stroke->width * sqrtf(transform.e11 * transform.e11 + transform.e12 * transform.e12) > 0.0f;
+    if (updateFill) {
+        shape->fillCoverage.status = generateFillCoverage(rshape, transform, vport, shape->fillCoverage.map);
+        if (!clips.empty() && shape->fillCoverage.status == CoverageStatus::Ready) shape->fillCoverage.status = _clipCoverage(shape->fillCoverage.map, clips);
+    }
+    if (update) {
+        shape->strokeCoverage.status = generateStrokeCoverage(rshape, transform, vport, shape->strokeCoverage.map);
+        if (!clips.empty() && shape->strokeCoverage.status == CoverageStatus::Ready) shape->strokeCoverage.status = _clipCoverage(shape->strokeCoverage.map, clips);
+    }
     if (updateFill || !shape->fillCoverage.region.texture) {
         if (!uploadCoverage(shape->fillCoverage)) shape->fillCoverage.status = CoverageStatus::Error;
     }

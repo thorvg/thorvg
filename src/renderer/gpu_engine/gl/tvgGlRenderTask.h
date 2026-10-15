@@ -198,6 +198,7 @@ struct GlSceneBlendTask : GlComposeTask
     uint32_t parentHeight = 0;
 };
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 struct GlClipTask : GlRenderTask
 {
     GlClipTask(GlRenderTask* clip, GlRenderTask* mask) :
@@ -214,6 +215,8 @@ struct GlClipTask : GlRenderTask
     GlRenderTask* clipTask;
     GlRenderTask* maskTask;
 };
+
+#endif
 
 struct GlDirectBlendTask : GlRenderTask
 {

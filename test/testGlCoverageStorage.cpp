@@ -475,6 +475,7 @@ struct CoveragePaint
     const Fill* fill;
     Matrix transform;
     uint8_t opacity;
+    const RenderSurface* image = nullptr;
 };
 
 void appendPaints(std::vector<CoveragePaint>& paints, const GlShape& shape, const RenderShape& rshape,
@@ -507,6 +508,16 @@ std::vector<uint8_t> checkPixels(Validation& validation, GlRenderer& renderer, c
                 auto coverage = coveragePixel(paint.coverage->map, x, y);
                 if (!coverage) continue;
                 auto color = paintColor(paint.color, paint.fill, paint.transform, paint.opacity, x, y);
+                if (paint.image) {
+                    Matrix inverseImage;
+                    inverse(&paint.transform, &inverseImage);
+                    Point position = {x + 0.5f, y + 0.5f};
+                    position *= inverseImage;
+                    if (position.x < 0.0f || position.y < 0.0f || position.x >= paint.image->w || position.y >= paint.image->h) continue;
+                    auto pixel = paint.image->buf32[size_t(uint32_t(position.y)) * paint.image->stride + uint32_t(position.x)];
+                    color = {{(pixel & 255) / 255.0, ((pixel >> 8) & 255) / 255.0, ((pixel >> 16) & 255) / 255.0,
+                              ((pixel >> 24) & 255) * paint.opacity / (255.0 * 255.0)}};
+                }
                 auto alpha = color[3] * coverage / 255.0;
                 for (uint32_t channel = 0; channel < 4; ++channel) {
                     auto source = channel == 3 ? 255.0 : color[channel] * (background ? expected[channel] : 255.0);
@@ -820,21 +831,362 @@ void batchChecks(Validation& validation, GlRenderer& renderer, const WglTarget& 
     batchCase(validation, renderer, target, "batch-image-interruption", inputs, {1, 1});
 }
 
+using CoverageBytes = std::vector<uint8_t>;
+
+CoverageBytes coverageBytes(const CoverageMap& map)
+{
+    CoverageBytes bytes(size_t(Width) * Height);
+    for (uint32_t y = 0; y < Height; ++y) {
+        for (uint32_t x = 0; x < Width; ++x) bytes[size_t(y) * Width + x] = coveragePixel(map, x, y);
+    }
+    return bytes;
+}
+
+void intersectBytes(CoverageBytes& paint, const CoverageBytes& clip)
+{
+    for (size_t i = 0; i < paint.size(); ++i) paint[i] = uint8_t((uint32_t(paint[i]) * clip[i] + 255) >> 8);
+}
+
+struct ClipReference
+{
+    CoverageBytes fill, stroke;
+    bool strokeClip;
+
+    const CoverageBytes& selected() const { return strokeClip ? stroke : fill; }
+};
+
+ClipReference unclippedReference(Validation& validation, const RenderShape& shape, const Matrix& transform,
+                                 const RenderRegion& viewport)
+{
+    // Generate fresh unclipped geometry; never derive expected bytes from a prepared clipped map.
+    CoverageMap fill, stroke;
+    validation.check(generateFillCoverage(shape, transform, viewport, fill) != CoverageStatus::Error, "reference fill generation");
+    validation.check(generateStrokeCoverage(shape, transform, viewport, stroke) != CoverageStatus::Error, "reference stroke generation");
+    return {coverageBytes(fill), coverageBytes(stroke), shape.stroke && shape.stroke->width > 0.0f};
+}
+
+void checkClipMap(Validation& validation, GlRenderer& renderer, const WglTarget& target, const GlCoverageMap& actual,
+                  const CoverageBytes& expected, const std::string& label)
+{
+    auto visible = std::any_of(expected.begin(), expected.end(), [](uint8_t value) { return value != 0; });
+    validation.check(actual.status == (visible ? CoverageStatus::Ready : CoverageStatus::Empty) &&
+                     bool(actual.map.data) == visible && bool(actual.region.texture) == visible,
+                     label + " ready/empty CPU and atlas ownership matches independent intersection");
+    validation.check(coverageBytes(actual.map) == expected, label + " every CPU byte matches independent unclipped-map product");
+    if (visible) validation.read(renderer, target, actual, label);
+    else validation.check(!actual.byteSize && !actual.runCount, label + " empty intersection releases payload");
+}
+
+struct ClipInput
+{
+    RenderShape* shape;
+    std::vector<uint32_t> clips;
+    GlCoverageFormat format = GlCoverageFormat::Runs;
+};
+
+void clippedShapeCase(Validation& validation, GlRenderer& renderer, const WglTarget& target, const std::string& label,
+                       RenderShape& rshape, const std::vector<ClipInput>& inputs, const std::vector<uint32_t>& clipIndices,
+                       bool batch = false, const RenderColor* background = nullptr, uint8_t opacity = 173, const Matrix& transform = identity(),
+                       const RenderRegion& viewport = {{0, 0}, {Width, Height}})
+{
+    renderer.viewport(viewport);
+    validation.check(renderer.preUpdate(), label + " preUpdate");
+    std::vector<GlShape*> preparedClips;
+    std::vector<ClipReference> references;
+    Array<RenderData> clips, none;
+    for (const auto& input : inputs) {
+        clips.clear();
+        auto reference = unclippedReference(validation, *input.shape, identity(), viewport);
+        for (auto index : input.clips) {
+            clips.push(preparedClips[index]);
+            intersectBytes(reference.fill, references[index].selected());
+            intersectBytes(reference.stroke, references[index].selected());
+        }
+        preparedClips.push_back(static_cast<GlShape*>(renderer.prepare(*input.shape, nullptr, identity(), clips, 255, RenderUpdateFlag::All, true)));
+        references.push_back(std::move(reference));
+    }
+    clips.clear();
+    auto reference = unclippedReference(validation, rshape, transform, viewport);
+    auto originalFill = reference.fill;
+    for (auto index : clipIndices) {
+        clips.push(preparedClips[index]);
+        intersectBytes(reference.fill, references[index].selected());
+        intersectBytes(reference.stroke, references[index].selected());
+    }
+    validation.check(reference.fill != originalFill, label + " clipping changes target coverage");
+    RenderShape backdrop;
+    GlShape* backgroundShape = nullptr;
+    if (background) {
+        backdrop.path.addRect(0.0f, 0.0f, Width, Height, 0.0f, 0.0f, true);
+        backdrop.color = *background;
+        backgroundShape = static_cast<GlShape*>(renderer.prepare(backdrop, nullptr, identity(), none, 255, RenderUpdateFlag::All, false));
+    }
+    std::vector<GlShape*> paints;
+    for (uint32_t i = 0; i < (batch ? 2u : 1u); ++i) {
+        paints.push_back(static_cast<GlShape*>(renderer.prepare(rshape, nullptr, transform, clips, opacity, RenderUpdateFlag::All, false)));
+    }
+    validation.check(renderer.postUpdate(), label + " postUpdate");
+    for (uint32_t i = 0; i < preparedClips.size(); ++i) {
+        if (!validation.check(preparedClips[i] != nullptr, label + " clip prepare")) continue;
+        checkClipMap(validation, renderer, target, preparedClips[i]->fillCoverage, references[i].fill, label + "-clip" + std::to_string(i) + "-fill");
+        checkClipMap(validation, renderer, target, preparedClips[i]->strokeCoverage, references[i].stroke, label + "-clip" + std::to_string(i) + "-stroke");
+        const auto& selected = references[i].strokeClip ? preparedClips[i]->strokeCoverage : preparedClips[i]->fillCoverage;
+        if (selected.status == CoverageStatus::Ready) validation.check(selected.format == inputs[i].format, label + " clip uses requested Dense/Runs source format");
+    }
+    std::vector<CoveragePaint> expectedPaints;
+    GLsizei instances = 0;
+    GLuint texture = 0;
+    GlCoverageFormat format = GlCoverageFormat::Dense;
+    for (auto paint : paints) {
+        if (!validation.check(paint != nullptr, label + " paint prepare")) continue;
+        checkClipMap(validation, renderer, target, paint->fillCoverage, reference.fill, label + "-fill");
+        checkClipMap(validation, renderer, target, paint->strokeCoverage, reference.stroke, label + "-stroke");
+        appendPaints(expectedPaints, *paint, rshape, transform, opacity);
+        if (batch) {
+            for (auto coverage : {&paint->fillCoverage, &paint->strokeCoverage}) {
+                if (coverage->status != CoverageStatus::Ready) continue;
+                if (texture) validation.check(coverage->region.texture == texture && coverage->format == format, label + " clipped solids share batch page and format");
+                texture = coverage->region.texture; format = coverage->format;
+                instances += format == GlCoverageFormat::Runs ? coverage->runCount : 1;
+            }
+        }
+    }
+    {
+        InstancedCalls calls;
+        validation.check(renderer.preRender(), label + " preRender");
+        if (backgroundShape) {
+            validation.check(renderer.renderShape(backgroundShape), label + " background render");
+            renderer.blend(BlendMethod::Multiply);
+        }
+        for (auto paint : paints) if (paint) validation.check(renderer.renderShape(paint), label + " renderShape");
+        if (background) renderer.blend(BlendMethod::Normal);
+        validation.check(renderer.postRender(), label + " postRender");
+        validation.check(renderer.sync(), label + " sync");
+        if (batch) validation.check(instances > 0 && calls.quads && calls.instances == std::vector<GLsizei>{instances}, label + " clipped solid maps retain one instanced batch");
+    }
+    checkPixels(validation, renderer, target, label, expectedPaints, 2, background);
+    for (auto paint : paints) if (paint) renderer.dispose(paint);
+    if (backgroundShape) renderer.dispose(backgroundShape);
+    for (auto clip : preparedClips) if (clip) renderer.dispose(clip);
+}
+
+void clipChecks(Validation& validation, GlRenderer& renderer, const WglTarget& target)
+{
+    RenderShape paint, runs, dense, inner, stroke, empty;
+    batchShape(paint, false, 0, true);
+    runs.path.addRect(84.5f, 30.25f, 110.25f, 83.5f, 0.0f, 0.0f, true);
+    runs.color = {255, 255, 255, 255};
+    clippedShapeCase(validation, renderer, target, "clip-runs-fill-stroke-batch", paint, {{&runs, {}}}, {0}, true);
+
+    dense.path.moveTo({121.2f, 91.35f}); dense.path.lineTo({122.4f, 91.55f});
+    dense.path.lineTo({121.6f, 92.45f}); dense.path.close();
+    dense.color = {255, 255, 255, 255};
+    paint.path.clear();
+    paint.path.addRect(121.25f, 80.5f, 45.0f, 40.0f, 0.0f, 0.0f, true);
+    clippedShapeCase(validation, renderer, target, "clip-dense-fill-stroke", paint, {{&dense, {}, GlCoverageFormat::Dense}}, {0}, true);
+    paint.path.clear();
+    paint.path.addRect(25.25f, 20.5f, 195.5f, 150.25f, 0.0f, 0.0f, true);
+    inner.path.addRect(110.25f, 56.5f, 89.5f, 89.25f, 0.0f, 0.0f, true);
+    inner.color = {255, 255, 255, 255};
+    clippedShapeCase(validation, renderer, target, "clip-multiple", paint, {{&runs, {}}, {&inner, {}}}, {0, 1});
+    clippedShapeCase(validation, renderer, target, "clip-nested", paint, {{&runs, {}}, {&inner, {0}}}, {1});
+
+    stroke.path.addRect(40.25f, 30.25f, 150.0f, 110.0f, 0.0f, 0.0f, true);
+    stroke.color = {255, 255, 255, 255};
+    stroke.stroke = new RenderStroke;
+    stroke.stroke->width = 8.5f;
+    stroke.stroke->color = {255, 255, 255, 255};
+    clippedShapeCase(validation, renderer, target, "clip-stroke-selected", paint, {{&stroke, {}}}, {0});
+    inner.path.clear();
+    inner.path.addRect(70.25f, 60.5f, 60.0f, 40.0f, 0.0f, 0.0f, true);
+    clippedShapeCase(validation, renderer, target, "clip-nested-empty-stroke", paint, {{&inner, {}}, {&stroke, {0}}}, {1});
+    stroke.path.clear();
+    stroke.path.addRect(-20.0f, -20.0f, Width + 40.0f, Height + 40.0f, 0.0f, 0.0f, true);
+    clippedShapeCase(validation, renderer, target, "clip-viewport-empty-stroke", paint, {{&stroke, {}}}, {0});
+    clippedShapeCase(validation, renderer, target, "clip-empty", paint, {{&empty, {}}}, {0});
+
+    auto transform = identity();
+    transform.e13 = 11.375f; transform.e23 = -8.125f;
+    auto gradient = LinearGradient::gen();
+    gradient->linear(40.0f, 30.0f, 190.0f, 30.0f);
+    const Fill::ColorStop stops[] = {{0.0f, 217, 39, 91, 96}, {1.0f, 21, 183, 231, 208}};
+    gradient->colorStops(stops, 2);
+    paint.fill = gradient; paint.color = {}; paint.stroke->color = {};
+    clippedShapeCase(validation, renderer, target, "clip-gradient-offset-viewport", paint, {{&runs, {}}}, {0}, false, nullptr,
+                     173, transform, {{61, 42}, {180, 129}});
+    paint.fill = nullptr;
+    delete gradient;
+    paint.color = {128, 192, 64, 255};
+    const RenderColor background = {96, 144, 208, 255};
+    clippedShapeCase(validation, renderer, target, "clip-multiply", paint, {{&runs, {}}}, {0}, false, &background, 255);
+
+    renderer.viewport({{0, 0}, {Width, Height}});
+    const RenderRegion viewport = {{0, 0}, {Width, Height}};
+    Array<RenderData> clips, none;
+    validation.check(renderer.preUpdate(), "clip updates preUpdate");
+    auto clip = static_cast<GlShape*>(renderer.prepare(runs, nullptr, identity(), none, 255, RenderUpdateFlag::All, true));
+    clips.push(clip);
+    auto shape = static_cast<GlShape*>(renderer.prepare(paint, nullptr, identity(), clips, 255, RenderUpdateFlag::All, false));
+    auto raw = unclippedReference(validation, paint, identity(), viewport);
+    auto checkUpdate = [&](const Matrix& clipTransform, const std::string& label, bool clipped) {
+        auto expected = raw;
+        if (clipped) {
+            auto source = unclippedReference(validation, runs, clipTransform, viewport);
+            intersectBytes(expected.fill, source.selected());
+            intersectBytes(expected.stroke, source.selected());
+        }
+        validation.check(renderer.postUpdate(), label + " postUpdate");
+        if (shape) {
+            checkClipMap(validation, renderer, target, shape->fillCoverage, expected.fill, label + "-fill");
+            checkClipMap(validation, renderer, target, shape->strokeCoverage, expected.stroke, label + "-stroke");
+        }
+    };
+    validation.check(clip && shape, "clip update shapes prepared");
+    checkUpdate(identity(), "clip-initial", true);
+    renderer.prepare(paint, shape, identity(), clips, 255, RenderUpdateFlag::Clip, false);
+    checkUpdate(identity(), "clip-repeat-does-not-accumulate", true);
+    transform.e13 = -22.25f; transform.e23 = 13.5f;
+    renderer.prepare(runs, clip, transform, none, 255, RenderUpdateFlag::Transform, true);
+    renderer.prepare(paint, shape, identity(), clips, 255, RenderUpdateFlag::Clip, false);
+    checkUpdate(transform, "clip-transform-update", true);
+    renderer.prepare(paint, shape, identity(), none, 255, RenderUpdateFlag::Clip, false);
+    checkUpdate(identity(), "clip-removal-restores-unclipped", false);
+    if (shape) renderer.dispose(shape);
+    if (clip) renderer.dispose(clip);
+
+    std::array<uint32_t, 64> pixels;
+    for (uint32_t y = 0; y < 8; ++y) {
+        for (uint32_t x = 0; x < 8; ++x) pixels[y * 8 + x] = 0xff000000u | (x < 4 ? 0x0047c925u : 0x00d139abu) | (y < 4 ? 0u : 0x00100000u);
+    }
+    RenderSurface image;
+    image.setup(pixels.data(), 8, 8, 8, 4, ColorSpace::ABGR8888S);
+    image.premultiplied = image.opaque = true;
+    transform = identity();
+    transform.e11 = 4.0f; transform.e22 = 4.0f; transform.e13 = 108.0f; transform.e23 = 80.0f;
+    validation.check(renderer.preUpdate(), "clip-image preUpdate");
+    inner.path.clear();
+    inner.path.addRect(111.25f, 83.5f, 25.5f, 24.25f, 0.0f, 0.0f, true);
+    clip = static_cast<GlShape*>(renderer.prepare(inner, nullptr, identity(), none, 255, RenderUpdateFlag::All, true));
+    clips.clear(); clips.push(clip);
+    auto preparedImage = static_cast<GlImage*>(renderer.prepare(&image, nullptr, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::All));
+    validation.check(renderer.postUpdate(), "clip-image postUpdate");
+    if (validation.check(clip && preparedImage, "clip-image prepare")) {
+        auto expected = unclippedReference(validation, inner, identity(), viewport).selected();
+        RenderRegion imageBounds = {{108, 80}, {140, 112}};
+        auto crop = [&]() {
+            for (uint32_t y = 0; y < Height; ++y) {
+                for (uint32_t x = 0; x < Width; ++x) if (!imageBounds.inside({float(x), float(y)})) expected[size_t(y) * Width + x] = 0;
+            }
+        };
+        auto drawImage = [&](const std::string& label, const RenderColor* backgroundColor = nullptr) {
+            RenderShape backdrop;
+            GlShape* backgroundData = nullptr;
+            if (backgroundColor) {
+                backdrop.path.addRect(0.0f, 0.0f, Width, Height, 0.0f, 0.0f, true);
+                backdrop.color = *backgroundColor;
+                backgroundData = static_cast<GlShape*>(renderer.prepare(backdrop, nullptr, identity(), none, 255, RenderUpdateFlag::All, false));
+                validation.check(renderer.postUpdate(), label + " background postUpdate");
+            }
+            validation.check(renderer.preRender(), label + " preRender");
+            if (backgroundData) {
+                validation.check(renderer.renderShape(backgroundData), label + " background renderShape");
+                renderer.blend(BlendMethod::Multiply);
+            }
+            validation.check(renderer.renderImage(preparedImage), label + " renderImage");
+            if (backgroundColor) renderer.blend(BlendMethod::Normal);
+            validation.check(renderer.postRender(), label + " postRender");
+            validation.check(renderer.sync(), label + " sync");
+            checkPixels(validation, renderer, target, label, {{&preparedImage->clipCoverage, {}, nullptr, transform, 173, &image}}, 2, backgroundColor);
+            if (backgroundData) renderer.dispose(backgroundData);
+        };
+        crop();
+        checkClipMap(validation, renderer, target, preparedImage->clipCoverage, expected, "clip-image-mask");
+        drawImage("clip-image");
+        drawImage("clip-image-multiply", &background);
+        validation.check(renderer.target(nullptr, target.dc, target.context, 0, Width, Height, ColorSpace::ABGR8888S) == Result::Success,
+                         "clip-image reset renderer target");
+        validation.check(!preparedImage->clipCoverage.region.texture, "clip-image target reset clears atlas region");
+        renderer.prepare(&image, preparedImage, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::None);
+        validation.check(renderer.postUpdate(), "clip-image-target-reset postUpdate");
+        checkClipMap(validation, renderer, target, preparedImage->clipCoverage, expected, "clip-image-target-reset-mask");
+        drawImage("clip-image-target-reset");
+        transform.e12 = 2.0f;
+        imageBounds.max.x = 156;
+        renderer.prepare(&image, preparedImage, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::Transform);
+        validation.check(renderer.postUpdate(), "clip-image-sheared postUpdate");
+        expected = unclippedReference(validation, inner, identity(), viewport).selected();
+        crop();
+        checkClipMap(validation, renderer, target, preparedImage->clipCoverage, expected, "clip-image-sheared-mask");
+        drawImage("clip-image-sheared");
+        transform.e12 = 0.0f;
+        imageBounds.max.x = 140;
+        renderer.prepare(&image, preparedImage, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::Transform);
+        auto clipTransform = identity();
+        clipTransform.e13 = -6.25f; clipTransform.e23 = 3.5f;
+        renderer.prepare(inner, clip, clipTransform, none, 255, RenderUpdateFlag::Transform, true);
+        renderer.prepare(&image, preparedImage, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::Clip);
+        validation.check(renderer.postUpdate(), "clip-image-update postUpdate");
+        expected = unclippedReference(validation, inner, clipTransform, viewport).selected();
+        crop();
+        checkClipMap(validation, renderer, target, preparedImage->clipCoverage, expected, "clip-image-updated-mask");
+        drawImage("clip-image-updated");
+        transform.e12 = transform.e21 = 4.0f;
+        imageBounds.max = {172, 144};
+        renderer.prepare(&image, preparedImage, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::Transform);
+        validation.check(renderer.postUpdate(), "clip-image-singular postUpdate");
+        expected = unclippedReference(validation, inner, clipTransform, viewport).selected();
+        crop();
+        checkClipMap(validation, renderer, target, preparedImage->clipCoverage, expected, "clip-image-singular-mask");
+        validation.check(renderer.preRender(), "clip-image-singular preRender");
+        validation.check(renderer.renderImage(preparedImage), "clip-image-singular renderImage");
+        validation.check(renderer.postRender(), "clip-image-singular postRender");
+        validation.check(renderer.sync(), "clip-image-singular sync");
+        checkPixels(validation, renderer, target, "clip-image-singular", {}, 0);
+        transform.e12 = transform.e21 = 0.0f;
+        renderer.prepare(&image, preparedImage, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::Transform);
+        auto emptyClip = static_cast<GlShape*>(renderer.prepare(empty, nullptr, identity(), none, 255, RenderUpdateFlag::All, true));
+        clips.clear(); clips.push(emptyClip);
+        renderer.prepare(&image, preparedImage, transform, clips, 173, FilterMethod::Nearest, RenderUpdateFlag::Clip);
+        validation.check(renderer.postUpdate(), "clip-image-empty postUpdate");
+        checkClipMap(validation, renderer, target, preparedImage->clipCoverage, CoverageBytes(size_t(Width) * Height), "clip-image-empty-mask");
+        drawImage("clip-image-empty");
+        renderer.prepare(&image, preparedImage, transform, none, 173, FilterMethod::Nearest, RenderUpdateFlag::Clip);
+        validation.check(renderer.postUpdate(), "clip-image-removal postUpdate");
+        validation.check(preparedImage->clipCoverage.status == CoverageStatus::Empty && !preparedImage->clipCoverage.map.data &&
+                         !preparedImage->clipCoverage.region.texture && !preparedImage->clipCoverage.byteSize,
+                         "clip-image removal releases clip coverage and atlas region");
+        // The unclipped image uses its original quad; use an independently generated rectangle for the paint oracle.
+        RenderShape imageRect;
+        imageRect.path.addRect(0.0f, 0.0f, 8.0f, 8.0f, 0.0f, 0.0f, true);
+        GlCoverageMap imageCoverage;
+        imageCoverage.status = generateFillCoverage(imageRect, transform, viewport, imageCoverage.map);
+        validation.check(renderer.preRender(), "clip-image-removed preRender");
+        validation.check(renderer.renderImage(preparedImage), "clip-image-removed renderImage");
+        validation.check(renderer.postRender(), "clip-image-removed postRender");
+        validation.check(renderer.sync(), "clip-image-removed sync");
+        checkPixels(validation, renderer, target, "clip-image-removed", {{&imageCoverage, {}, nullptr, transform, 173, &image}}, 2);
+        if (emptyClip) renderer.dispose(emptyClip);
+    }
+    if (preparedImage) renderer.dispose(preparedImage);
+    if (clip) renderer.dispose(clip);
+}
+
 } // namespace
 
 int main(int argc, char** argv)
 {
     Validation validation;
-    bool capture = false, updatesOnly = false, drawOnly = false, batchOnly = false;
+    bool capture = false, updatesOnly = false, drawOnly = false, batchOnly = false, clipOnly = false;
     for (int i = 1; i < argc; ++i) {
         if (std::string(argv[i]) == "--capture") capture = true;
         else if (std::string(argv[i]) == "--updates-only") updatesOnly = true;
         else if (std::string(argv[i]) == "--draw-only") drawOnly = true;
         else if (std::string(argv[i]) == "--batch-only") batchOnly = true;
+        else if (std::string(argv[i]) == "--clip-only") clipOnly = true;
         else if (validation.directory.empty()) validation.directory = argv[i];
-        else { std::cerr << "Usage: tvgCoverageStorageTests [output-directory] [--capture|--updates-only|--draw-only|--batch-only]\n"; return 2; }
+        else { std::cerr << "Usage: tvgCoverageStorageTests [output-directory] [--capture|--updates-only|--draw-only|--batch-only|--clip-only]\n"; return 2; }
     }
-    if (!validation.directory.empty() && !drawOnly && !batchOnly) {
+    if (!validation.directory.empty() && !drawOnly && !batchOnly && !clipOnly) {
         if (!CreateDirectoryA(validation.directory.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS) {
             std::cerr << "Cannot create output directory\n"; return 2;
         }
@@ -854,12 +1206,13 @@ int main(int argc, char** argv)
     }
     renderer->viewport({{0, 0}, {Width, Height}});
     std::cerr << "GL renderer: " << glGetString(GL_RENDERER) << "; version: " << glGetString(GL_VERSION) << "; texture labels: " << bool(target.objectLabel) << '\n';
-    if (drawOnly || batchOnly) {
-        if (batchOnly) batchChecks(validation, *renderer, target);
+    if (drawOnly || batchOnly || clipOnly) {
+        if (clipOnly) clipChecks(validation, *renderer, target);
+        else if (batchOnly) batchChecks(validation, *renderer, target);
         else drawChecks(validation, *renderer, target);
         renderer.reset();
         validation.check(Initializer::term() == Result::Success, "terminate");
-        std::cout << "coverage " << (batchOnly ? "batching" : "drawing") << ": checks=" << validation.checks << " failures=" << validation.failures << '\n';
+        std::cout << "coverage " << (clipOnly ? "clipping" : batchOnly ? "batching" : "drawing") << ": checks=" << validation.checks << " failures=" << validation.failures << '\n';
         return validation.failures ? 1 : 0;
     }
     std::array<RenderShape, 8> rshapes;
@@ -987,6 +1340,7 @@ int main(int argc, char** argv)
     for (auto shape : prepared) if (shape) renderer->dispose(shape);
     drawChecks(validation, *renderer, target);
     if (!updatesOnly) batchChecks(validation, *renderer, target);
+    if (!updatesOnly) clipChecks(validation, *renderer, target);
     renderer.reset();
     validation.check(Initializer::term() == Result::Success, "terminate");
     std::cerr << "coverage storage: maps=" << validation.maps << " page_textures=" << validation.textures.size() << " cropped_dense_bytes=" << validation.denseBytes

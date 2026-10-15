@@ -176,6 +176,7 @@ struct GlShape : GlDrawable
     void destroy(GlRenderer& renderer) override;
     INLIST_ITEM(GlShape);
     GlCoverageMap fillCoverage, strokeCoverage;
+    bool clipStroke = false;
 #else
     void destroy(GlRenderer& renderer) override {}
 #endif
@@ -193,6 +194,10 @@ struct GlShape : GlDrawable
 struct GlImage : GlDrawable
 {
     void destroy(GlRenderer& renderer) override;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    INLIST_ITEM(GlImage);
+    GlCoverageMap clipCoverage;
+#endif
 
     const RenderSurface* surface;
     GLuint texId = 0;
