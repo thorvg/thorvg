@@ -1051,7 +1051,7 @@ LottieObject* LottieParser::parseAsset()
         else if (KEY_AS("sid")) sid = getString();
         else skip();
     }
-    if (data) {
+    if (data && !obj) {
         if (!strncmp(data, "data:image/", 11) || width != 0.0f || height != 0.0f) {
             obj = new LottieImage;
             parseImage(static_cast<LottieImage*>(obj), data, subPath, width, height, embedded);
