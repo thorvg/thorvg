@@ -406,7 +406,7 @@ static void _fillRadial(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x
     }
 }
 
-static void _fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+static void _fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
     if (fill->radial.a < RADIAL_A_THRESHOLD) {
         auto radial = &fill->radial;
@@ -416,17 +416,14 @@ static void _fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* 
         if (a == 255) {
             for (uint32_t i = 0; i < len; ++i, ++dst) {
                 auto x0 = 0.5f * (rx * rx + ry * ry - radial->fr * radial->fr) / (radial->dr * radial->fr + rx * radial->dx + ry * radial->dy);
-                auto tmp = op(_pixel(fill, x0), *dst, 255);
-                *dst = op2(surface, tmp, *dst);
+                *dst = op(surface, _pixel(fill, x0), *dst);
                 rx += radial->a11;
                 ry += radial->a21;
             }
         } else {
             for (uint32_t i = 0; i < len; ++i, ++dst) {
                 auto x0 = 0.5f * (rx * rx + ry * ry - radial->fr * radial->fr) / (radial->dr * radial->fr + rx * radial->dx + ry * radial->dy);
-                auto tmp = op(_pixel(fill, x0), *dst, 255);
-                auto tmp2 = op2(surface, tmp, *dst);
-                *dst = INTERPOLATE(tmp2, *dst, a);
+                *dst = INTERPOLATE(op(surface, _pixel(fill, x0), *dst), *dst, a);
                 rx += radial->a11;
                 ry += radial->a21;
             }
@@ -436,17 +433,14 @@ static void _fillRadial(const SwSurface* surface, const SwFill* fill, uint32_t* 
         _calculateCoefficients(fill, x, y, b, deltaB, det, deltaDet, deltaDeltaDet);
         if (a == 255) {
             for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
-                auto tmp = op(_pixel(fill, sqrtf(det) - b), *dst, 255);
-                *dst = op2(surface, tmp, *dst);
+                *dst = op(surface, _pixel(fill, sqrtf(det) - b), *dst);
                 det += deltaDet;
                 deltaDet += deltaDeltaDet;
                 b += deltaB;
             }
         } else {
             for (uint32_t i = 0 ; i < len ; ++i, ++dst) {
-                auto tmp = op(_pixel(fill, sqrtf(det) - b), *dst, 255);
-                auto tmp2 = op2(surface, tmp, *dst);
-                *dst = INTERPOLATE(tmp2, *dst, a);
+                *dst = INTERPOLATE(op(surface, _pixel(fill, sqrtf(det) - b), *dst), *dst, a);
                 det += deltaDet;
                 deltaDet += deltaDeltaDet;
                 b += deltaB;
@@ -623,7 +617,7 @@ static void _fillConic(const SwFill* fill, uint8_t* dst, uint32_t y, uint32_t x,
     }
 }
 
-static void _fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+static void _fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
     auto conic = &fill->conic;
     auto rx = (x + 0.5f) * conic->a11 + (y + 0.5f) * conic->a12 + conic->a13 - conic->cx;
@@ -632,16 +626,13 @@ static void _fillConic(const SwSurface* surface, const SwFill* fill, uint32_t* d
 
     if (a == 255) {
         for (uint32_t i = 0; i < len; ++i, ++dst) {
-            auto tmp = op(_conicPixel(fill, rx, ry, i, range), *dst, 255);
-            *dst = op2(surface, tmp, *dst);
+            *dst = op(surface, _conicPixel(fill, rx, ry, i, range), *dst);
             rx += conic->a11;
             ry += conic->a21;
         }
     } else {
         for (uint32_t i = 0; i < len; ++i, ++dst) {
-            auto tmp = op(_conicPixel(fill, rx, ry, i, range), *dst, 255);
-            auto tmp2 = op2(surface, tmp, *dst);
-            *dst = INTERPOLATE(tmp2, *dst, a);
+            *dst = INTERPOLATE(op(surface, _conicPixel(fill, rx, ry, i, range), *dst), *dst, a);
             rx += conic->a11;
             ry += conic->a21;
         }
@@ -899,7 +890,7 @@ static void _fillLinear(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t 
     }
 }
 
-static void _fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+static void _fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlender op, uint8_t a)
 {
     //Rotation
     float rx = x + 0.5f;
@@ -911,14 +902,11 @@ static void _fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* 
         auto color = _fixedPixel(fill, static_cast<int32_t>(t * FIXPT_SIZE));
         if (a == 255) {
             for (uint32_t i = 0; i < len; ++i, ++dst) {
-                auto tmp = op(color, *dst, a);
-                *dst = op2(surface, tmp, *dst);
+                *dst = op(surface, color, *dst);
             }
         } else {
             for (uint32_t i = 0; i < len; ++i, ++dst) {
-                auto tmp = op(color, *dst, a);
-                auto tmp2 = op2(surface, tmp, *dst);
-                *dst = INTERPOLATE(tmp2, *dst, a);
+                *dst = INTERPOLATE(op(surface, color, *dst), *dst, a);
             }
         }
         return;
@@ -934,16 +922,14 @@ static void _fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* 
             auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
             auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
             for (uint32_t j = 0; j < len; ++j, ++dst) {
-                auto tmp = op(_fixedPixel(fill, t2), *dst, 255);
-                *dst = op2(surface, tmp, *dst);
+                *dst = op(surface, _fixedPixel(fill, t2), *dst);
                 t2 += inc2;
             }
         //we have to fallback to float math
         } else {
             uint32_t counter = 0;
             while (counter++ < len) {
-                auto tmp = op(_pixel(fill, t / SW_COLOR_TABLE), *dst, 255);
-                *dst = op2(surface, tmp, *dst);
+                *dst = op(surface, _pixel(fill, t / SW_COLOR_TABLE), *dst);
                 ++dst;
                 t += inc;
             }
@@ -954,18 +940,14 @@ static void _fillLinear(const SwSurface* surface, const SwFill* fill, uint32_t* 
             auto t2 = static_cast<int32_t>(t * FIXPT_SIZE);
             auto inc2 = static_cast<int32_t>(inc * FIXPT_SIZE);
             for (uint32_t j = 0; j < len; ++j, ++dst) {
-                auto tmp = op(_fixedPixel(fill, t2), *dst, 255);
-                auto tmp2 = op2(surface, tmp, *dst);
-                *dst = INTERPOLATE(tmp2, *dst, a);
+                *dst = INTERPOLATE(op(surface, _fixedPixel(fill, t2), *dst), *dst, a);
                 t2 += inc2;
             }
         //we have to fallback to float math
         } else {
             uint32_t counter = 0;
             while (counter++ < len) {
-                auto tmp = op(_pixel(fill, t / SW_COLOR_TABLE), *dst, 255);
-                auto tmp2 = op2(surface, tmp, *dst);
-                *dst = INTERPOLATE(tmp2, *dst, a);
+                *dst = INTERPOLATE(op(surface, _pixel(fill, t / SW_COLOR_TABLE), *dst), *dst, a);
                 ++dst;
                 t += inc;
             }
@@ -1061,10 +1043,17 @@ void fillRaster(const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint3
     if (fill->type == Type::ConicGradient) _fillConic(fill, dst, y, x, len, cmp, alpha, csize, opacity);
 }
 
-// blending + BlendingMethod(op2) ver.
-void fillRaster(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, SwBlenderA op, SwBlender op2, uint8_t a)
+// blending + BlendingMethod ver.
+void fillRaster(const SwSurface* surface, const SwFill* fill, uint32_t* dst, uint32_t y, uint32_t x, uint32_t len, uint8_t a)
 {
-    if (fill->type == Type::LinearGradient) _fillLinear(surface, fill, dst, y, x, len, op, op2, a);
-    if (fill->type == Type::RadialGradient) _fillRadial(surface, fill, dst, y, x, len, op, op2, a);
-    if (fill->type == Type::ConicGradient) _fillConic(surface, fill, dst, y, x, len, op, op2, a);
+    //blend the unpremultiplied color, then interpolate by its alpha
+    auto translucent = [](const SwSurface* surface, uint32_t s, uint32_t d) {
+        return INTERPOLATE(surface->blender(surface, UNPREMULTIPLY(s), d), d, A(s));
+    };
+    SwBlender op = surface->blender;
+    if (fill->translucent) op = translucent;
+
+    if (fill->type == Type::LinearGradient) _fillLinear(surface, fill, dst, y, x, len, op, a);
+    if (fill->type == Type::RadialGradient) _fillRadial(surface, fill, dst, y, x, len, op, a);
+    if (fill->type == Type::ConicGradient) _fillConic(surface, fill, dst, y, x, len, op, a);
 }
