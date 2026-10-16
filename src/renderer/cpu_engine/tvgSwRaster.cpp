@@ -1078,14 +1078,8 @@ static bool _rasterBlendingGradientRect(SwSurface* surface, const RenderRegion& 
 {
     auto buffer = surface->buf32 + (bbox.yMin * surface->stride) + bbox.xMin;
 
-    if (fill->translucent) {
-        for (uint32_t y = 0; y < bbox.h(); ++y) {
-            fillRaster(surface, fill, buffer + y * surface->stride, bbox.yMin + y, bbox.xMin, bbox.w(), opBlendPreNormal, surface->blender, 255);
-        }
-    } else {
-        for (uint32_t y = 0; y < bbox.h(); ++y) {
-            fillRaster(surface, fill, buffer + y * surface->stride, bbox.yMin + y, bbox.xMin, bbox.w(), opBlendSrcOver, surface->blender, 255);
-        }
+    for (uint32_t y = 0; y < bbox.h(); ++y) {
+        fillRaster(surface, fill, buffer + y * surface->stride, bbox.yMin + y, bbox.xMin, bbox.w(), 255);
     }
     return true;
 }
@@ -1204,7 +1198,7 @@ static bool _rasterBlendingGradientRle(SwSurface* surface, const SwRle* rle, con
 
     for (uint32_t i = 0; i < rle->size(); ++i, ++span) {
         auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        fillRaster(surface, fill, dst, span->y, span->x, span->len, opBlendPreNormal, surface->blender, span->coverage);
+        fillRaster(surface, fill, dst, span->y, span->x, span->len, span->coverage);
     }
     return true;
 }
