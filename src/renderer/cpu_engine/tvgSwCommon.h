@@ -312,11 +312,6 @@ struct SwSurface : RenderSurface
         return alphas[idx > 3 ? 0 : idx];   //CompositeMethod has only four Matting methods.
     }
 
-    uint8_t luma(const uint32_t& c) const
-    {
-        return alphas[2]((uint8_t*)&c);
-    }
-
     SwSurface() = default;
 
     SwSurface(const SwSurface* rhs) : RenderSurface(rhs)
