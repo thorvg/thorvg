@@ -29,6 +29,7 @@
 #include "tvgInlist.h"
 #include "tvgStr.h"
 #include "tvgAccessor.h"
+#include "tvgCompressor.h"
 
 namespace tvg
 {
@@ -149,6 +150,13 @@ struct Loader
         if (text) content[size] = '\0';
 
         fclose(f);
+
+        //compressed (e.g. svgz, tgs)
+        if (gzipped(content, size)) {
+            auto decoded = gzDecode(content, size, size);
+            tvg::free(content);
+            return decoded;
+        }
 
         return content;
 #endif

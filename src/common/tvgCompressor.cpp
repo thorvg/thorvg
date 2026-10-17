@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "tvgCommon.h"
+#include <zlib.h>
 #include "tvgCompressor.h"
 
 namespace tvg {
@@ -93,6 +94,65 @@ unsigned long djb2Encode(const char* str)
         hash = ((hash << 5) + hash) + c; // hash * 33 + c
     }
     return hash;
+}
+
+
+/************************************************************************/
+/* Gzip Implementation                                                  */
+/************************************************************************/
+
+bool gzipped(const char* data, size_t size)
+{
+    return data && size >= 2 && (uint8_t)data[0] == 0x1f && (uint8_t)data[1] == 0x8b;
+}
+
+
+//Inflate the whole gzip stream (all of its members) into a new NUL-terminated buffer.
+char* gzDecode(const char* data, size_t size, uint32_t& decodedSize)
+{
+    if (!gzipped(data, size) || size > UINT32_MAX) return nullptr;
+
+    z_stream zs{};
+    if (inflateInit2(&zs, 15 + 16) != Z_OK) return nullptr;  //gzip header only
+
+    zs.next_in = (Bytef*)data;
+    zs.avail_in = (uInt)size;
+
+    size_t reserved = 0, len = 0;
+    char* output = nullptr;
+
+    while (true) {
+        if (reserved - len < 2) {
+            auto limit = (size_t)UINT32_MAX;
+            if (reserved) reserved = (reserved < limit / 2) ? reserved * 2 : limit;
+            else reserved = (size < limit / 4) ? size * 4 + 2 : limit;
+            if (reserved - len < 2) goto failed;  //too big
+            auto tmp = tvg::realloc<char>(output, reserved);
+            if (!tmp) goto failed;
+            output = tmp;
+        }
+        zs.next_out = (Bytef*)(output + len);
+        zs.avail_out = (uInt)(reserved - len - 1);
+
+        auto ret = inflate(&zs, Z_NO_FLUSH);
+        len = reserved - 1 - zs.avail_out;
+
+        if (ret == Z_STREAM_END) {
+            //concatenated members are allowed, anything else after the stream is ignored
+            if (!gzipped((const char*)zs.next_in, zs.avail_in)) break;
+            if (inflateReset(&zs) != Z_OK) goto failed;
+        } else if (ret != Z_OK) goto failed;  //corrupted or truncated
+    }
+
+    inflateEnd(&zs);
+    output[len] = '\0';
+    decodedSize = (uint32_t)len;
+    return output;
+
+failed:
+    inflateEnd(&zs);
+    tvg::free(output);
+    return nullptr;
 }
 
 }
