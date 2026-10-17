@@ -1080,6 +1080,7 @@ static void _handleFillOpacityAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* no
 
 static void _handleTransformAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
+    tvg::free(node->transform);
     node->transform = _parseTransformationMatrix(value);
 }
 
@@ -1367,7 +1368,7 @@ static bool _attrParseGNode(void* data, const char* key, const char* value)
     auto node = ctx->parser->node;
 
     if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "transform")) node->transform = _parseTransformationMatrix(value);
+    else if (STR_AS(key, "transform")) { tvg::free(node->transform); node->transform = _parseTransformationMatrix(value); }
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
     else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
@@ -1391,6 +1392,7 @@ static bool _attrParseClipPathNode(void* data, const char* key, const char* valu
     if (STR_AS(key, "style")) {
         return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
     } else if (STR_AS(key, "transform")) {
+        tvg::free(node->transform);
         node->transform = _parseTransformationMatrix(value);
     } else if (STR_AS(key, "id")) {
         _copyId(&node->id, value);
@@ -1436,7 +1438,7 @@ static bool _attrParseMaskNode(void* data, const char* key, const char* value)
     if (_parseBox(key, value, &mask->box, mask->isPercentage)) return true;
 
     if (STR_AS(key, "style")) return xmlParseW3CAttribute(value, strlen(value), _parseStyleAttr, ctx);
-    else if (STR_AS(key, "transform")) node->transform = _parseTransformationMatrix(value);
+    else if (STR_AS(key, "transform")) { tvg::free(node->transform); node->transform = _parseTransformationMatrix(value); }
     else if (STR_AS(key, "id")) _copyId(&node->id, value);
     else if (STR_AS(key, "class")) _handleCssClassAttr(ctx, node, value);
     else if (STR_AS(key, "maskUnits")) { if (STR_AS(value, "userSpaceOnUse")) mask->userSpace = true; }
@@ -1714,6 +1716,7 @@ static bool _attrParsePatternNode(void* data, const char* key, const char* value
         if (!_parseNumber(&value, nullptr, &pattern->vbox.w) || !_parseNumber(&value, nullptr, &pattern->vbox.h)) return false;
         if (pattern->vbox.w > 0.0f && pattern->vbox.h > 0.0f) pattern->hasViewBox = true;
     } else if (STR_AS(key, "patternTransform")) {
+        tvg::free(pattern->transform);
         pattern->transform = _parseTransformationMatrix(value);
     }
     return true;
@@ -2099,7 +2102,7 @@ static bool _attrParseImageNode(void* data, const char* key, const char* value)
     else if (STR_AS(key, "clip-path")) _handleClipPathAttr(ctx, node, value);
     else if (STR_AS(key, "mask")) _handleMaskAttr(ctx, node, value);
     else if (STR_AS(key, "filter")) _handleFilterAttr(ctx, node, value);
-    else if (STR_AS(key, "transform")) node->transform = _parseTransformationMatrix(value);
+    else if (STR_AS(key, "transform")) { tvg::free(node->transform); node->transform = _parseTransformationMatrix(value); }
     else return _parseStyleAttr(ctx, key, value);
 
     return true;
@@ -2660,6 +2663,7 @@ static bool _attrParseRadialGradientNode(void* data, const char* key, const char
         if (STR_AS(value, "userSpaceOnUse")) grad->userSpace = true;
         grad->flags = (grad->flags | SvgGradientFlags::GradientUnits);
     } else if (STR_AS(key, "gradientTransform")) {
+        tvg::free(grad->transform);
         grad->transform = _parseTransformationMatrix(value);
     } else {
         return false;
@@ -2925,6 +2929,7 @@ static bool _attrParseLinearGradientNode(void* data, const char* key, const char
         if (STR_AS(value, "userSpaceOnUse")) grad->userSpace = true;
         grad->flags = (grad->flags | SvgGradientFlags::GradientUnits);
     } else if (STR_AS(key, "gradientTransform")) {
+        tvg::free(grad->transform);
         grad->transform = _parseTransformationMatrix(value);
     } else {
         return false;
