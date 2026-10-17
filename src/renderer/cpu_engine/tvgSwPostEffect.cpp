@@ -575,14 +575,25 @@ void effectFillUpdate(RenderEffectFill* params)
     params->valid = true;
 }
 
-// TODO: simd & openmp optimization?
+// Kept out of the OpenMP region. Inside it, w is read through a pointer that may alias dst, which blocks vectorization.
+static void _fillRow(uint32_t* dst, uint32_t* src, uint32_t len, uint32_t color, uint8_t opacity, bool direct)
+{
+    for (uint32_t x = 0; x < len; ++x) {
+        auto a = MULTIPLY(opacity, A(src[x]));
+        auto result = ALPHA_BLEND(color, a);
+        if (direct) result += ALPHA_BLEND(dst[x], 255 - a);
+        dst[x] = result;
+    }
+}
+
+// TODO: simd optimization?
 bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
 {
     auto opacity = direct ? MULTIPLY(params->color[3], cmp->opacity) : params->color[3];
 
     auto& bbox = cmp->bbox;
-    auto w = size_t(bbox.xMax - bbox.xMin);
-    auto h = size_t(bbox.yMax - bbox.yMin);
+    auto w = bbox.xMax - bbox.xMin;
+    auto h = bbox.yMax - bbox.yMin;
     auto color = cmp->recoverSfc->join(params->color[0], params->color[1], params->color[2], 255);
 
     TVGLOG("SW_ENGINE", "Fill region(%d, %d, %d, %d), param(%d %d %d %d)", bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax, params->color[0], params->color[1], params->color[2], params->color[3]);
@@ -590,26 +601,16 @@ bool effectFill(SwCompositor* cmp, const RenderEffectFill* params, bool direct)
     if (direct) {
         auto dbuffer = cmp->recoverSfc->buf32 + (bbox.yMin * cmp->recoverSfc->stride + bbox.xMin);
         auto sbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
-        for (size_t y = 0; y < h; ++y) {
-            auto dst = dbuffer;
-            auto src = sbuffer;
-            for (size_t x = 0; x < w; ++x, ++dst, ++src) {
-                auto a = MULTIPLY(opacity, A(*src));
-                auto tmp = ALPHA_BLEND(color, a);
-                *dst = tmp + ALPHA_BLEND(*dst, 255 - a);
-            }
-            dbuffer += cmp->recoverSfc->stride;
-            sbuffer += cmp->image.stride;
-        }
+        #pragma omp parallel for
+        for (int32_t y = 0; y < h; ++y)
+            _fillRow(dbuffer + y * cmp->recoverSfc->stride, sbuffer + y * cmp->image.stride, w, color, opacity, true);
         cmp->valid = true;  //no need the subsequent composition
     } else {
         auto dbuffer = cmp->image.buf32 + (bbox.yMin * cmp->image.stride + bbox.xMin);
-        for (size_t y = 0; y < h; ++y) {
-            auto dst = dbuffer;
-            for (size_t x = 0; x < w; ++x, ++dst) {
-                *dst = ALPHA_BLEND(color, MULTIPLY(opacity, A(*dst)));
-            }
-            dbuffer += cmp->image.stride;
+        #pragma omp parallel for
+        for (int32_t y = 0; y < h; ++y) {
+            auto row = dbuffer + y * cmp->image.stride;
+            _fillRow(row, row, w, color, opacity, false);
         }
     }
     return true;
