@@ -210,7 +210,7 @@ static float _toOffset(const char* str)
     auto parsedValue = toFloat(str, &end);
 
     end = (char*)svgUtilSkipWhiteSpace(end, nullptr);
-    auto ptr = strstr(str, "%");
+    auto ptr = strchr(str, '%');
 
     if (ptr) {
         parsedValue = parsedValue / 100.0f;
@@ -916,14 +916,14 @@ static bool _attrParseSvgNode(void* data, const char* key, const char* value)
 
     if (STR_AS(key, "width")) {
         doc->w = _toFloat(ctx->parser, value, SvgParserLengthType::Horizontal);
-        if (strstr(value, "%") && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
+        if (strchr(value, '%') && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::WidthInPercent);
         } else {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::Width);
         }
     } else if (STR_AS(key, "height")) {
         doc->h = _toFloat(ctx->parser, value, SvgParserLengthType::Vertical);
-        if (strstr(value, "%") && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
+        if (strchr(value, '%') && !(doc->viewFlag & SvgViewFlag::Viewbox)) {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::HeightInPercent);
         } else {
             doc->viewFlag = (doc->viewFlag | SvgViewFlag::Height);
