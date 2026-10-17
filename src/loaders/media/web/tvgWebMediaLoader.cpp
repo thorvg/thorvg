@@ -88,21 +88,18 @@ RenderSurface* WebMediaLoader::bitmap()
 
 Result WebMediaLoader::play()
 {
-    paused = false;
     js.call<void>("play");
     return Result::Success;
 }
 
 Result WebMediaLoader::pause()
 {
-    paused = true;
     js.call<void>("pause");
     return Result::Success;
 }
 
 Result WebMediaLoader::stop()
 {
-    paused = true;
     curTime = 0.0f;
     js.call<void>("stop");
     return Result::Success;
