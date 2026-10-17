@@ -46,18 +46,18 @@ struct AudioSink;
 struct Decoder
 {
     enum Decoded : uint8_t {None = 0, Converted, Failure};
-
-    AMediaExtractor* extractor = nullptr;
     AMediaCodec* codec = nullptr;
     int64_t durationUs = 0;
+    void close();
+
+protected:
+    AMediaExtractor* extractor = nullptr;
     int64_t seekTargetUs = -1;  // seek target: earlier output is dropped, -1 once reached
     int64_t maxPtsUs = -1;      // the largest pts queued since the seek
     bool fed = false;           // the codec took input since its last flush
     bool inputDone = false;
     bool outputDone = false;
-
     AMediaFormat* open(int fd, int64_t length, const char* kind);  // the format of the first track of the kind, which the caller configures the codec with and deletes
-    void close();
     bool seek(int64_t timeUs);
     bool feed();  // fills the free input buffers
 };
@@ -68,13 +68,23 @@ struct VideoDecoder : Decoder
     struct Frame
     {
         pixel_t* data = nullptr;
-        int64_t ptsUs = 0;
-        ColorSpace cs = ColorSpace::ABGR8888;
+        int64_t ptsUs;
     };
 
-    AImageReader* reader = nullptr;
     int32_t width = 0;
     int32_t height = 0;
+    bool open(int fd, int64_t length, condition_variable& cv);
+    void close();
+    bool seek(int64_t timeUs);
+    Decoded decode(int64_t playheadUs, Frame& frame, ColorSpace cs);  // converts one frame at most
+
+    bool drained()
+    {
+        return outputDone && pending.ptsUs < 0;
+    }
+
+private:
+    AImageReader* reader = nullptr;
     int64_t latestConvertedPtsUs = INT64_MIN;  // the last converted frame
     int64_t averageConvertUs = 0;              // exponential moving average of the conversion cost, 0.1 weight on each new sample
 
@@ -82,7 +92,7 @@ struct VideoDecoder : Decoder
     struct
     {
         int64_t ptsUs = -1;      // -1 when none
-        int64_t deadlineUs = 0;  // it fails the pipeline past this time
+        int64_t deadlineUs;     // it fails the pipeline past this time
     } pending;
 
     // MediaFormat color info, BT.601 limited for untagged content
@@ -92,18 +102,7 @@ struct VideoDecoder : Decoder
         int32_t range = 2;
     } color;
 
-    bool open(int fd, int64_t length, condition_variable& cv);
-    void close();
-    bool seek(int64_t timeUs);
-    Decoded decode(int64_t playheadUs, Frame& frame);  // converts one frame at most
-
-    bool drained()
-    {
-        return outputDone && pending.ptsUs < 0;
-    }
-
-private:
-    Decoded acquire(Frame& frame);
+    Decoded acquire(Frame& frame, ColorSpace cs);
     bool parse(AMediaFormat* format);  // reads and deletes the format
 };
 
@@ -113,6 +112,11 @@ struct AudioDecoder : Decoder
     int64_t endUs = 0;  // track end: the encoder padding past it is dropped
     int32_t sampleRate = 0;
     int32_t channels = 0;
+    bool open(int fd, int64_t length);
+    bool seek(int64_t timeUs);
+    bool refill(AudioSink& sink);  // fills the sink, false once the track can't play on
+
+private:
     // the output buffer kept in the codec until the sink is ready for it
     struct
     {
@@ -120,11 +124,6 @@ struct AudioDecoder : Decoder
         AMediaCodecBufferInfo info;
     } pending;
 
-    bool open(int fd, int64_t length);
-    bool seek(int64_t timeUs);
-    bool refill(AudioSink& sink);  // fills the sink, false once the track can't play on
-
-private:
     bool parse(AMediaFormat* format);  // reads and deletes the format
 };
 

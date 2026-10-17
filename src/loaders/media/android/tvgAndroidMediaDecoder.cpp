@@ -33,11 +33,9 @@ static constexpr int32_t ENCODING_PCM_16BIT = 2;                     // Java Aud
 static constexpr int32_t COLOR_TRANSFER_ST2084 = 6;                 // MediaFormat.COLOR_TRANSFER_ST2084 (Java API 24); no NDK numeric constant
 static constexpr int32_t COLOR_TRANSFER_HLG = 7;                    // MediaFormat.COLOR_TRANSFER_HLG (Java API 24); no NDK numeric constant
 
-// a pixel pair shares one chroma sample: a constant chroma step lets the compiler vectorize the loop
-template<int32_t STEP>
-static void _row(const uint8_t* y, const uint8_t* u, const uint8_t* v, int32_t step, pixel_t* out, int32_t w, const int32_t* k, int32_t y0, int32_t red)
+// a pixel pair shares one chroma sample
+static void _row(const uint8_t* y, const uint8_t* u, const uint8_t* v, int32_t step, pixel_t* out, int32_t w, const int16_t* k, int32_t y0, int32_t red)
 {
-    if (STEP) step = STEP;
     auto pixels = [&](int32_t x, int32_t n) {
         const auto d = u[x * step] - 128;
         const auto e = v[x * step] - 128;
@@ -52,7 +50,7 @@ static void _row(const uint8_t* y, const uint8_t* u, const uint8_t* v, int32_t s
 }
 
 // convert the visible part of a YUV_420_888 image, planar or interleaved alike, into opaque 32-bit pixels
-static bool _convert(AImage* image, pixel_t* dst, int32_t width, int32_t height, bool abgr, const int32_t* k, int32_t y0)
+static bool _convert(AImage* image, pixel_t* dst, int32_t width, int32_t height, bool abgr, const int16_t* k, int32_t y0)
 {
     AImageCropRect crop;
     if (AImage_getCropRect(image, &crop) != AMEDIA_OK || crop.left < 0 || crop.top < 0) return false;
@@ -85,9 +83,7 @@ static bool _convert(AImage* image, pixel_t* dst, int32_t width, int32_t height,
         const auto uRow = plane[1] + static_cast<size_t>(sy >> 1) * stride[1] + (crop.left >> 1) * step[1];
         const auto vRow = plane[2] + static_cast<size_t>(sy >> 1) * stride[2] + (crop.left >> 1) * step[2];
         const auto out = dst + static_cast<size_t>(y) * width;
-        // most decoders interleave the chroma planes
-        if (step[1] == 2) _row<2>(yRow, uRow, vRow, step[1], out, w, k, y0, red);
-        else _row<0>(yRow, uRow, vRow, step[1], out, w, k, y0, red);
+        _row(yRow, uRow, vRow, step[1], out, w, k, y0, red);
     }
     return true;
 }
@@ -213,7 +209,7 @@ bool VideoDecoder::seek(int64_t timeUs)
     return Decoder::seek(timeUs);
 }
 
-Decoder::Decoded VideoDecoder::acquire(Frame& frame)
+Decoder::Decoded VideoDecoder::acquire(Frame& frame, ColorSpace cs)
 {
     // 1. acquire: the pending image by its timestamp in ns, dropping any rendered before a seek flush
     AImage* image;
@@ -233,7 +229,7 @@ Decoder::Decoded VideoDecoder::acquire(Frame& frame)
     // 2. convert: with the 8-bit fixed-point yuv to rgb {y scale, v to r, u to g, v to g, u to b}
     // of BT.601, BT.709 and BT.2020 in limited and full range
     // see https://learn.microsoft.com/en-us/windows/win32/medfound/recommended-8-bit-yuv-formats-for-video-rendering
-    static constexpr int32_t YUV_COEFFS[3][2][5] = {
+    static constexpr int16_t YUV_COEFFS[3][2][5] = {
         {{298, 409, 100, 208, 516}, {256, 359, 88, 183, 454}},
         {{298, 459, 55, 136, 541}, {256, 403, 48, 120, 475}},
         {{298, 430, 48, 167, 548}, {256, 377, 42, 146, 482}}
@@ -241,7 +237,7 @@ Decoder::Decoded VideoDecoder::acquire(Frame& frame)
     const auto begin = monotonic();
     // the MediaFormat standard 1 is BT.709 and 6 BT.2020, the range 1 full
     const auto k = YUV_COEFFS[color.standard == 1 ? 1 : (color.standard == 6 ? 2 : 0)][color.range == 1 ? 1 : 0];
-    const auto ret = _convert(image, frame.data, width, height, frame.cs == ColorSpace::ABGR8888, k, color.range == 1 ? 0 : 16);
+    const auto ret = _convert(image, frame.data, width, height, cs == ColorSpace::XBGR8888, k, color.range == 1 ? 0 : 16);
     AImage_delete(image);
     if (!ret) {
         TVGERR("MEDIA", "Unsupported decoded image layout");
@@ -255,14 +251,14 @@ Decoder::Decoded VideoDecoder::acquire(Frame& frame)
     return Converted;
 }
 
-Decoder::Decoded VideoDecoder::decode(int64_t playheadUs, Frame& frame)
+Decoder::Decoded VideoDecoder::decode(int64_t playheadUs, Frame& frame, ColorSpace cs)
 {
     static constexpr int64_t IMAGE_WAIT_US = 2000000;         // a rendered output that never reaches the reader fails the pipeline
     static constexpr int64_t LATE_INTERVAL_US = 250000;       // behind the playhead, one frame per this much media time is converted
     static constexpr int64_t CONVERT_MARGIN_PERCENT = 20;     // the interval over the measured conversion time
 
     // 1. pending: the output waiting in the reader converts before any new one
-    if (pending.ptsUs >= 0) return acquire(frame);
+    if (pending.ptsUs >= 0) return acquire(frame, cs);
 
     // 2. feed: the compressed samples into the codec
     if (!feed()) return Failure;
@@ -296,7 +292,7 @@ Decoder::Decoded VideoDecoder::decode(int64_t playheadUs, Frame& frame)
             seekTargetUs = -1;
             pending.ptsUs = ptsUs;
             pending.deadlineUs = monotonic() + IMAGE_WAIT_US;
-            return acquire(frame);
+            return acquire(frame, cs);
         }
     }
     return None;

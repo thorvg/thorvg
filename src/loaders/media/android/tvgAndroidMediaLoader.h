@@ -51,10 +51,16 @@ struct AndroidMediaLoader : MediaLoader
 private:
     static constexpr uint32_t FRAME_COUNT = 3;
 
-    // the worker's progress since the load or the last seek: no frame yet, a frame queued, the end reached
-    enum class Status : uint8_t {Seeking = 0, Queued, Ended};
-
-    struct Request;
+    // the latest requested playback, coalesced: the worker takes it over as a whole
+    struct Request
+    {
+        uint32_t revision = 0;      // bumped on every change
+        uint32_t seekRevision = 0;  // bumped on every seek, so that repeated seeks to one time stay apart
+        int64_t seekTimeUs = 0;
+        bool playing = false;  // kept over the end, so that a seek plays on from there
+        bool looping = false;
+        bool quit = false;
+    } request;
 
     bool open(int fd, int64_t length, const char* name);
     void post();                    // requires key
@@ -68,17 +74,6 @@ private:
     // and handle looping/waits until quit or failure
     void run();
 
-    // the latest requested playback, coalesced: the worker takes it over as a whole
-    struct Request
-    {
-        uint32_t revision = 0;      // bumped on every change
-        uint32_t seekRevision = 0;  // bumped on every seek, so that repeated seeks to one time stay apart
-        int64_t seekTimeUs = 0;
-        bool playing = false;  // kept over the end, so that a seek plays on from there
-        bool looping = false;
-        bool quit = false;
-    } request;
-
     // decoded frames waiting for their time
     struct Ring
     {
@@ -89,6 +84,7 @@ private:
 
     StrictKey key;         // guards the request, the ring and the worker states against the caller and the renderer
     condition_variable cv;
+    ColorSpace cs;
     int64_t durationUs = 0;
     uint32_t appliedSeekRevision = 0;  // the frames wait until it catches up with request.seekRevision
     bool seekPublished = false;        // until then the first frame of a seek shows at once

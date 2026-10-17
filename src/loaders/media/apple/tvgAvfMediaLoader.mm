@@ -463,7 +463,6 @@ bool AvfMediaLoader::sync()
     curTime = latestTime;
     if (eosPending) {
         started = false;
-        paused = true;
         eosPending = false;
     }
     if (!frameUpdated) return false;
@@ -484,7 +483,6 @@ Result AvfMediaLoader::play()
     auto restart = curTime >= totalTime;
     _clearEos(*this);
     started = true;
-    paused = false;
     dispatch_async(queue, ^{
         if (restart) [player seekToTime:kCMTimeZero toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero];
         [player play];
@@ -497,7 +495,6 @@ Result AvfMediaLoader::pause()
 {
     if (!started) return Result::InsufficientCondition;
 
-    paused = true;
     dispatch_async(queue, ^{
         [player pause];
         _cancelTimer(*this);
@@ -510,7 +507,6 @@ Result AvfMediaLoader::stop()
     _clearEos(*this);
     curTime = 0.0f;
     started = false;
-    paused = true;
     dispatch_async(queue, ^{
         [player pause];
         _cancelTimer(*this);

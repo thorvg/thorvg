@@ -70,8 +70,7 @@ private:
         {
             uint8_t* data = nullptr;
             size_t capacity = 0;
-            int64_t ptsUs = 0;
-            int64_t endUs = 0;
+            int64_t endUs;
         } chunks[CHUNK_COUNT];
         uint32_t read = 0;
         uint32_t queued = 0;

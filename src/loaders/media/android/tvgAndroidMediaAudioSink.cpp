@@ -260,12 +260,11 @@ bool AudioSink::push(const uint8_t* data, size_t size, int64_t ptsUs)
     }
     memset(chunk.data, 0, silence);
     memcpy(chunk.data + silence, data, size);
-    chunk.ptsUs = startUs;
     chunk.endUs = tailUs;
     if (!SL_OK((*sl.queue)->Enqueue(sl.queue, chunk.data, static_cast<SLuint32>(silence + size)))) return false;
 
     // the clock resumes from a starved queue with the chunk that ends the starvation
-    if (ring.queued++ == 0 && playing) anchor(std::max(anchorMediaUs, chunk.ptsUs));
+    if (ring.queued++ == 0 && playing) anchor(std::max(anchorMediaUs, startUs));
     // no long gap is waited out anymore
     waitPtsUs = -1;
     return true;

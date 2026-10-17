@@ -37,13 +37,6 @@ static float _seconds(int64_t timeUs)
     return static_cast<float>(static_cast<double>(timeUs) / MICROSEC);
 }
 
-static ColorSpace _cs()
-{
-    // MediaCodec decodes into yuv, which has no alpha: an opaque frame is straight and premultiplied alike
-    const auto cs = BitmapLoader::cs.load();
-    return (cs == ColorSpace::ARGB8888 || cs == ColorSpace::ARGB8888S) ? ColorSpace::ARGB8888 : ColorSpace::ABGR8888;
-}
-
 void AndroidMediaLoader::post()
 {
     ++request.revision;
@@ -77,8 +70,7 @@ Decoder::Decoded AndroidMediaLoader::decodeFrame(const Request& taken)
     }
 
     // only the worker touches a free slot, so the decode runs without the lock
-    frame->cs = _cs();
-    const auto ret = video.decode(nowUs, *frame);
+    const auto ret = video.decode(nowUs, *frame, cs);
     if (ret != Decoder::Converted) return ret;
 
     // the decoded frame joins the queue
@@ -93,6 +85,9 @@ Decoder::Decoded AndroidMediaLoader::decodeFrame(const Request& taken)
 
 void AndroidMediaLoader::run()
 {
+    // the worker's progress since the load or the last seek: no frame yet, a frame queued, the end reached
+    enum class Status : uint8_t {Seeking = 0, Queued, Ended};
+
     auto status = Status::Seeking;
 
     unique_lock<mutex> lock(key.mtx);
@@ -214,7 +209,6 @@ bool AndroidMediaLoader::open(int fd, int64_t length, const char* name)
     w = static_cast<float>(video.width);
     h = static_cast<float>(video.height);
     totalTime = _seconds(durationUs);
-    paused = true;
     return true;
 }
 
@@ -222,9 +216,12 @@ bool AndroidMediaLoader::read()
 {
     if (!Loader::read()) return true;
 
+    // only opaque
+    cs = BitmapLoader::cs.load();
+    cs = (cs == ColorSpace::ARGB8888 || cs == ColorSpace::ARGB8888S || cs == ColorSpace::XRGB8888) ? ColorSpace::XRGB8888 : ColorSpace::XBGR8888;
+
     const auto size = static_cast<size_t>(video.width) * video.height * sizeof(pixel_t);
-    // decoded video is opaque: its pixels are premultiplied as they are
-    surface.setup(tvg::calloc<pixel_t>(size, 1), video.width, video.width, video.height, sizeof(pixel_t), _cs());
+    surface.data = tvg::calloc<pixel_t>(size, 1);
     // the destructor frees the buffers allocated before a failure
     if (!surface.data) return false;
     for (auto& frame : ring.frames) {
@@ -261,7 +258,7 @@ bool AndroidMediaLoader::sync()
     {
         ScopedLock pixels(surface.key);
         std::swap(surface.data, latest->data);
-        surface.cs = latest->cs;
+        surface.setup(surface.data, video.width, video.width, video.height, sizeof(pixel_t), cs);
     }
     seekPublished = true;
     cv.notify_one();
@@ -279,20 +276,16 @@ Result AndroidMediaLoader::play()
         post();
     }
     started = true;
-    paused = false;
     return Result::Success;
 }
 
 Result AndroidMediaLoader::pause()
 {
-    {
-        ScopedLock lock(key);
-        if (failed) return Result::Unknown;
-        if (!started || (request.seekRevision == appliedSeekRevision && ended)) return Result::InsufficientCondition;
-        request.playing = false;
-        post();
-    }
-    paused = true;
+    ScopedLock lock(key);
+    if (failed) return Result::Unknown;
+    if (!started || (request.seekRevision == appliedSeekRevision && ended)) return Result::InsufficientCondition;
+    request.playing = false;
+    post();
     return Result::Success;
 }
 
@@ -306,7 +299,6 @@ Result AndroidMediaLoader::stop()
     }
     curTime = 0.0f;
     started = false;
-    paused = true;
     return Result::Success;
 }
 
