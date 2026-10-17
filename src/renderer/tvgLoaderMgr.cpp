@@ -269,7 +269,7 @@ bool LoaderMgr::retrieve(const char* filename)
     return retrieve(_findFromCache(filename));
 }
 
-tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, LoaderOps& ops, Result& ret)
+static tvg::Loader* _loader(const char* data, uint32_t size, const char* mimeType, LoaderOps& ops, Result& ret)
 {
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
@@ -314,6 +314,25 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
     }
     return nullptr;
 }
+
+tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mimeType, LoaderOps& ops, Result& ret)
+{
+    if (!gzipped(data, size)) return _loader(data, size, mimeType, ops, ret);
+
+    //compressed (e.g. svgz, tgs): decode, and let the loader keep its own copy
+    uint32_t decodedSize;
+    auto decoded = gzDecode(data, size, decodedSize);
+    if (!decoded) return nullptr;
+
+    auto owner = ops.owner;
+    ops.owner = Ownership::Copy;
+    auto loader = _loader(decoded, decodedSize, mimeType, ops, ret);
+    ops.owner = owner;
+    tvg::free(decoded);
+
+    return loader;
+}
+
 
 tvg::Loader* LoaderMgr::loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner)
 {

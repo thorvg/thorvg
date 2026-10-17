@@ -23,12 +23,15 @@
 #ifndef _TVG_COMPRESSOR_H_
 #define _TVG_COMPRESSOR_H_
 
+#include <cstddef>
 #include <cstdint>
 
 namespace tvg
 {
     size_t b64Decode(const char* encoded, const size_t len, char** decoded);
     unsigned long djb2Encode(const char* str);
+    bool gzipped(const char* data, size_t size);
+    char* gzDecode(const char* data, size_t size, uint32_t& decodedSize);
 }
 
 #endif  //_TVG_COMPRESSOR_H_
