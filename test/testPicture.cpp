@@ -250,6 +250,48 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     Paint::rel(picture);
 }
 
+TEST_CASE("Load compressed SVG", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto picture = Picture::gen();
+        REQUIRE(picture);
+
+        //From path, regardless of the extension
+        REQUIRE(picture->load(TEST_DIR"/test1.svgz") == Result::Success);
+
+        float w, h, w2, h2;
+        REQUIRE(picture->size(&w, &h) == Result::Success);
+        REQUIRE(picture->load(TEST_DIR"/test1.svg") == Result::Success);
+        REQUIRE(picture->size(&w2, &h2) == Result::Success);
+        REQUIRE(w == w2);
+        REQUIRE(h == h2);
+
+        //From data, with or without the MIME type
+        ifstream file(TEST_DIR"/test1.svgz", ios::in | ios::binary | ios::ate);
+        REQUIRE(file.is_open());
+        auto size = (uint32_t)file.tellg();
+        auto data = (char*)malloc(size);
+        file.seekg(0);
+        file.read(data, size);
+        file.close();
+
+        REQUIRE(picture->load(data, size, nullptr) == Result::Success);
+        REQUIRE(picture->load(data, size, "svg", nullptr, true) == Result::Success);
+        REQUIRE(picture->size(&w2, &h2) == Result::Success);
+        REQUIRE(w == w2);
+        REQUIRE(h == h2);
+
+        //Truncated
+        REQUIRE(picture->load(data, size / 2, "svg", nullptr, true) != Result::Success);
+
+        free(data);
+
+        Paint::rel(picture);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
 
 #ifdef THORVG_PNG_LOADER_SUPPORT

@@ -463,4 +463,43 @@ TEST_CASE("Lottie Embedded Fonts Share", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Compressed", "[tvgLottie]")
+{
+    REQUIRE(Initializer::init(4) == Result::Success);
+    {
+        auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+        REQUIRE(animation);
+
+        auto picture = animation->picture();
+
+        REQUIRE(picture->load(TEST_DIR"/test.lot") == Result::Success);
+        auto frames = animation->totalFrame();
+
+        //Telegram sticker (gzipped Lottie), from path
+        REQUIRE(picture->load(TEST_DIR"/test.tgs") == Result::Success);
+        REQUIRE(animation->totalFrame() == frames);
+
+        //From data, with or without the MIME type
+        ifstream file(TEST_DIR"/test.tgs", ios::in | ios::binary | ios::ate);
+        REQUIRE(file.is_open());
+        auto size = (uint32_t)file.tellg();
+        auto data = (char*)malloc(size);
+        file.seekg(0);
+        file.read(data, size);
+        file.close();
+
+        REQUIRE(picture->load(data, size, nullptr, nullptr, true) == Result::Success);
+        REQUIRE(animation->totalFrame() == frames);
+        REQUIRE(picture->load(data, size, "lottie", nullptr, true) == Result::Success);
+        REQUIRE(animation->totalFrame() == frames);
+        REQUIRE(animation->frame(frames * 0.5f) == Result::Success);
+
+        //Truncated
+        REQUIRE(picture->load(data, size / 2, "lottie", nullptr, true) != Result::Success);
+
+        free(data);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
