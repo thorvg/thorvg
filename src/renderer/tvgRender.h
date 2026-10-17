@@ -250,6 +250,9 @@ struct RenderPath
 {
     Array<PathCommand> cmds;
     Array<Point> pts;
+#if defined(THORVG_GL_ENGINE_SUPPORT) || defined(THORVG_WG_ENGINE_SUPPORT)
+    bool ellipse = false;
+#endif
 
     void dismiss()
     {
@@ -267,6 +270,9 @@ struct RenderPath
     {
         pts.clear();
         cmds.clear();
+#if defined(THORVG_GL_ENGINE_SUPPORT) || defined(THORVG_WG_ENGINE_SUPPORT)
+        ellipse = false;
+#endif
     }
 
     void close()
