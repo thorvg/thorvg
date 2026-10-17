@@ -463,4 +463,28 @@ TEST_CASE("Lottie Embedded Fonts Share", "[tvgLottie]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("Lottie Invalid Header", "[tvgLottie]")
+{
+    //Without and with worker threads, which take different header paths
+    for (uint32_t threads = 0; threads <= 4; threads += 4) {
+        REQUIRE(Initializer::init(threads) == Result::Success);
+        {
+            //A valid composition first, so that its memory could be reused
+            {
+                auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+                REQUIRE(animation->picture()->load(TEST_DIR"/test.lot") == Result::Success);
+            }
+
+            static const char* noSize = "{\"layers\":[]}";
+            static const char* noFrameRate = "{\"w\":10,\"h\":10,\"ip\":0,\"op\":5,\"layers\":[]}";
+
+            auto animation = unique_ptr<LottieAnimation>(LottieAnimation::gen());
+            auto picture = animation->picture();
+            REQUIRE(picture->load(noSize, strlen(noSize), "lottie+json", nullptr, true) == Result::InvalidArguments);
+            REQUIRE(picture->load(noFrameRate, strlen(noFrameRate), "lottie+json", nullptr, true) == Result::InvalidArguments);
+        }
+        REQUIRE(Initializer::term() == Result::Success);
+    }
+}
+
 #endif

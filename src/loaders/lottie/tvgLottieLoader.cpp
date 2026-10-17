@@ -106,7 +106,7 @@ Result LottieLoader::header()
     //A single thread doesn't need to perform intensive tasks.
     if (TaskScheduler::threads() == 0) {
         Loader::read();
-        if (prepare()) {
+        if (prepare() && comp->frameRate >= FLOAT_EPSILON) {
             w = static_cast<float>(comp->w);
             h = static_cast<float>(comp->h);
             segmentEnd = frameCnt = comp->frameCnt();

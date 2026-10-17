@@ -1281,8 +1281,8 @@ struct LottieComposition
     LottieRootLayer* root = nullptr;
     char* version = nullptr;
     char* name = nullptr;
-    float w, h;
-    float frameRate;
+    float w = 0.0f, h = 0.0f;
+    float frameRate = 0.0f;
     Array<LottieObject*> assets;
     Array<LottieInterpolator*> interpolators;
     Array<LottieFont*> fonts;
