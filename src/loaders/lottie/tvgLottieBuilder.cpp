@@ -1622,7 +1622,7 @@ static void _buildReference(LottieComposition* comp, LottieLayer* layer)
 {
     ARRAY_FOREACH(p, comp->assets) {
         if (layer->rid != (*p)->id) continue;
-        if (layer->type == LottieLayer::Precomp) {
+        if (layer->type == LottieLayer::Precomp && (*p)->type == LottieObject::Composition) {
             auto asset = static_cast<LottieRootLayer*>(*p);
             if (_buildComposition(comp, asset)) {
                 layer->children = asset->children;
