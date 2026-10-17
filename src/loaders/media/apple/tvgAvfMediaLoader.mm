@@ -129,7 +129,7 @@ static bool _push(AvfMediaLoader& loader, CVPixelBufferRef pixelBuffer, float se
 {
     auto width = static_cast<uint32_t>(CVPixelBufferGetWidth(pixelBuffer));
     auto height = static_cast<uint32_t>(CVPixelBufferGetHeight(pixelBuffer));
-    if (width != loader.surface.w || height != loader.surface.h) return false;
+    if (width != static_cast<uint32_t>(loader.w) || height != static_cast<uint32_t>(loader.h)) return false;
 
     // Copy the decoded pixel buffer into the loader-owned ring buffer.
     if (CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly) != kCVReturnSuccess) return false;
@@ -153,6 +153,7 @@ static bool _push(AvfMediaLoader& loader, CVPixelBufferRef pixelBuffer, float se
         ScopedLock lock(loader.key);
         loader.latestTime = seconds;
         loader.latest = loader.write;
+        loader.opaque = CVBufferGetAttachment(pixelBuffer, kCVImageBufferAlphaChannelIsOpaque, nullptr) == kCFBooleanTrue;
         loader.write = (loader.write + 1) % BUFFER_COUNT;
         loader.frameUpdated = true;
         ret = true;
@@ -446,12 +447,6 @@ bool AvfMediaLoader::read()
 {
     if (!Loader::read()) return true;
 
-    surface.w = static_cast<uint32_t>(w);
-    surface.h = static_cast<uint32_t>(h);
-    surface.stride = surface.w;
-    surface.channelSize = sizeof(uint32_t);
-    surface.opaque = true;
-
     // Prime the first frame so Picture can render immediately after load().
     return _readStillFrame(*this, 0.0f) && sync();
 }
@@ -469,11 +464,12 @@ bool AvfMediaLoader::sync()
     if (!frameUpdated) return false;
 
     auto frame = frames[latest];
-    auto size = surface.stride * surface.h * surface.channelSize;
+    auto width = static_cast<uint32_t>(w);
+    auto height = static_cast<uint32_t>(h);
+    auto size = static_cast<size_t>(width) * height * sizeof(pixel_t);
     if (!surface.data) surface.data = tvg::malloc<pixel_t>(size);
     memcpy(surface.data, frame, size);
-    surface.cs = ColorSpace::ARGB8888S;   // rasterConvertCS() can update this.
-    surface.premultiplied = false;        // rasterPremultiplySurface() can update this.
+    surface.setup(surface.data, width, width, height, sizeof(pixel_t), opaque ? ColorSpace::XRGB8888 : ColorSpace::ARGB8888S);
     frameUpdated = false;
 
     return true;

@@ -54,6 +54,7 @@ struct AvfMediaLoader : MediaLoader
     float latestTime = 0.0f;
     uint32_t write = 0;
     uint32_t latest = 0;
+    bool opaque = false;
     bool frameUpdated = false;
     bool eosPending = false;
 
