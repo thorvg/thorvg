@@ -49,6 +49,10 @@ if media_loader
     subdir('media')
 endif
 
+if gif_loader
+    subdir('gif')
+endif
+
 subdir('raw')
 
 loader_dep = declare_dependency(
