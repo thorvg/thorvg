@@ -163,6 +163,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let d0 = in.vGradCoord.xy - uPaintSettings.gradient.coords.xy;
     let d1 = uPaintSettings.gradient.coords.xy - uPaintSettings.gradient.focal.xy;
     let r0 = uPaintSettings.gradient.coords.z;
+    if (r0 == 0.0) {
+        let color = textureLoad(uTextureGrad, vec2<i32>(textureDimensions(uTextureGrad)) - vec2<i32>(1), 0);
+        let alpha = color.a * uPaintSettings.options.a;
+        return vec4f(color.rgb * alpha, alpha);
+    }
     let rd = uPaintSettings.gradient.focal.z - uPaintSettings.gradient.coords.z;
     let a = 1.0*dot(d1, d1) - 1.0*rd*rd;
     let b = 2.0*dot(d0, d1) - 2.0*r0*rd;
@@ -350,29 +355,15 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     return out;
 }
 
-struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
-fn getFragData(in: VertexOutput) -> FragData {
+fn getGradientColor(in: VertexOutput) -> vec4f {
     // get source data
     let pos = in.vGradCoord.xy;
     let st = uPaintSettings.gradient.coords.xy;
     let ed = uPaintSettings.gradient.coords.zw;
     let ba = ed - st;
     let t = dot(pos - st, ba) / dot(ba, ba);
-    let colorSrc = textureSample(uTextureGrad, uSamplerGrad, vec2f(t, 0.5));
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
-    // fill fragment data
-    var data: FragData;
-    data.Sc = colorSrc.rgb;
-    data.Sa = colorSrc.a;
-    data.So = uPaintSettings.options.a;
-    data.Dc = colorDst.rgb;
-    data.Da = colorDst.a;
-    data.Sc = mix(data.Dc, data.Sc, data.Sa * data.So);
-    data.Sa = mix(data.Da,     1.0, data.Sa * data.So);
-    return data;
-};
-
-fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
+    return textureSample(uTextureGrad, uSamplerGrad, vec2f(t, 0.5));
+}
 )";
 
 const char* cShaderSrc_Radial_Blend = R"(
@@ -398,11 +389,11 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     return out;
 }
 
-struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
-fn getFragData(in: VertexOutput) -> FragData {
+fn getGradientColor(in: VertexOutput) -> vec4f {
     let d0 = in.vGradCoord.xy - uPaintSettings.gradient.coords.xy;
     let d1 = uPaintSettings.gradient.coords.xy - uPaintSettings.gradient.focal.xy;
     let r0 = uPaintSettings.gradient.coords.z;
+    if (r0 == 0.0) { return textureLoad(uTextureGrad, vec2<i32>(textureDimensions(uTextureGrad)) - vec2<i32>(1), 0); }
     let rd = uPaintSettings.gradient.focal.z - uPaintSettings.gradient.coords.z;
     let a = 1.0*dot(d1, d1) - 1.0*rd*rd;
     let b = 2.0*dot(d0, d1) - 2.0*r0*rd;
@@ -411,21 +402,8 @@ fn getFragData(in: VertexOutput) -> FragData {
     var t = 0.0;
     if (d >= 0) { t = min(1.0, (-b + sqrt(d))/(2*a)); }
     if ((c > 0) && (t >= 1.0)) { t = 0.0; }
-    let colorSrc = textureSample(uTextureGrad, uSamplerGrad, vec2f(1.0 - t, 0.5));
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
-    // fill fragment data
-    var data: FragData;
-    data.Sc = colorSrc.rgb;
-    data.Sa = colorSrc.a;
-    data.So = uPaintSettings.options.a;
-    data.Dc = colorDst.rgb;
-    data.Da = colorDst.a;
-    data.Sc = mix(data.Dc, data.Sc, data.Sa * data.So);
-    data.Sa = mix(data.Da,     1.0, data.Sa * data.So);
-    return data;
-};
-
-fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
+    return textureSample(uTextureGrad, uSamplerGrad, vec2f(1.0 - t, 0.5));
+}
 )";
 
 const char* cShaderSrc_Conic_Blend = R"(
@@ -454,37 +432,46 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     return out;
 }
 
-struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
-fn getFragData(in: VertexOutput) -> FragData {
+fn getGradientColor(in: VertexOutput) -> vec4f {
     let pos = in.vGradCoord.xy;
     let width = fwidth(pos.y);
-    var colorSrc: vec4f;
     if (pos.x >= 0.0 && abs(pos.y) < 0.5 * width) {
         let first = textureLoad(uTextureGrad, vec2<i32>(0, 0), 0);
         let last = textureLoad(uTextureGrad, vec2<i32>(i32(GRADIENT_SIZE) - 1, 0), 0);
         let coverage = pos.y / width + 0.5;
         // Mix coverage after premultiplication so transparent stops cannot tint the seam.
-        colorSrc = mix(vec4f(last.rgb * last.a, last.a), vec4f(first.rgb * first.a, first.a), coverage);
-    } else {
-        let t = fract(atan2(pos.y, pos.x) * INV_TAU);
-        let u = (t * (GRADIENT_SIZE - 1.0) + 0.5) / GRADIENT_SIZE;
-        // Explicit LOD avoids an anisotropic footprint across the wrapped seam coordinate.
-        let color = textureSampleLevel(uTextureGrad, uSamplerGrad, vec2f(u, 0.5), 0.0);
-        colorSrc = vec4f(color.rgb * color.a, color.a);
+        let color = mix(vec4f(last.rgb * last.a, last.a), vec4f(first.rgb * first.a, first.a), coverage);
+        return vec4f(color.rgb / select(color.a, 1.0, color.a == 0.0), color.a);
     }
+    let t = fract(atan2(pos.y, pos.x) * INV_TAU);
+    let u = (t * (GRADIENT_SIZE - 1.0) + 0.5) / GRADIENT_SIZE;
+    // Explicit LOD avoids an anisotropic footprint across the wrapped seam coordinate.
+    return textureSampleLevel(uTextureGrad, uSamplerGrad, vec2f(u, 0.5), 0.0);
+}
+)";
+
+const char* cShaderSrc_Gradient_Blend = R"(
+fn getFragData(in: VertexOutput) -> FragData {
+    let colorSrc = getGradientColor(in);
     let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
     var data: FragData;
     data.Sc = colorSrc.rgb;
-    data.Sa = colorSrc.a;
-    data.So = uPaintSettings.options.a;
-    data.Dc = colorDst.rgb;
-    data.Da = colorDst.a;
-    data.Sc = data.Dc * (1.0 - data.Sa * data.So) + data.Sc * data.So;
-    data.Sa = mix(data.Da,     1.0, data.Sa * data.So);
+    data.Sa = colorSrc.a * uPaintSettings.options.a;
+    data.Dc = colorDst.rgb / select(colorDst.a, 1.0, colorDst.a == 0.0);
+    data.Da = 1.0;
+    data.backdrop = colorDst;
     return data;
-};
+}
+)";
 
-fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
+// W3C blending uses straight colors. Da = 1 evaluates only the blend function;
+// postProcess applies source-over with the original premultiplied backdrop.
+const char* cShaderSrc_BlendSourceOver = R"(
+struct FragData { Sc: vec3f, Sa: f32, Dc: vec3f, Da: f32, backdrop: vec4f };
+fn postProcess(d: FragData, R: vec4f) -> vec4f {
+    let Da = d.backdrop.a;
+    return vec4f(mix(d.Sc, R.rgb, Da) * d.Sa + d.backdrop.rgb * (1.0 - d.Sa), d.Sa + Da * (1.0 - d.Sa));
+}
 )";
 
 const char* cShaderSrc_Image_Blend = R"(
@@ -564,6 +551,7 @@ fn getFragData(in: VertexOutput) -> FragData {
 fn postProcess(d: FragData, R: vec4f) -> vec4f { return mix(vec4(d.Dc, d.Da), R, d.Sa * So); };
 )";
 
+// Keep the target luminance when clipping to avoid cancellation at black and white.
 const char* cShaderSrc_BlendFuncs = R"(
 const One = vec3f(1.0, 1.0, 1.0);
 
@@ -571,7 +559,7 @@ const LUM_W = vec3f(0.3, 0.59, 0.11);
 
 fn setLum(colorIn: vec3f, l: f32) -> vec3f {
     var color = colorIn + vec3f(l - dot(colorIn, LUM_W));
-    let ll = dot(color, LUM_W);
+    let ll = l;
     let n = min(color.r, min(color.g, color.b));
     let x = max(color.r, max(color.g, color.b));
 
@@ -589,23 +577,10 @@ fn sat(color: vec3f) -> f32 {
 };
 
 fn setSat(colorIn: vec3f, s: f32) -> vec3f {
-    let rMin = step(colorIn.r, colorIn.g) * step(colorIn.r, colorIn.b);
-    let gMin = (1.0 - rMin) * step(colorIn.g, colorIn.r) * step(colorIn.g, colorIn.b);
-    let minMask = vec3f(rMin, gMin, 1.0 - rMin - gMin);
-
-    let bMax = step(colorIn.r, colorIn.b) * step(colorIn.g, colorIn.b);
-    let gMax = (1.0 - bMax) * step(colorIn.r, colorIn.g) * step(colorIn.b, colorIn.g);
-    let maxMask = vec3f(1.0 - bMax - gMax, gMax, bMax);
-    let midMask = vec3f(1.0) - minMask - maxMask;
-
-    let cMin = dot(colorIn, minMask);
-    let cMid = dot(colorIn, midMask);
-    let cMax = dot(colorIn, maxMask);
-    let delta = cMax - cMin;
-    let deltaMask = sign(delta);
-    let scale = deltaMask * s / max(delta, 1e-6);
-
-    return maxMask * vec3f(s * deltaMask) + midMask * vec3f((cMid - cMin) * scale);
+    let n = min(colorIn.r, min(colorIn.g, colorIn.b));
+    let x = max(colorIn.r, max(colorIn.g, colorIn.b));
+    if (x > n) { return (colorIn - vec3f(n)) * (s / (x - n)); }
+    return vec3f(0.0);
 };
 
 @fragment
@@ -671,9 +646,10 @@ fn fs_main_ColorDodge(in: VertexOutput) -> @location(0) vec4f {
     var Rc = d.Sc;
     if (d.Da > 0.0) {
         let Dc = min(One, d.Dc / d.Da);
-        Rc.r = select(0.0, select(1.0, min(1.0, Dc.r / (1.0 - d.Sc.r)), d.Sc.r < 1.0), Dc.r > 0.0);
-        Rc.g = select(0.0, select(1.0, min(1.0, Dc.g / (1.0 - d.Sc.g)), d.Sc.g < 1.0), Dc.g > 0.0);
-        Rc.b = select(0.0, select(1.0, min(1.0, Dc.b / (1.0 - d.Sc.b)), d.Sc.b < 1.0), Dc.b > 0.0);
+        let denom = select(One, One - d.Sc, d.Sc < One);
+        Rc.r = select(0.0, select(1.0, min(1.0, Dc.r / denom.r), d.Sc.r < 1.0), Dc.r > 0.0);
+        Rc.g = select(0.0, select(1.0, min(1.0, Dc.g / denom.g), d.Sc.g < 1.0), Dc.g > 0.0);
+        Rc.b = select(0.0, select(1.0, min(1.0, Dc.b / denom.b), d.Sc.b < 1.0), Dc.b > 0.0);
         Rc = mix(d.Sc, Rc, d.Da);
     }
     return postProcess(d, vec4f(Rc, 1.0));
@@ -685,9 +661,10 @@ fn fs_main_ColorBurn(in: VertexOutput) -> @location(0) vec4f {
     var Rc = d.Sc;
     if (d.Da > 0.0) {
         let Dc = min(One, d.Dc / d.Da);
-        Rc.r = select(select(1.0, 0.0, Dc.r < 1), 1.0 - min(1.0, (1.0 - Dc.r) / d.Sc.r), d.Sc.r > 0);
-        Rc.g = select(select(1.0, 0.0, Dc.g < 1), 1.0 - min(1.0, (1.0 - Dc.g) / d.Sc.g), d.Sc.g > 0);
-        Rc.b = select(select(1.0, 0.0, Dc.b < 1), 1.0 - min(1.0, (1.0 - Dc.b) / d.Sc.b), d.Sc.b > 0);
+        let denom = select(One, d.Sc, d.Sc > vec3f(0.0));
+        Rc.r = select(select(1.0, 0.0, Dc.r < 1), 1.0 - min(1.0, (1.0 - Dc.r) / denom.r), d.Sc.r > 0);
+        Rc.g = select(select(1.0, 0.0, Dc.g < 1), 1.0 - min(1.0, (1.0 - Dc.g) / denom.g), d.Sc.g > 0);
+        Rc.b = select(select(1.0, 0.0, Dc.b < 1), 1.0 - min(1.0, (1.0 - Dc.b) / denom.b), d.Sc.b > 0);
         Rc = mix(d.Sc, Rc, d.Da);
     }
     return postProcess(d, vec4f(Rc, 1.0));

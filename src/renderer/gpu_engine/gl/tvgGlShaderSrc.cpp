@@ -591,8 +591,6 @@ const char* BLIT_FRAG_SHADER = TVG_COMPOSE_SHADER(
 // SW parity map for blend sources:
 // - Solid shape: SW calls blender(srcPremul, dst) directly.
 //   Keep premultiplied source and bypass postProcess.
-// - Gradient shape: SW first does src-over (opBlendPreNormal), then blender(tmp, dst).
-//   Build equivalent tmp in getFragData() by pre-mixing with dst, then bypass postProcess.
 // - Image/Scene: SW uses blender(unpremul(src), dst), then interpolates by src alpha/opacity.
 //   Keep unpremultiplied source + postProcess mix for these headers.
 const char* BLEND_SHAPE_SOLID_FRAG_HEADER = R"(
@@ -623,6 +621,8 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; }
 )";
 
+// Gradients use W3C blending on straight colors, followed by source-over compositing.
+// Da = 1 makes the shared blend functions return B(Cb, Cs) without backdrop weighting.
 const char* BLEND_SHAPE_GRADIENT_FRAG_HEADER = R"(
 layout(std140) uniform BlendRegion {
     vec4 region;
@@ -633,26 +633,26 @@ uniform sampler2D uDstTexture;
 out vec4 FragColor;
 
 vec3 One = vec3(1.0, 1.0, 1.0);
-struct FragData { vec3 Sc; float Sa; float So; vec3 Dc; float Da; };
+struct FragData { vec3 Sc; vec3 Dc; float Da; };
 FragData d;
+vec4 src, dst;
 
 void getFragData() {
-    vec4 colorSrc = gradientColor(vPos);
+    src = gradientColor(vPos);
     vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
-    vec4 colorDst = texture(uDstTexture, uv);
+    dst = texture(uDstTexture, uv);
 
-    d.Sc = colorSrc.rgb;
-    d.Sa = colorSrc.a;
-    d.So = 1.0;
-    d.Dc = colorDst.rgb;
-    d.Da = colorDst.a;
-    // RGB is premultiplied.
-    float srcOpacity = d.Sa * d.So;
-    d.Sc = d.Dc * (1.0 - srcOpacity) + d.Sc * d.So;
-    d.Sa = mix(d.Da, 1.0, srcOpacity);
+    d.Sc = src.rgb;
+    d.Dc = dst.rgb;
+    if (src.a > 0.0) d.Sc /= src.a;
+    if (dst.a > 0.0) d.Dc /= dst.a;
+    d.Da = 1.0;
 }
 
-vec4 postProcess(vec4 R) { return R; }
+vec4 postProcess(vec4 R) {
+    return vec4(src.rgb * (1.0 - dst.a) + R.rgb * src.a * dst.a + dst.rgb * (1.0 - src.a),
+                src.a + dst.a * (1.0 - src.a));
+}
 )";
 
 // GL keeps a viewport-sized dst copy, so src/dst can share vUV.
@@ -786,12 +786,13 @@ vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 #endif
 
+// Keep the target luminance when clipping to avoid cancellation at black and white.
 const char* BLEND_FRAG_LUM_HELPER = R"(
 const vec3 LUM_W = vec3(0.3, 0.59, 0.11);
 
 vec3 setLum(vec3 color, float l) {
     color += l - dot(color, LUM_W);
-    float ll = dot(color, LUM_W);
+    float ll = l;
     float n = min(color.r, min(color.g, color.b));
     float x = max(color.r, max(color.g, color.b));
 
@@ -807,23 +808,9 @@ float sat(vec3 color) {
 }
 
 vec3 setSat(vec3 color, float s) {
-    float rMin = step(color.r, color.g) * step(color.r, color.b);
-    float gMin = (1.0 - rMin) * step(color.g, color.r) * step(color.g, color.b);
-    vec3 minMask = vec3(rMin, gMin, 1.0 - rMin - gMin);
-
-    float bMax = step(color.r, color.b) * step(color.g, color.b);
-    float gMax = (1.0 - bMax) * step(color.r, color.g) * step(color.b, color.g);
-    vec3 maxMask = vec3(1.0 - bMax - gMax, gMax, bMax);
-    vec3 midMask = vec3(1.0) - minMask - maxMask;
-
-    float cMin = dot(color, minMask);
-    float cMid = dot(color, midMask);
-    float cMax = dot(color, maxMask);
-    float delta = cMax - cMin;
-    float deltaMask = sign(delta);
-    float scale = deltaMask * s / max(delta, 1e-6);
-
-    return maxMask * (s * deltaMask) + midMask * ((cMid - cMin) * scale);
+    float n = min(color.r, min(color.g, color.b));
+    float x = max(color.r, max(color.g, color.b));
+    return x > n ? (color - vec3(n)) * (s / (x - n)) : vec3(0.0);
 }
 )";
 
