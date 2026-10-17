@@ -53,7 +53,7 @@ private:
     LottieEffect* getEffect(int type);
 
     void getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property);
-    void getInterpolatorPoint(Point& pt);
+    void getInterpolatorPoint(Point pt[DimCnt]);
     void getPathSet(LottiePath* obj, LottiePathSet& path);
     void getLayerSize(float& val);
     bool getValue(TextDocument& doc);
