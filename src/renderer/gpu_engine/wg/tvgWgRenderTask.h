@@ -75,15 +75,17 @@ struct WgSceneTask : WgRenderTask
 {
     WgSceneTask* parent{};           // parent scene (nullptr for root scene)
     Array<WgRenderTask*> children;   // children can be shapes or scenes tasks
-    WgRenderTarget* renderTarget{};  // scene blend/compose targets
-    WgRenderTarget* renderTargetMsk{};
-    WgRenderTarget* renderTargetDst{};
+    WgRenderTargetState targetState;
+    WgSceneTask* maskScene{};
+    WgSceneTask* dstScene{};
+    WgMesh composeMesh;
+    WgMesh effectMesh;
     WgCompose* compose{};  // scene blend/compose properties
     Array<const RenderEffect*> effects;
     bool clearBuffer = true;
 
     WgSceneTask(WgRenderTarget* renderTarget, WgCompose* compose, WgSceneTask* parent) :
-        parent(parent), renderTarget(renderTarget), compose(compose) {}
+        parent(parent), targetState{renderTarget, compose->aabb}, compose(compose) {}
     void stage(WgCompositor& compositor) override;
     void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
     void runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);

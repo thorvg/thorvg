@@ -45,7 +45,7 @@ struct WgRenderTargetPool
     Array<WgRenderTarget*> list, pool;
     uint32_t width{}, height{};
 
-    WgRenderTarget* allocate(WgContext& context);
+    WgRenderTarget* allocate(WgContext& context, const RenderRegion& region);
     void initialize(uint32_t width, uint32_t height);
     void release(WgContext& context);
 };

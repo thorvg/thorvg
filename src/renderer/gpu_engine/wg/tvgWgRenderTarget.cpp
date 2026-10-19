@@ -22,6 +22,16 @@
 
 #include "tvgWgRenderTarget.h"
 
+static uint32_t _renderTargetSize(uint32_t value, uint32_t limit)
+{
+    uint32_t size = 1;
+    while (size < value && size < limit) {
+        if (size > limit / 2) return limit;
+        size <<= 1;
+    }
+    return size < limit ? size : limit;
+}
+
 void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t height)
 {
     this->width = width;
@@ -61,12 +71,20 @@ void WgRenderTarget::release(WgContext& context)
 // render target pool
 //*****************************************************************************
 
-WgRenderTarget* WgRenderTargetPool::allocate(WgContext& context)
+WgRenderTarget* WgRenderTargetPool::allocate(WgContext& context, const RenderRegion& region)
 {
-    if (!pool.empty()) return pool.pick();
+    auto targetWidth = _renderTargetSize(region.sw() > 1 ? region.sw() : 1, width);
+    auto targetHeight = _renderTargetSize(region.sh() > 1 ? region.sh() : 1, height);
+    for (uint32_t i = 0; i < pool.count; ++i) {
+        auto target = pool[i];
+        if (target->width != targetWidth || target->height != targetHeight) continue;
+        pool[i] = pool.last();
+        pool.pop();
+        return target;
+    }
 
     auto renderTarget = new WgRenderTarget;
-    renderTarget->initialize(context, width, height);
+    renderTarget->initialize(context, targetWidth, targetHeight);
     list.push(renderTarget);
 
     return renderTarget;

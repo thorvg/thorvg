@@ -34,6 +34,13 @@ struct WgCompose: RenderCompositor
     bool masked{}; // indicate if composition allocates more than one render target
 };
 
+struct WgRenderTargetState
+{
+    WgRenderTarget* target{};
+    RenderRegion bounds{};       // Canvas coordinates.
+    uint32_t transformOffset{};  // Byte offset in the geometry buffer.
+};
+
 class WgCompositor
 {
 private:
@@ -44,11 +51,13 @@ private:
     WgStageBufferSolidColor stageBufferSolidColor{};
     WgStageBufferUniform<WgShaderTypePaintSettings> stageBufferPaint;
     WgStageBufferUniform<WgShaderTypeMat4x4fBlock> stageBufferViewMat;
-    // global stencil/depth buffer handles
-    WGPUTexture texDepthStencil{};
-    WGPUTextureView texViewDepthStencil{};
-    WGPUTexture texDepthStencilMS{};
-    WGPUTextureView texViewDepthStencilMS{};
+    struct DepthStencilAttachment
+    {
+        uint32_t width, height, sampleCount;
+        WGPUTexture texture;
+        WGPUTextureView view;
+    };
+    Array<DepthStencilAttachment> depthStencilAttachments;
     // global view matrix handles
     WGPUBuffer bufferViewMat{};
     WGPUBindGroup bindGroupViewMat{};
@@ -60,7 +69,7 @@ private:
     // current render pass handles
     WGPURenderPassEncoder renderPassEncoder{};
     WGPUCommandEncoder commandEncoder{};
-    WgRenderTarget* currentTarget{};
+    const WgRenderTargetState* currentTargetState{};
     // intermediate render targets
     WgRenderTarget targetTemp0;
     WgRenderTarget targetTemp1;
@@ -72,9 +81,11 @@ private:
     uint32_t height{};
     
     // viewport utilities
-    RenderRegion shrinkRenderRegion(const RenderRegion& rect);
+    void setScissorRegion(const RenderRegion& region);
+    WGPUTextureView getDepthStencilView(WgContext& context, uint32_t width, uint32_t height, uint32_t sampleCount);
+    void requestQuad(WgMesh& mesh, const WgRenderTargetState& src, const WgRenderTargetState& dst, const WgRenderTargetState* mask = nullptr);
+    void copyEffectTexture(WgContext& context, WgRenderTarget* dst, const WgRenderTargetState& src, bool clear = false);
     void copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src);
-    void copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src, const RenderRegion& region);
 
     // base meshes draw
     void drawMesh(WgContext& context, WgMesh* meshData);
@@ -96,8 +107,8 @@ private:
     void clipImage(WgContext& context, WgImage* rdata);
 
     // scenes
-    void drawScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose);
-    void blendScene(WgContext& context, WgRenderTarget* src, WgCompose* compose);
+    void drawScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose, WgMesh& mesh);
+    void blendScene(WgContext& context, WgRenderTarget* src, WgCompose* compose, WgMesh& mesh);
 
     // the renderer prioritizes clipping with the stroke over the shape's fill
     void markupClipPath(WgContext& context, WgShape* rdata);
@@ -112,8 +123,8 @@ public:
     void resize(WgContext& context, uint32_t width, uint32_t height);
 
     // render passes workflow
-    void beginRenderPassMS(WGPUCommandEncoder encoder, WgRenderTarget* target, bool clearBuffer);
-    void beginRenderPass(WGPUCommandEncoder encoder, WgRenderTarget* target);
+    void beginRenderPassMS(WgContext& context, WGPUCommandEncoder encoder, const WgRenderTargetState& targetState, bool clearBuffer);
+    void beginRenderPass(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* target, bool clearBuffer = false);
     void endRenderPass();
 
     // stage buffers operations
@@ -126,6 +137,7 @@ public:
     void requestSolidBatch(const Array<WgShape*>& renderShapes, WgSolidBatchRange& range);
     void requestImageBatch(const Array<WgImage*>& renderImages, WgImageBatchRange& range);
     void requestStencilBatch(const Array<WgShape*>& renderShapes, WgStencilBatchRange& range);
+    void requestScene(WgRenderTargetState& targetState, WgMesh& mesh, WgMesh& effectMesh, const WgRenderTargetState* dst, const WgRenderTargetState* mask, bool effects);
 
     // render shapes, images and scenes
     void renderShape(WgContext& context, WgShape* rdata, BlendMethod blendMethod);
@@ -133,19 +145,19 @@ public:
     void renderImageBatch(WgImage* image, const WgImageBatchRange& range);
     void renderStencilBatch(const Array<WgShape*>& renderShapes, const WgStencilBatchRange& range);
     void renderImage(WgContext& context, WgImage* rdata, BlendMethod blendMethod);
-    void renderScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose);
-    void composeScene(WgContext& context, WgRenderTarget* src, WgRenderTarget* mask, WgCompose* compose);
+    void renderScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose, WgMesh& mesh);
+    void composeScene(WgContext& context, WgRenderTarget* src, WgRenderTarget* mask, WgCompose* compose, WgMesh& mesh);
 
     // blit render target to texture view (f.e. screen buffer)
     void blit(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* src, WGPUTextureView dstView, bool premultiplied, bool clearBuffer);
 
     // effects
-    bool gaussianBlur(WgContext& context, WgRenderTarget* dst, const RenderEffectGaussianBlur* blur, const WgCompose* compose);
-    bool dropShadow(WgContext& context, WgRenderTarget* dst, const RenderEffectDropShadow* shadow, const WgCompose* compose);
-    bool fillEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectFill* fill, const WgCompose* compose);
-    bool tintEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectTint* tint, const WgCompose* compose);
-    bool tritoneEffect(WgContext& context, WgRenderTarget* dst, const RenderEffectTritone* tritone, const WgCompose* compose);
-    bool motionBlur(WgContext& context, WgRenderTarget* dst, const RenderEffectMotionBlur* params, const WgCompose* compose);
+    bool gaussianBlur(WgContext& context, const WgRenderTargetState& targetState, const RenderEffectGaussianBlur* blur, WgMesh& mesh);
+    bool dropShadow(WgContext& context, const WgRenderTargetState& targetState, const RenderEffectDropShadow* shadow, WgMesh& mesh);
+    bool fillEffect(WgContext& context, const WgRenderTargetState& targetState, const RenderEffectFill* fill, WgMesh& mesh);
+    bool tintEffect(WgContext& context, const WgRenderTargetState& targetState, const RenderEffectTint* tint, WgMesh& mesh);
+    bool tritoneEffect(WgContext& context, const WgRenderTargetState& targetState, const RenderEffectTritone* tritone, WgMesh& mesh);
+    bool motionBlur(WgContext& context, const WgRenderTargetState& targetState, const RenderEffectMotionBlur* params, WgMesh& mesh);
 };
 
 #endif // _TVG_WG_COMPOSITOR_H_
