@@ -149,6 +149,7 @@ Result LottieLoader::header()
             p += 5;
             auto e = strchr(p, ',');
             if (!e) e = strchr(p, '}');
+            if (!e) return Result::InvalidArguments;
             frameRate = toFloat(p, nullptr);
             p = e;
             continue;
@@ -159,6 +160,7 @@ Result LottieLoader::header()
             p += 5;
             auto e = strchr(p, ',');
             if (!e) e = strchr(p, '}');
+            if (!e) return Result::InvalidArguments;
             startFrame = toFloat(p, nullptr);
             p = e;
             continue;
@@ -169,6 +171,7 @@ Result LottieLoader::header()
             p += 5;
             auto e = strchr(p, ',');
             if (!e) e = strchr(p, '}');
+            if (!e) return Result::InvalidArguments;
             endFrame = toFloat(p, nullptr);
             p = e;
             continue;
@@ -179,6 +182,7 @@ Result LottieLoader::header()
             p += 4;
             auto e = strchr(p, ',');
             if (!e) e = strchr(p, '}');
+            if (!e) return Result::InvalidArguments;
             w = toFloat(p, nullptr);
             p = e;
             continue;
@@ -188,6 +192,7 @@ Result LottieLoader::header()
             p += 4;
             auto e = strchr(p, ',');
             if (!e) e = strchr(p, '}');
+            if (!e) return Result::InvalidArguments;
             h = toFloat(p, nullptr);
             p = e;
             continue;
