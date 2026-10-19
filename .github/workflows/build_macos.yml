@@ -37,6 +37,8 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v7
+      with:
+        submodules: true
 
     - name: Unbreak Python in GitHub Actions
       run: |
