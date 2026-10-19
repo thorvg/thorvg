@@ -987,10 +987,10 @@ bool LottieParser::parseAssetSource(AssetSrc& src, const char* data, const char*
     auto typeLen = strlen(type);
     if (embedded && !strncmp(data, type, typeLen)) {
         auto mime = data + typeLen;
-        auto semi = strstr(mime, ";");
+        auto semi = strchr(mime, ';');
         if (!semi) return false;
         src.mimeType = duplicate(mime, semi - mime);
-        auto b64 = strstr(semi, ",");
+        auto b64 = strchr(semi, ',');
         if (!b64) return false;
         ++b64;
         src.size = b64Decode(b64, dlen - (b64 - data), &src.data);
@@ -1086,7 +1086,7 @@ void LottieParser::parseFontData(LottieFont* font, const char* data)
             TVGLOG("LOTTIE", "Not support the current font type!");
             return;
         }
-        auto b64Data = strstr(data, ",");
+        auto b64Data = strchr(data, ',');
         if (!b64Data) return;
         data = b64Data + 1;
         font->size = b64Decode(data, strlen(data), &font->b64src);
