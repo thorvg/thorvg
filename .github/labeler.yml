@@ -36,7 +36,7 @@
 
 "test":
   - changed-files:
-      - any-glob-to-any-file: test/**/*
+      - any-glob-to-any-file: test
 
 "infrastructure":
   - changed-files:

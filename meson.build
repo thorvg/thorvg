@@ -163,7 +163,16 @@ configure_file(
 )
 
 if get_option('tests')
-   subdir('test')
+   fs = import('fs')
+   git = find_program('git', required: false)
+   if not fs.exists('test/meson.build') and fs.exists('.git') and git.found()
+      run_command(git, '-C', meson.current_source_dir(), 'submodule', 'update', '--init', '--', 'test', check: false)
+   endif
+   if fs.exists('test/meson.build')
+      subdir('test')
+   else
+      warning('Unit tests are unavailable in this source archive; skipping.')
+   endif
 endif
 
 summary(
