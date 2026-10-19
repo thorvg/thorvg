@@ -226,6 +226,7 @@ void LottieColorStop::copy(LottieColorStop& rhs, bool shallow)
     }
     populated = rhs.populated;
     count = rhs.count;
+    colorCnt = rhs.colorCnt;
 }
 
 /************************************************************************/

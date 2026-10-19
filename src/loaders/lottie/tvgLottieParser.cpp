@@ -214,7 +214,7 @@ bool LottieParser::getValue(ColorStop& color)
         if (!nextArrayValue()) return true;
     }
 
-    if (!color.input) color.input = new Array<float>(static_cast<LottieGradient*>(context.parent)->colorStops.count * 6);
+    if (!color.input) color.input = new Array<float>(static_cast<LottieGradient*>(context.parent)->colorStops.colorCnt * 6);
     else color.input->clear();
 
     do color.input->push(getFloat());
@@ -737,7 +737,7 @@ void LottieParser::parseColorStop(LottieGradient* gradient)
 {
     enterObject();
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("p")) gradient->colorStops.count = getInt();
+        if (KEY_AS("p")) gradient->colorStops.colorCnt = getInt();
         else if (KEY_AS("k")) parseProperty(gradient->colorStops, gradient);
         else if (parseCommon(gradient, gradient->colorStops, key)) continue;
         else skip();
