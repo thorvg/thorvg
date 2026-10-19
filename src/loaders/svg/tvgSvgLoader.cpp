@@ -2379,45 +2379,48 @@ static constexpr struct
 {
     const char* tag;
     int sz;
+    SvgNodeType type;
     FactoryMethod tagHandler;
 } graphicsTags[] = {
-    {"use", sizeof("use"), _createUseNode},
-    {"circle", sizeof("circle"), _createCircleNode},
-    {"ellipse", sizeof("ellipse"), _createEllipseNode},
-    {"path", sizeof("path"), _createPathNode},
-    {"polygon", sizeof("polygon"), _createPolygonNode},
-    {"rect", sizeof("rect"), _createRectNode},
-    {"polyline", sizeof("polyline"), _createPolylineNode},
-    {"line", sizeof("line"), _createLineNode},
-    {"image", sizeof("image"), _createImageNode},
-    {"text", sizeof("text"), _createTextNode},
-    {"feGaussianBlur", sizeof("feGaussianBlur"), _createGaussianBlurNode}};
+    {"use", sizeof("use"), SvgNodeType::Use, _createUseNode},
+    {"circle", sizeof("circle"), SvgNodeType::Circle, _createCircleNode},
+    {"ellipse", sizeof("ellipse"), SvgNodeType::Ellipse, _createEllipseNode},
+    {"path", sizeof("path"), SvgNodeType::Path, _createPathNode},
+    {"polygon", sizeof("polygon"), SvgNodeType::Polygon, _createPolygonNode},
+    {"rect", sizeof("rect"), SvgNodeType::Rect, _createRectNode},
+    {"polyline", sizeof("polyline"), SvgNodeType::Polyline, _createPolylineNode},
+    {"line", sizeof("line"), SvgNodeType::Line, _createLineNode},
+    {"image", sizeof("image"), SvgNodeType::Image, _createImageNode},
+    {"text", sizeof("text"), SvgNodeType::Text, _createTextNode},
+    {"feGaussianBlur", sizeof("feGaussianBlur"), SvgNodeType::GaussianBlur, _createGaussianBlurNode}};
 
 static constexpr struct
 {
     const char* tag;
     int sz;
+    SvgNodeType type;
     FactoryMethod tagHandler;
 } groupTags[] = {
-    {"defs", sizeof("defs"), _createDefsNode},
-    {"g", sizeof("g"), _createGNode},
-    {"svg", sizeof("svg"), _createSvgNode},
-    {"mask", sizeof("mask"), _createMaskNode},
-    {"clipPath", sizeof("clipPath"), _createClipPathNode},
-    {"style", sizeof("style"), _createCssStyleNode},
-    {"symbol", sizeof("symbol"), _createSymbolNode},
-    {"filter", sizeof("filter"), _createFilterNode},
-    {"pattern", sizeof("pattern"), _createPatternNode}};
+    {"defs", sizeof("defs"), SvgNodeType::Defs, _createDefsNode},
+    {"g", sizeof("g"), SvgNodeType::G, _createGNode},
+    {"svg", sizeof("svg"), SvgNodeType::Doc, _createSvgNode},
+    {"mask", sizeof("mask"), SvgNodeType::Mask, _createMaskNode},
+    {"clipPath", sizeof("clipPath"), SvgNodeType::ClipPath, _createClipPathNode},
+    {"style", sizeof("style"), SvgNodeType::CssStyle, _createCssStyleNode},
+    {"symbol", sizeof("symbol"), SvgNodeType::Symbol, _createSymbolNode},
+    {"filter", sizeof("filter"), SvgNodeType::Filter, _createFilterNode},
+    {"pattern", sizeof("pattern"), SvgNodeType::Pattern, _createPatternNode}};
 
 #define FIND_FACTORY(Short_Name, Tags_Array)                                           \
     static FactoryMethod                                                               \
-        _find##Short_Name##Factory(const char* name)                                   \
+    _find##Short_Name##Factory(const char* name, SvgNodeType* type = nullptr)          \
     {                                                                                  \
         unsigned int i;                                                                \
         int sz = strlen(name);                                                         \
                                                                                        \
         for (i = 0; i < sizeof(Tags_Array) / sizeof(Tags_Array[0]); i++) {             \
             if (Tags_Array[i].sz - 1 == sz && !strncmp(Tags_Array[i].tag, name, sz)) { \
+                if (type) *type = Tags_Array[i].type;                                  \
                 return Tags_Array[i].tagHandler;                                       \
             }                                                                          \
         }                                                                              \
@@ -3769,19 +3772,18 @@ static void _svgLoaderParserXmlCssStyle(SvgParserContext* ctx, const char* conte
     SvgNode *node = nullptr;
 
     while (auto next = xmlParseCSSAttribute(content, length, &tag, &name, &attrs, &attrsLength)) {
-        if (!STR_AS(tag, "defs") && ((method = _findGroupFactory(tag)) || (method = _findGraphicsFactory(tag)))) {
-            auto global = ctx->parser->global;
-            node = method(ctx, ctx->cssStyle, "", 0, xmlParseW3CAttribute);
-            ctx->parser->global = global;
+        auto type = SvgNodeType::Unknown;
+        if (!STR_AS(tag, "defs") && ((method = _findGroupFactory(tag, &type)) || (method = _findGraphicsFactory(tag, &type)))) {
+            node = cssFindStyleNode(ctx->cssStyle, name, type);
+            if (!node) {
+                auto global = ctx->parser->global;
+                node = method(ctx, ctx->cssStyle, "", 0, xmlParseW3CAttribute);
+                ctx->parser->global = global;
+                if (node) _copyId(&node->id, name);
+            }
             if (node) {
-                _copyId(&node->id, name);
-                auto first = cssFindStyleNode(ctx->cssStyle, node->id, node->type);
-                ctx->parser->node = first;
+                ctx->parser->node = node;
                 xmlParseW3CAttribute(attrs, attrsLength, _attrParseCssStyleNode, ctx);
-                if (first != node) {
-                    ctx->cssStyle->child.pop();
-                    _free(node);
-                }
             }
         } else if ((gradientMethod = _findGradientFactory(tag))) {
             TVGLOG("SVG", "Unsupported elements used in the internal CSS style sheets [Elements: %s]", tag);

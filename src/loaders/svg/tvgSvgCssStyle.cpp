@@ -62,20 +62,17 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::Color)) {
         to->color = from->color;
         to->curColorSet = true;
-        to->flags |= SvgStyleFlags::Color;
-        if (from->flagsImportance & SvgStyleFlags::Color) to->flagsImportance |= SvgStyleFlags::Color;
+        _markCopied(to, from, SvgStyleFlags::Color);
     }
     if (((from->flags & SvgStyleFlags::PaintOrder) && !(keep & SvgStyleFlags::PaintOrder)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::PaintOrder)) {
         to->paintOrder = from->paintOrder;
-        to->flags |= SvgStyleFlags::PaintOrder;
-        if (from->flagsImportance & SvgStyleFlags::PaintOrder) to->flagsImportance |= SvgStyleFlags::PaintOrder;
+        _markCopied(to, from, SvgStyleFlags::PaintOrder);
     }
     if (((from->flags & SvgStyleFlags::Display) && !(keep & SvgStyleFlags::Display)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::Display)) {
         to->display = from->display;
-        to->flags |= SvgStyleFlags::Display;
-        if (from->flagsImportance & SvgStyleFlags::Display) to->flagsImportance |= SvgStyleFlags::Display;
+        _markCopied(to, from, SvgStyleFlags::Display);
     }
     //Fill
     if (((from->fill.flags & SvgFillFlags::Paint) && !(keep & SvgStyleFlags::Fill)) ||
@@ -85,22 +82,19 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         to->fill.paint.curColor = from->fill.paint.curColor;
         if (from->fill.paint.url) svgUtilReplace(&to->fill.paint.url, from->fill.paint.url);
         to->fill.flags |= SvgFillFlags::Paint;
-        to->flags |= SvgStyleFlags::Fill;
-        if (from->flagsImportance & SvgStyleFlags::Fill) to->flagsImportance |= SvgStyleFlags::Fill;
+        _markCopied(to, from, SvgStyleFlags::Fill);
     }
     if (((from->fill.flags & SvgFillFlags::Opacity) && !(keep & SvgStyleFlags::FillOpacity)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::FillOpacity)) {
         to->fill.opacity = from->fill.opacity;
         to->fill.flags |= SvgFillFlags::Opacity;
-        to->flags |= SvgStyleFlags::FillOpacity;
-        if (from->flagsImportance & SvgStyleFlags::FillOpacity) to->flagsImportance |= SvgStyleFlags::FillOpacity;
+        _markCopied(to, from, SvgStyleFlags::FillOpacity);
     }
     if (((from->fill.flags & SvgFillFlags::FillRule) && !(keep & SvgStyleFlags::FillRule)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::FillRule)) {
         to->fill.fillRule = from->fill.fillRule;
         to->fill.flags |= SvgFillFlags::FillRule;
-        to->flags |= SvgStyleFlags::FillRule;
-        if (from->flagsImportance & SvgStyleFlags::FillRule) to->flagsImportance |= SvgStyleFlags::FillRule;
+        _markCopied(to, from, SvgStyleFlags::FillRule);
     }
     //Stroke
     if (((from->stroke.flags & SvgStrokeFlags::Paint) && !(keep & SvgStyleFlags::Stroke)) ||
@@ -110,22 +104,19 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         to->stroke.paint.curColor = from->stroke.paint.curColor;
         if (from->stroke.paint.url) svgUtilReplace(&to->stroke.paint.url, from->stroke.paint.url);
         to->stroke.flags |= SvgStrokeFlags::Paint;
-        to->flags |= SvgStyleFlags::Stroke;
-        if (from->flagsImportance & SvgStyleFlags::Stroke) to->flagsImportance |= SvgStyleFlags::Stroke;
+        _markCopied(to, from, SvgStyleFlags::Stroke);
     }
     if (((from->stroke.flags & SvgStrokeFlags::Opacity) && !(keep & SvgStyleFlags::StrokeOpacity)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::StrokeOpacity)) {
         to->stroke.opacity = from->stroke.opacity;
         to->stroke.flags |= SvgStrokeFlags::Opacity;
-        to->flags |= SvgStyleFlags::StrokeOpacity;
-        if (from->flagsImportance & SvgStyleFlags::StrokeOpacity) to->flagsImportance |= SvgStyleFlags::StrokeOpacity;
+        _markCopied(to, from, SvgStyleFlags::StrokeOpacity);
     }
     if (((from->stroke.flags & SvgStrokeFlags::Width) && !(keep & SvgStyleFlags::StrokeWidth)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::StrokeWidth)) {
         to->stroke.width = from->stroke.width;
         to->stroke.flags |= SvgStrokeFlags::Width;
-        to->flags |= SvgStyleFlags::StrokeWidth;
-        if (from->flagsImportance & SvgStyleFlags::StrokeWidth) to->flagsImportance |= SvgStyleFlags::StrokeWidth;
+        _markCopied(to, from, SvgStyleFlags::StrokeWidth);
     }
     if (((from->stroke.flags & SvgStrokeFlags::Dash) && !(keep & SvgStyleFlags::StrokeDashArray)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::StrokeDashArray)) {
@@ -134,68 +125,57 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
             to->stroke.dash.array.reserve(from->stroke.dash.array.count);
             ARRAY_FOREACH(p, from->stroke.dash.array) to->stroke.dash.array.push(*p);
             to->stroke.flags |= SvgStrokeFlags::Dash;
-            to->flags |= SvgStyleFlags::StrokeDashArray;
-            if (from->flagsImportance & SvgStyleFlags::StrokeDashArray) to->flagsImportance |= SvgStyleFlags::StrokeDashArray;
+            _markCopied(to, from, SvgStyleFlags::StrokeDashArray);
         }
     }
     if (((from->stroke.flags & SvgStrokeFlags::Cap) && !(keep & SvgStyleFlags::StrokeLineCap)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::StrokeLineCap)) {
         to->stroke.cap = from->stroke.cap;
         to->stroke.flags |= SvgStrokeFlags::Cap;
-        to->flags |= SvgStyleFlags::StrokeLineCap;
-        if (from->flagsImportance & SvgStyleFlags::StrokeLineCap) to->flagsImportance |= SvgStyleFlags::StrokeLineCap;
+        _markCopied(to, from, SvgStyleFlags::StrokeLineCap);
     }
     if (((from->stroke.flags & SvgStrokeFlags::Join) && !(keep & SvgStyleFlags::StrokeLineJoin)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::StrokeLineJoin)) {
         to->stroke.join = from->stroke.join;
         to->stroke.flags |= SvgStrokeFlags::Join;
-        to->flags |= SvgStyleFlags::StrokeLineJoin;
-        if (from->flagsImportance & SvgStyleFlags::StrokeLineJoin) to->flagsImportance |= SvgStyleFlags::StrokeLineJoin;
+        _markCopied(to, from, SvgStyleFlags::StrokeLineJoin);
     }
     //Opacity
     if (((from->flags & SvgStyleFlags::Opacity) && !(keep & SvgStyleFlags::Opacity)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::Opacity)) {
         to->opacity = from->opacity;
-        to->flags |= SvgStyleFlags::Opacity;
-        if (from->flagsImportance & SvgStyleFlags::Opacity) to->flagsImportance |= SvgStyleFlags::Opacity;
+        _markCopied(to, from, SvgStyleFlags::Opacity);
     }
     if (((from->flags & SvgStyleFlags::BlendMode) && !(keep & SvgStyleFlags::BlendMode)) ||
         _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::BlendMode)) {
         to->blendMode = from->blendMode;
-        to->flags |= SvgStyleFlags::BlendMode;
-        if (from->flagsImportance & SvgStyleFlags::BlendMode) to->flagsImportance |= SvgStyleFlags::BlendMode;
+        _markCopied(to, from, SvgStyleFlags::BlendMode);
     }
     if (((from->flags & SvgStyleFlags::TextAnchor) && !(keep & SvgStyleFlags::TextAnchor)) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::TextAnchor)) {
         to->textAnchor = from->textAnchor;
-        to->flags |= SvgStyleFlags::TextAnchor;
-        if (from->flagsImportance & SvgStyleFlags::TextAnchor) to->flagsImportance |= SvgStyleFlags::TextAnchor;
+        _markCopied(to, from, SvgStyleFlags::TextAnchor);
     }
     if (((from->flags & SvgStyleFlags::AlignmentBaseline) && !(keep & SvgStyleFlags::AlignmentBaseline)) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::AlignmentBaseline)) {
         to->alignmentBaseline = from->alignmentBaseline;
-        to->flags |= SvgStyleFlags::AlignmentBaseline;
-        if (from->flagsImportance & SvgStyleFlags::AlignmentBaseline) to->flagsImportance |= SvgStyleFlags::AlignmentBaseline;
+        _markCopied(to, from, SvgStyleFlags::AlignmentBaseline);
     }
     if (((from->flags & SvgStyleFlags::DominantBaseline) && !(keep & SvgStyleFlags::DominantBaseline)) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::DominantBaseline)) {
         to->dominantBaseline = from->dominantBaseline;
-        to->flags |= SvgStyleFlags::DominantBaseline;
-        if (from->flagsImportance & SvgStyleFlags::DominantBaseline) to->flagsImportance |= SvgStyleFlags::DominantBaseline;
+        _markCopied(to, from, SvgStyleFlags::DominantBaseline);
     }
     if (((from->flags & SvgStyleFlags::FontWeight) && !(keep & SvgStyleFlags::FontWeight)) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::FontWeight)) {
         to->fontWeight = from->fontWeight;
-        to->flags |= SvgStyleFlags::FontWeight;
-        if (from->flagsImportance & SvgStyleFlags::FontWeight) to->flagsImportance |= SvgStyleFlags::FontWeight;
+        _markCopied(to, from, SvgStyleFlags::FontWeight);
     }
     if (((from->flags & SvgStyleFlags::LetterSpacing) && !(keep & SvgStyleFlags::LetterSpacing)) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::LetterSpacing)) {
         to->letterSpacing = from->letterSpacing;
         to->letterSpacingRelative = from->letterSpacingRelative;
-        to->flags |= SvgStyleFlags::LetterSpacing;
-        if (from->flagsImportance & SvgStyleFlags::LetterSpacing) to->flagsImportance |= SvgStyleFlags::LetterSpacing;
+        _markCopied(to, from, SvgStyleFlags::LetterSpacing);
     }
     if (((from->flags & SvgStyleFlags::WordSpacing) && !(keep & SvgStyleFlags::WordSpacing)) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::WordSpacing)) {
         to->wordSpacing = from->wordSpacing;
         to->wordSpacingRelative = from->wordSpacingRelative;
-        to->flags |= SvgStyleFlags::WordSpacing;
-        if (from->flagsImportance & SvgStyleFlags::WordSpacing) to->flagsImportance |= SvgStyleFlags::WordSpacing;
+        _markCopied(to, from, SvgStyleFlags::WordSpacing);
     }
 }
 
