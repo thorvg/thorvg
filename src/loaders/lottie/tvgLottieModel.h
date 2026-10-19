@@ -816,14 +816,17 @@ struct LottieGradient : LottieObject
     bool prepare()
     {
         if (!colorStops.populated) {
-            auto count = colorStops.count;  //colorstop count can be modified after population
+            //keep the smallest count, so that every keyframe has enough stops to interpolate
+            colorStops.count = UINT16_MAX;
             if (colorStops.frames) {
                 ARRAY_FOREACH(v, *colorStops.frames) {
-                    colorStops.count = populate(v->value, count);
+                    colorStops.count = std::min<uint32_t>(colorStops.count, populate(v->value, colorStops.colorCnt));
                 }
             } else {
-                colorStops.count = populate(colorStops.value, count);
+                colorStops.count = std::min<uint32_t>(colorStops.count, populate(colorStops.value, colorStops.colorCnt));
             }
+            //nothing to fill, don't cover the fills below
+            if (colorStops.count == 0) opaque = false;
             colorStops.populated = true;
         }
         if (start.frames || end.frames || height.frames || angle.frames || opacity.frames || colorStops.frames) return true;

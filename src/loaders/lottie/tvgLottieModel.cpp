@@ -361,76 +361,15 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
     auto inputLast = color.input->count - ((color.input->count - clast) % 2);
     auto alphaCnt = (inputLast - clast) / 2;
     Array<Fill::ColorStop> output(count + alphaCnt);
-    uint32_t cidx = 0;               //color count
-    uint32_t aidx = clast;           //alpha count
-    Fill::ColorStop cs;
 
-    //merge color stops.
-    for (uint32_t i = 0; i < inputLast; ++i) {
-        if (cidx == clast || aidx == inputLast) break;
-        if ((*color.input)[cidx] == (*color.input)[aidx]) {
-            cs.offset = (*color.input)[cidx];
-            cs.r = remap255((*color.input)[cidx + 1]);
-            cs.g = remap255((*color.input)[cidx + 2]);
-            cs.b = remap255((*color.input)[cidx + 3]);
-            cs.a = remap255((*color.input)[aidx + 1]);
-            cidx += 4;
-            aidx += 2;
-        } else if ((*color.input)[cidx] < (*color.input)[aidx]) {
-            cs.offset = (*color.input)[cidx];
-            cs.r = remap255((*color.input)[cidx + 1]);
-            cs.g = remap255((*color.input)[cidx + 2]);
-            cs.b = remap255((*color.input)[cidx + 3]);
-            //generate alpha value
-            if (output.count > 0) {
-                auto p = ((*color.input)[cidx] - output.last().offset) / ((*color.input)[aidx] - output.last().offset);
-                cs.a = tvg::lerp<uint8_t>(output.last().a, remap255((*color.input)[aidx + 1]), p);
-            } else cs.a = remap255((*color.input)[aidx + 1]);
-            cidx += 4;
-        } else {
-            cs.offset = (*color.input)[aidx];
-            cs.a = remap255((*color.input)[aidx + 1]);
-            //generate color value
-            if (output.count > 0) {
-                auto p = ((*color.input)[aidx] - output.last().offset) / ((*color.input)[cidx] - output.last().offset);
-                cs.r = tvg::lerp<uint8_t>(output.last().r, remap255((*color.input)[cidx + 1]), p);
-                cs.g = tvg::lerp<uint8_t>(output.last().g, remap255((*color.input)[cidx + 2]), p);
-                cs.b = tvg::lerp<uint8_t>(output.last().b, remap255((*color.input)[cidx + 3]), p);
-            } else {
-                cs.r = remap255((*color.input)[cidx + 1]);
-                cs.g = remap255((*color.input)[cidx + 2]);
-                cs.b = remap255((*color.input)[cidx + 3]);
-            }
-            aidx += 2;
-        }
-        if (cs.a < 255) opaque = false;
-        output.push(cs);
+    //keep color and alpha stops separated until interpolated: [colors | alphas]
+    for (uint32_t i = 0; i < clast; i += 4) {
+        output.push({(*color.input)[i], remap255((*color.input)[i + 1]), remap255((*color.input)[i + 2]), remap255((*color.input)[i + 3]), 255});
     }
-
-    //color remains
-    while (cidx + 3 < clast) {
-        cs.offset = (*color.input)[cidx];
-        cs.r = remap255((*color.input)[cidx + 1]);
-        cs.g = remap255((*color.input)[cidx + 2]);
-        cs.b = remap255((*color.input)[cidx + 3]);
-        cs.a = (output.count > 0) ? output.last().a : 255;
-        if (cs.a < 255) opaque = false;
-        output.push(cs);
-        cidx += 4;
-    }
-
-    //alpha remains
-    while (aidx < inputLast) {
-        cs.offset = (*color.input)[aidx];
-        cs.a = remap255((*color.input)[aidx + 1]);
-        if (cs.a < 255) opaque = false;
-        if (output.count > 0) {
-            cs.r = output.last().r;
-            cs.g = output.last().g;
-            cs.b = output.last().b;
-        } else cs.r = cs.g = cs.b = 255;
-        output.push(cs);
-        aidx += 2;
+    for (auto i = clast; i < inputLast; i += 2) {
+        auto alpha = remap255((*color.input)[i + 1]);
+        if (alpha < 255) opaque = false;
+        output.push({(*color.input)[i], 255, 255, 255, alpha});
     }
 
     color.data = output.data;
@@ -476,6 +415,38 @@ Fill* LottieGradient::fill(float frameNo, uint8_t opacity, LottieTween& tween, L
     }
 
     colorStops(frameNo, fill, tween, exps);
+    //merge color stops
+    const Fill::ColorStop* colors;
+    auto cnt = fill->colorStops(&colors);
+    auto colorCnt = colorStops.colorCnt;
+    if (colorCnt > 0 && cnt > colorCnt) {
+        auto alphas = colors + colorCnt;
+        auto alphaCnt = cnt - colorCnt;
+
+        //sample a stop stream at the offset, next is the first stop not passed yet
+        auto sample = [](const Fill::ColorStop* stops, uint32_t cnt, uint32_t next, float offset) {
+            auto& s = stops[next > 0 ? next - 1 : 0];
+            auto& e = stops[std::min(next, cnt - 1)];
+            auto span = e.offset - s.offset;
+            auto t = span > 0.0f ? (offset - s.offset) / span : 1.0f;
+            return tvg::lerp(s, e, t < 1.0f ? std::max(t, 0.0f) : 1.0f);  //clamp, NaN to 1
+        };
+
+        Array<Fill::ColorStop> output(cnt);
+        uint32_t cidx = 0, aidx = 0;
+        while (cidx < colorCnt || aidx < alphaCnt) {
+            auto color = aidx == alphaCnt || (cidx < colorCnt && colors[cidx].offset <= alphas[aidx].offset);
+            auto offset = color ? colors[cidx].offset : alphas[aidx].offset;
+            auto cs = sample(colors, colorCnt, cidx, offset);
+            cs.offset = offset;
+            cs.a = sample(alphas, alphaCnt, aidx, offset).a;
+            output.push(cs);
+            if (color) ++cidx;
+            //color and alpha stops at the same offset become one stop
+            if (!color || (aidx < alphaCnt && alphas[aidx].offset == offset)) ++aidx;
+        }
+        fill->colorStops(output.data, output.count);
+    }
 
     //multiply the current opacity with the fill
     if (opacity < 255) {
