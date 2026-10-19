@@ -147,8 +147,8 @@ Result LottieLoader::header()
         //framerate
         if (!strncmp(p, "\"fr\":", 5)) {
             p += 5;
-            auto e = strstr(p, ",");
-            if (!e) e = strstr(p, "}");
+            auto e = strchr(p, ',');
+            if (!e) e = strchr(p, '}');
             frameRate = toFloat(p, nullptr);
             p = e;
             continue;
@@ -157,8 +157,8 @@ Result LottieLoader::header()
         //start frame
         if (!strncmp(p, "\"ip\":", 5)) {
             p += 5;
-            auto e = strstr(p, ",");
-            if (!e) e = strstr(p, "}");
+            auto e = strchr(p, ',');
+            if (!e) e = strchr(p, '}');
             startFrame = toFloat(p, nullptr);
             p = e;
             continue;
@@ -167,8 +167,8 @@ Result LottieLoader::header()
         //end frame
         if (!strncmp(p, "\"op\":", 5)) {
             p += 5;
-            auto e = strstr(p, ",");
-            if (!e) e = strstr(p, "}");
+            auto e = strchr(p, ',');
+            if (!e) e = strchr(p, '}');
             endFrame = toFloat(p, nullptr);
             p = e;
             continue;
@@ -177,8 +177,8 @@ Result LottieLoader::header()
         //width
         if (!strncmp(p, "\"w\":", 4)) {
             p += 4;
-            auto e = strstr(p, ",");
-            if (!e) e = strstr(p, "}");
+            auto e = strchr(p, ',');
+            if (!e) e = strchr(p, '}');
             w = toFloat(p, nullptr);
             p = e;
             continue;
@@ -186,8 +186,8 @@ Result LottieLoader::header()
         //height
         if (!strncmp(p, "\"h\":", 4)) {
             p += 4;
-            auto e = strstr(p, ",");
-            if (!e) e = strstr(p, "}");
+            auto e = strchr(p, ',');
+            if (!e) e = strchr(p, '}');
             h = toFloat(p, nullptr);
             p = e;
             continue;
