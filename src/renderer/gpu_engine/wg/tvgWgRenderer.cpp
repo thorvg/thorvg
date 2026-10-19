@@ -562,7 +562,7 @@ RenderCompositor* WgRenderer::target(const RenderRegion& region, TVG_UNUSED Colo
 {
     // create and setup compose data
     WgCompose* compose = new WgCompose();
-    compose->aabb = region;
+    compose->aabb = RenderRegion::intersect(region, {0, 0, int32_t(mSurface.w), int32_t(mSurface.h)});
     compose->flags = flags;
     mCompositorList.push(compose);
     return compose;
@@ -575,7 +575,7 @@ bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
     // current composition
     WgCompose* compose = (WgCompose*)cmp;
     // allocate new render target and push to the render tree stack
-    WgRenderTarget* newRenderTarget = mRenderTargetPool.allocate(mContext);
+    WgRenderTarget* newRenderTarget = mRenderTargetPool.allocate(mContext, compose->aabb);
     mRenderTargetStack.push(newRenderTarget);
     // current and new scenes
     WgSceneTask* curSceneTask = mSceneTaskStack.last();
@@ -586,13 +586,13 @@ bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
         newSceneTask->compose->method = curSceneTask->compose->method;
         newSceneTask->compose->opacity = 255;
         newSceneTask->compose->blend = BlendMethod::Normal;
-        newSceneTask->renderTargetMsk = curSceneTask->renderTargetMsk;
-        newSceneTask->renderTargetDst = curSceneTask->renderTarget;
+        newSceneTask->maskScene = curSceneTask->maskScene;
+        newSceneTask->dstScene = curSceneTask;
         // cur scene task must be blended but not masked
         curSceneTask->compose->method = MaskMethod::None;
         curSceneTask->compose->opacity = opacity;
         curSceneTask->compose->blend = mBlendMethod;
-        curSceneTask->renderTargetMsk = nullptr;
+        curSceneTask->maskScene = nullptr;
     } else // setup masking scenes configuration
     if (method != MaskMethod::None) {
         // new scene task must be masked
@@ -600,18 +600,18 @@ bool WgRenderer::beginComposite(RenderCompositor* cmp, MaskMethod method, uint8_
         newSceneTask->compose->method = method;
         newSceneTask->compose->opacity = opacity;
         newSceneTask->compose->blend = BlendMethod::Normal;
-        newSceneTask->renderTargetMsk = curSceneTask->renderTarget;
-        newSceneTask->renderTargetDst = curSceneTask->renderTargetDst;
+        newSceneTask->maskScene = curSceneTask;
+        newSceneTask->dstScene = curSceneTask->dstScene;
         // cur scene task must not be blended
-        curSceneTask->renderTargetDst = nullptr;
+        curSceneTask->dstScene = nullptr;
     } else // setup blending scenes configuration
     if (method == MaskMethod::None) {
         // new scene task must be blended
         newSceneTask->compose->method = MaskMethod::None;
         newSceneTask->compose->opacity = opacity;
         newSceneTask->compose->blend = mBlendMethod;
-        newSceneTask->renderTargetMsk = nullptr;
-        newSceneTask->renderTargetDst = curSceneTask->renderTarget;
+        newSceneTask->maskScene = nullptr;
+        newSceneTask->dstScene = curSceneTask;
     }
     curSceneTask->children.push(newSceneTask);
     mRenderTaskList.push(newSceneTask);
