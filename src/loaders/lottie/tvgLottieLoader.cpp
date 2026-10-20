@@ -47,7 +47,6 @@ bool LottieLoader::prepare()
         ScopedLock lock(key);
         comp = parser.comp;
     }
-    if (!comp) return false;
     if (parser.slots) {
         auto slotcode = gen(parser.slots, true);
         apply(slotcode, true);
