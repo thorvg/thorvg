@@ -70,7 +70,7 @@ static const char* EXP_POSITION = "position";
 
 static LottieExpressions* _exps = nullptr;
 static uint32_t _refCnt = 0;
-static Key _lockKey;
+static Key& _lockKey = *new Key;
 
 /**
  * external magic strings for the per-frame hot path (buildProperty, buildLayer, buildTransform, bm_rt).

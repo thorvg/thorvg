@@ -139,7 +139,7 @@ struct WgIntersector
 /************************************************************************/
 
 static int32_t _rendererCnt = -1;
-static StrictKey _rendererMtx;
+static StrictKey& _rendererMtx = *new StrictKey;
 
 void WgRenderer::release()
 {
