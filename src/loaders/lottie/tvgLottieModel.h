@@ -818,9 +818,16 @@ struct LottieGradient : LottieObject
         if (!colorStops.populated) {
             auto count = colorStops.count;  //colorstop count can be modified after population
             if (colorStops.frames) {
-                ARRAY_FOREACH(v, *colorStops.frames) {
-                    colorStops.count = populate(v->value, count);
+                auto expected = populate(colorStops.frames->first().value, count);
+                for (uint32_t i = 1; i < colorStops.frames->count; ++i) {
+                    // TODO: support inconsistent keyframe counts.
+                    if (populate((*colorStops.frames)[i].value, count) != expected) {
+                        colorStops.count = 0;
+                        TVGERR("LOTTIE", "Inconsistent gradient stop counts across keyframes are not supported.");
+                        return false;
+                    }
                 }
+                colorStops.count = expected;
             } else {
                 colorStops.count = populate(colorStops.value, count);
             }
