@@ -1782,8 +1782,7 @@ bool LottieParser::parse()
     auto outPoint = 0.0f;
 
     while (auto key = nextObjectKey()) {
-        if (KEY_AS("v")) comp->version = getStringCopy();
-        else if (KEY_AS("fr")) comp->frameRate = getFloat();
+        if (KEY_AS("fr")) comp->frameRate = getFloat();
         else if (KEY_AS("ip")) inPoint = getFloat();
         else if (KEY_AS("op")) outPoint = getFloat();
         else if (KEY_AS("w")) comp->w = getFloat();
