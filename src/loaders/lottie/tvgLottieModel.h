@@ -1279,7 +1279,6 @@ struct LottieComposition
     }
 
     LottieRootLayer* root = nullptr;
-    char* version = nullptr;
     char* name = nullptr;
     float w, h;
     float frameRate;

@@ -692,7 +692,6 @@ LottieComposition::~LottieComposition()
     if (!initiated && root) Paint::rel(root->scene);
 
     delete (root);
-    tvg::free(version);
     tvg::free(name);
 
     ARRAY_FOREACH(p, interpolators) {
