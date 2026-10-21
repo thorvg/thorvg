@@ -26,200 +26,183 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static uint32_t _premultiply(uint32_t c1, uint32_t c2, uint8_t a)
+//v / 255 rounded, exact while v fits in 16 bits
+static uint32_t _div255(uint32_t v)
 {
-    if (a == 255) return c1;
-    else if (a == 0) return c2;
-    return ALPHA_BLEND(c1, a) + ALPHA_BLEND(c2, 255 - a);
+    v += 128;
+    return (v + (v >> 8)) >> 8;
 }
 
-static RenderColor _unpremultiply(uint32_t c)
+//W3C compositing in the premultiplied space: co = cs * (1 - ab) + cb * (1 - as) + as * ab * B, ao = as + ab - as * ab
+//https://www.w3.org/TR/compositing-1/#blending
+//x1, x2, x3 are as * ab * B of each channel in the 255 * 255 scale. Two channels share a word in 16-bit lanes,
+//each rounded as in _div255()
+static uint32_t _compose(uint32_t s, uint32_t d, uint32_t x1, uint32_t x2, uint32_t x3)
 {
-    RenderColor o = {C1(c), C2(c), C3(c), A(c)};
-    if (o.a > 0 && o.a < 255) {
-        o.r = std::min(o.r * 255u / o.a, 255u);
-        o.g = std::min(o.g * 255u / o.a, 255u);
-        o.b = std::min(o.b * 255u / o.a, 255u);
-    }
-    return o;
+    uint32_t sa = A(s), da = A(d);
+    auto ag = ((s >> 8) & 0x00ff00ff) * (255 - da) + ((d >> 8) & 0x00ff00ff) * (255 - sa) + (sa * da << 16) + x2 + 0x00800080;
+    auto rb = (s & 0x00ff00ff) * (255 - da) + (d & 0x00ff00ff) * (255 - sa) + (x1 << 16) + x3 + 0x00800080;
+    return ((ag + ((ag >> 8) & 0x00ff00ff)) & 0xff00ff00) | (((rb + ((rb >> 8) & 0x00ff00ff)) >> 8) & 0x00ff00ff);
 }
 
-static void _saturate(uint8_t& c1, uint8_t& c2, uint8_t& c3, const uint8_t& s1, const uint8_t& s2, const uint8_t& s3)
+//separable blending: x1, x2, x3 are as * ab * B of each channel in the 255 * 255 scale, the mode's f of the premultiplied
+//channels s, d and the alphas sa, da. it composes as co = cs + cb - g with g = cs * ab + cb * as - as * ab * B, which folds
+//into a few products per mode (exclusion: 2 * cs * cb), and co stays in [0, 255], so the four channels subtract in one word
+//it needs B <= Cs + Cb per channel to keep g non-negative, which only the separable modes meet: the others use _compose()
+static uint32_t _blend(uint32_t s, uint32_t d, uint32_t x1, uint32_t x2, uint32_t x3)
 {
-    // to saturation
-    auto s = std::max(s1, std::max(s2, s3)) - std::min(s1, std::min(s2, s3));
-
-    uint8_t v[3] = {c1, c2, c3};
-    int lo = 0, mid = 1, hi = 2;
-
-    if (v[lo] > v[mid]) std::swap(lo, mid);
-    if (v[mid] > v[hi]) std::swap(mid, hi);
-    if (v[lo] > v[mid]) std::swap(lo, mid);
-
-    auto minv = v[lo];
-    auto maxv = v[hi];
-
-    if (maxv > minv) {
-        v[mid] = uint8_t((int(v[mid] - minv) * s) / (maxv - minv));
-        v[hi] = s;
-    } else {
-        v[mid] = v[hi] = 0;
-    }
-
-    v[lo] = 0;
-    c1 = v[0];
-    c2 = v[1];
-    c3 = v[2];
+    //opaque source and destination: only B remains
+    if ((s & d) >= 0xff000000) return JOIN(255, _div255(x1), _div255(x2), _div255(x3));
+    uint32_t sa = A(s), da = A(d);
+    if (!sa) return d;  //a transparent source leaves the destination
+    if (!da) return s;  //a transparent destination takes the source
+    //g can exceed 16 bits, so it takes the division instead of _div255()
+    auto g = [&](uint32_t s, uint32_t d, uint32_t x) { return (s * da + d * sa - x + 127) / 255; };
+    return s + d - (((sa * da + 127) / 255 << 24) + (g(C1(s), C1(d), x1) << 16) + (g(C2(s), C2(d), x2) << 8) + g(C3(s), C3(d), x3));
 }
 
-static void _luminance(uint8_t& c1, uint8_t& c2, uint8_t& c3, int cl, int l)
+//W3C luminosity: 0.3 red, 0.59 green, 0.11 blue
+//https://www.w3.org/TR/compositing-1/#blendingnonseparable
+static int32_t _lum(const SwSurface* surface, int32_t c1, int32_t c2, int32_t c3)
 {
-    auto d = l - cl;
-    auto r = int(c1) + d;
-    auto g = int(c2) + d;
-    auto b = int(c3) + d;
-    auto minv = std::min(r, std::min(g, b));
-    auto maxv = std::max(r, std::max(g, b));
+    if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) return (c1 * 30 + c2 * 59 + c3 * 11 + 50) / 100;
+    return (c1 * 11 + c2 * 59 + c3 * 30 + 50) / 100;
+}
 
-    if (minv < 0) {
-        r = l + ((r - l) * l) / (l - minv);
-        g = l + ((g - l) * l) / (l - minv);
-        b = l + ((b - l) * l) / (l - minv);
-        maxv = std::max(r, std::max(g, b));
-    }
+static int32_t _sat(uint8_t c1, uint8_t c2, uint8_t c3)
+{
+    return std::max(c1, std::max(c2, c3)) - std::min(c1, std::min(c2, c3));
+}
 
-    if (maxv > 255) {
-        r = l + ((r - l) * (255 - l)) / (maxv - l);
-        g = l + ((g - l) * (255 - l)) / (maxv - l);
-        b = l + ((b - l) * (255 - l)) / (maxv - l);
-    }
+//set the saturation s, only the channel ratios matter so the color needs no alpha scaling
+static void _saturate(int32_t& c1, int32_t& c2, int32_t& c3, int32_t s)
+{
+    auto n = std::min(c1, std::min(c2, c3));
+    auto x = std::max(c1, std::max(c2, c3));
+    auto m = (x > n) ? (c1 + c2 + c3 - x - 2 * n) * s / (x - n) : 0;  //the middle channel
+    auto f = [&](int32_t& c) { c = (c == n) ? 0 : ((c == x) ? s : m); };
+    f(c1); f(c2); f(c3);
+}
 
-    c1 = static_cast<uint8_t>(r);
-    c2 = static_cast<uint8_t>(g);
-    c3 = static_cast<uint8_t>(b);
+//set the luminosity l, clip the color into [0, as * ab], then composite it
+static uint32_t _luminate(const SwSurface* surface, uint32_t s, uint32_t d, int32_t c1, int32_t c2, int32_t c3, int32_t l)
+{
+    int32_t a = A(s) * A(d);
+    l = std::min(l, a);  //an invalid premultiplied color (c > a) can push l over a, then x - l can be zero
+    auto t = l - _lum(surface, c1, c2, c3);
+    c1 += t; c2 += t; c3 += t;
+    auto n = std::min(c1, std::min(c2, c3));
+    auto x = std::max(c1, std::max(c2, c3));
+    auto f = [&](int32_t& c) {
+        if (n < 0) c = l + int64_t(c - l) * l / (l - n);
+        if (x > a) c = l + int64_t(c - l) * (a - l) / (x - l);
+    };
+    f(c1); f(c2); f(c3);
+    return _compose(s, d, c1, c2, c3);
 }
 
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
 
+//the blenders composite the premultiplied source over the premultiplied destination
+
 uint32_t blendDifference(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return (s > d) ? (s - d) : (d - s);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    auto sa = A(s), da = A(d);
+    auto f = [&](uint8_t s, uint8_t d) { return abs(s * da - d * sa); };
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
 uint32_t blendExclusion(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return tvg::clamp(s + d - 2 * MULTIPLY(s, d), 0, 255);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    auto sa = A(s), da = A(d);
+    auto f = [&](uint8_t s, uint8_t d) { return s * da + d * sa - 2 * s * d; };
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
+//plus-lighter is a compositing operator: min(1, s + d) for the colors and the alpha alike
+//https://drafts.fxtf.org/compositing-2/#porterduffcompositingoperators_plus_lighter
 uint32_t blendAdd(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::min(s + d, 255);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    auto f = [](uint8_t s, uint8_t d) { return std::min(s + d, 255); };
+    return JOIN(f(A(s), A(d)), f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
+//screen composes to s + d - s * d for the colors and the alpha alike
 uint32_t blendScreen(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return s + d - MULTIPLY(s, d);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    return s + d - JOIN(_div255(A(s) * A(d)), _div255(C1(s) * C1(d)), _div255(C2(s) * C2(d)), _div255(C3(s) * C3(d)));
 }
 
 uint32_t blendMultiply(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return MULTIPLY(s, d);
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _blend(s, d, C1(s) * C1(d), C2(s) * C2(d), C3(s) * C3(d));
 }
 
+//multiply 2 * s * d while 2 * cb <= 1, screen above it: max() adds the screen part without a branch
 uint32_t blendOverlay(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (d < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    auto sa = A(s), da = A(d);
+    auto f = [&](uint8_t s, uint8_t d) { return 2 * s * d + std::max(0, 2 * d - da) * (sa - 2 * s); };
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
 uint32_t blendDarken(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::min(s, d);
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    auto sa = A(s), da = A(d);
+    auto f = [&](uint8_t s, uint8_t d) { return std::min(s * da, d * sa); };
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
 uint32_t blendLighten(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto f = [](uint8_t s, uint8_t d) {
-        return std::max(s, d);
-    };
-
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    auto sa = A(s), da = A(d);
+    auto f = [&](uint8_t s, uint8_t d) { return std::max(s * da, d * sa); };
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
+//dodge, burn and soft-light take int32_t channels: with uint8_t, the compare and the subtraction before each division
+//no longer fuse into one instruction (dodge 6% slower)
 uint32_t blendColorDodge(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return d == 0 ? 0 : (s == 255 ? 255 : std::min(d * 255 / (255 - s), 255));
+    auto sa = A(s), da = A(d);
+    auto f = [&](int32_t s, int32_t d) {
+        if (d == 0) return 0;
+        if (s >= sa) return sa * da;
+        return std::min(sa * da, sa * sa * d / (sa - s));
     };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
 uint32_t blendColorBurn(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return d == 255 ? 255 : (s == 0 ? 0 : 255 - std::min((255 - d) * 255 / s, 255));
+    auto sa = A(s), da = A(d);
+    auto f = [&](int32_t s, int32_t d) {
+        if (d >= da) return sa * da;
+        if (s == 0) return 0;
+        return sa * da - std::min(sa * da, sa * sa * (da - d) / s);
     };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
+//the overlay with the source and the destination swapped
 uint32_t blendHardLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) {
-        return (s < 128) ? std::min(255, 2 * MULTIPLY(s, d)) : (255 - std::min(255, 2 * MULTIPLY(255 - s, 255 - d)));
-    };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    auto sa = A(s), da = A(d);
+    auto f = [&](uint8_t s, uint8_t d) { return 2 * s * d + std::max(0, 2 * s - sa) * (da - 2 * d); };
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
+//int32_t channels as in dodge and burn
 uint32_t blendSoftLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto f = [](uint8_t s, uint8_t d) -> uint8_t {
-        if (s <= 127) return (d - ((255 - 2 * s) * d * (255 - d)) / 65025);
+    auto sa = A(s), da = A(d);
+    auto f = [&](int32_t s, int32_t d) {
+        if (d >= da) return sa * da;
+        if (2 * s <= sa) return sa * d - (sa - 2 * s) * d * (da - d) / da;
+        //the product stays below 2^31 for any 8-bit input
+        if (4 * d <= da) return sa * d + (2 * s - sa) * d * ((16 * d - 12 * da) * d + 3 * da * da) / (da * da);
 
         // use Look up table for skip sqrt per every pixels.
         static constexpr uint8_t SQRT_LUT[256] = {
@@ -239,56 +222,36 @@ uint32_t blendSoftLight(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_
             230, 230, 231, 231, 232, 233, 233, 234, 234, 235, 235, 236, 236, 237, 237, 238,
             238, 239, 240, 240, 241, 241, 242, 242, 243, 243, 244, 244, 245, 245, 246, 246,
             247, 247, 248, 248, 249, 249, 250, 250, 251, 251, 252, 252, 253, 253, 254, 255};
-        auto D = (d <= 64) ? (4 * d - (12 * d * d) / 255 + (16 * d * d * d) / 65025) : SQRT_LUT[d];
-        return static_cast<uint8_t>(d + ((2 * s - 255) * (D - d)) / 255);
+        return sa * d + (2 * s - sa) * (SQRT_LUT[d * 255 / da] * da - 255 * d) / 255;
     };
-
-    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
+    return _blend(s, d, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
 }
 
 uint32_t blendHue(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto c1 = C1(s);
-    auto c2 = C2(s);
-    auto c3 = C3(s);
-    _saturate(c1, c2, c3, o.r, o.g, o.b);
-    _luminance(c1, c2, c3, surface->luma((c1 << 16 | c2 << 8 | c3)), surface->luma((o.r << 16 | o.g << 8 | o.b)));
-
-    return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
+    auto sa = A(s);
+    int32_t c1 = C1(s), c2 = C2(s), c3 = C3(s);
+    _saturate(c1, c2, c3, _sat(C1(d), C2(d), C3(d)) * sa);
+    return _luminate(surface, s, d, c1, c2, c3, _lum(surface, C1(d) * sa, C2(d) * sa, C3(d) * sa));
 }
 
 uint32_t blendSaturation(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto c1 = o.r;
-    auto c2 = o.g;
-    auto c3 = o.b;
-    _saturate(c1, c2, c3, C1(s), C2(s), C3(s));
-    _luminance(c1, c2, c3, surface->luma((c1 << 16 | c2 << 8 | c3)), surface->luma((o.r << 16 | o.g << 8 | o.b)));
-
-    return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
+    auto sa = A(s);
+    int32_t c1 = C1(d), c2 = C2(d), c3 = C3(d);
+    auto l = _lum(surface, c1 * sa, c2 * sa, c3 * sa);
+    _saturate(c1, c2, c3, _sat(C1(s), C2(s), C3(s)) * A(d));
+    return _luminate(surface, s, d, c1, c2, c3, l);
 }
 
 uint32_t blendColor(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    auto c1 = C1(s);
-    auto c2 = C2(s);
-    auto c3 = C3(s);
-    _luminance(c1, c2, c3, surface->luma(s), surface->luma((o.r << 16 | o.g << 8 | o.b)));
-
-    return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
+    auto sa = A(s), da = A(d);
+    return _luminate(surface, s, d, C1(s) * da, C2(s) * da, C3(s) * da, _lum(surface, C1(d) * sa, C2(d) * sa, C3(d) * sa));
 }
 
 uint32_t blendLuminosity(const SwSurface* surface, uint32_t s, uint32_t d)
 {
-    auto o = _unpremultiply(d);
-
-    _luminance(o.r, o.g, o.b, surface->luma((o.r << 16 | o.g << 8 | o.b)), surface->luma(s));
-
-    return _premultiply(JOIN(255, o.r, o.g, o.b), s, o.a);
+    auto sa = A(s), da = A(d);
+    return _luminate(surface, s, d, C1(d) * sa, C2(d) * sa, C3(d) * sa, _lum(surface, C1(s) * da, C2(s) * da, C3(s) * da));
 }

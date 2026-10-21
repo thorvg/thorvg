@@ -150,7 +150,7 @@ static void _rasterBlendingPolygonImageSegment(TexmapCtx& ctx, int yStart, int y
                     if (feather < 255) px = ALPHA_BLEND(px, feather);
                 }
 
-                *buf = INTERPOLATE(ctx.surface->blender(ctx.surface, UNPREMULTIPLY(px), *buf), *buf, MULTIPLY(ctx.opacity, A(px)));
+                *buf = ctx.surface->blender(ctx.surface, (ctx.opacity < 255) ? ALPHA_BLEND(px, ctx.opacity) : px, *buf);
                 ++buf;
 
                 //Step UV horizontally
