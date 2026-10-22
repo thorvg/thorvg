@@ -119,7 +119,7 @@ The following figure illustrates the geometry changes and highlights the minimal
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_partial.png">
 </p>
 
-Please note that in highly dynamic content—such as fast-paced games or full-screen animations where nearly all objects change every frame—partial rendering provides little to no benefit and may even introduce minor overhead. In these scenarios, full-scene rendering is typically the better choice. For a practical showcase, visit [this page](https://hermet.github.io/partial-test/) demonstrating a performance comparison of partial rendering using ThorVG's software renderer.<br />
+Please note that in highly dynamic content—such as fast-paced games or full-screen animations where nearly all objects change every frame—partial rendering provides little to no benefit and may even introduce minor overhead. In these scenarios, full-scene rendering is typically the better choice. For a practical showcase, visit [this page](https://thorvg.github.io/thorvg.demo.partial-render/) demonstrating a performance comparison of partial rendering using ThorVG's software renderer.<br />
 
 ### Render Backends
 Today, ThorVG provides its own implementation of multiple rendering backends, allowing you to choose the one that best suits your application and target platform.
@@ -154,6 +154,8 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   <img width="650" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_platforms.png">
 </p>
 
+</br>
+
 ## Contents
 - [ThorVG](#thorvg)
   - [Installation](#installation)
@@ -182,6 +184,8 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [Communication](#communication)
 
 [](#contents)
+
+<br />
 
 ## Installation
 This section details the steps required to configure the environment for installing ThorVG.
@@ -216,6 +220,7 @@ meson setup builddir --backend=xcode
 ```
 
 <br />
+
 ## Quick Start
 ThorVG renders vector shapes to a given canvas buffer. The following is a quick start to show you how to use the essential APIs.
 
@@ -315,6 +320,8 @@ Lastly, terminate the engine after its usage:
 tvg::Initializer::term();
 ```
 
+<br />
+
 ## SVG
 
 ThorVG facilitates [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) rendering via its dedicated SVG interpreter. Adhering to the SVG Tiny Specification, the implementation maintains a lightweight profile, rendering it particularly advantageous for embedded systems. While ThorVG comprehensively adheres to [most of the SVG Tiny specs](https://github.com/thorvg/thorvg/wiki/SVG-Support), certain features remain unsupported within the current framework. These include:</br>
@@ -342,6 +349,8 @@ The result is:
 <p align="center">
   <img width="300" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tiger.png">
 </p>
+
+<br />
 
 ## Lottie
 
@@ -392,6 +401,8 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_expressions.gif">
 </p>
+
+<br />
 
 ## In Practice
 ### Camtasia
@@ -459,6 +470,8 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
 
 Discover more projects in our [Showcase](https://www.thorvg.org/showcase). Using ThorVG in your project? Feel free to contact us at thorvg@thorvg.org to get featured!
 
+<br />
+
 ## ThorVG Demo
 ### Thor Janitor
 [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS! [Give it a try!](https://thorvg-janitor.vercel.app/)
@@ -482,6 +495,8 @@ Check out [Thor Pirates](https://github.com/thorvg/thorvg.demo.pirates). Every v
   <strong><a href="https://youtu.be/eBvL9oUaQ3A?si=AKmsjYn25uMLLoFB">Watch the full video!</a></strong>
 </p>
 
+<br />
+
 ## Examples
 
 ### C++ Examples
@@ -489,6 +504,8 @@ A wide range of native sample codes is available in the [thorvg.example](https:/
 
 ### Playground
 The [ThorVG Playground](https://www.thorvg.org/playground) is an interactive web-based environment where you can explore various graphic features and instantly see the results in real time.
+
+<br />
 
 ## Tools
 ### ThorVG View
@@ -513,6 +530,8 @@ A [Visual Studio Code extension](https://marketplace.visualstudio.com/items?item
 ### CLI Tools
 [CLI Tools](https://github.com/thorvg/thorvg.cli-tools/) provides lightweight command-line tools, including **svg2png** for converting SVG files to PNG images and **lottie2gif** for converting Lottie animations to animated GIFs.
 
+<br />
+
 ## Related Projects
 ThorVG is designed to be portable and extensible across various platforms. The following projects integrate ThorVG into specific environments or tools: </br >
 
@@ -523,6 +542,8 @@ ThorVG is designed to be portable and extensible across various platforms. The f
 * [ThorVG Unity](https://github.com/thorvg/thorvg.unity) – ThorVG integration for Unity using C#.
 * [ThorVG Web](https://github.com/thorvg/thorvg.web) - WebAssembly-based integration of ThorVG for web apps.
 
+<br />
+
 ## API Bindings
 Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
 
@@ -531,10 +552,14 @@ To enable CAPI binding, you need to activate this feature in the build options:
 meson setup builddir -Dbindings="capi"
 ```
 
+<br />
+
 ## Documentation
 The ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also be found directly in this repository via the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h) and [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h). 
 
 For comprehensive and well-structured technical information, please visit the [DeepWiki](https://deepwiki.com/thorvg/thorvg), which offers in-depth guidance on ThorVG's architecture, features, and usage.
+
+<br />
 
 ## Dependencies
 ThorVG provides flexible image loading capabilities, supporting both static and external loaders. This design ensures that even in environments lacking external libraries, users can rely on built-in static loaders for core functionality. At its core, the ThorVG library is fully self-contained and operates without mandatory external dependencies. However, several optional feature extensions are available, each with its own set of dependencies.
@@ -548,6 +573,8 @@ The following outlines the dependencies for these optional features:
 * **JPEG** (external): [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * **WebP** (external): [libwebp](https://developers.google.com/speed/webp/download)
 
+<br />
+
 ## Contributors
 ThorVG stands as a purely open-source initiative. We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
 
@@ -555,6 +582,8 @@ ThorVG stands as a purely open-source initiative. We are grateful to the individ
 * [Canva Pty Ltd](https://www.canva.com/)
 * [Godot](https://godotengine.org/)
 * [LVGL](https://lvgl.io/)
+
+<br />
 
 ## Partners
 Corporate partners collaborate with ThorVG through development, integration, and strategic initiatives that help advance the project.
@@ -576,6 +605,8 @@ We also recognize previous partners whose contributions have played an important
 </p>
 
 Interested in partnering with ThorVG? We welcome opportunities for commercial integration, technical collaboration, and custom development. For technical assistance or business inquiries, feel free to reach out at **thorvg@thorvg.org**.
+
+<br />
 
 ## Sponsors
 We sincerely thank the organizations that have supported ThorVG throughout its journey. Their generous contributions have played an important role in shaping ThorVG into a high-performance, accessible graphics engine built for real-world production.
@@ -599,6 +630,8 @@ ThorVG is committed to remaining open, accessible, and community-driven. Sponsor
 
 * [GitHub Sponsors](https://github.com/sponsors/thorvg)
 * [Open Collective](https://opencollective.com/thorvg)
+
+<br />
 
 ## Communication
 For real-time conversations and discussions, join us on [Discord](https://discord.gg/n25xj6J6HM)
