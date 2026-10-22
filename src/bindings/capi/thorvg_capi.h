@@ -428,6 +428,7 @@ typedef struct
  * This callback is invoked when a Picture requires an external asset
  * (such as an image or font resource). Implementations should load the asset
  * into the given @p paint object.
+ * Available embedded image and font data is loaded internally without invoking this callback.
  *
  * @param[in] paint The target paint object where the resolved asset will be loaded.
  * @param[in] src   The source path, identifier, or URI of the asset to be resolved.
@@ -2160,29 +2161,34 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data,
 TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy);
 
 /**
- * @brief Sets the asset resolver callback for handling external resources (e.g., images and fonts).
+ * @brief Sets the asset resolver callback for external images and fonts.
  *
- * This callback is invoked when an external asset reference (such as an image source or file path)
- * is encountered in a Picture object. It allows the user to provide a custom mechanism for loading
- * or substituting assets, such as loading from an external source or a virtual filesystem.
+ * The callback allows the user to load assets from an external source or a virtual filesystem,
+ * or provide a substitute. Set @p fallback to @c true to invoke it only when internal resolution fails,
+ * or @c false to invoke it before internal resolution.
  *
+ * @param[in] picture The picture object.
  * @param[in] resolver A user-defined function that handles the resolution of asset paths.
  *                     The function should return @c true if the asset was successfully resolved by the user, or @c false if it was not.
  * @param[in] data A pointer to user-defined data that will be passed to the callback each time it is invoked.
  *                 This can be used to maintain context or access external resources.
  *
- * @retval TVG_RESULT_INVALID_ARGUMENT A @c nullptr passed as the @p picture argument.
- * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the @p picture is already loaded.
+ * @param[in] fallback If @c true, invoke the callback only after internal resolution fails.
+ *                     If @c false, invoke it first and attempt internal resolution only if it returns @c false.
  *
- * @note This function must be called before @ref tvg_picture_load()
- *       Setting the resolver after loading will have no effect on asset resolution for that asset.
- * @note If @c false is returned by @p resolver, ThorVG will attempt to resolve the resource using its internal resolution mechanism as a fallback.
- * @note To unset the resolver, pass @c nullptr as the @p resolver parameter.
+ * @retval TVG_RESULT_INSUFFICIENT_CONDITION If the @p picture is already loaded. The resolver is not changed.
+ *
+ * @note This function must be called before loading the picture.
+ * @note Available embedded image and font data is loaded internally without invoking the callback.
+ * @note @p src identifies the asset to resolve, such as an image path, a font path, or a font name.
+ *       Font names are prefixed with "name:" (e.g., "name:FreeSans-Medium") to distinguish them from paths.
+ * @note For fonts, if neither the callback nor internal resolution succeeds, ThorVG attempts to use an available font.
+ * @note To unset the resolver before loading, pass @c nullptr as the @p resolver parameter.
  * @note Experimental API
  *
  * @see Tvg_Picture_Asset_Resolver
  */
-TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture_Asset_Resolver resolver, void* data);
+TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture_Asset_Resolver resolver, void* data, bool fallback);
 
 /**
  * @brief Resizes the picture content to the given width and height.

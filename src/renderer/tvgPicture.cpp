@@ -56,10 +56,9 @@ Result Picture::load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs
     return to<PictureImpl>(this)->load(data, w, h, cs, copy ? Ownership::Copy : Ownership::Borrow);
 }
 
-
-Result Picture::resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data) noexcept
+Result Picture::resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data, bool fallback) noexcept
 {
-    return to<PictureImpl>(this)->set(func, data);
+    return to<PictureImpl>(this)->set(std::move(func), data, fallback);
 }
 
 

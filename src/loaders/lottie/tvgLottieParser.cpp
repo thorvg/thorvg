@@ -1114,7 +1114,6 @@ LottieFont* LottieParser::parseFont()
         else skip();
     }
 
-    font->prepare();
     return font;
 }
 
