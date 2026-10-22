@@ -182,10 +182,11 @@ ThorVG is designed to be portable across a wide range of devices, including smal
   - [Communication](#communication)
 
 [](#contents)
-<br />
+
 ## Installation
-This section details the steps required to configure the environment for installing ThorVG.<br />
+This section details the steps required to configure the environment for installing ThorVG.
 <br />
+
 ### Build and Install
 ThorVG supports [meson](https://mesonbuild.com/) build system. Install [meson](http://mesonbuild.com/Getting-meson.html) and [ninja](https://ninja-build.org/) if you don't have them already.
 
@@ -214,8 +215,6 @@ If you want to create Xcode project files, use the command `--backend=xcode`. Th
 meson setup builddir --backend=xcode
 ```
 
-[Back to contents](#contents)
-<br />
 <br />
 ## Quick Start
 ThorVG renders vector shapes to a given canvas buffer. The following is a quick start to show you how to use the essential APIs.
@@ -315,9 +314,7 @@ Lastly, terminate the engine after its usage:
 ```cpp
 tvg::Initializer::term();
 ```
-[Back to contents](#contents)
-<br />
-<br />
+
 ## SVG
 
 ThorVG facilitates [SVG Tiny Specification](https://www.w3.org/TR/SVGTiny12/) rendering via its dedicated SVG interpreter. Adhering to the SVG Tiny Specification, the implementation maintains a lightweight profile, rendering it particularly advantageous for embedded systems. While ThorVG comprehensively adheres to [most of the SVG Tiny specs](https://github.com/thorvg/thorvg/wiki/SVG-Support), certain features remain unsupported within the current framework. These include:</br>
@@ -346,9 +343,6 @@ The result is:
   <img width="300" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_tiger.png">
 </p>
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Lottie
 
 ThorVG supports a wide range of [Lottie animation features](https://github.com/thorvg/thorvg/wiki/Lottie-Support). Lottie is an industry-standard, JSON-based vector animation format that enables animations to be distributed seamlessly across platforms, much like static assets. Lottie files are compact, compatible with a wide range of devices, and can be scaled without pixelation. The format also makes it easy to create, edit, test, collaborate on, and distribute animations. For more information, visit the [Lottie Animation Community](https://lottie.github.io/) website.
@@ -399,11 +393,7 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_expressions.gif">
 </p>
 
-[Back to contents](#contents)
-<br />
-<br />
 ## In Practice
-
 ### Camtasia
 [Camtasia](https://www.techsmith.com/camtasia/) adopted ThorVG for Lottie rendering, enabling customizable animations and dynamic color adjustments.
 
@@ -469,9 +459,6 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
 
 Discover more projects in our [Showcase](https://www.thorvg.org/showcase). Using ThorVG in your project? Feel free to contact us at thorvg@thorvg.org to get featured!
 
-[Back to contents](#contents)
-<br />
-<br />
 ## ThorVG Demo
 ### Thor Janitor
 [Thor Janitor](https://github.com/thorvg/thorvg.janitor), an interactive demo game fully rendered using ThorVG. It renders tens of thousands of objects in real-time with effects like DropShadow and Blur, running stably at 120+ FPS! [Give it a try!](https://thorvg-janitor.vercel.app/)
@@ -495,9 +482,6 @@ Check out [Thor Pirates](https://github.com/thorvg/thorvg.demo.pirates). Every v
   <strong><a href="https://youtu.be/eBvL9oUaQ3A?si=AKmsjYn25uMLLoFB">Watch the full video!</a></strong>
 </p>
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Examples
 
 ### C++ Examples
@@ -506,9 +490,6 @@ A wide range of native sample codes is available in the [thorvg.example](https:/
 ### Playground
 The [ThorVG Playground](https://www.thorvg.org/playground) is an interactive web-based environment where you can explore various graphic features and instantly see the results in real time.
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Tools
 ### ThorVG View
 
@@ -531,11 +512,7 @@ A [Visual Studio Code extension](https://marketplace.visualstudio.com/items?item
 
 ### CLI Tools
 [CLI Tools](https://github.com/thorvg/thorvg.cli-tools/) provides lightweight command-line tools, including **svg2png** for converting SVG files to PNG images and **lottie2gif** for converting Lottie animations to animated GIFs.
-<br />
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Related Projects
 ThorVG is designed to be portable and extensible across various platforms. The following projects integrate ThorVG into specific environments or tools: </br >
 
@@ -546,10 +523,6 @@ ThorVG is designed to be portable and extensible across various platforms. The f
 * [ThorVG Unity](https://github.com/thorvg/thorvg.unity) – ThorVG integration for Unity using C#.
 * [ThorVG Web](https://github.com/thorvg/thorvg.web) - WebAssembly-based integration of ThorVG for web apps.
 
-[Back to contents](#contents)
-<br />
-<br />
-
 ## API Bindings
 Our main development APIs are written in C++, but ThorVG also provides API bindings for C.
 
@@ -557,17 +530,12 @@ To enable CAPI binding, you need to activate this feature in the build options:
 ```
 meson setup builddir -Dbindings="capi"
 ```
-[Back to contents](#contents)
-<br />
-<br />
+
 ## Documentation
 The ThorVG API documentation is available at [thorvg.org/apis](https://www.thorvg.org/apis), and can also be found directly in this repository via the [C++ API](https://github.com/thorvg/thorvg/blob/main/inc/thorvg.h) and [C API](https://github.com/thorvg/thorvg/blob/main/src/bindings/capi/thorvg_capi.h). 
 
 For comprehensive and well-structured technical information, please visit the [DeepWiki](https://deepwiki.com/thorvg/thorvg), which offers in-depth guidance on ThorVG's architecture, features, and usage.
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Dependencies
 ThorVG provides flexible image loading capabilities, supporting both static and external loaders. This design ensures that even in environments lacking external libraries, users can rely on built-in static loaders for core functionality. At its core, the ThorVG library is fully self-contained and operates without mandatory external dependencies. However, several optional feature extensions are available, each with its own set of dependencies.
 
@@ -580,9 +548,6 @@ The following outlines the dependencies for these optional features:
 * **JPEG** (external): [libjpeg-turbo](https://github.com/libjpeg-turbo/libjpeg-turbo)
 * **WebP** (external): [libwebp](https://developers.google.com/speed/webp/download)
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Contributors
 ThorVG stands as a purely open-source initiative. We are grateful to the individuals, organizations, and companies that have contributed to the development of the ThorVG project. The dedicated efforts of the individuals and entities listed below have enabled ThorVG to reach its current state.
 
@@ -591,11 +556,8 @@ ThorVG stands as a purely open-source initiative. We are grateful to the individ
 * [Godot](https://godotengine.org/)
 * [LVGL](https://lvgl.io/)
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Partners
-Corporate partners collaborate with ThorVG through development, integration, and strategic initiatives that help advance the project. 
+Corporate partners collaborate with ThorVG through development, integration, and strategic initiatives that help advance the project.
 <br />
 <br />
 <p align="center", href="https://www.lottiefiles.com">
@@ -604,23 +566,19 @@ Corporate partners collaborate with ThorVG through development, integration, and
   </a>
 </p>
 <br />
-We also recognize past partners whose contributions have played an important role in ThorVG’s growth.
+We also recognize previous partners whose contributions have played an important role in ThorVG’s growth.
 <br />
 <br />
 <p align="center", href="https://wwww.samsung.com">
   <a href="https://www.samsung.com">
-  <img width="250" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_samsung.jpg"  alt="Samsung">
+  <img width="180" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/partner_samsung.jpg"  alt="Samsung">
   </a>
 </p>
-<br />
 
-If you’re interested in partnering with ThorVG, we’d love to hear from you. Please reach out at thorvg@thorvg.org
+Interested in partnering with ThorVG? We welcome opportunities for commercial integration, technical collaboration, and custom development. For technical assistance or business inquiries, feel free to reach out at **thorvg@thorvg.org**.
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Sponsors
-We sincerely thank all of our sponsors, past and present, whose financial support has helped shape the evolution of ThorVG. Your generosity is more than a contribution—it is an investment in a high-performance, accessible graphics engine built for real-world production.
+We sincerely thank the organizations that have supported ThorVG throughout its journey. Their generous contributions have played an important role in shaping ThorVG into a high-performance, accessible graphics engine built for real-world production.
 <br/>
 <br/>
 
@@ -635,17 +593,12 @@ We sincerely thank all of our sponsors, past and present, whose financial suppor
   </a>
 </p>
 <br/>
-ThorVG is designed to remain open, accessible, and community-driven. To help ensure long-term sustainability and faster technical iteration, we provide additional support channels for our corporate and professional sponsors.
+ThorVG is committed to remaining open, accessible, and community-driven. Sponsorship plays a vital role in sustaining its long-term development, accelerating technical innovation, and growing its ecosystem. Your support is always welcome and greatly appreciated through any of the following channels!
 <br/>
 <br/>
 
 * [GitHub Sponsors](https://github.com/sponsors/thorvg)
 * [Open Collective](https://opencollective.com/thorvg)
 
-[Back to contents](#contents)
-<br />
-<br />
 ## Communication
-For real-time conversations and discussions, please join us on [Discord](https://discord.gg/n25xj6J6HM)
-
-[Back to contents](#contents)
+For real-time conversations and discussions, join us on [Discord](https://discord.gg/n25xj6J6HM)
