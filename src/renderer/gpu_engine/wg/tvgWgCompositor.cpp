@@ -166,6 +166,7 @@ WGPUTextureView WgCompositor::getDepthStencilView(WgContext& context, uint32_t w
     }
     auto texture = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, sampleCount);
     auto view = context.createTextureView(texture);
+    // TODO: Add an eviction policy to release unused cached resources.
     depthStencilAttachments.push({width, height, sampleCount, texture, view});
     return view;
 }
