@@ -83,6 +83,7 @@ WgRenderTarget* WgRenderTargetPool::allocate(WgContext& context, const RenderReg
         return target;
     }
 
+    // TODO: Add an eviction policy to release unused cached resources.
     auto renderTarget = new WgRenderTarget;
     renderTarget->initialize(context, targetWidth, targetHeight);
     list.push(renderTarget);
