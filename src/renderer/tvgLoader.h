@@ -37,6 +37,7 @@ struct AssetResolver
 {
     std::function<bool(Paint* paint, const char* src, void* data)> func;
     void* data;
+    bool fallback;
 };
 
 // Specifying how ownership of supplied data is handled.

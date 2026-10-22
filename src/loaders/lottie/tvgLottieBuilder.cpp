@@ -977,15 +977,8 @@ void LottieBuilder::updateImage(LottieLayer* layer, float frameNo)
         return;
     }
 
-    auto picture = image->get();
+    auto picture = image->get(resolver);
     if (!picture) return;
-
-    //resolve an image asset if need
-    if (resolver && !image->valid) {
-        resolver->func(picture, image->asset.path, resolver->data);
-        picture->size(image->asset.width, image->asset.height);
-        image->valid = true;
-    }
 
     layer->scene->add(picture->refCnt() == 1 ? picture : picture->duplicate());
     image->volume(volume);
@@ -998,19 +991,28 @@ void LottieBuilder::updateURLFont(LottieLayer* layer, float frameNo, LottieText*
     //text load
     //TODO: cache the text instance, don't need to reload every frame.
     auto paint = Text::gen();
-    if (paint->font(doc.name) != Result::Success) {
-        char* src = nullptr;
-        if (text->font && text->font->path) {
-            src = text->font->b64src;
-        } else {
-            auto len = (strlen(doc.name) + 6);
-            src = tvg::malloc<char>(sizeof(char) * len);
-            snprintf(src, len, "name:%s", doc.name);
-        }
-        if (!resolver || !resolver->func(paint, src, resolver->data)) {
-            paint->font(nullptr);  // fallback to any available font
-        }
-        if (!text->font || !text->font->path) tvg::free(src);
+    auto resolver = (text->font && !text->font->path && text->font->b64src) ? nullptr : this->resolver;
+    auto resolve = [&]() {
+        if (text->font && text->font->path) return resolver->func(paint, text->font->b64src, resolver->data);
+        auto len = strlen(doc.name) + 6;
+        auto src = tvg::malloc<char>(len);
+        snprintf(src, len, "name:%s", doc.name);
+        auto resolved = resolver->func(paint, src, resolver->data);
+        tvg::free(src);
+        return resolved;
+    };
+
+    auto resolved = resolver && !resolver->fallback && resolve();
+    if (!resolved) {
+        if (text->font) text->font->prepare();
+        resolved = (paint->font(doc.name) == Result::Success);
+    }
+    if (!resolved && resolver && resolver->fallback) resolved = resolve();
+
+    // fallback to any available font
+    if (!resolved && paint->font(nullptr) != Result::Success) {
+        Paint::rel(paint);
+        return;
     }
 
     //text build

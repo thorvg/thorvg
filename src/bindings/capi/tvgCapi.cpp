@@ -678,16 +678,14 @@ TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, ui
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
-
-TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture_Asset_Resolver resolver, void* data)
+TVG_API Tvg_Result tvg_picture_set_asset_resolver(Tvg_Paint picture, Tvg_Picture_Asset_Resolver resolver, void* data, bool fallback)
 {
     if (!picture) return TVG_RESULT_INVALID_ARGUMENT;
-    if (!resolver) return (Tvg_Result) reinterpret_cast<Picture*>(picture)->resolver(nullptr, nullptr);
+    if (!resolver) return (Tvg_Result) reinterpret_cast<Picture*>(picture)->resolver(nullptr, nullptr, fallback);
     return (Tvg_Result) reinterpret_cast<Picture*>(picture)->resolver([resolver](Paint* paint, const char* src, void* data) -> bool {
         return resolver(reinterpret_cast<Tvg_Paint>(paint), src, data);
-    }, data);
+    }, data, fallback);
 }
-
 
 TVG_API Tvg_Result tvg_picture_set_size(Tvg_Paint picture, float w, float h)
 {

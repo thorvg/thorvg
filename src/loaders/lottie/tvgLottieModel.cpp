@@ -294,7 +294,7 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
 /* LottieImage                                                          */
 /************************************************************************/
 
-Picture* LottieImage::get()
+Picture* LottieImage::get(const AssetResolver* resolver)
 {
     if (picture) return picture;
 
@@ -305,11 +305,16 @@ Picture* LottieImage::get()
     picture = Picture::gen();
     picture->ref();
 #endif
-    auto result = Result::Unknown;
-    if (asset.size > 0) result = picture->load(asset.data, asset.size, asset.mimeType);
-    else if (asset.external) result = picture->load(asset.path);
+    if (asset.size > 0) {
+        valid = (picture->load(asset.data, asset.size, asset.mimeType) == Result::Success);
+    } else if (asset.path) {
+        valid = resolver && !resolver->fallback && resolver->func(picture, asset.path, resolver->data);
+        if (!valid) {
+            if (asset.external) valid = (picture->load(asset.path) == Result::Success);
+            if (!valid && resolver && resolver->fallback) valid = resolver->func(picture, asset.path, resolver->data);
+        }
+    }
     picture->size(asset.width, asset.height);
-    valid = (result == Result::Success);
 
     return picture;
 }

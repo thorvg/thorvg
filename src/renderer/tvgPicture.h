@@ -50,7 +50,7 @@ struct PictureImpl : Picture
     ~PictureImpl()
     {
         LoaderMgr::retrieve(loader);
-        tvg::free(resolver);
+        delete resolver;
         if (vector) vector->unref();
     }
 
@@ -162,18 +162,18 @@ struct PictureImpl : Picture
         return loader ? load(loader) : Result::NonSupport;
     }
 
-    Result set(std::function<bool(Paint* paint, const char* src, void* data)> resolver, void* data)
+    Result set(std::function<bool(Paint* paint, const char* src, void* data)> resolver, void* data, bool fallback)
     {
         if (loader) return Result::InsufficientCondition;
 
         if (!resolver) {
-            tvg::free(this->resolver);
+            delete this->resolver;
             this->resolver = nullptr;
             return Result::Success;
         }
 
-        if (!this->resolver) this->resolver = tvg::calloc<AssetResolver>(1, sizeof(AssetResolver));
-        *(this->resolver) = {resolver, data};
+        if (!this->resolver) this->resolver = new AssetResolver;
+        *(this->resolver) = {resolver, data, fallback};
         return Result::Success;
     }
 
