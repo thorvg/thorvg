@@ -40,7 +40,8 @@ ReferenceAlignment: Left
 DerivePointerAlignment: false
 
 # Spacing
-SpaceBeforeParens: ControlStatements
+ForEachMacros: [ARRAY_FOREACH]
+SpaceBeforeParens: ControlStatementsExceptControlMacros
 SpaceInEmptyParentheses: false
 SpacesInParentheses: false
 SpaceAfterCStyleCast: false

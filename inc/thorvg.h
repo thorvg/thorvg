@@ -1853,28 +1853,31 @@ struct TVG_API Picture : Paint
     Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy = false) noexcept;
 
     /**
-     * @brief Sets the asset resolver callback for handling external resources (e.g., images and fonts).
+     * @brief Sets the asset resolver callback for external images and fonts.
      *
-     * This callback is invoked when an external asset reference (such as an image source or file path)
-     * is encountered in a Picture object. It allows the user to provide a custom mechanism for loading
-     * or substituting assets, such as loading from an external source or a virtual filesystem.
+     * The callback allows the user to load assets from an external source or a virtual filesystem,
+     * or provide a substitute. By default, it is invoked only when internal resolution fails.
+     * Set @p fallback to @c false to invoke the callback before internal resolution.
      *
      * @param[in] func A user-defined function that handles the resolution of asset paths.
-     *                 @p resolver can return @c true if the asset was successfully resolved by the user, or @c false if it was not.
+     *                 Return @c true if the asset was successfully resolved by the user, or @c false if it was not.
      * @param[in] data A pointer to user-defined data that will be passed to the callback each time it is invoked.
      *                 This can be used to maintain context or access external resources.
+     * @param[in] fallback If @c true, invoke the callback only after internal resolution fails.
+     *                     If @c false, invoke it first and attempt internal resolution only if it returns @c false.
      *
-     * @retval Result::InsufficientCondition If the picture is already loaded.
-     * 
-     * @warning This function must be called before @ref Picture::load()
-     *          Setting the resolver after loading will have no effect on asset resolution for that asset.
-     * @note @p src will be either a font path or a font name. In the case of a font name, @p src will begin with "name:", e.g., "name:FreeSans-Medium".
-     * @note If @c false is returned by @p func, ThorVG will attempt to resolve the resource using its internal resolution mechanism as a fallback.
-     * @note To unset the resolver, pass @c nullptr as the @p func parameter.
+     * @retval Result::InsufficientCondition If the picture is already loaded. The resolver is not changed.
+     *
+     * @warning This function must be called before @ref Picture::load().
+     * @note Available embedded image and font data is loaded internally without invoking the callback.
+     * @note @p src identifies the asset to resolve, such as an image path, a font path, or a font name.
+     *       Font names are prefixed with "name:" (e.g., "name:FreeSans-Medium") to distinguish them from paths.
+     * @note For fonts, if neither the callback nor internal resolution succeeds, ThorVG attempts to use an available font.
+     * @note To unset the resolver before loading, pass @c nullptr as the @p func parameter.
      *
      * @note Experimental API
      */
-    Result resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data) noexcept;
+    Result resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data, bool fallback = true) noexcept;
 
     /**
      * @brief Sets the image filtering method for rendering this picture.
