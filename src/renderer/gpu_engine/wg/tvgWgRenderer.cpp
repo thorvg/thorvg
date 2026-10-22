@@ -206,6 +206,9 @@ void WgRenderer::clearTargets()
 
 void WgRenderer::surfaceConfigure(RenderSurface& rsurface, WGPUSurface wsurface, WgContext& context)
 {
+    // Retire the previous frame before native reconfiguration resets its presentation state.
+    releaseSurfaceTexture();
+
     this->surface = wsurface;
 
     // setup surface configuration
