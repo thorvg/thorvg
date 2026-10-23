@@ -26,11 +26,12 @@
  * ThorVG uses it under the Public Domain terms.
  */
 
+#ifdef THORVG_FILE_IO_SUPPORT
+    #include <stdio.h>
+#endif
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdint.h>
 
-#include "tvgCommon.h"
 #include "tvgJpgd.h"
 
 /************************************************************************/
@@ -43,7 +44,6 @@
 typedef int16_t jpgd_quant_t;
 typedef int16_t jpgd_block_t;
 
-// Success/failure error codes.
 enum jpgd_status
 {
     JPGD_SUCCESS = 0, JPGD_FAILED = -1, JPGD_DONE = 1,
@@ -67,7 +67,6 @@ enum
 // Derive from this class to read input data from sources other than files or memory. Set m_eof_flag to true when no more data is available.
 // The decoder is rather greedy: it will keep on calling this method until its internal input buffer is full, or until the EOF flag is set.
 // It the input stream contains data after the JPEG stream's EOI (end of image) marker it will probably be pulled into the internal buffer.
-// Call the get_total_bytes_read() method to determine the actual size of the JPEG stream after successful decoding.
 struct jpeg_decoder_stream
 {
     jpeg_decoder_stream() { }
@@ -85,6 +84,7 @@ struct jpeg_decoder_stream
 
 
 // stdio FILE stream class.
+#ifdef THORVG_FILE_IO_SUPPORT
 class jpeg_decoder_file_stream : public jpeg_decoder_stream
 {
     jpeg_decoder_file_stream(const jpeg_decoder_file_stream &);
@@ -101,22 +101,19 @@ public:
     void close();
     virtual int read(uint8_t *pBuf, int max_bytes_to_read, bool *pEOF_flag);
   };
+#endif
 
+  // Memory stream class.
+  class jpeg_decoder_mem_stream : public jpeg_decoder_stream
+  {
+      const uint8_t* m_pSrc_data;
+      uint32_t m_ofs, m_size;
 
-// Memory stream class.
-class jpeg_decoder_mem_stream : public jpeg_decoder_stream
-{
-    const uint8_t *m_pSrc_data;
-    uint32_t m_ofs, m_size;
-
-public:
-    jpeg_decoder_mem_stream() : m_pSrc_data(nullptr), m_ofs(0), m_size(0) {}
-    jpeg_decoder_mem_stream(const uint8_t *pSrc_data, uint32_t size) : m_pSrc_data(pSrc_data), m_ofs(0), m_size(size) {}
-    virtual ~jpeg_decoder_mem_stream() {}
-    bool open(const uint8_t *pSrc_data, uint32_t size);
-    void close() { m_pSrc_data = nullptr; m_ofs = 0; m_size = 0; }
-    virtual int read(uint8_t *pBuf, int max_bytes_to_read, bool *pEOF_flag);
-};
+  public:
+      jpeg_decoder_mem_stream(const uint8_t* pSrc_data, uint32_t size) : m_pSrc_data(pSrc_data), m_ofs(0), m_size(size) {}
+      virtual ~jpeg_decoder_mem_stream() {}
+      virtual int read(uint8_t* pBuf, int max_bytes_to_read, bool* pEOF_flag);
+  };
 
 
 class jpeg_decoder
@@ -131,8 +128,8 @@ public:
     // If JPGD_SUCCESS is returned you may then call decode() on each scanline.
     int begin_decoding();
     // Returns the next scan line.
-    // For grayscale images, pScan_line will point to a buffer containing 8-bit pixels (get_bytes_per_pixel() will return 1).
-    // Otherwise, it will always point to a buffer containing 32-bit RGBA pixels (A will always be 255, and get_bytes_per_pixel() will return 4).
+    // For grayscale images, pScan_line will point to a buffer containing 8-bit pixels.
+    // Otherwise, it will always point to a buffer containing 32-bit RGBA pixels (A will always be 255).
     // Returns JPGD_SUCCESS if a scan line has been returned.
     // Returns JPGD_DONE if all scan lines have been returned.
     // Returns JPGD_FAILED if an error occurred. Call get_error_code() for a more info.
@@ -141,10 +138,6 @@ public:
     inline int get_width() const { return m_image_x_size; }
     inline int get_height() const { return m_image_y_size; }
     inline int get_num_components() const { return m_comps_in_frame; }
-    inline int get_bytes_per_pixel() const { return m_dest_bytes_per_pixel; }
-    inline int get_bytes_per_scan_line() const { return m_image_x_size * get_bytes_per_pixel(); }
-    // Returns the total number of bytes actually consumed by the decoder (which should equal the actual size of the JPEG file).
-    inline int get_total_bytes_read() const { return m_total_bytes_read; }
 
 private:
     jpeg_decoder(const jpeg_decoder &);
@@ -154,7 +147,6 @@ private:
 
     struct huff_tables
     {
-      bool ac_table;
       uint32_t  look_up[256];
       uint32_t  look_up2[256];
       uint8_t code_size[256];
@@ -164,8 +156,7 @@ private:
     struct coeff_buf
     {
       uint8_t *pData;
-      int block_num_x, block_num_y;
-      int block_len_x, block_len_y;
+      int block_num_x;
       int block_size;
     };
 
@@ -182,7 +173,6 @@ private:
     int m_image_y_size;
     jpeg_decoder_stream *m_pStream;
     int m_progressive_flag;
-    uint8_t m_huff_ac[JPGD_MAX_HUFF_TABLES];
     uint8_t* m_huff_num[JPGD_MAX_HUFF_TABLES];      // pointer to number of Huffman codes per bit size
     uint8_t* m_huff_val[JPGD_MAX_HUFF_TABLES];      // pointer to Huffman codes per bit size
     jpgd_quant_t* m_quant[JPGD_MAX_QUANT_TABLES]; // pointer to quantization tables
@@ -210,7 +200,6 @@ private:
     int m_mcu_org[JPGD_MAX_BLOCKS_PER_MCU];
     int m_total_lines_left;                       // total # lines left in image
     int m_mcu_lines_left;                         // total # lines left in this MCU
-    int m_real_dest_bytes_per_scan_line;
     int m_dest_bytes_per_scan_line;               // rounded up
     int m_dest_bytes_per_pixel;                   // 4 (RGB) or 1 (Y)
     huff_tables* m_pHuff_tabs[JPGD_MAX_HUFF_TABLES];
@@ -232,9 +221,6 @@ private:
     int m_next_restart_num;
     int m_max_mcus_per_row;
     int m_max_blocks_per_mcu;
-    int m_expanded_blocks_per_mcu;
-    int m_expanded_blocks_per_row;
-    int m_expanded_blocks_per_component;
     int m_max_mcus_per_col;
     uint32_t m_last_dc_val[JPGD_MAX_COMPONENTS];
     jpgd_block_t* m_pMCU_coefficients;
@@ -248,7 +234,6 @@ private:
     uint8_t* m_pScan_line_1;
     jpgd_status m_error_code;
     bool m_ready_flag;
-    int m_total_bytes_read;
 
     void free_all_blocks();
     bool stop_decoding(jpgd_status status);
@@ -852,8 +837,6 @@ bool jpeg_decoder::prep_in_buffer()
         m_in_buf_left += bytes_read;
     } while ((m_in_buf_left < JPGD_IN_BUF_SIZE) && (!m_eof_flag));
 
-    m_total_bytes_read += m_in_buf_left;
-
     // Pad the end of the block with M_EOI (prevents the decompressor from going off the rails if the stream is invalid).
     // (This dates way back to when this decompressor was written in C/asm, and the all-asm Huffman decoder did some fancy things to increase perf.)
     word_clear(m_pIn_buf_ofs + m_in_buf_left, 0xD9FF, 64);
@@ -899,7 +882,6 @@ bool jpeg_decoder::read_dht_marker()
         if (!m_huff_num[index]) m_huff_num[index] = (uint8_t *)alloc(17);
         if (!m_huff_val[index]) m_huff_val[index] = (uint8_t *)alloc(256);
 
-        m_huff_ac[index] = (index & 0x10) != 0;
         memcpy(m_huff_num[index], huff_num, 17);
         memcpy(m_huff_val[index], huff_val, 256);
     }
@@ -1199,7 +1181,6 @@ void jpeg_decoder::init(jpeg_decoder_stream *pStream)
     m_pStream = pStream;
     m_progressive_flag = false;
 
-    memset(m_huff_ac, 0, sizeof(m_huff_ac));
     memset(m_huff_num, 0, sizeof(m_huff_num));
     memset(m_huff_val, 0, sizeof(m_huff_val));
     memset(m_quant, 0, sizeof(m_quant));
@@ -1229,15 +1210,11 @@ void jpeg_decoder::init(jpeg_decoder_stream *pStream)
     m_max_blocks_per_row = 0;
     m_mcus_per_row = 0;
     m_mcus_per_col = 0;
-    m_expanded_blocks_per_component = 0;
-    m_expanded_blocks_per_mcu = 0;
-    m_expanded_blocks_per_row = 0;
 
     memset(m_mcu_org, 0, sizeof(m_mcu_org));
 
     m_total_lines_left = 0;
     m_mcu_lines_left = 0;
-    m_real_dest_bytes_per_scan_line = 0;
     m_dest_bytes_per_scan_line = 0;
     m_dest_bytes_per_pixel = 0;
 
@@ -1271,8 +1248,6 @@ void jpeg_decoder::init(jpeg_decoder_stream *pStream)
     memset(m_last_dc_val, 0, sizeof(m_last_dc_val));
     m_pMCU_coefficients = nullptr;
     m_pSample_buf = nullptr;
-
-    m_total_bytes_read = 0;
 
     m_pScan_line_0 = nullptr;
     m_pScan_line_1 = nullptr;
@@ -1703,8 +1678,7 @@ void jpeg_decoder::gray_convert()
     }
 }
 
-
-// Find end of image (EOI) marker, so we can return to the user the exact size of the input stream.
+// Find the end of image (EOI) marker.
 void jpeg_decoder::find_eoi()
 {
     if (!m_progressive_flag) {
@@ -1719,7 +1693,6 @@ void jpeg_decoder::find_eoi()
         // The next marker _should_ be EOI
         process_markers();
     }
-    m_total_bytes_read -= m_in_buf_left;
 }
 
 
@@ -1788,7 +1761,6 @@ void jpeg_decoder::make_huff_table(int index, huff_tables *pH)
     int nextfreeentry;
     int currententry;
 
-    pH->ac_table = m_huff_ac[index] != 0;
     p = 0;
 
     for (l = 1; l <= 16; l++)  {
@@ -2019,7 +1991,6 @@ bool jpeg_decoder::init_frame()
     else m_dest_bytes_per_pixel = 4;
 
     m_dest_bytes_per_scan_line = ((m_image_x_size + 15) & 0xFFF0) * m_dest_bytes_per_pixel;
-    m_real_dest_bytes_per_scan_line = (m_image_x_size * m_dest_bytes_per_pixel);
 
     // Initialize two scan line buffers.
     m_pScan_line_0 = (uint8_t *)alloc(m_dest_bytes_per_scan_line, true);
@@ -2039,10 +2010,6 @@ bool jpeg_decoder::init_frame()
         m_mcu_block_max_zag[i] = 64;
     }
 
-    m_expanded_blocks_per_component = m_comp_h_samp[0] * m_comp_v_samp[0];
-    m_expanded_blocks_per_mcu = m_expanded_blocks_per_component * m_comps_in_frame;
-    m_expanded_blocks_per_row = m_max_mcus_per_row * m_expanded_blocks_per_mcu;
-
     m_pSample_buf = (uint8_t *)alloc(m_max_blocks_per_row * 64);
 
     m_total_lines_left = m_image_y_size;
@@ -2061,9 +2028,6 @@ jpeg_decoder::coeff_buf* jpeg_decoder::coeff_buf_open(int block_num_x, int block
 {
     coeff_buf* cb = (coeff_buf*)alloc(sizeof(coeff_buf));
     cb->block_num_x = block_num_x;
-    cb->block_num_y = block_num_y;
-    cb->block_len_x = block_len_x;
-    cb->block_len_y = block_len_y;
     cb->block_size = (block_len_x * block_len_y) * sizeof(jpgd_block_t);
     cb->pData = (uint8_t *)alloc(cb->block_size * block_num_x * block_num_y, true);
     return cb;
@@ -2354,7 +2318,7 @@ jpeg_decoder::~jpeg_decoder()
     free_all_blocks();
 }
 
-
+#ifdef THORVG_FILE_IO_SUPPORT
 void jpeg_decoder_file_stream::close()
 {
     if (m_pFile) {
@@ -2411,17 +2375,7 @@ int jpeg_decoder_file_stream::read(uint8_t *pBuf, int max_bytes_to_read, bool *p
     }
     return bytes_read;
 }
-
-
-bool jpeg_decoder_mem_stream::open(const uint8_t *pSrc_data, uint32_t size)
-{
-    close();
-    m_pSrc_data = pSrc_data;
-    m_ofs = 0;
-    m_size = size;
-    return true;
-}
-
+#endif
 
 int jpeg_decoder_mem_stream::read(uint8_t *pBuf, int max_bytes_to_read, bool *pEOF_flag)
 {
@@ -2459,7 +2413,7 @@ jpeg_decoder* jpgdHeader(const char* data, int size, int* width, int* height)
     return decoder;
 }
 
-
+#ifdef THORVG_FILE_IO_SUPPORT
 jpeg_decoder* jpgdHeader(const char* filename, int* width, int* height)
 {
     auto fileStream = new jpeg_decoder_file_stream();
@@ -2479,7 +2433,7 @@ jpeg_decoder* jpgdHeader(const char* filename, int* width, int* height)
 
     return decoder;
 }
-
+#endif
 
 void jpgdDelete(jpeg_decoder* decoder)
 {
