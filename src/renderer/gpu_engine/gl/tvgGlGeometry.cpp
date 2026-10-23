@@ -140,6 +140,22 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
     convex = false;
     multiplier = 1.0f;
 
+    GpuEllipse ellipse;
+    if (ellipse.prepare(rshape, matrix)) {
+        fill.vertex.count = ellipse.count * 2;
+        fill.vertex.reserve(fill.vertex.count);
+        fill.index.count = (ellipse.count - 2) * 3;
+        fill.index.reserve(fill.index.count);
+        ellipse.tessellate(fill.vertex.data, fill.index.data);
+        fillBBox = {int32_t(floorf(ellipse.bbox.min.x)), int32_t(floorf(ellipse.bbox.min.y)),
+                    int32_t(ceilf(ellipse.bbox.max.x)), int32_t(ceilf(ellipse.bbox.max.y))};
+        convex = true;
+        optStrokePath.clear();
+        return true;
+    }
+
+    prepare(rshape);
+
     // `skipFill` means the path stayed thin enough that even thin fallback should not draw a fill.
     if (optPathSkipFill) return false;
 
