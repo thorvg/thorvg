@@ -2126,6 +2126,14 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h, LodePNG
     if (!state->error && scanlines_size != expected_size) state->error = 91; /*decompressed size doesn't match prediction*/
     tvg::free(idat);
 
+    if (!state->error && state->info_png.interlace_method == 0 && state->info_png.color.bitdepth >= 8) {
+        // Unfilter byte-aligned pixels in place and transfer the scanline buffer.
+        state->error = postProcessScanlines(scanlines, scanlines, *w, *h, &state->info_png);
+        if (!state->error) *out = scanlines;
+        else tvg::free(scanlines);
+        return;
+    }
+
     if (!state->error) {
         outsize = lodepng_get_raw_size(*w, *h, &state->info_png.color);
         *out = tvg::malloc<unsigned char>(outsize);
