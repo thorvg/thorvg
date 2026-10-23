@@ -266,10 +266,7 @@ struct PictureImpl : Picture
         if (opacity < 255) return;
 
         //Composition test
-        const Paint* target;
-        PAINT(this)->mask(&target);
-        if (!target || target->pImpl->opacity == 255 || target->pImpl->opacity == 0) return;
-        impl.mark(CompositionFlag::Opacity);
+        if (impl.needMaskComposition()) impl.mark(CompositionFlag::Masking);
     }
 
     bool render(RenderMethod* renderer, TVG_UNUSED CompositionFlag flag)
