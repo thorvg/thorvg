@@ -30,14 +30,19 @@ if get_option('simd')
             config_h.set10('THORVG_AVX_SUPPORT', true)
         endif
     # NEON
-    elif cpu_family == 'arm' or cpu_family == 'aarch64'
+    elif cpu_family == 'arm' or cpu_family == 'aarch64' or cpu_family == 'wasm32'
         candidate_flags = []
+        neon_type = 'neon-aarch'
         if cpu_family == 'arm'
             if cpp.get_id() == 'clang-cl'
                 candidate_flags = ['/clang:-mfpu=neon']
             elif cpp.get_id() != 'msvc'
                 candidate_flags = ['-mfpu=neon']
             endif
+            neon_type = 'neon-arm'
+        elif cpu_family == 'wasm32'
+            candidate_flags = ['-msimd128', '-mfpu=neon']
+            neon_type = 'neon-wasm'
         endif
 
         if cpp.compiles('''
@@ -48,7 +53,7 @@ if get_option('simd')
             }
         ''', args: candidate_flags, name: 'NEON raster support')
             simd_flags = candidate_flags
-            simd_type = cpu_family == 'arm' ? 'neon-arm' : 'neon-aarch'
+            simd_type = neon_type
             config_h.set10('THORVG_NEON_SUPPORT', true)
         endif
     endif
