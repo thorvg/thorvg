@@ -112,7 +112,6 @@ struct TaskScheduler
     static void init(uint32_t threads);
     static void term();
     static void request(Task* task);
-    static bool onthread();  //figure out whether on worker thread or not
     static ThreadID tid();
 };
 
