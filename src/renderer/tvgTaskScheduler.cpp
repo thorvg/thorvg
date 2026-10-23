@@ -29,15 +29,15 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-namespace tvg {
+namespace tvg
+{
 
 #ifdef THORVG_THREAD_SUPPORT
 
-struct TaskQueue {
+struct TaskQueue
+{
     Inlist<Task>             taskDeque;
     mutex                    mtx;
-    condition_variable       ready;
-    bool                     done = false;
 
     bool tryPop(Task** task)
     {
@@ -49,54 +49,35 @@ struct TaskQueue {
 
     bool tryPush(Task* task)
     {
-        {
-            unique_lock<mutex> lock{mtx, try_to_lock};
-            if (!lock) return false;
-            taskDeque.back(task);
-        }
-        ready.notify_one();
+        unique_lock<mutex> lock{mtx, try_to_lock};
+        if (!lock) return false;
+        taskDeque.back(task);
         return true;
-    }
-
-    void complete()
-    {
-        {
-            lock_guard<mutex> lock{mtx};
-            done = true;
-        }
-        ready.notify_all();
     }
 
     bool pop(Task** task)
     {
-        unique_lock<mutex> lock{mtx};
-
-        while (taskDeque.empty() && !done) {
-            ready.wait(lock);
-        }
-
+        lock_guard<mutex> lock{mtx};
         if (taskDeque.empty()) return false;
-
         *task = taskDeque.front();
         return true;
     }
 
     void push(Task* task)
     {
-        {
-            lock_guard<mutex> lock{mtx};
-            taskDeque.back(task);
-        }
-        ready.notify_one();
+        lock_guard<mutex> lock{mtx};
+        taskDeque.back(task);
     }
 };
-
 
 struct TaskSchedulerImpl
 {
     Array<thread*>                 threads;
     Array<TaskQueue*>              taskQueues;
     atomic<uint32_t>               idx{0};
+    mutex mtx;
+    condition_variable ready;
+    bool stopping = false;
 
     TaskSchedulerImpl(uint32_t threadCnt)
     {
@@ -114,9 +95,11 @@ struct TaskSchedulerImpl
 
     ~TaskSchedulerImpl()
     {
-        ARRAY_FOREACH(p, taskQueues) {
-            (*p)->complete();
+        {
+            lock_guard<mutex> lock{mtx};
+            stopping = true;
         }
+        ready.notify_all();
         ARRAY_FOREACH(p, threads) {
             (*p)->join();
             delete(*p);
@@ -140,7 +123,21 @@ struct TaskSchedulerImpl
                 }
             }
 
-            if (!success && !taskQueues[i]->pop(&task)) break;
+            if (!success) {
+                unique_lock<mutex> lock{mtx};
+                while (!success) {
+                    // Recheck every queue before sleeping, without skipping locked queues.
+                    for (uint32_t x = 0; x < threads.count; ++x) {
+                        if (taskQueues[(i + x) % threads.count]->pop(&task)) {
+                            success = true;
+                            break;
+                        }
+                    }
+                    if (success) break;
+                    if (stopping) return;
+                    ready.wait(lock);
+                }
+            }
             (*task)(i + 1);
         }
     }
@@ -151,10 +148,19 @@ struct TaskSchedulerImpl
         if (threads.count > 0) {
             task->prepare();
             auto i = idx++;
+            auto queued = false;
             for (uint32_t n = 0; n < threads.count; ++n) {
-                if (taskQueues[(i + n) % threads.count]->tryPush(task)) return;
+                if (taskQueues[(i + n) % threads.count]->tryPush(task)) {
+                    queued = true;
+                    break;
+                }
             }
-            taskQueues[i % threads.count]->push(task);
+            if (!queued) taskQueues[i % threads.count]->push(task);
+            {
+                // Serialize notification with the workers' final queue check and wait.
+                lock_guard<mutex> lock{mtx};
+                ready.notify_one();
+            }
         //Sync
         } else {
             task->run(0);
@@ -178,7 +184,6 @@ struct TaskSchedulerImpl
 
 #endif //THORVG_THREAD_SUPPORT
 
-
 } //namespace
 
 /************************************************************************/
@@ -195,7 +200,6 @@ void TaskScheduler::init(uint32_t threads)
     _tid = tid();
 }
 
-
 void TaskScheduler::term()
 {
     delete(_inst);
@@ -208,18 +212,10 @@ void TaskScheduler::request(Task* task)
     if (_inst) _inst->request(task);
 }
 
-
 uint32_t TaskScheduler::threads()
 {
     return _inst ? _inst->threadCnt() : 0;
 }
-
-
-bool TaskScheduler::onthread()
-{
-    return _tid != tid();
-}
-
 
 ThreadID TaskScheduler::tid()
 {
