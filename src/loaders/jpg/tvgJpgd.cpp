@@ -127,17 +127,14 @@ public:
     // Call this method after constructing the object to begin decompression.
     // If JPGD_SUCCESS is returned you may then call decode() on each scanline.
     int begin_decoding();
-    // Returns the next scan line.
-    // For grayscale images, pScan_line will point to a buffer containing 8-bit pixels.
-    // Otherwise, it will always point to a buffer containing 32-bit RGBA pixels (A will always be 255).
-    // Returns JPGD_SUCCESS if a scan line has been returned.
+    // Writes the next scan line as 32-bit RGBA pixels (A is always 255).
+    // Returns JPGD_SUCCESS if a scan line has been written.
     // Returns JPGD_DONE if all scan lines have been returned.
     // Returns JPGD_FAILED if an error occurred. Call get_error_code() for a more info.
-    int decode(const void** pScan_line);
+    int decode(uint8_t* dst);
     inline jpgd_status get_error_code() const { return m_error_code; }
     inline int get_width() const { return m_image_x_size; }
     inline int get_height() const { return m_image_y_size; }
-    inline int get_num_components() const { return m_comps_in_frame; }
 
 private:
     jpeg_decoder(const jpeg_decoder &);
@@ -200,8 +197,6 @@ private:
     int m_mcu_org[JPGD_MAX_BLOCKS_PER_MCU];
     int m_total_lines_left;                       // total # lines left in image
     int m_mcu_lines_left;                         // total # lines left in this MCU
-    int m_dest_bytes_per_scan_line;               // rounded up
-    int m_dest_bytes_per_pixel;                   // 4 (RGB) or 1 (Y)
     huff_tables* m_pHuff_tabs[JPGD_MAX_HUFF_TABLES];
     coeff_buf* m_dc_coeffs[JPGD_MAX_COMPONENTS];
     coeff_buf* m_ac_coeffs[JPGD_MAX_COMPONENTS];
@@ -275,7 +270,6 @@ private:
     void H2V1Convert();
     void H1V2Convert();
     void H1V1Convert();
-    void gray_convert();
     void find_eoi();
     inline uint32_t get_char();
     inline uint32_t get_char(bool *pPadding_flag);
@@ -1215,8 +1209,6 @@ void jpeg_decoder::init(jpeg_decoder_stream *pStream)
 
     m_total_lines_left = 0;
     m_mcu_lines_left = 0;
-    m_dest_bytes_per_scan_line = 0;
-    m_dest_bytes_per_pixel = 0;
 
     memset(m_pHuff_tabs, 0, sizeof(m_pHuff_tabs));
 
@@ -1662,22 +1654,6 @@ void jpeg_decoder::H2V2Convert()
     }
 }
 
-
-// Y (1 block per MCU) to 8-bit grayscale
-void jpeg_decoder::gray_convert()
-{
-    int row = m_max_mcu_y_size - m_mcu_lines_left;
-    uint8_t *d = m_pScan_line_0;
-    uint8_t *s = m_pSample_buf + row * 8;
-
-    for (int i = m_max_mcus_per_row; i > 0; i--) {
-        *(uint32_t *)d = *(uint32_t *)s;
-        *(uint32_t *)(&d[4]) = *(uint32_t *)(&s[4]);
-        s += 64;
-        d += 8;
-    }
-}
-
 // Find the end of image (EOI) marker.
 void jpeg_decoder::find_eoi()
 {
@@ -1695,8 +1671,7 @@ void jpeg_decoder::find_eoi()
     }
 }
 
-
-int jpeg_decoder::decode(const void** pScan_line)
+int jpeg_decoder::decode(uint8_t* dst)
 {
     if ((m_error_code) || (!m_ready_flag)) return JPGD_FAILED;
     if (m_total_lines_left == 0) return JPGD_DONE;
@@ -1708,38 +1683,47 @@ int jpeg_decoder::decode(const void** pScan_line)
         m_mcu_lines_left = m_max_mcu_y_size;
     }
 
+    const uint8_t* src = nullptr;
     switch (m_scan_type) {
         case JPGD_YH2V2: {
             if ((m_mcu_lines_left & 1) == 0) {
                 H2V2Convert();
-                *pScan_line = m_pScan_line_0;
-            }
-            else *pScan_line = m_pScan_line_1;
+                src = m_pScan_line_0;
+            } else src = m_pScan_line_1;
             break;
         }
         case JPGD_YH2V1: {
             H2V1Convert();
-            *pScan_line = m_pScan_line_0;
+            src = m_pScan_line_0;
             break;
         }
         case JPGD_YH1V2: {
             if ((m_mcu_lines_left & 1) == 0) {
                 H1V2Convert();
-                *pScan_line = m_pScan_line_0;
-            } else *pScan_line = m_pScan_line_1;
+                src = m_pScan_line_0;
+            } else src = m_pScan_line_1;
             break;
         }
         case JPGD_YH1V1: {
             H1V1Convert();
-            *pScan_line = m_pScan_line_0;
+            src = m_pScan_line_0;
             break;
         }
         case JPGD_GRAYSCALE: {
-            gray_convert();
-            *pScan_line = m_pScan_line_0;
+            int row = m_max_mcu_y_size - m_mcu_lines_left;
+            const uint8_t* samples = m_pSample_buf + row * 8;
+            for (int x = 0; x < m_image_x_size; x++, dst += 4) {
+                uint8_t y = samples[(x >> 3) * 64 + (x & 7)];
+                dst[0] = y;
+                dst[1] = y;
+                dst[2] = y;
+                dst[3] = 255;
+            }
             break;
         }
     }
+
+    if (src) memcpy(dst, src, m_image_x_size * 4);
 
     m_mcu_lines_left--;
     m_total_lines_left--;
@@ -1986,16 +1970,13 @@ bool jpeg_decoder::init_frame()
     m_max_mcus_per_row = (m_image_x_size + (m_max_mcu_x_size - 1)) / m_max_mcu_x_size;
     m_max_mcus_per_col = (m_image_y_size + (m_max_mcu_y_size - 1)) / m_max_mcu_y_size;
 
-    // These values are for the *destination* pixels: after conversion.
-    if (m_scan_type == JPGD_GRAYSCALE) m_dest_bytes_per_pixel = 1;
-    else m_dest_bytes_per_pixel = 4;
-
-    m_dest_bytes_per_scan_line = ((m_image_x_size + 15) & 0xFFF0) * m_dest_bytes_per_pixel;
-
-    // Initialize two scan line buffers.
-    m_pScan_line_0 = (uint8_t *)alloc(m_dest_bytes_per_scan_line, true);
-    if ((m_scan_type == JPGD_YH1V2) || (m_scan_type == JPGD_YH2V2)) {
-        m_pScan_line_1 = (uint8_t *)alloc(m_dest_bytes_per_scan_line, true);
+    // Color conversion uses temporary scan lines; grayscale writes directly to the output.
+    if (m_scan_type != JPGD_GRAYSCALE) {
+        int scan_line_size = ((m_image_x_size + 15) & 0xFFF0) * 4;
+        m_pScan_line_0 = (uint8_t*)alloc(scan_line_size, true);
+        if ((m_scan_type == JPGD_YH1V2) || (m_scan_type == JPGD_YH2V2)) {
+            m_pScan_line_1 = (uint8_t*)alloc(scan_line_size, true);
+        }
     }
 
     m_max_blocks_per_row = m_max_mcus_per_row * m_max_blocks_per_mcu;
@@ -2447,28 +2428,16 @@ unsigned char* jpgdDecompress(jpeg_decoder* decoder)
     auto channel = 4; //OPTIMIZE: jpg is 3 channel format, not really need 4 channel components.
     auto width = decoder->get_width();
     auto height = decoder->get_height();
-    //auto actual_comps = decoder->get_num_components();
     const auto stride = width * channel;
     auto ret = tvg::malloc<uint8_t>(stride * height);
     auto dst = ret;
 
     for (int y = 0; y < height; y++) {
-        uint8_t* src = nullptr;
-        if (decoder->decode((const void**)&src) != JPGD_SUCCESS) {
+        if (decoder->decode(dst) != JPGD_SUCCESS) {
             tvg::free(ret);
             return nullptr;
         }
-        if (decoder->get_num_components() == 3) {
-            memcpy(dst, src, stride);
-            dst += stride;
-        } else if (decoder->get_num_components() == 1) {
-            for (int x = 0; x < width; x++, src++, dst += 4) {
-                dst[0] = *src;
-                dst[1] = *src;
-                dst[2] = *src;
-                dst[3] = 255;
-            }
-        }
+        dst += stride;
     }
     return ret;
 }
