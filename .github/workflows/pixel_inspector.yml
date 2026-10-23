@@ -110,7 +110,7 @@ jobs:
       - name: Install runtime packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+          sudo apt-get install -y libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev libvulkan1 mesa-vulkan-drivers
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v2
