@@ -184,47 +184,31 @@ void RenderPath::addRect(float x, float y, float w, float h, float rx, float ry,
         cmds[9] = PathCommand::Close;
         pts[0] = {x + w, y + ry};  // move
 
-        if (cw) {
-            cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::LineTo;
-            cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::CubicTo;
+        cmds[1] = cmds[3] = cmds[5] = cmds[7] = cw ? PathCommand::LineTo : PathCommand::CubicTo;
+        cmds[2] = cmds[4] = cmds[6] = cmds[8] = cw ? PathCommand::CubicTo : PathCommand::LineTo;
 
-            pts[1] = {x + w, y + h - ry};  // line
-            pts[2] = {x + w, y + h - ry + hr.y};
-            pts[3] = {x + w - rx + hr.x, y + h};
-            pts[4] = {x + w - rx, y + h};  // cubic
-            pts[5] = {x + rx, y + h};      // line
-            pts[6] = {x + rx - hr.x, y + h};
-            pts[7] = {x, y + h - ry + hr.y};
-            pts[8] = {x, y + h - ry};  // cubic
-            pts[9] = {x, y + ry};      // line
-            pts[10] = {x, y + ry - hr.y};
-            pts[11] = {x + rx - hr.x, y};
-            pts[12] = {x + rx, y};      // cubic
-            pts[13] = {x + w - rx, y};  // line
-            pts[14] = {x + w - rx + hr.x, y};
-            pts[15] = {x + w, y + ry - hr.y};
-            pts[16] = {x + w, y + ry};  // cubic
-        } else {
-            cmds[1] = cmds[3] = cmds[5] = cmds[7] = PathCommand::CubicTo;
-            cmds[2] = cmds[4] = cmds[6] = cmds[8] = PathCommand::LineTo;
+        // Reverse the clockwise point order for CCW, keeping the endpoints fixed.
+        static constexpr uint8_t indices[2][16] = {
+            {0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}};
+        auto idx = indices[cw];
 
-            pts[1] = {x + w, y + ry - hr.y};
-            pts[2] = {x + w - rx + hr.x, y};
-            pts[3] = {x + w - rx, y};  // cubic
-            pts[4] = {x + rx, y};      // line
-            pts[5] = {x + rx - hr.x, y};
-            pts[6] = {x, y + ry - hr.y};
-            pts[7] = {x, y + ry};      // cubic
-            pts[8] = {x, y + h - ry};  // line
-            pts[9] = {x, y + h - ry + hr.y};
-            pts[10] = {x + rx - hr.x, y + h};
-            pts[11] = {x + rx, y + h};      // cubic
-            pts[12] = {x + w - rx, y + h};  // line
-            pts[13] = {x + w - rx + hr.x, y + h};
-            pts[14] = {x + w, y + h - ry + hr.y};
-            pts[15] = {x + w, y + h - ry};  // cubic
-            pts[16] = {x + w, y + ry};      // line
-        }
+        pts[idx[1]] = {x + w, y + h - ry};  // line
+        pts[idx[2]] = {x + w, y + h - ry + hr.y};
+        pts[idx[3]] = {x + w - rx + hr.x, y + h};
+        pts[idx[4]] = {x + w - rx, y + h};  // cubic
+        pts[idx[5]] = {x + rx, y + h};      // line
+        pts[idx[6]] = {x + rx - hr.x, y + h};
+        pts[idx[7]] = {x, y + h - ry + hr.y};
+        pts[idx[8]] = {x, y + h - ry};  // cubic
+        pts[idx[9]] = {x, y + ry};      // line
+        pts[idx[10]] = {x, y + ry - hr.y};
+        pts[idx[11]] = {x + rx - hr.x, y};
+        pts[idx[12]] = {x + rx, y};      // cubic
+        pts[idx[13]] = {x + w - rx, y};  // line
+        pts[idx[14]] = {x + w - rx + hr.x, y};
+        pts[idx[15]] = {x + w, y + ry - hr.y};
+        pts[16] = {x + w, y + ry};  // cubic
 
         this->cmds.count += 10;
         this->pts.count += 17;
