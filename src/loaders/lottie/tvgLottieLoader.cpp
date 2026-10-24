@@ -42,7 +42,10 @@ LottieCustomSlot::~LottieCustomSlot()
 bool LottieLoader::prepare()
 {
     LottieParser parser(content, dirName, builder->expressions());
-    if (!parser.parse()) return false;
+    if (!parser.parse()) {
+        tvg::free(parser.slots);
+        return false;
+    }
     {
         ScopedLock lock(key);
         comp = parser.comp;
@@ -51,7 +54,7 @@ bool LottieLoader::prepare()
         auto slotcode = gen(parser.slots, true);
         apply(slotcode, true);
         del(slotcode, true);
-        parser.slots = nullptr;
+        tvg::free(parser.slots);
     }
     builder->build(comp);
     release();
@@ -367,7 +370,7 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
         ++idx;
     }
 
-    tvg::free((char*)temp);
+    if (!byDefault) tvg::free((char*)temp);
 
     //Success, valid custom slot.
     if (custom->props.count > 0) {
