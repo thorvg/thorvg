@@ -461,9 +461,11 @@ static inline uint32_t UNPREMULTIPLY(uint32_t data)
     auto a = A(data);
     if (a == 255 || a == 0) return data;
 
-    uint8_t r = std::min(C1(data) * 255u / a, 255u);
-    uint8_t g = std::min(C2(data) * 255u / a, 255u);
-    uint8_t b = std::min(C3(data) * 255u / a, 255u);
+    // Premultiplied channels are <= a; the fixed-point scale loses at most 1.
+    auto scale = (255u << 16) / a;
+    uint8_t r = (C1(data) * scale) >> 16;
+    uint8_t g = (C2(data) * scale) >> 16;
+    uint8_t b = (C3(data) * scale) >> 16;
 
     return JOIN(a, r, g, b);
 }
