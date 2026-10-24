@@ -386,7 +386,8 @@ struct LottieColorStop : LottieProperty
 {
     Array<LottieScalarFrame<ColorStop>>* frames = nullptr;
     ColorStop value;
-    uint16_t count = 0;     //colorstop count
+    uint16_t count = 0;     //color + alpha stop count, the smallest among keyframes
+    uint16_t colorCnt = 0;  //color stop count
     bool populated = false;
 
     LottieColorStop() : LottieProperty(LottieProperty::Type::ColorStop) {}
