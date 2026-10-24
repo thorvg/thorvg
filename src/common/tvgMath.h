@@ -453,6 +453,11 @@ struct BBox
         return (pt.x >= min.x && pt.x <= max.x && pt.y >= min.y && pt.y <= max.y);
     }
 
+    bool intersected(const BBox& rhs) const
+    {
+        return (rhs.min.x <= max.x && rhs.max.x >= min.x && rhs.min.y <= max.y && rhs.max.y >= min.y);
+    }
+
     void init()
     {
         min = {FLT_MAX, FLT_MAX};
@@ -549,6 +554,35 @@ struct Bezier
         cur.y = ay * it + by * t;
 
         return cur;
+    }
+
+    Bezier sub(float t0, float t1) const
+    {
+        auto u0 = 1.0f - t0, u1 = 1.0f - t1;
+        Bezier out;
+        out.start = start * (u0 * u0 * u0) + ctrl1 * (3.0f * t0 * u0 * u0) + ctrl2 * (3.0f * t0 * t0 * u0) + end * (t0 * t0 * t0);
+        out.ctrl1 = start * (u0 * u0 * u1) + ctrl1 * (2.0f * t0 * u0 * u1 + u0 * u0 * t1) + ctrl2 * (t0 * t0 * u1 + 2.0f * u0 * t0 * t1) + end * (t0 * t0 * t1);
+        out.ctrl2 = start * (u0 * u1 * u1) + ctrl1 * (t0 * u1 * u1 + 2.0f * u0 * u1 * t1) + ctrl2 * (2.0f * t0 * t1 * u1 + u0 * t1 * t1) + end * (t0 * t1 * t1);
+        out.end = start * (u1 * u1 * u1) + ctrl1 * (3.0f * t1 * u1 * u1) + ctrl2 * (3.0f * t1 * t1 * u1) + end * (t1 * t1 * t1);
+        return out;
+    }
+
+    Bezier reverse() const
+    {
+        return {end, ctrl2, ctrl1, start};
+    }
+
+    BBox hull() const
+    {
+        BBox box;
+        box.min = {fminf(fminf(start.x, ctrl1.x), fminf(ctrl2.x, end.x)), fminf(fminf(start.y, ctrl1.y), fminf(ctrl2.y, end.y))};
+        box.max = {fmaxf(fmaxf(start.x, ctrl1.x), fmaxf(ctrl2.x, end.x)), fmaxf(fmaxf(start.y, ctrl1.y), fmaxf(ctrl2.y, end.y))};
+        return box;
+    }
+
+    static Bezier line(const Point& start, const Point& end)
+    {
+        return {start, start + (end - start) * (1.0f / 3.0f), start + (end - start) * (2.0f / 3.0f), end};
     }
 
     void split(float t, Bezier& left);

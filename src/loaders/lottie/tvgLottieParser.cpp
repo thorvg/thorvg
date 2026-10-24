@@ -72,28 +72,16 @@ LottieEffect* LottieParser::getEffect(int type)
 }
 
 
-MaskMethod LottieParser::getMaskMethod(bool inversed)
+MaskMethod LottieParser::getMaskMethod()
 {
     auto mode = getString();
     if (!mode) return MaskMethod::None;
 
     switch (mode[0]) {
-        case 'a': {
-            if (inversed) return MaskMethod::InvAlpha;
-            else return MaskMethod::Add;
-        }
-        case 's': {
-            if (inversed) return MaskMethod::Intersect;
-            return MaskMethod::Subtract;
-        }
-        case 'i': {
-            if (inversed) return MaskMethod::Difference;
-            return MaskMethod::Intersect;
-        }
-        case 'f': {
-            if (inversed) return MaskMethod::Intersect;
-            return MaskMethod::Difference;
-        }
+        case 'a': return MaskMethod::Add;
+        case 's': return MaskMethod::Subtract;
+        case 'i': return MaskMethod::Intersect;
+        case 'f': return MaskMethod::Difference;
         case 'l': return MaskMethod::Lighten;
         case 'd': return MaskMethod::Darken;
         default: return MaskMethod::None;
@@ -111,6 +99,18 @@ RGB32 LottieParser::getColor(const char *str)
     if (len > 7) hex >>= 8;  // ignore the alpha channel
     return {int32_t((hex >> 16) & 0xff), int32_t((hex >> 8) & 0xff), int32_t(hex & 0xff)};
 }
+
+LottieMergePath::Mode LottieParser::getMergeMode()
+{
+    switch (getInt()) {
+        case 2: return LottieMergePath::Add;
+        case 3: return LottieMergePath::Subtract;
+        case 4: return LottieMergePath::Intersect;
+        case 5: return LottieMergePath::Exclude;
+        default: return LottieMergePath::Merge;
+    }
+}
+
 
 bool LottieParser::getValue(TextDocument& doc)
 {
@@ -891,6 +891,21 @@ LottieZigZag* LottieParser::parseZigZag()
     return zigzag;
 }
 
+LottieMergePath* LottieParser::parseMergePath()
+{
+    auto mergePath = new LottieMergePath;
+
+    context.parent = mergePath;
+
+    while (auto key = nextObjectKey()) {
+        if (parseCommon(mergePath, key)) continue;
+        else if (KEY_AS("mm")) mergePath->mode = getMergeMode();
+        else skip();
+    }
+    return mergePath;
+}
+
+
 LottieObject* LottieParser::parseObject(const char* type)
 {
     if (!strcmp(type, "gr")) return parseGroup();
@@ -909,7 +924,7 @@ LottieObject* LottieParser::parseObject(const char* type)
     else if (!strcmp(type, "pb")) return parsePuckerBloat();
     else if (!strcmp(type, "op")) return parseOffsetPath();
     else if (!strcmp(type, "zz")) return parseZigZag();
-    else if (!strcmp(type, "mm")) TVGLOG("LOTTIE", "MergePath(mm) is not supported yet");
+    else if (!strcmp(type, "mm")) return parseMergePath();
     else if (!strcmp(type, "tw")) TVGLOG("LOTTIE", "Twist(tw) is not supported yet");
     return nullptr;
 }
@@ -1351,7 +1366,7 @@ LottieMask* LottieParser::parseMask()
     enterObject();
     while (auto key = nextObjectKey()) {
         if (KEY_AS("inv")) mask->inverse = getBool();
-        else if (KEY_AS("mode")) mask->method = getMaskMethod(mask->inverse);
+        else if (KEY_AS("mode")) mask->method = getMaskMethod();
         else if (KEY_AS("pt")) getPathSet(nullptr, mask->pathset);
         else if (KEY_AS("o")) parseProperty(mask->opacity);
         else if (KEY_AS("x")) parseProperty(mask->expand);
