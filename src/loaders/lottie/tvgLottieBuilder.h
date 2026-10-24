@@ -53,7 +53,7 @@ struct RenderText
     int line = 0, space = 0, idx = 0;
     float lineSpace = 0.0f, totalLineSpace = 0.0f;
     char *p;  //current processing character
-    int nChars;
+    int nChars, nSpaces = 0, nLines = 1;
     float scale;
     Scene* textScene;
     Scene* lineScene;
@@ -63,6 +63,11 @@ struct RenderText
 
     RenderText(LottieText* text, const TextDocument& doc) : p(doc.text), nChars(strlen(p)), scale(doc.size), textScene(Scene::gen()), lineScene(Scene::gen())
     {
+        // the units text ranges count, by their basis
+        for (auto c = p; *c; ++c) {
+            if (*c == ' ') ++nSpaces;
+            else if (*c == 13 || *c == 3) ++nLines;
+        }
     }
 
     ~RenderText()
