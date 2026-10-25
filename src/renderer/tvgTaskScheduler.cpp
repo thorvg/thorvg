@@ -22,7 +22,6 @@
 
 
 #include "tvgArray.h"
-#include "tvgInlist.h"
 #include "tvgTaskScheduler.h"
 
 /************************************************************************/
@@ -186,13 +185,11 @@ struct TaskSchedulerImpl
 /************************************************************************/
 
 static TaskSchedulerImpl* _inst = nullptr;
-static ThreadID _tid;   //dominant thread id
 
 void TaskScheduler::init(uint32_t threads)
 {
     if (_inst) return;
     _inst = new TaskSchedulerImpl(threads);
-    _tid = tid();
 }
 
 
@@ -212,20 +209,4 @@ void TaskScheduler::request(Task* task)
 uint32_t TaskScheduler::threads()
 {
     return _inst ? _inst->threadCnt() : 0;
-}
-
-
-bool TaskScheduler::onthread()
-{
-    return _tid != tid();
-}
-
-
-ThreadID TaskScheduler::tid()
-{
-#ifdef THORVG_THREAD_SUPPORT
-    return std::this_thread::get_id();
-#else
-    return 0;
-#endif
 }
