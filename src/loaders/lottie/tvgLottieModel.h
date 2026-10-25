@@ -481,7 +481,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
     {
         enum Group : uint8_t { Chars = 1, Word = 2, Line = 3, All = 4 };
         Group group = Chars;
-        LottieScalar anchor{};
+        LottieScalar anchor = Point{0.0f, 0.0f};
     } alignOp;
 
     LottieText() : LottieObject(LottieObject::Text) {}
