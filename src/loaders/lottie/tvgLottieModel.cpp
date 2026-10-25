@@ -282,8 +282,9 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         if (minEase > 0.0f) out.x = minEase * 0.01f;
         else out.y = -minEase * 0.01f;
 
-        interpolator->set(nullptr, in, out);
-        f = interpolator->progress(f);
+        LottieInterpolator interpolator;
+        interpolator.set(nullptr, in, out);
+        f = interpolator.progress(f);
     }
     f = tvg::clamp(f, 0.0f, 1.0f);
 

@@ -1248,11 +1248,7 @@ void LottieParser::parseTextRange(LottieText* text)
                 enterObject();
                 while (auto key = nextObjectKey()) {
                     if (KEY_AS("t")) selector->expressible = (bool) getInt();
-                    else if (KEY_AS("xe"))
-                    {
-                        parseProperty(selector->maxEase, selector);
-                        selector->interpolator = tvg::malloc<LottieInterpolator>(sizeof(LottieInterpolator));
-                    }
+                    else if (KEY_AS("xe")) parseProperty(selector->maxEase, selector);
                     else if (KEY_AS("ne")) parseProperty(selector->minEase, selector);
                     else if (KEY_AS("a")) parseProperty(selector->maxAmount, selector);
                     else if (KEY_AS("b")) selector->based = (LottieTextRange::Based) getInt();
