@@ -1225,12 +1225,13 @@ static LottieGlyph* _searchGlyph(const LottieFont* font, const char* p, const Te
 {
     capScale = 1.0f;
     auto outCode = p;
+    char capCode[2] = {0, 0};  //outlives the search below, which reads it through outCode
 
     // SmallCaps: lowercase letters are converted to uppercase with 70% scale
     if ((unsigned char)*p < 0x80 && doc.caps) {
         if (*p >= 'a' && *p <= 'z') {
-            char capCode = *p + 'A' - 'a';
-            outCode = &capCode;
+            capCode[0] = *p + 'A' - 'a';
+            outCode = capCode;
             if (doc.caps == 2) capScale = 0.7f;
         }
     }
