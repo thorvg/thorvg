@@ -454,7 +454,8 @@ void LottieParser::parsePropertyInternal(T& prop)
     } else {
         enterArray();
         while (nextArrayValue()) {
-            if (peekType() == kObjectType) parseKeyFrame(prop);  //keyframes value
+            if (peekType() == kNullType) getNull();
+            else if (peekType() == kObjectType) parseKeyFrame(prop);  //keyframes value
             else if (getValue(prop.value)) break; //multi value property with no keyframes
         }
         prop.prepare();
