@@ -21,7 +21,6 @@
  */
 
 
-#include "tvgArray.h"
 #include "tvgTaskScheduler.h"
 
 /************************************************************************/
@@ -96,6 +95,9 @@ struct TaskSchedulerImpl
     Array<thread*>                 threads;
     Array<TaskQueue*>              taskQueues;
     atomic<uint32_t>               idx{0};
+    mutex drainMtx;
+    condition_variable drained;
+    uint32_t deferredCount = 0;
 
     TaskSchedulerImpl(uint32_t threadCnt)
     {
@@ -113,6 +115,11 @@ struct TaskSchedulerImpl
 
     ~TaskSchedulerImpl()
     {
+        // Waiting tasks can still enqueue successors. Keep all workers alive until drained.
+        {
+            unique_lock<mutex> lock(drainMtx);
+            drained.wait(lock, [&] { return deferredCount == 0; });
+        }
         ARRAY_FOREACH(p, taskQueues) {
             (*p)->complete();
         }
@@ -140,8 +147,40 @@ struct TaskSchedulerImpl
             }
 
             if (!success && !taskQueues[i]->pop(&task)) break;
-            (*task)(i + 1);
+            auto deferred = task->dependencies.count > 0;
+            task->run(i + 1);
+
+            // Keep prerequisite results alive until this task has finished reading them.
+            ARRAY_FOREACH(p, task->dependencies) {
+                lock_guard<mutex> lock((*p)->mtx);
+                if (--(*p)->users == 0) (*p)->cv.notify_all();
+            }
+            task->dependencies.clear();
+
+            {
+                lock_guard<mutex> lock(task->mtx);
+                task->ready = true;
+                ARRAY_FOREACH(p, task->dependents) {
+                    if ((*p)->remaining.fetch_sub(1) == 1) enqueue(*p);
+                }
+                task->dependents.clear();
+                task->cv.notify_all();
+            }
+            // done() may now return and destroy task. Do not access it again.
+            if (deferred) {
+                lock_guard<mutex> lock(drainMtx);
+                if (--deferredCount == 0) drained.notify_one();
+            }
         }
+    }
+
+    void enqueue(Task* task)
+    {
+        auto i = idx++;
+        for (uint32_t n = 0; n < threads.count; ++n) {
+            if (taskQueues[(i + n) % threads.count]->tryPush(task)) return;
+        }
+        taskQueues[i % threads.count]->push(task);
     }
 
     void request(Task* task)
@@ -149,14 +188,31 @@ struct TaskSchedulerImpl
         //Async
         if (threads.count > 0) {
             task->prepare();
-            auto i = idx++;
-            for (uint32_t n = 0; n < threads.count; ++n) {
-                if (taskQueues[(i + n) % threads.count]->tryPush(task)) return;
+            if (task->dependencies.count == 0) {
+                enqueue(task);
+                return;
             }
-            taskQueues[i % threads.count]->push(task);
-        //Sync
+            {
+                lock_guard<mutex> lock(drainMtx);
+                ++deferredCount;
+            }
+            // The submission reference prevents execution before registration finishes.
+            task->remaining = 1;
+            ARRAY_FOREACH(p, task->dependencies) {
+                auto dependency = *p;
+                lock_guard<mutex> lock(dependency->mtx);
+                ++dependency->users;
+                dependency->pending = true;
+                if (!dependency->ready) {
+                    ++task->remaining;
+                    dependency->dependents.push(task);
+                }
+            }
+            if (task->remaining.fetch_sub(1) == 1) enqueue(task);
+        // Sync
         } else {
             task->run(0);
+            task->dependencies.clear();
         }
     }
 

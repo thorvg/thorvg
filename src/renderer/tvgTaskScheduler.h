@@ -25,6 +25,7 @@
 
 #include "tvgCommon.h"
 #include "tvgInlist.h"
+#include "tvgArray.h"
 
 #ifdef THORVG_THREAD_SUPPORT
     #include <atomic>
@@ -44,19 +45,30 @@ private:
     mutex                   mtx;
     condition_variable      cv;
     bool                    ready = true;
-    bool                    pending = false;
+    atomic<bool> pending{false};
+    Array<Task*> dependents;  // Tasks waiting for this task to finish; cleared on completion.
+    atomic<uint32_t> remaining{0};
+    uint32_t users = 0;
 
 public:
     INLIST_ITEM(Task);
+    Array<Task*> dependencies;  // Prerequisites that must finish before this task runs; cleared after execution.
 
     virtual ~Task() = default;
+
+    // Add prerequisites after done() and before request().
+    // Prerequisites must be idle or already submitted; cycles are not supported.
+    void depend(Task* task)
+    {
+        dependencies.push(task);
+    }
 
     void done()
     {
         if (!pending) return;
 
         unique_lock<mutex> lock(mtx);
-        while (!ready) cv.wait(lock);
+        while (!ready || users) cv.wait(lock);
         pending = false;
     }
 
@@ -64,17 +76,9 @@ protected:
     virtual void run(unsigned tid) = 0;
 
 private:
-    void operator()(unsigned tid)
-    {
-        run(tid);
-
-        lock_guard<mutex> lock(mtx);
-        ready = true;
-        cv.notify_one();
-    }
-
     void prepare()
     {
+        lock_guard<mutex> lock(mtx);
         ready = false;
         pending = true;
     }
@@ -91,6 +95,7 @@ public:
 
     virtual ~Task() = default;
     void done() {}
+    void depend(Task*) {}
 
 protected:
     virtual void run(unsigned tid) = 0;
