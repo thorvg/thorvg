@@ -103,7 +103,16 @@ struct SwShapeTask : SwTask
        Additionally, the stroke style should not be dashed. */
     bool antialiasing(float strokeWidth)
     {
-        return renderer->antiAlias && (strokeWidth < 2.0f || rshape->stroke->dash.count > 0 || rshape->stroke->first || rshape->trimpath() || rshape->stroke->color.a < 255);
+        if (!renderer->antiAlias) return false;
+        if (strokeWidth < 2.0f || rshape->stroke->dash.count > 0 || rshape->stroke->first || rshape->trimpath() || rshape->stroke->color.a < 255) return true;
+
+        // Implicit fill closures are not covered by the stroke.
+        bool closed = true;
+        for (auto cmd : rshape->path.cmds) {
+            if (cmd == PathCommand::MoveTo && !closed) return true;
+            closed = (cmd == PathCommand::Close);
+        }
+        return !closed;
     }
 
     float validStrokeWidth(bool clipper)
