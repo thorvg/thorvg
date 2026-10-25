@@ -218,8 +218,11 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
     if (random > 0) {
         auto range = end - start;
         auto len = (rangeUnit == Unit::Percent) ? 100.0f : totalLen;
-        start = static_cast<float>(random % int(len - range));
-        end = start + range;
+        auto span = int(len - range);
+        if (span != 0) {
+            start = static_cast<float>(random % span);
+            end = start + range;
+        }
     }
 
     auto divisor = (rangeUnit == Unit::Percent) ? (100.0f / totalLen) : 1.0f;
