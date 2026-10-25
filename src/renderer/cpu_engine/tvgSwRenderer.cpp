@@ -724,8 +724,6 @@ bool SwRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 bool SwRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 {
     auto task = static_cast<SwShapeTask*>(data);
-    task->done();
-
     if (!task->valid || !task->bounds().intersected(region)) return false;
     if (rleIntersect(task->shape.strokeRle, region)) return true;
     return task->shape.fastTrack || rleIntersect(task->shape.rle, region);
@@ -735,8 +733,6 @@ bool SwRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 bool SwRenderer::intersectsImage(RenderData data, const RenderRegion& region)
 {
     auto task = static_cast<SwImageTask*>(data);
-    task->done();
-
     if (!task->valid || !task->bounds().intersected(region)) return false;
 
     //aabb & obb transformed image intersection
