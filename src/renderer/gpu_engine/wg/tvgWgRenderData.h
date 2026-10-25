@@ -112,9 +112,14 @@ struct WgShape : WgPaint
     bool strokeOverlapFree;
 
     void expand(const BBox& bb);
-    void update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity);
+    // its entry in the renderer's geometries still to make, if any
+    uint32_t geometry = UINT32_MAX;
+
+    void update(const RenderShape& rshape, const RenderRegion& vport, uint8_t opacity);
     void update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag);
+    void update(ColorSpace cs, uint8_t opacity);
     void reset();
+    void resetGeometry();  // all but its clips
     void release(WgContext& context) override;
 
     RenderRegion region() override
