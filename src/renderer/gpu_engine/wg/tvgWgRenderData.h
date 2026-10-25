@@ -34,6 +34,9 @@ struct WgGradientTexture
     WGPUTexture texture{};
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
+    // the color stops the texture's ramp was made from, and whether they're all opaque
+    Array<Fill::ColorStop> stops;
+    bool opaque = false;
 
     bool update(WgContext& context, const Fill* fill, FillSpread& currentSpread);
     void release(WgContext& context);
