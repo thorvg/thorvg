@@ -45,7 +45,7 @@ jobs:
       - name: Install build packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build pkg-config curl unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+          sudo apt-get install -y meson ninja-build pkg-config curl unzip libegl-dev libgl1-mesa-dev
 
       - name: Install wgpu_native
         run: bash thorvg/.github/workflows/install_wgpu_native.sh
@@ -110,7 +110,7 @@ jobs:
       - name: Install runtime packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev libvulkan1 mesa-vulkan-drivers
+          sudo apt-get install -y libegl-dev libgl1-mesa-dev libvulkan1 mesa-vulkan-drivers
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v2
@@ -181,7 +181,7 @@ jobs:
       - name: Install runtime packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y unzip libturbojpeg0-dev libpng-dev libwebp-dev libegl-dev libgl1-mesa-dev
+          sudo apt-get install -y unzip libegl-dev libgl1-mesa-dev
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v2
