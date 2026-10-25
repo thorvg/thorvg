@@ -53,10 +53,21 @@ if ! command -v clang-format >/dev/null 2>&1; then
     exit 1
 fi
 
+FORMAT_DIFF=(clang-format-diff)
 if ! command -v clang-format-diff >/dev/null 2>&1; then
-    echo "Error: clang-format-diff is not installed or not in PATH."
-    echo "Hint: On macOS, install via: brew install clang-format"
-    exit 1
+    # Homebrew installs the helper outside PATH.
+    if command -v brew >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1 &&
+       prefix=$(brew --prefix clang-format 2>/dev/null); then
+        helper="$prefix/share/clang/clang-format-diff.py"
+        if [ -f "$helper" ]; then
+            FORMAT_DIFF=(python3 "$helper")
+        fi
+    fi
+    if [ "${FORMAT_DIFF[0]}" = clang-format-diff ]; then
+        echo "Error: clang-format-diff is not installed or not in PATH."
+        echo "Hint: On macOS, install via: brew install clang-format"
+        exit 1
+    fi
 fi
 
 # ------------------------------
@@ -84,6 +95,6 @@ fi
 
 echo "Formatting changes in commit: $COMMIT"
 
-git show -U0 "$COMMIT" | clang-format-diff -p1 -i
+git show -U0 "$COMMIT" | "${FORMAT_DIFF[@]}" -p1 -i
 
 echo "Done."
