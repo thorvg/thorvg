@@ -337,11 +337,6 @@ struct LottieTextRange : LottieObject
         style.flags.strokeWidth = 0;
     }
 
-    ~LottieTextRange()
-    {
-        tvg::free(interpolator);
-    }
-
     struct {
         LottieColor fillColor = RGB32{255, 255, 255};
         LottieColor strokeColor = RGB32{255, 255, 255};
@@ -368,7 +363,6 @@ struct LottieTextRange : LottieObject
     LottieFloat smoothness = 100.0f;
     LottieFloat start = 0.0f;
     LottieFloat end = 100.0f;
-    LottieInterpolator* interpolator = nullptr;
     Based based = Chars;
     Shape shape = Square;
     Unit rangeUnit = Percent;
