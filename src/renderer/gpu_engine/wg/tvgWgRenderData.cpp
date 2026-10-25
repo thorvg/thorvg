@@ -36,16 +36,26 @@
 
 bool WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread& currentSpread)
 {
-    // compute gradient data
-    WgShaderTypeGradientData gradientData;
-    auto opaque = gradientData.update(fill);
-    // allocate new texture handle
-    auto bytesPerRow = WG_TEXTURE_GRADIENT_SIZE * sizeof(uint32_t);
-    bool texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data, bytesPerRow, bytesPerRow);
-    // update texture view if texture handle was changed
-    if (texHandleChanged) {
-        context.releaseTextureView(textureView);
-        textureView = context.createTextureView(texture);
+    // the ramp depends on the color stops alone: kept while they're the same
+    const Fill::ColorStop* fillStops = nullptr;
+    auto stopCnt = fill->colorStops(&fillStops);
+    auto same = texture && stopCnt == stops.count && (stopCnt == 0 || memcmp(stops.data, fillStops, sizeof(Fill::ColorStop) * stopCnt) == 0);
+    bool texHandleChanged = false;
+    if (!same) {
+        // compute gradient data
+        WgShaderTypeGradientData gradientData;
+        opaque = gradientData.update(fill);
+        // allocate new texture handle
+        auto bytesPerRow = WG_TEXTURE_GRADIENT_SIZE * sizeof(uint32_t);
+        texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data, bytesPerRow, bytesPerRow);
+        // update texture view if texture handle was changed
+        if (texHandleChanged) {
+            context.releaseTextureView(textureView);
+            textureView = context.createTextureView(texture);
+        }
+        stops.clear();
+        for (uint32_t i = 0; i < stopCnt; ++i)
+            stops.push(fillStops[i]);
     }
     // get sampler by spread type. Conic gradients always use repeat to filter
     // across the first/last ramp texels at their seam.
@@ -67,6 +77,7 @@ void WgGradientTexture::release(WgContext& context)
     context.layouts.releaseBindGroup(bindGroup);
     context.releaseTextureView(textureView);
     context.releaseTexture(texture);
+    stops.reset();
 };
 
 //***********************************************************************
