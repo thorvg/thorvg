@@ -65,10 +65,10 @@
 
 void cRasterGaussianFilterRow(uint8_t* dst, const uint8_t* src, int32_t w, int32_t dimension, float iarr)
 {
-    auto end = w - 1;
+    int end = w - 1;
     auto i = 0;                 // current index
-    auto l = -(dimension + 1);  // left index
-    auto r = dimension;         // right index
+    int l = -(dimension + 1);   // left index
+    int r = dimension;          // right index
     int acc[4] = {0, 0, 0, 0};  // sliding accumulator
 
     // initial accumulation
