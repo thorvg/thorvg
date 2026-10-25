@@ -21,7 +21,6 @@
  */
 
 #include "tvgMath.h"
-#include "tvgArray.h"
 
 #define BEZIER_EPSILON 1e-2f
 
@@ -397,26 +396,39 @@ bool Bezier::flatten(float tolerance) const
 uint32_t Bezier::segments(float scale) const
 {
     static constexpr uint32_t MaxSegments = 1u << 10; // 2^10 segments cap keeps runtime bounded
+    // Depth first, the halves still to flatten are only a few: they're kept on the stack,
+    // and only a deeper subdivision moves them to the heap.
+    static constexpr uint32_t Local = 32;
+    Bezier local[Local];
+    auto stack = local;
+    uint32_t reserved = Local;
+    uint32_t pending = 0;
     auto tolerance = 0.5f / scale;
     uint32_t count = 0;
-    Array<Bezier> stack;
-    stack.push(*this);
-    Bezier left, right;
+    stack[pending++] = *this;
 
-    while (!stack.empty()) {
-        auto current = stack.pick();
+    while (pending > 0) {
+        auto current = stack[--pending];
         if (current.flatten(tolerance)) {
             ++count;
             continue;
         }
-        if (count + stack.count + 2 >= MaxSegments) {
+        if (count + pending + 2 >= MaxSegments) {
             TVGERR("Common", "Bezier segments count exceeded the maximum limit.");
-            return MaxSegments;
+            count = MaxSegments;
+            break;
         }
-        current.split(left, right);
-        stack.push(left);
-        stack.push(right);
+        if (pending + 2 > reserved) {
+            reserved *= 2;
+            auto grown = tvg::malloc<Bezier>(sizeof(Bezier) * reserved);
+            memcpy(grown, stack, sizeof(Bezier) * pending);
+            if (stack != local) tvg::free(stack);
+            stack = grown;
+        }
+        current.split(stack[pending], stack[pending + 1]);
+        pending += 2;
     }
+    if (stack != local) tvg::free(stack);
     return count;
 }
 
