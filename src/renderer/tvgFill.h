@@ -135,7 +135,7 @@ struct RadialGradientImpl : RadialGradient
         constexpr float PRECISION = 0.02f;
         if (r < PRECISION) return false;  // too small, treated as solid fill
 
-        auto dist = tvg::length(center, focal);
+        auto dist = tvg::length(center - focal);
 
         // clamp focal point to inside end circle if outside
         if (this->r - dist <  PRECISION) {
