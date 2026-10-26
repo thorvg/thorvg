@@ -25,26 +25,38 @@
 
 #include "tvgCommon.h"
 #include "tvgInlist.h"
+#include "tvgArray.h"
 
 #ifdef THORVG_THREAD_SUPPORT
-    #include <atomic>
-    #include <thread>
     #include <mutex>
     #include <condition_variable>
 #endif
 
-namespace tvg {
-
+namespace tvg
+{
 
 #ifdef THORVG_THREAD_SUPPORT
 
 struct Task
 {
 private:
-    mutex                   mtx;
-    condition_variable      cv;
-    bool                    ready = true;
-    bool                    pending = false;
+    Array<Task*> waiters;   // dependent tasks that must wait for this task to finish
+    mutex mtx;              // protects task state shared between threads
+    condition_variable cv;  // wakes done() when task execution completes
+    uint16_t deps = 0;      // number of unfinished dependencies this task must wait for
+    bool ready = true;      // true when no execution is outstanding
+    bool pending = false;   // true when a submitted task has not been consumed by done()
+
+    bool prepare()
+    {
+        lock_guard<mutex> lock(mtx);
+        ready = false;
+        pending = true;
+        return deps == 0;
+    }
+
+protected:
+    virtual void run(unsigned tid) = 0;
 
 public:
     INLIST_ITEM(Task);
@@ -60,23 +72,12 @@ public:
         pending = false;
     }
 
-protected:
-    virtual void run(unsigned tid) = 0;
-
-private:
-    void operator()(unsigned tid)
+    void depend(Task* task)
     {
-        run(tid);
-
-        lock_guard<mutex> lock(mtx);
-        ready = true;
-        cv.notify_one();
-    }
-
-    void prepare()
-    {
-        ready = false;
-        pending = true;
+        lock_guard<mutex> lock(task->mtx);
+        if (task->ready) return;
+        ++deps;
+        task->waiters.push(this);
     }
 
     friend struct TaskSchedulerImpl;
@@ -91,6 +92,7 @@ public:
 
     virtual ~Task() = default;
     void done() {}
+    void depend(TVG_UNUSED Task* task) {}
 
 protected:
     virtual void run(unsigned tid) = 0;
@@ -110,6 +112,6 @@ struct TaskScheduler
     static void request(Task* task);
 };
 
-}  //namespace
+}  // namespace tvg
 
 #endif //_TVG_TASK_SCHEDULER_H_

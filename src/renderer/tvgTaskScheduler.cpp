@@ -24,15 +24,22 @@
 #include "tvgArray.h"
 #include "tvgTaskScheduler.h"
 
+#ifdef THORVG_THREAD_SUPPORT
+    #include <atomic>
+    #include <thread>
+#endif
+
 /************************************************************************/
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-namespace tvg {
+namespace tvg
+{
 
 #ifdef THORVG_THREAD_SUPPORT
 
-struct TaskQueue {
+struct TaskQueue
+{
     Inlist<Task>             taskDeque;
     mutex                    mtx;
     condition_variable       ready;
@@ -90,7 +97,6 @@ struct TaskQueue {
     }
 };
 
-
 struct TaskSchedulerImpl
 {
     Array<thread*>                 threads;
@@ -125,39 +131,58 @@ struct TaskSchedulerImpl
         }
     }
 
+    void complete(Task* task)
+    {
+        {
+            lock_guard<mutex> lock(task->mtx);
+            task->ready = true;
+            task->cv.notify_one();
+        }
+
+        ARRAY_FOREACH(p, task->waiters) {
+            auto waiter = *p;
+            bool runnable;
+            {
+                lock_guard<mutex> lock(waiter->mtx);
+                runnable = (--waiter->deps == 0 && waiter->pending);
+            }
+            if (runnable) enqueue(waiter);
+        }
+        task->waiters.clear();
+    }
+
     void run(unsigned i)
     {
         Task* task;
 
-        //Thread Loop
+        // thread loop
         while (true) {
             auto success = false;
-            for (uint32_t x = 0; x < threads.count * 2; ++x) {
+            for (uint32_t x = 0; x < threads.count; ++x) {
                 if (taskQueues[(i + x) % threads.count]->tryPop(&task)) {
                     success = true;
                     break;
                 }
             }
-
             if (!success && !taskQueues[i]->pop(&task)) break;
-            (*task)(i + 1);
+            task->run(i + 1);
+            complete(task);
         }
+    }
+
+    void enqueue(Task* task)
+    {
+        auto i = idx.fetch_add(1, memory_order_relaxed);
+        for (uint32_t n = 0; n < taskQueues.count; ++n) {
+            if (taskQueues[(i + n) % taskQueues.count]->tryPush(task)) return;
+        }
+        taskQueues[i % taskQueues.count]->push(task);
     }
 
     void request(Task* task)
     {
-        //Async
-        if (threads.count > 0) {
-            task->prepare();
-            auto i = idx++;
-            for (uint32_t n = 0; n < threads.count; ++n) {
-                if (taskQueues[(i + n) % threads.count]->tryPush(task)) return;
-            }
-            taskQueues[i % threads.count]->push(task);
-        //Sync
-        } else {
-            task->run(0);
-        }
+        if (threads.empty()) task->run(0);        // sync
+        else if (task->prepare()) enqueue(task);  // async
     }
 
     uint32_t threadCnt()
@@ -177,8 +202,7 @@ struct TaskSchedulerImpl
 
 #endif //THORVG_THREAD_SUPPORT
 
-
-} //namespace
+}  // namespace tvg
 
 /************************************************************************/
 /* External Class Implementation                                        */
