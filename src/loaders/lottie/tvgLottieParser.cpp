@@ -1599,6 +1599,8 @@ LottieLayer* LottieParser::parseLayer(LottieRootLayer* precomp)
         else skip();
     }
 
+    if (layer->type == LottieLayer::Precomp) layer->clear();
+
     layer->prepare(&color);
 
     layer->effect = !layer->effects.empty();
