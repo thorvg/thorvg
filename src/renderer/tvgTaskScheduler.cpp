@@ -133,11 +133,7 @@ struct TaskSchedulerImpl
 
     void complete(Task* task)
     {
-        {
-            lock_guard<mutex> lock(task->mtx);
-            task->ready = true;
-            task->cv.notify_one();
-        }
+        lock_guard<mutex> lock(task->mtx);
 
         ARRAY_FOREACH(p, task->nexts) {
             auto waiter = *p;
@@ -149,6 +145,8 @@ struct TaskSchedulerImpl
             if (runnable) enqueue(waiter);
         }
         task->nexts.clear();
+        task->ready = true;
+        task->cv.notify_one();
     }
 
     void run(unsigned i)
