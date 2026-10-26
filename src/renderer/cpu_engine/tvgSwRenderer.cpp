@@ -869,9 +869,8 @@ SwTask* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const A
     if (task->ready(ready)) return task;
 
     if (flags) {
-        // TODO: For deferred process, task scheduler dependency graph might be useful.
         ARRAY_FOREACH(p, clips) {
-            static_cast<SwTask*>(*p)->done();
+            task->depend(static_cast<Task*>(*p));
         }
         TaskScheduler::request(task);
     }
