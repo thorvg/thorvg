@@ -273,6 +273,7 @@ struct GlRenderer : RenderMethod
     bool mClearBuffer = false;
     bool mFullDraw = true;      // the next frame must redraw everything
     bool mPartialDraw = false;  // the current frame redraws the dirty regions only
+    bool restoreBounds = false;  // restore precise bounds before partial rendering resumes
     bool mBlended = false;      // a blended scene was composited since the last frame
 };
 

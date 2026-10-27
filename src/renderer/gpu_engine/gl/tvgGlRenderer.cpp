@@ -601,6 +601,10 @@ void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBoun
         shape->geometry.draw(clipTask, &mGpuBuffer, flag);
 
         auto clipBounds = shape->geometry.bounds();
+        if (restoreBounds || mPartialDraw) {
+            shape->box = clipBounds;
+            shape->box.intersect(shape->geometry.viewport);
+        }
         clipBounds.intersect(viewBounds);
         clipTask->setViewport(viewportRegion(passViewport, clipBounds));
 
@@ -1135,6 +1139,7 @@ bool GlRenderer::preRender()
 
     mRenderBounds = mRootTarget.viewport;
     mRenderRegions.clear();
+    restoreBounds = mFullDraw && !mClearBuffer;
     mPartialDraw = !mFullDraw && !mDirtyRegion.deactivated();
 
     if (mPartialDraw) {
@@ -1161,7 +1166,8 @@ bool GlRenderer::preRender()
 bool GlRenderer::postRender()
 {
     mDirtyRegion.clear();
-    mFullDraw = false;
+    // Remember explicit clears so the next update can skip damage collection.
+    mFullDraw = mClearBuffer;
 
     return true;
 }
@@ -1272,7 +1278,13 @@ bool GlRenderer::renderImage(void* data)
     if (!image) return false;
 
     if (currentPass()->isEmpty()) return true;
-    if (culled(image->box)) return true;
+    if (mPartialDraw || restoreBounds) {
+        if (restoreBounds || image->box == image->geometry.viewport) {
+            image->box = image->geometry.bounds();
+            image->box.intersect(image->geometry.viewport);
+        }
+        if (culled(image->box)) return true;
+    }
 
     auto vp = currentPass()->getViewport();
     auto bbox = image->geometry.viewport;
@@ -1332,7 +1344,14 @@ bool GlRenderer::renderShape(RenderData data)
 {
     auto shape = static_cast<GlShape*>(data);
     if (currentPass()->isEmpty() || (!shape->valid.fill && !shape->valid.stroke)) return true;
-    if (culled(shape->box)) return true;
+    if (mPartialDraw || restoreBounds) {
+        // A paint hidden during recovery needs precise bounds when shown.
+        if (restoreBounds || shape->box == shape->geometry.viewport) {
+            shape->box = shape->geometry.bounds();
+            shape->box.intersect(shape->geometry.viewport);
+        }
+        if (culled(shape->box)) return true;
+    }
 
     auto bbox = shape->geometry.viewport;
     bbox.intersect(currentPass()->getViewport());
@@ -1380,7 +1399,7 @@ bool GlRenderer::renderShape(RenderData data)
 void GlRenderer::dispose(RenderData data)
 {
     auto drawable = static_cast<GlDrawable*>(data);
-    dirty(drawable, false);
+    if (!mFullDraw) dirty(drawable, false);
     drawable->destroy(*this);
     delete (drawable);
 }
@@ -1397,7 +1416,10 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     auto cacheStale = image->texId && (image->stamp != textures.stamp);
     if (cacheStale) flags |= RenderUpdateFlag::Image;
     if (image->prepare(flags, {float(this->surface.w), float(this->surface.h)}, opacity, false)) {
-        if (opacity == 0) dirty(image, false);
+        if (opacity == 0) {
+            if (mFullDraw) image->box = {};
+            else dirty(image, false);
+        }
         return image;
     }
 
@@ -1424,7 +1446,9 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     image->geometry.viewport = vport;
     image->opacity = opacity;
 
-    dirty(image, true, retained);
+    // The viewport safely covers the paint while bounds tracking is skipped.
+    if (mFullDraw) image->box = image->geometry.viewport;
+    else dirty(image, true, retained);
 
     return image;
 }
@@ -1439,7 +1463,10 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     if (shape->prepare(flags, {float(surface.w), float(surface.h)}, opacity, clipper)) {
-        if (opacity == 0 && !clipper) dirty(shape, false);
+        if (opacity == 0 && !clipper) {
+            if (mFullDraw) shape->box = {};
+            else dirty(shape, false);
+        }
         return shape;
     }
 
@@ -1466,7 +1493,9 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     auto retained = (flags == RenderUpdateFlag::Clip && _sameClips(shape->clips, clips));
     if (flags & RenderUpdateFlag::Clip) shape->clips = clips;
 
-    dirty(shape, true, retained);
+    // Hidden paints may become visible without another geometry update.
+    if (mFullDraw) shape->box = shape->geometry.viewport;
+    else dirty(shape, true, retained);
 
     return shape;
 }
@@ -1490,7 +1519,7 @@ bool GlRenderer::postUpdate()
 void GlRenderer::damage(RenderData rd, const RenderRegion& region)
 {
     auto drawable = static_cast<GlDrawable*>(rd);
-    if (mDirtyRegion.deactivated() || (drawable && drawable->opacity == 0)) return;
+    if (mFullDraw || mDirtyRegion.deactivated() || (drawable && drawable->opacity == 0)) return;
     mDirtyRegion.add(region);
 }
 
