@@ -1224,14 +1224,13 @@ static void _commit(LottieGlyph* glyph, Shape* shape, const RenderText& ctx)
 static LottieGlyph* _searchGlyph(const LottieFont* font, const char* p, const TextDocument& doc, float& capScale)
 {
     capScale = 1.0f;
-    auto outCode = p;
-    char capCode[2] = {0, 0};  //outlives the search below, which reads it through outCode
+    char capCode[2] = {0, 0};  //outlives the search below, which reads it through p
 
     // SmallCaps: lowercase letters are converted to uppercase with 70% scale
     if ((unsigned char)*p < 0x80 && doc.caps) {
         if (*p >= 'a' && *p <= 'z') {
             capCode[0] = *p + 'A' - 'a';
-            outCode = capCode;
+            p = capCode;
             if (doc.caps == 2) capScale = 0.7f;
         }
     }
@@ -1240,7 +1239,7 @@ static LottieGlyph* _searchGlyph(const LottieFont* font, const char* p, const Te
     ARRAY_FOREACH(g, font->chars)
     {
         auto glyph = *g;
-        if (!strncmp(glyph->code, outCode, glyph->len)) return glyph;
+        if (!strncmp(glyph->code, p, glyph->len)) return glyph;
     }
     return nullptr;
 }
