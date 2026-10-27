@@ -53,12 +53,16 @@ Result WebMediaLoader::open(const char* data, uint32_t size, TVG_UNUSED const Lo
 
     auto bytes = val::global("Uint8Array").new_(val(typed_memory_view(size, reinterpret_cast<const uint8_t*>(data))));
     js = WebMediaPlayer(generator(reinterpret_cast<uintptr_t>(this), bytes));
+    if (js.isNull()) return Result::SystemError;
 
-    // FIXME: The surface must contain valid information, here or at least when WebMediaLoader::read() is called.
-    // surface.w =
-    // surface.h =
+    auto state = js.call<WebMediaState>("sync");
+    if (state.isNull()) return Result::SystemError;
 
-    return !js.isNull() ? Result::Success : Result::SystemError;
+    w = state["width"].as<float>();
+    h = state["height"].as<float>();
+    totalTime = state["duration"].as<float>();
+
+    return Result::Success;
 }
 
 bool WebMediaLoader::sync()
@@ -72,8 +76,6 @@ bool WebMediaLoader::sync()
     auto height = state["height"].as<uint32_t>();
     // todo: use ColorSpace::XBGR8888 if the video is not half-translucent
     surface.setup(tvg::realloc<uint32_t>(surface.buf32, width * height * sizeof(uint32_t)), width, width, height, sizeof(uint32_t), ColorSpace::ABGR8888S);
-    w = static_cast<float>(width);
-    h = static_cast<float>(height);
 
     auto data = state["data"];
     if (!surface.buf32 || data.isUndefined()) return false;
