@@ -287,7 +287,9 @@ enum struct SceneEffect : uint8_t
     Fill,          ///< Override the scene content color with a given fill information. Param(4) = {color_R(int)[0 - 255], color_G(int)[0 - 255], color_B(int)[0 - 255], opacity(int)[0 - 255]}
     Tint,          ///< Tinting the current scene color with a given black, white color parameters. Param(7) = {black_R(int)[0 - 255], black_G(int)[0 - 255], black_B(int)[0 - 255], white_R(int)[0 - 255], white_G(int)[0 - 255], white_B(int)[0 - 255], intensity(double)[0 - 100]}
     Tritone,       ///< Apply a tritone color effect to the scene using three color parameters for shadows, midtones, and highlights. A blending factor determines the mix between the original color and the tritone colors. Param(9) = {Shadow_R(int)[0 - 255], Shadow_G(int)[0 - 255], Shadow_B(int)[0 - 255], Midtone_R(int)[0 - 255], Midtone_G(int)[0 - 255], Midtone_B(int)[0 - 255], Highlight_R(int)[0 - 255], Highlight_G(int)[0 - 255], Highlight_B(int)[0 - 255], Blend(int)[0 - 255]}
-    MotionBlur     ///< Apply a centered linear motion blur. Param(3) = {distance(double)[>= 0, scene-local units], angle(double)[degrees, clockwise from the positive X axis], quality(int)[0 - 100]} @note Experimental API
+    MotionBlur,    ///< Apply a centered linear motion blur. Param(3) = {distance(double)[>= 0, scene-local units], angle(double)[degrees, clockwise from the positive X axis], quality(int)[0 - 100]} @note Experimental API
+    Pixellation,   ///< Replace each square block with its center pixel. Param(1) = {size(int)[output pixels, <= 1 disables the effect]}. Blocks start at the scene's clipped render bounds. CPU renderer only. @note Experimental API
+    Palette        ///< Map colors to a palette using a 5-bit-per-channel RGB lookup, preserving alpha. Param(3) = {colors(const uint32_t*)[0xRRGGBB, copied on add], count(int)[2 - 256], dither(double)[0 - 1, 0 disables 4x4 Bayer dithering, 1 applies up to 32 RGB levels of offset]}. CPU renderer only. @note Experimental API
 };
 
 /**
@@ -2473,6 +2475,18 @@ struct TVG_API SwCanvas final : Canvas
      * @see Canvas::sync()
      */
     Result target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs) noexcept;
+
+    /**
+     * @brief Enables or disables anti-aliased rendering.
+     *
+     * Changing this setting invalidates the canvas contents for the next draw.
+     *
+     * @param[in] on Whether anti-aliasing is enabled.
+     * @retval Result::InsufficientCondition If the canvas is updating or drawing. Call Canvas::sync() first.
+     * @retval Result::NonSupport If the software engine is unavailable.
+     * @note Experimental API
+     */
+    Result antialias(bool on) noexcept;
 
     /**
      * @brief Creates a new SwCanvas object with optional rendering engine settings.

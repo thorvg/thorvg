@@ -560,6 +560,64 @@ struct RenderEffectMotionBlur : RenderEffect
     }
 };
 
+struct RenderEffectPixellation : RenderEffect
+{
+    int size;
+
+    static RenderEffectPixellation* gen(va_list& args)
+    {
+        auto inst = new RenderEffectPixellation;
+        inst->size = std::max(va_arg(args, int), 1);
+        inst->type = SceneEffect::Pixellation;
+        return inst;
+    }
+};
+
+struct RenderEffectPalette : RenderEffect
+{
+    uint32_t colors[256]{};
+    uint8_t lookup[32 * 32 * 32];
+    int count;
+    float dither;
+
+    static RenderEffectPalette* gen(va_list& args)
+    {
+        auto colors = va_arg(args, const uint32_t*);
+        auto count = va_arg(args, int);
+        auto dither = va_arg(args, double);
+        if (!colors || count < 2 || count > 256 || !std::isfinite(dither) || dither < 0.0 || dither > 1.0) return nullptr;
+
+        auto inst = new RenderEffectPalette;
+        memcpy(inst->colors, colors, size_t(count) * sizeof(uint32_t));
+        inst->count = count;
+        inst->dither = float(dither);
+        inst->type = SceneEffect::Palette;
+        // One palette index per 5-bit RGB cell, sampled at the cell center.
+        for (int r = 0; r < 32; ++r) {
+            for (int g = 0; g < 32; ++g) {
+                for (int b = 0; b < 32; ++b) {
+                    auto best = 0;
+                    auto distance = 3 * 255 * 255 + 1;
+                    for (int i = 0; i < count; ++i) {
+                        auto c = inst->colors[i];
+                        auto dr = (r * 8 + 4) - int((c >> 16) & 255);
+                        auto dg = (g * 8 + 4) - int((c >> 8) & 255);
+                        auto db = (b * 8 + 4) - int(c & 255);
+                        auto d = dr * dr + dg * dg + db * db;
+                        if (d < distance) {
+                            distance = d;
+                            best = i;
+                            if (!d) break;
+                        }
+                    }
+                    inst->lookup[(r << 10) | (g << 5) | b] = uint8_t(best);
+                }
+            }
+        }
+        return inst;
+    }
+};
+
 struct RenderEffectDropShadow : RenderEffect
 {
     uint8_t color[4];  //rgba

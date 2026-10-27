@@ -699,6 +699,8 @@ bool SwRenderer::endComposite(RenderCompositor* cmp)
 void SwRenderer::prepare(RenderEffect* effect, const Matrix& transform)
 {
     switch (effect->type) {
+        case SceneEffect::Pixellation: effect->valid = (static_cast<RenderEffectPixellation*>(effect)->size > 1); break;
+        case SceneEffect::Palette: effect->valid = true; break;
         case SceneEffect::MotionBlur: effectMotionBlurUpdate(static_cast<RenderEffectMotionBlur*>(effect), transform); break;
         case SceneEffect::GaussianBlur: effectGaussianBlurUpdate(static_cast<RenderEffectGaussianBlur*>(effect), transform); break;
         case SceneEffect::DropShadow: effectDropShadowUpdate(static_cast<RenderEffectDropShadow*>(effect), transform); break;
@@ -796,6 +798,12 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
     if (p->recoverSfc->channelSize != sizeof(uint32_t)) direct = false;
     
     switch (effect->type) {
+        case SceneEffect::Pixellation: {
+            return effectPixellation(p, static_cast<const RenderEffectPixellation*>(effect));
+        }
+        case SceneEffect::Palette: {
+            return effectPalette(p, static_cast<const RenderEffectPalette*>(effect));
+        }
         case SceneEffect::MotionBlur: {
             return effectMotionBlur(p, request(surface->channelSize, true), static_cast<const RenderEffectMotionBlur*>(effect));
         }

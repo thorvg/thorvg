@@ -270,6 +270,14 @@ struct SceneImpl : Scene
                         ret = new RenderEffectMotionBlur(*(RenderEffectMotionBlur*)(*p));
                         break;
                     }
+                    case SceneEffect::Pixellation: {
+                        ret = new RenderEffectPixellation(*(RenderEffectPixellation*)(*p));
+                        break;
+                    }
+                    case SceneEffect::Palette: {
+                        ret = new RenderEffectPalette(*(RenderEffectPalette*)(*p));
+                        break;
+                    }
                     case SceneEffect::DropShadow: {
                         ret = new RenderEffectDropShadow(*(RenderEffectDropShadow*)(*p));
                         break;
@@ -429,6 +437,14 @@ struct SceneImpl : Scene
             }
             case SceneEffect::MotionBlur: {
                 re = RenderEffectMotionBlur::gen(args);
+                break;
+            }
+            case SceneEffect::Pixellation: {
+                re = RenderEffectPixellation::gen(args);
+                break;
+            }
+            case SceneEffect::Palette: {
+                re = RenderEffectPalette::gen(args);
                 break;
             }
             default: break;

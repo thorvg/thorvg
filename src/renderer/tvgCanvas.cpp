@@ -148,6 +148,22 @@ Result SwCanvas::target(uint32_t* buffer, uint32_t stride, uint32_t w, uint32_t 
 }
 
 
+Result SwCanvas::antialias(bool on) noexcept
+{
+#ifdef THORVG_CPU_ENGINE_SUPPORT
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
+
+    auto renderer = static_cast<SwRenderer*>(pImpl->renderer);
+    if (renderer->antiAlias != on) {
+        renderer->antiAlias = on;
+        pImpl->status = Status::Damaged;
+    }
+    return Result::Success;
+#endif
+    return Result::NonSupport;
+}
+
+
 SwCanvas* SwCanvas::gen(EngineOption op) noexcept
 {
 #ifdef THORVG_CPU_ENGINE_SUPPORT

@@ -23,6 +23,69 @@
 #include "tvgSwRasterCore.h"
 
 /************************************************************************/
+/* Pixellation Implementation                                           */
+/************************************************************************/
+
+bool effectPixellation(SwCompositor* cmp, const RenderEffectPixellation* params)
+{
+    auto& bbox = cmp->bbox;
+    auto stride = cmp->image.stride;
+
+    for (auto y = bbox.yMin; y < bbox.yMax;) {
+        auto h = std::min(params->size, bbox.yMax - y);
+        for (auto x = bbox.xMin; x < bbox.xMax;) {
+            auto w = std::min(params->size, bbox.xMax - x);
+            auto row = cmp->image.buf32 + size_t(y) * stride + x;
+            auto color = row[size_t(h / 2) * stride + w / 2];
+            for (int i = 0; i < h; ++i, row += stride) std::fill_n(row, w, color);
+            x += w;
+        }
+        y += h;
+    }
+    return true;
+}
+
+/************************************************************************/
+/* Palette Implementation                                               */
+/************************************************************************/
+
+bool effectPalette(SwCompositor* cmp, const RenderEffectPalette* params)
+{
+    static constexpr uint8_t bayer[4][4] = {
+        {0, 8, 2, 10}, {12, 4, 14, 6}, {3, 11, 1, 9}, {15, 7, 13, 5}
+    };
+    uint32_t colors[256];
+    auto rgb = (cmp->recoverSfc->join(255, 0, 0, 255) & 255) != 0;
+    for (int i = 0; i < params->count; ++i) {
+        auto c = params->colors[i];
+        colors[i] = cmp->recoverSfc->join((c >> 16) & 255, (c >> 8) & 255, c & 255, 255);
+    }
+
+    auto& bbox = cmp->bbox;
+    for (auto y = bbox.yMin; y < bbox.yMax; ++y) {
+        auto dst = cmp->image.buf32 + size_t(y) * cmp->image.stride + bbox.xMin;
+        for (auto x = bbox.xMin; x < bbox.xMax; ++x, ++dst) {
+            auto alpha = A(*dst);
+            if (!alpha) {
+                *dst = 0;
+                continue;
+            }
+
+            // Look up straight colors; the compositor stores premultiplied pixels.
+            auto offset = int((float(bayer[y & 3][x & 3]) - 7.5f) * 4.0f * params->dither);
+            auto c0 = std::max(0, std::min(255, int(((*dst & 255) * 255 + alpha / 2) / alpha) + offset));
+            auto c1 = std::max(0, std::min(255, int((((*dst >> 8) & 255) * 255 + alpha / 2) / alpha) + offset));
+            auto c2 = std::max(0, std::min(255, int((((*dst >> 16) & 255) * 255 + alpha / 2) / alpha) + offset));
+            auto index = rgb ? ((c0 >> 3) << 10) | ((c1 >> 3) << 5) | (c2 >> 3)
+                             : ((c2 >> 3) << 10) | ((c1 >> 3) << 5) | (c0 >> 3);
+            auto best = params->lookup[index];
+            *dst = ALPHA_BLEND(colors[best], alpha);
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /* Gaussian Blur Implementation                                         */
 /************************************************************************/
 

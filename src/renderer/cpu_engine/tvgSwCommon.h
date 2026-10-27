@@ -552,6 +552,8 @@ bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 bool effectMotionBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectMotionBlur* params);
 bool effectMotionBlurRegion(RenderEffectMotionBlur* params);
 void effectMotionBlurUpdate(RenderEffectMotionBlur* params, const Matrix& transform);
+bool effectPixellation(SwCompositor* cmp, const RenderEffectPixellation* params);
+bool effectPalette(SwCompositor* cmp, const RenderEffectPalette* params);
 bool effectGaussianBlur(SwCompositor* cmp, SwSurface* surface, const RenderEffectGaussianBlur* params);
 bool effectGaussianBlurRegion(RenderEffectGaussianBlur* effect);
 void effectGaussianBlurUpdate(RenderEffectGaussianBlur* effect, const Matrix& transform);
