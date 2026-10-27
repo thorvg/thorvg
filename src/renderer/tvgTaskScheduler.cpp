@@ -45,6 +45,7 @@ struct TaskQueue
     condition_variable       ready;
     bool                     done = false;
 
+    // try to get a task without waiting
     bool tryPop(Task** task)
     {
         unique_lock<mutex> lock{mtx, try_to_lock};
@@ -53,26 +54,7 @@ struct TaskQueue
         return true;
     }
 
-    bool tryPush(Task* task)
-    {
-        {
-            unique_lock<mutex> lock{mtx, try_to_lock};
-            if (!lock) return false;
-            taskDeque.back(task);
-        }
-        ready.notify_one();
-        return true;
-    }
-
-    void complete()
-    {
-        {
-            lock_guard<mutex> lock{mtx};
-            done = true;
-        }
-        ready.notify_all();
-    }
-
+    // wait for an available task
     bool pop(Task** task)
     {
         unique_lock<mutex> lock{mtx};
@@ -87,6 +69,19 @@ struct TaskQueue
         return true;
     }
 
+    // try to enqueue a task without waiting
+    bool tryPush(Task* task)
+    {
+        {
+            unique_lock<mutex> lock{mtx, try_to_lock};
+            if (!lock) return false;
+            taskDeque.back(task);
+        }
+        ready.notify_one();
+        return true;
+    }
+
+    // wait for the lock to enqueue a task
     void push(Task* task)
     {
         {
@@ -94,6 +89,15 @@ struct TaskQueue
             taskDeque.back(task);
         }
         ready.notify_one();
+    }
+
+    void complete()
+    {
+        {
+            lock_guard<mutex> lock{mtx};
+            done = true;
+        }
+        ready.notify_all();
     }
 };
 
@@ -133,11 +137,7 @@ struct TaskSchedulerImpl
 
     void complete(Task* task)
     {
-        {
-            lock_guard<mutex> lock(task->mtx);
-            task->ready = true;
-            task->cv.notify_one();
-        }
+        lock_guard<mutex> lock(task->mtx);
 
         ARRAY_FOREACH(p, task->nexts) {
             auto waiter = *p;
@@ -149,6 +149,8 @@ struct TaskSchedulerImpl
             if (runnable) enqueue(waiter);
         }
         task->nexts.clear();
+        task->ready = true;
+        task->cv.notify_one();
     }
 
     void run(unsigned i)
@@ -158,6 +160,7 @@ struct TaskSchedulerImpl
         // thread loop
         while (true) {
             auto success = false;
+            // try to steal a task for load balancing
             for (uint32_t x = 0; x < threads.count; ++x) {
                 if (taskQueues[(i + x) % threads.count]->tryPop(&task)) {
                     success = true;

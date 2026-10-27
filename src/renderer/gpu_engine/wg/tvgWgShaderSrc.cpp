@@ -28,7 +28,7 @@
 //************************************************************************
 
 const char* cShaderSrc_Stencil = R"(
-struct VertexInput { @location(0) position: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
 struct VertexOutput { @builtin(position) position: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat  : mat4x4f;
@@ -36,7 +36,8 @@ struct VertexOutput { @builtin(position) position: vec4f };
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     return out;
 }
 
@@ -51,7 +52,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Depth = R"(
-struct VertexInput { @location(0) position: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
 struct VertexOutput { @builtin(position) position: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat  : mat4x4f;
@@ -60,7 +61,8 @@ struct VertexOutput { @builtin(position) position: vec4f };
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.position.z = uDepth;
     return out;
 }
@@ -76,7 +78,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Solid = R"(
-struct VertexInput { @location(0) position: vec2f, @location(1) color: vec4f };
+struct VertexInput { @location(0) position: vec2f, @location(1) color: vec4f, @location(2) adjust: vec4f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) color: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
@@ -84,7 +86,8 @@ struct VertexOutput { @builtin(position) position: vec4f, @location(0) color: ve
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.color = in.color;
     return out;
 }
@@ -102,7 +105,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Linear = R"(
-struct VertexInput { @location(0) position: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
 struct PaintSettings { options: vec4f, gradient: GradSettings };
@@ -116,7 +119,8 @@ struct PaintSettings { options: vec4f, gradient: GradSettings };
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
@@ -139,7 +143,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Radial = R"(
-struct VertexInput { @location(0) position: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
 struct PaintSettings { options: vec4f, gradient: GradSettings };
@@ -152,7 +156,8 @@ struct PaintSettings { options: vec4f, gradient: GradSettings };
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
@@ -184,7 +189,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Conic = R"(
-struct VertexInput { @location(0) position: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
 struct VertexOutput { @builtin(position) position : vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
 struct PaintSettings { options: vec4f, gradient: GradSettings };
@@ -200,7 +205,8 @@ const INV_TAU: f32 = 0.15915494309189535;
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
     return out;
 }
@@ -233,7 +239,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Image = R"(
-struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f, @location(2) adjust: vec4f };
 struct VertexOutput { @builtin(position) position: vec4f, @location(0) vTexCoord: vec2f };
 struct PaintSettings { options: vec4f };
 
@@ -245,7 +251,8 @@ struct PaintSettings { options: vec4f };
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.position = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vTexCoord = in.texCoord;
     return out;
 }
@@ -290,20 +297,18 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Solid_Blend = R"(
-struct VertexInput { @location(0) position: vec2f, @location(1) color: vec4f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) vColor: vec4f, @location(1) vScrCoord: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(1) color: vec4f, @location(2) adjust: vec4f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) vColor: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
-@group(1) @binding(0) var uSamplerDst : sampler;
 @group(1) @binding(1) var uTextureDst : texture_2d<f32>;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
-    out.position = pos;
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vColor = in.color;
-    out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
     return out;
 }
 
@@ -311,7 +316,7 @@ struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
 fn getFragData(in: VertexOutput) -> FragData {
     // get source data
     let colorSrc = in.vColor;
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
+    let colorDst = textureLoad(uTextureDst, vec2i(in.position.xy), 0);
     // fill fragment data
     var data: FragData;
     data.Sc = colorSrc.rgb;
@@ -328,8 +333,8 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 )";
 
 const char* cShaderSrc_Linear_Blend = R"(
-struct VertexInput { @location(0) position: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
 struct PaintSettings { options: vec4f, gradient: GradSettings };
 
@@ -337,16 +342,14 @@ struct PaintSettings { options: vec4f, gradient: GradSettings };
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
-@group(3) @binding(0) var uSamplerDst : sampler;
 @group(3) @binding(1) var uTextureDst : texture_2d<f32>;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
-    out.position = pos;
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
-    out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
     return out;
 }
 
@@ -359,7 +362,7 @@ fn getFragData(in: VertexOutput) -> FragData {
     let ba = ed - st;
     let t = dot(pos - st, ba) / dot(ba, ba);
     let colorSrc = textureSample(uTextureGrad, uSamplerGrad, vec2f(t, 0.5));
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
+    let colorDst = textureLoad(uTextureDst, vec2i(in.position.xy), 0);
     // fill fragment data
     var data: FragData;
     data.Sc = colorSrc.rgb;
@@ -376,8 +379,8 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 )";
 
 const char* cShaderSrc_Radial_Blend = R"(
-struct VertexInput { @location(0) position: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
 struct PaintSettings { options: vec4f, gradient: GradSettings };
 
@@ -385,16 +388,14 @@ struct PaintSettings { options: vec4f, gradient: GradSettings };
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
-@group(3) @binding(0) var uSamplerDst : sampler;
 @group(3) @binding(1) var uTextureDst : texture_2d<f32>;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
-    out.position = pos;
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
-    out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
     return out;
 }
 
@@ -412,7 +413,7 @@ fn getFragData(in: VertexOutput) -> FragData {
     if (d >= 0) { t = min(1.0, (-b + sqrt(d))/(2*a)); }
     if ((c > 0) && (t >= 1.0)) { t = 0.0; }
     let colorSrc = textureSample(uTextureGrad, uSamplerGrad, vec2f(1.0 - t, 0.5));
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
+    let colorDst = textureLoad(uTextureDst, vec2i(in.position.xy), 0);
     // fill fragment data
     var data: FragData;
     data.Sc = colorSrc.rgb;
@@ -429,8 +430,8 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 )";
 
 const char* cShaderSrc_Conic_Blend = R"(
-struct VertexInput { @location(0) position: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f, @location(1) vScrCoord: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(2) adjust: vec4f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) vGradCoord : vec4f };
 struct GradSettings  { transform: mat4x4f, coords: vec4f, focal: vec4f };
 struct PaintSettings { options: vec4f, gradient: GradSettings };
 
@@ -438,7 +439,6 @@ struct PaintSettings { options: vec4f, gradient: GradSettings };
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
 @group(2) @binding(0) var uSamplerGrad : sampler;
 @group(2) @binding(1) var uTextureGrad : texture_2d<f32>;
-@group(3) @binding(0) var uSamplerDst : sampler;
 @group(3) @binding(1) var uTextureDst : texture_2d<f32>;
 
 const GRADIENT_SIZE: f32 = 512.0;
@@ -448,9 +448,8 @@ const INV_TAU: f32 = 0.15915494309189535;
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
-    out.position = pos;
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vGradCoord = uPaintSettings.gradient.transform * vec4f(in.position.xy, 0.0, 1.0);
-    out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
     return out;
 }
 
@@ -472,7 +471,7 @@ fn getFragData(in: VertexOutput) -> FragData {
         let color = textureSampleLevel(uTextureGrad, uSamplerGrad, vec2f(u, 0.5), 0.0);
         colorSrc = vec4f(color.rgb * color.a, color.a);
     }
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
+    let colorDst = textureLoad(uTextureDst, vec2i(in.position.xy), 0);
     var data: FragData;
     data.Sc = colorSrc.rgb;
     data.Sa = colorSrc.a;
@@ -488,24 +487,22 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return R; };
 )";
 
 const char* cShaderSrc_Image_Blend = R"(
-struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) vTexCoord : vec2f, @location(1) vScrCoord: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f, @location(2) adjust: vec4f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) vTexCoord : vec2f };
 struct PaintSettings { options: vec4f };
 
 @group(0) @binding(0) var<uniform> uViewMat : mat4x4f;
 @group(1) @binding(0) var<uniform> uPaintSettings : PaintSettings;
 @group(2) @binding(0) var uSamplerSrc : sampler;
 @group(2) @binding(1) var uTextureSrc : texture_2d<f32>;
-@group(3) @binding(0) var uSamplerDst : sampler;
 @group(3) @binding(1) var uTextureDst : texture_2d<f32>;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     let pos = uViewMat * vec4f(in.position.xy, 0.0, 1.0);
-    out.position = pos;
+    out.position = vec4f(pos.xy * in.adjust.xy + in.adjust.zw * pos.w, pos.zw);
     out.vTexCoord = in.texCoord;
-    out.vScrCoord = vec2f(0.5 + pos.x * 0.5, 0.5 - pos.y * 0.5);
     return out;
 }
 
@@ -513,7 +510,7 @@ struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
 fn getFragData(in: VertexOutput) -> FragData {
     // get source data
     let colorSrc = textureSample(uTextureSrc, uSamplerSrc, in.vTexCoord.xy);
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
+    let colorDst = textureLoad(uTextureDst, vec2i(in.position.xy), 0);
     // fill fragment data
     var data: FragData;
     data.Sc = colorSrc.rgb;
@@ -531,11 +528,10 @@ fn postProcess(d: FragData, R: vec4f) -> vec4f { return mix(vec4(d.Dc, d.Da), R,
 
 const char* cShaderSrc_Scene_Blend = R"(
 struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) vScrCoord: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) vTexCoord: vec2f };
 
 @group(0) @binding(0) var uSamplerSrc : sampler;
 @group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
-@group(1) @binding(0) var uSamplerDst : sampler;
 @group(1) @binding(1) var uTextureDst : texture_2d<f32>;
 @group(2) @binding(0) var<uniform> So : f32;
 
@@ -543,15 +539,15 @@ struct VertexOutput { @builtin(position) position: vec4f, @location(0) vScrCoord
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.position = vec4f(in.position.xy, 0.0, 1.0);
-    out.vScrCoord = in.texCoord;
+    out.vTexCoord = in.texCoord;
     return out;
 }
 
 struct FragData { Sc: vec3f, Sa: f32, So: f32, Dc: vec3f, Da: f32 };
 fn getFragData(in: VertexOutput) -> FragData {
     // get source data
-    let colorSrc = textureSample(uTextureSrc, uSamplerSrc, in.vScrCoord.xy);
-    let colorDst = textureSample(uTextureDst, uSamplerDst, in.vScrCoord.xy);
+    let colorSrc = textureSample(uTextureSrc, uSamplerSrc, in.vTexCoord.xy);
+    let colorDst = textureLoad(uTextureDst, vec2i(in.position.xy), 0);
     // fill fragment data
     var data: FragData;
     data.Sc = min(vec3f(1.0, 1.0, 1.0), colorSrc.rgb / select(colorSrc.a, 1.0, (colorSrc.a == 0.0) || (colorSrc.a == 1.0)));
@@ -811,8 +807,8 @@ fn fs_main_Add(in: VertexOutput) -> @location(0) vec4f {
 //************************************************************************
 
 const char* cShaderSrc_Scene_Compose = R"(
-struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f };
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) texCoord: vec2f };
+struct VertexInput { @location(0) position: vec2f, @location(1) texCoord: vec2f, @location(3) maskCoord: vec2f };
+struct VertexOutput { @builtin(position) position: vec4f, @location(0) texCoord: vec2f, @location(1) maskCoord: vec2f };
 
 @group(0) @binding(0) var uSamplerSrc : sampler;
 @group(0) @binding(1) var uTextureSrc : texture_2d<f32>;
@@ -824,7 +820,13 @@ fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.position = vec4f(in.position.xy, 0.0, 1.0);
     out.texCoord = in.texCoord;
+    out.maskCoord = in.maskCoord;
     return out;
+}
+
+fn readMask(coord: vec2f) -> vec4f {
+    let color = textureSample(uTextureMsk, uSamplerMsk, coord);
+    return select(vec4f(0.0), color, all(coord >= vec2f(0.0)) && all(coord < vec2f(1.0)));
 }
 
 @fragment
@@ -836,28 +838,28 @@ fn fs_main_None(in: VertexOutput) -> @location(0) vec4f {
 @fragment
 fn fs_main_ClipPath(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src * msk.a);
 };
 
 @fragment
 fn fs_main_AlphaMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src * msk.a);
 };
 
 @fragment
 fn fs_main_InvAlphaMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src * (1.0 - msk.a));
 };
 
 @fragment
 fn fs_main_LumaMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     let luma: f32 = dot(msk.rgb, vec3f(0.2125, 0.7154, 0.0721));
     return vec4f(src * luma);
 };
@@ -865,7 +867,7 @@ fn fs_main_LumaMask(in: VertexOutput) -> @location(0) vec4f {
 @fragment
 fn fs_main_InvLumaMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     let luma: f32 = dot(msk.rgb, vec3f(0.2125, 0.7154, 0.0721));
     return vec4f(src * (1.0 - luma));
 };
@@ -873,42 +875,42 @@ fn fs_main_InvLumaMask(in: VertexOutput) -> @location(0) vec4f {
 @fragment
 fn fs_main_AddMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src.rgb, src.a + msk.a * (1.0 - src.a));
 };
 
 @fragment
 fn fs_main_SubtractMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src.rgb, src.a * (1.0 - msk.a));
 };
 
 @fragment
 fn fs_main_IntersectMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src.rgb, src.a * msk.a);
 };
 
 @fragment
 fn fs_main_DifferenceMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src.rgb, src.a * (1.0 - msk.a) + msk.a * (1.0 - src.a));
 };
 
 @fragment
 fn fs_main_LightenMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src.rgb, max(src.a, msk.a));
 };
 
 @fragment
 fn fs_main_DarkenMask(in: VertexOutput) -> @location(0) vec4f {
     let src: vec4f = textureSample(uTextureSrc, uSamplerSrc, in.texCoord.xy);
-    let msk: vec4f = textureSample(uTextureMsk, uSamplerMsk, in.texCoord.xy);
+    let msk: vec4f = readMask(in.maskCoord);
     return vec4f(src.rgb, min(src.a, msk.a));
 };
 )";
@@ -1050,7 +1052,7 @@ fn fs_main_motion(in: VertexOutput) -> @location(0) vec4f {
     var color = vec4f(0.0);
     for (var i: i32 = 0; i < samples; i++) {
         let t = (f32(i) + 0.5) * invSamples - 0.5;
-        let p = clamp(in.position.xy + settings[0].xy * t, minCoord, maxCoord);
+        let p = clamp(in.texCoord / invTextureSize + settings[0].xy * t, minCoord, maxCoord);
         color += textureSampleLevel(uTextureSrc, uSamplerSrc, p * invTextureSize, 0.0);
     }
     return color * invSamples;
