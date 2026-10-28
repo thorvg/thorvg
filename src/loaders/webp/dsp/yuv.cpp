@@ -125,8 +125,6 @@ static volatile VP8CPUInfo yuv_last_cpuinfo_used =
 WEBP_TSAN_IGNORE_FUNCTION void WebPInitSamplers(void) {
   if (yuv_last_cpuinfo_used == VP8GetCPUInfo) return;
 
-  WebPSamplers[MODE_RGBA]      = YuvToRgbaRow;
-  WebPSamplers[MODE_BGRA]      = YuvToBgraRow;
   WebPSamplers[MODE_rgbA]      = YuvToRgbaRow;
   WebPSamplers[MODE_bgrA]      = YuvToBgraRow;
 
