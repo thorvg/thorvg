@@ -570,11 +570,6 @@ void WebPIoInitFrame(VP8Io* const io) {
   io->crop_bottom = io->height;
   io->mb_w = io->width;
   io->mb_h = io->height;
-#ifdef FANCY_UPSAMPLING
-  io->fancy_upsampling = 1;
-#else
-  io->fancy_upsampling = 0;
-#endif
 }
 
 //------------------------------------------------------------------------------
