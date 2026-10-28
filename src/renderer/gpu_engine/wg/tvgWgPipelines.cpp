@@ -28,7 +28,7 @@
 static const char* shaderBlendNames[]{
     "fs_main_Normal",
     "fs_main_Multiply",
-    "fs_main_Screen",
+    "fs_main",
     "fs_main_Overlay",
     "fs_main_Darken",
     "fs_main_Lighten",
@@ -37,12 +37,12 @@ static const char* shaderBlendNames[]{
     "fs_main_HardLight",
     "fs_main_SoftLight",
     "fs_main_Difference",
-    "fs_main_Exclusion",
+    "fs_main",
     "fs_main_Hue",
     "fs_main_Saturation",
     "fs_main_Color",
     "fs_main_Luminosity",
-    "fs_main_Add",
+    "fs_main",
     "fs_main_Normal"  // TODO: a padding for reserved Hardmix.
 };
 
@@ -119,13 +119,29 @@ WGPURenderPipeline WgPipelines::createRenderPipeline(
 }
 
 WGPURenderPipeline WgPipelines::createBlendPipeline(
-    WgContext& context, const char* pipelineLabel, WGPUShaderModule shaderModule,
-    const char* fsEntryPoint, WGPUPipelineLayout pipelineLayout,
+    WgContext& context, const char* pipelineLabel, WGPUShaderModule shaderModule, WGPUShaderModule shaderModuleBlend,
+    BlendMethod method, WGPUPipelineLayout pipelineLayout, WGPUPipelineLayout pipelineLayoutBlend,
     WGPUVertexBufferLayout* vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount,
     WGPUCompareFunction stencilCompare)
 {
     WGPUBlendComponent blendComponentSrc{.operation = WGPUBlendOperation_Add, .srcFactor = WGPUBlendFactor_One, .dstFactor = WGPUBlendFactor_Zero};
-    const WGPUBlendState blendStateSrc{.color = blendComponentSrc, .alpha = blendComponentSrc};
+    WGPUBlendState blendState{.color = blendComponentSrc, .alpha = blendComponentSrc};
+    switch (method) {
+        case BlendMethod::Screen:
+        case BlendMethod::Exclusion:
+            blendState.color.srcFactor = method == BlendMethod::Screen ? WGPUBlendFactor_One : WGPUBlendFactor_OneMinusDst;
+            blendState.color.dstFactor = WGPUBlendFactor_OneMinusSrc;
+            blendState.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+            break;
+        case BlendMethod::Add:
+            blendState.color.dstFactor = WGPUBlendFactor_One;
+            blendState.alpha.dstFactor = WGPUBlendFactor_One;
+            break;
+        default:
+            shaderModule = shaderModuleBlend;
+            pipelineLayout = pipelineLayoutBlend;
+            break;
+    }
     const WGPUDepthStencilState depthStencilState = makeDepthStencilState(
         WGPUCompareFunction_Always, WGPUOptionalBool_False,
         stencilCompare,
@@ -134,37 +150,37 @@ WGPURenderPipeline WgPipelines::createBlendPipeline(
 
     return createRenderPipeline(
         context.device, pipelineLabel,
-        shaderModule, "vs_main", fsEntryPoint,
+        shaderModule, "vs_main", shaderBlendNames[(uint32_t)method],
         pipelineLayout, vertexBufferLayouts, vertexBufferLayoutsCount,
-        WGPUColorWriteMask_All, WGPUTextureFormat_RGBA8Unorm, blendStateSrc,
+        WGPUColorWriteMask_All, WGPUTextureFormat_RGBA8Unorm, blendState,
         depthStencilState, multisampleState);
 }
 
 WGPURenderPipeline WgPipelines::solidBlend(WgContext& context, BlendMethod method)
 {
     auto index = (uint32_t)method;
-    if (!solidBlends[index]) solidBlends[index] = createBlendPipeline(context, "The render pipeline solid blend", shaderSolidBlend, shaderBlendNames[index], layoutSolidBlend, vertexBufferLayoutsSolid, 3, WGPUCompareFunction_NotEqual);
+    if (!solidBlends[index]) solidBlends[index] = createBlendPipeline(context, "The render pipeline solid blend", shaderSolid, shaderSolidBlend, method, layoutSolid, layoutSolidBlend, vertexBufferLayoutsSolid, 3, WGPUCompareFunction_NotEqual);
     return solidBlends[index];
 }
 
 WGPURenderPipeline WgPipelines::radialBlend(WgContext& context, BlendMethod method)
 {
     auto index = (uint32_t)method;
-    if (!radialBlends[index]) radialBlends[index] = createBlendPipeline(context, "The render pipeline radial blend", shaderRadialBlend, shaderBlendNames[index], layoutGradientBlend, vertexBufferLayoutsShape, 2, WGPUCompareFunction_NotEqual);
+    if (!radialBlends[index]) radialBlends[index] = createBlendPipeline(context, "The render pipeline radial blend", shaderRadial, shaderRadialBlend, method, layoutGradient, layoutGradientBlend, vertexBufferLayoutsShape, 2, WGPUCompareFunction_NotEqual);
     return radialBlends[index];
 }
 
 WGPURenderPipeline WgPipelines::linearBlend(WgContext& context, BlendMethod method)
 {
     auto index = (uint32_t)method;
-    if (!linearBlends[index]) linearBlends[index] = createBlendPipeline(context, "The render pipeline linear blend", shaderLinearBlend, shaderBlendNames[index], layoutGradientBlend, vertexBufferLayoutsShape, 2, WGPUCompareFunction_NotEqual);
+    if (!linearBlends[index]) linearBlends[index] = createBlendPipeline(context, "The render pipeline linear blend", shaderLinear, shaderLinearBlend, method, layoutGradient, layoutGradientBlend, vertexBufferLayoutsShape, 2, WGPUCompareFunction_NotEqual);
     return linearBlends[index];
 }
 
 WGPURenderPipeline WgPipelines::conicBlend(WgContext& context, BlendMethod method)
 {
     auto index = (uint32_t)method;
-    if (!conicBlends[index]) conicBlends[index] = createBlendPipeline(context, "The render pipeline conic blend", shaderConicBlend, shaderBlendNames[index], layoutGradientBlend, vertexBufferLayoutsShape, 2, WGPUCompareFunction_NotEqual);
+    if (!conicBlends[index]) conicBlends[index] = createBlendPipeline(context, "The render pipeline conic blend", shaderConic, shaderConicBlend, method, layoutGradient, layoutGradientBlend, vertexBufferLayoutsShape, 2, WGPUCompareFunction_NotEqual);
     return conicBlends[index];
 }
 
@@ -193,14 +209,14 @@ WGPURenderPipeline WgPipelines::clippedStroke(WgContext& context, WgRenderSettin
 WGPURenderPipeline WgPipelines::imageBlend(WgContext& context, BlendMethod method)
 {
     auto index = (uint32_t)method;
-    if (!imageBlends[index]) imageBlends[index] = createBlendPipeline(context, "The render pipeline image blend", shaderImageBlend, shaderBlendNames[index], layoutImageBlend, vertexBufferLayoutsImage, 3, WGPUCompareFunction_NotEqual);
+    if (!imageBlends[index]) imageBlends[index] = createBlendPipeline(context, "The render pipeline image blend", shaderImage, shaderImageBlend, method, layoutImage, layoutImageBlend, vertexBufferLayoutsImage, 3, WGPUCompareFunction_NotEqual);
     return imageBlends[index];
 }
 
 WGPURenderPipeline WgPipelines::sceneBlend(WgContext& context, BlendMethod method)
 {
     auto index = (uint32_t)method;
-    if (!sceneBlends[index]) sceneBlends[index] = createBlendPipeline(context, "The render pipeline scene blend", shaderSceneBlend, shaderBlendNames[index], layoutSceneBlend, vertexBufferLayoutsImage, 3, WGPUCompareFunction_Always);
+    if (!sceneBlends[index]) sceneBlends[index] = createBlendPipeline(context, "The render pipeline scene blend", shaderScene, shaderSceneBlend, method, layoutScene, layoutSceneBlend, vertexBufferLayoutsImage, 3, WGPUCompareFunction_Always);
     return sceneBlends[index];
 }
 
