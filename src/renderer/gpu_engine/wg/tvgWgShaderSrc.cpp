@@ -622,12 +622,6 @@ fn fs_main_Multiply(in: VertexOutput) -> @location(0) vec4f {
 }
 
 
-@fragment
-fn fs_main_Screen(in: VertexOutput) -> @location(0) vec4f {
-    let d: FragData = getFragData(in);
-    let Rc = d.Sc + d.Dc - d.Sc * d.Dc;
-    return postProcess(d, vec4f(Rc, 1.0));
-}
 
 @fragment
 fn fs_main_Overlay(in: VertexOutput) -> @location(0) vec4f {
@@ -728,12 +722,6 @@ fn fs_main_Difference(in: VertexOutput) -> @location(0) vec4f {
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
-@fragment
-fn fs_main_Exclusion(in: VertexOutput) -> @location(0) vec4f {
-    let d: FragData = getFragData(in);
-    let Rc = d.Sc + d.Dc - 2 * d.Sc * d.Dc;
-    return postProcess(d, vec4f(Rc, 1.0));
-}
 
 @fragment
 fn fs_main_Hue(in: VertexOutput) -> @location(0) vec4f {
@@ -794,12 +782,6 @@ fn fs_main_Luminosity(in: VertexOutput) -> @location(0) vec4f {
     return postProcess(d, vec4f(Rc, 1.0));
 }
 
-@fragment
-fn fs_main_Add(in: VertexOutput) -> @location(0) vec4f {
-    let d: FragData = getFragData(in);
-    let Rc = min(One, d.Sc + d.Dc);
-    return postProcess(d, vec4f(Rc, 1.0));
-}
 )";
 
 //************************************************************************
