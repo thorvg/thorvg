@@ -77,11 +77,6 @@ struct VP8Io {
   // during put()). Is NOT called if setup() failed.
   VP8IoTeardownHook teardown;
 
-  // this is a recommendation for the user-side yuv->rgb converter. This flag
-  // is set when calling setup() hook and can be overwritten by it. It then
-  // can be taken into consideration during the put() method.
-  int fancy_upsampling;
-
   // Input buffer.
   size_t data_size;
   const uint8_t* data;
