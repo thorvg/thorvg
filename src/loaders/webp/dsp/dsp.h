@@ -142,23 +142,6 @@ void VP8DspInit(void);
 //------------------------------------------------------------------------------
 // WebP I/O
 
-//#define FANCY_UPSAMPLING   // undefined to remove fancy upsampling support
-
-// Convert a pair of y/u/v lines together to the output rgb/a colorspace.
-// bottom_y can be NULL if only one line of output is needed (at top/bottom).
-typedef void (*WebPUpsampleLinePairFunc)(
-    const uint8_t* top_y, const uint8_t* bottom_y,
-    const uint8_t* top_u, const uint8_t* top_v,
-    const uint8_t* cur_u, const uint8_t* cur_v,
-    uint8_t* top_dst, uint8_t* bottom_dst, int len);
-
-#ifdef FANCY_UPSAMPLING
-
-// Fancy upsampling functions to convert YUV to RGB(A) modes
-extern WebPUpsampleLinePairFunc WebPUpsamplers[/* MODE_LAST */];
-
-#endif    // FANCY_UPSAMPLING
-
 // Per-row point-sampling methods.
 typedef void (*WebPSamplerRowFunc)(const uint8_t* y,
                                    const uint8_t* u, const uint8_t* v,
@@ -172,9 +155,6 @@ void WebPSamplerProcessPlane(const uint8_t* y, int y_stride,
 // Sampling functions to convert rows of YUV to RGB(A)
 extern WebPSamplerRowFunc WebPSamplers[/* MODE_LAST */];
 
-// Must be called before using the WebPUpsamplers[] (and for premultiplied
-// colorspaces like rgbA, rgbA4444, etc)
-void WebPInitUpsamplers(void);
 // Must be called before using WebPSamplers[]
 void WebPInitSamplers(void);
 
