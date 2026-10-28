@@ -18,7 +18,6 @@
 #include "./common.h"
 #include "./vp8li.h"
 #include "../utils/bit_reader.h"
-#include "../utils/random.h"
 #include "../dsp/dsp.h"
 
 #ifdef __cplusplus
@@ -136,9 +135,6 @@ typedef struct {  // Top/Left Contexts used for syntax-parsing
 typedef int quant_t[2];      // [DC / AC].  Can be 'uint16_t[2]' too (~slower).
 typedef struct {
   quant_t y1_mat_, y2_mat_, uv_mat_;
-
-  int uv_quant_;   // U/V quantizer value
-  int dither_;     // dithering amplitude (0 = off, max=255)
 } VP8QuantMatrix;
 
 // Data needed to reconstruct a macroblock
@@ -156,7 +152,6 @@ typedef struct {
   // This allows to call specialized transform functions.
   uint32_t non_zero_y_;
   uint32_t non_zero_uv_;
-  uint8_t dither_;      // local dithering strength (deduced from non_zero_*)
   uint8_t skip_;
   uint8_t segment_;
 } VP8MBData;
@@ -209,10 +204,6 @@ struct VP8Decoder {
   // per-partition boolean decoders.
   VP8BitReader parts_[MAX_NUM_PARTITIONS];
 
-  // Dithering strength, deduced from decoding options
-  int dither_;                // whether to use dithering or not
-  VP8Random dithering_rg_;    // random generator for dithering
-
   // dequantization (one set of DC/AC dequant factor per segment)
   VP8QuantMatrix dqm_[NUM_MB_SEGMENTS];
 
@@ -255,7 +246,6 @@ struct VP8Decoder {
   size_t alpha_data_size_;
   int is_alpha_decoded_;  // true if alpha_data_ is decoded in alpha_plane_
   uint8_t* alpha_plane_;  // output. Persistent, contains the whole data.
-  int alpha_dithering_;   // derived from decoding options (0=off, 100=full).
 };
 
 //------------------------------------------------------------------------------
@@ -284,9 +274,6 @@ VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io);
 // Must always be called in pair with VP8EnterCritical().
 // Returns false in case of error.
 int VP8ExitCritical(VP8Decoder* const dec, VP8Io* const io);
-// Initialize dithering post-process if needed.
-void VP8InitDithering(const WebPDecoderOptions* const options,
-                      VP8Decoder* const dec);
 // Process the last decoded row (filtering + output).
 int VP8ProcessRow(VP8Decoder* const dec, VP8Io* const io);
 // To be called at the start of a new scanline, to initialize predictors.

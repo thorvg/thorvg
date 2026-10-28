@@ -28,11 +28,8 @@ typedef int (*OutputFunc)(const VP8Io* const io, WebPDecParams* const p);
 
 struct WebPDecParams {
   WebPDecBuffer* output;             // output buffer.
-  uint8_t* tmp_y, *tmp_u, *tmp_v;    // cache for the fancy upsampler
 
   int last_y;                 // coordinate of the line that was last output
-  const WebPDecoderOptions* options;  // if not NULL, use alt decoding features
-  void* memory;                  // overall scratch memory for the output work.
 
   OutputFunc emit;               // output RGB samples
   OutputFunc emit_alpha;         // output alpha channel

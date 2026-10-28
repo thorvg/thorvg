@@ -30,7 +30,6 @@ typedef struct WebPRGBABuffer WebPRGBABuffer;
 typedef struct WebPYUVABuffer WebPYUVABuffer;
 typedef struct WebPDecBuffer WebPDecBuffer;
 typedef struct WebPBitstreamFeatures WebPBitstreamFeatures;
-typedef struct WebPDecoderOptions WebPDecoderOptions;
 
 // Retrieve basic header information: width, height.
 // This function will also validate the header and return 0 in
@@ -121,16 +120,14 @@ struct WebPYUVABuffer {              // view as YUVA
 struct WebPDecBuffer {
   WEBP_CSP_MODE colorspace;  // Colorspace.
   int width, height;         // Dimensions.
-  int is_external_memory;    // If true, 'internal_memory' pointer is not used.
   union {
     WebPRGBABuffer RGBA;
     WebPYUVABuffer YUVA;
   } u;                       // Nameless union of buffer parameters.
   uint32_t       pad[4];     // padding for later use
 
-  uint8_t* private_memory;   // Internally allocated memory (only when
-                             // is_external_memory is false). Should not be used
-                             // externally, but accessed via the buffer union.
+  uint8_t* private_memory;  // Internally allocated memory, accessed via
+                            // the buffer union.
 };
 
 // Internal, version-checked, entry point
@@ -184,12 +181,6 @@ struct WebPBitstreamFeatures {
 // VP8_STATUS_NOT_ENOUGH_DATA when more data is needed to retrieve the
 // features from headers. Returns error in other cases.
 WEBP_EXTERN(VP8StatusCode) WebPGetFeatures(const uint8_t*, size_t, WebPBitstreamFeatures*);
-
-// Decoding options
-struct WebPDecoderOptions {
-  int dithering_strength;             // dithering strength (0=Off, 100=full)
-  int alpha_dithering_strength;       // alpha dithering strength in [0..100]
-};
 
 #ifdef __cplusplus
 }    // extern "C"
