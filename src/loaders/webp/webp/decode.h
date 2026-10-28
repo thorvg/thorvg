@@ -30,7 +30,6 @@ typedef struct WebPRGBABuffer WebPRGBABuffer;
 typedef struct WebPYUVABuffer WebPYUVABuffer;
 typedef struct WebPDecBuffer WebPDecBuffer;
 typedef struct WebPBitstreamFeatures WebPBitstreamFeatures;
-typedef struct WebPDecoderOptions WebPDecoderOptions;
 
 // Retrieve basic header information: width, height.
 // This function will also validate the header and return 0 in
@@ -184,11 +183,6 @@ struct WebPBitstreamFeatures {
 // VP8_STATUS_NOT_ENOUGH_DATA when more data is needed to retrieve the
 // features from headers. Returns error in other cases.
 WEBP_EXTERN(VP8StatusCode) WebPGetFeatures(const uint8_t*, size_t, WebPBitstreamFeatures*);
-
-// Decoding options
-struct WebPDecoderOptions {
-  int alpha_dithering_strength;       // alpha dithering strength in [0..100]
-};
 
 #ifdef __cplusplus
 }    // extern "C"
