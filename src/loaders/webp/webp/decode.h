@@ -120,16 +120,14 @@ struct WebPYUVABuffer {              // view as YUVA
 struct WebPDecBuffer {
   WEBP_CSP_MODE colorspace;  // Colorspace.
   int width, height;         // Dimensions.
-  int is_external_memory;    // If true, 'internal_memory' pointer is not used.
   union {
     WebPRGBABuffer RGBA;
     WebPYUVABuffer YUVA;
   } u;                       // Nameless union of buffer parameters.
   uint32_t       pad[4];     // padding for later use
 
-  uint8_t* private_memory;   // Internally allocated memory (only when
-                             // is_external_memory is false). Should not be used
-                             // externally, but accessed via the buffer union.
+  uint8_t* private_memory;  // Internally allocated memory, accessed via
+                            // the buffer union.
 };
 
 // Internal, version-checked, entry point

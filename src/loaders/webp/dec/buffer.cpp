@@ -56,25 +56,25 @@ static VP8StatusCode AllocateBuffer(WebPDecBuffer* const buffer) {
     return VP8_STATUS_INVALID_PARAM;
   }
 
-  if (!buffer->is_external_memory && buffer->private_memory == NULL) {
-    uint8_t* output;
-    // We need memory and it hasn't been allocated yet.
-    // => initialize output buffer, now that dimensions are known.
-    const int stride = w * BYTES_PER_PIXEL;
-    const uint64_t size = (uint64_t)stride * h;
+  if (buffer->private_memory == NULL) {
+      uint8_t* output;
+      // We need memory and it hasn't been allocated yet.
+      // => initialize output buffer, now that dimensions are known.
+      const int stride = w * BYTES_PER_PIXEL;
+      const uint64_t size = (uint64_t)stride * h;
 
-    // Security/sanity checks
-    output = tvg::malloc<uint8_t>(size * sizeof(*output));
-    if (output == NULL) {
-      return VP8_STATUS_OUT_OF_MEMORY;
-    }
-    buffer->private_memory = output;
+      // Security/sanity checks
+      output = tvg::malloc<uint8_t>(size * sizeof(*output));
+      if (output == NULL) {
+          return VP8_STATUS_OUT_OF_MEMORY;
+      }
+      buffer->private_memory = output;
 
-    // RGBA initialization
-    WebPRGBABuffer* const buf = &buffer->u.RGBA;
-    buf->rgba = output;
-    buf->stride = stride;
-    buf->size = (size_t)size;
+      // RGBA initialization
+      WebPRGBABuffer* const buf = &buffer->u.RGBA;
+      buf->rgba = output;
+      buf->stride = stride;
+      buf->size = (size_t)size;
   }
   return CheckDecBuffer(buffer);
 }
@@ -103,10 +103,8 @@ int WebPInitDecBufferInternal(WebPDecBuffer* buffer, int version) {
 
 void WebPFreeDecBuffer(WebPDecBuffer* buffer) {
   if (buffer != NULL) {
-    if (!buffer->is_external_memory) {
       tvg::free(buffer->private_memory);
-    }
-    buffer->private_memory = NULL;
+      buffer->private_memory = NULL;
   }
 }
 
