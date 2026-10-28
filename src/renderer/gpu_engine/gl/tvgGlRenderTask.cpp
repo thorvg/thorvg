@@ -80,12 +80,28 @@ void GlRenderTask::run(GlStateCache& state)
         }
     }
 
+    // Native blending on premultiplied shader output.
+    switch (blendMethod) {
+        case BlendMethod::Normal:
+            state.blendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            break;
+        case BlendMethod::Screen:
+            state.blendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_COLOR, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            break;
+        case BlendMethod::Exclusion:
+            state.blendFuncSeparate(GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            break;
+        case BlendMethod::Add:  // Porter-Duff lighter: add both RGB and alpha.
+            state.blendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+            break;
+        default: break;
+    }
+
     if (useDrawArrays) {
         GL_CHECK(glDrawArrays(arrayMode, arrayOffset, indexCnt));
     } else {
         GL_CHECK(glDrawElements(GL_TRIANGLES, indexCnt, GL_UNSIGNED_INT, reinterpret_cast<void*>(indexOffset)));
     }
-
 }
 
 void GlRenderTask::addVertexLayout(const GlVertexLayout& layout)
@@ -264,9 +280,7 @@ void GlBlitTask::run(GlStateCache& state)
     }
 
     state.disable(GL_DEPTH_TEST);
-    // make sure the blending is correct
     state.enable(GL_BLEND);
-    state.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     GlRenderTask::run(state);
 }
@@ -324,9 +338,9 @@ void GlSceneBlendTask::run(GlStateCache& state)
     state.scissor(0, 0, parentWidth, parentHeight);
 
     state.disable(GL_DEPTH_TEST);
-    state.blendFunc(GL_ONE, GL_ZERO);
+    state.disable(GL_BLEND);
     GlRenderTask::run(state);
-    state.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    state.enable(GL_BLEND);
     state.enable(GL_DEPTH_TEST);
 }
 
@@ -400,9 +414,9 @@ void GlDirectBlendTask::run(GlStateCache& state)
     const auto& dstVp = dstFbo->viewport;
     state.viewport(0, 0, dstVp.w(), dstVp.h());
 
-    state.blendFunc(GL_ONE, GL_ZERO);
+    state.disable(GL_BLEND);
     GlRenderTask::run(state);
-    state.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    state.enable(GL_BLEND);
 }
 
 
@@ -452,12 +466,12 @@ void GlComplexBlendTask::run(GlStateCache& state)
     state.stencilFunc(GL_NOTEQUAL, 0x0, 0xFF);
     state.stencilOp(GL_REPLACE, GL_KEEP, GL_REPLACE);
 
-    state.blendFunc(GL_ONE, GL_ZERO);
+    state.disable(GL_BLEND);
 
     GlRenderTask::run(state);
 
     state.disable(GL_STENCIL_TEST);
-    state.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    state.enable(GL_BLEND);
 }
 
 

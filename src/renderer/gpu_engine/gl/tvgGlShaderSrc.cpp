@@ -827,13 +827,6 @@ vec3 setSat(vec3 color, float s) {
 }
 )";
 
-const char* NORMAL_BLEND_FRAG = R"(
-void main()
-{
-    FragColor = texture(uSrcTexture, vUV);
-}
-)";
-
 const char* MULTIPLY_BLEND_FRAG = R"(
 void main()
 {
@@ -843,15 +836,6 @@ void main()
         Rc = d.Sc * min(One, d.Dc / d.Da);
         Rc = mix(d.Sc, Rc, d.Da);
     }
-    FragColor = postProcess(vec4(Rc, 1.0));
-}
-)";
-
-const char* SCREEN_BLEND_FRAG = R"(
-void main()
-{
-    getFragData();
-    vec3 Rc = d.Sc + d.Dc - d.Sc * d.Dc;
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";
@@ -966,14 +950,6 @@ void main() {
 }
 )";
 
-const char* EXCLUSION_BLEND_FRAG = R"(
-void main() {
-    getFragData();
-    vec3 Rc = d.Sc + d.Dc - 2.0 * d.Sc * d.Dc;
-    FragColor = postProcess(vec4(Rc, 1.0));
-}
-)";
-
 const char* HUE_BLEND_FRAG = R"(
 void main()
 {
@@ -1029,14 +1005,6 @@ void main() {
         Rc = setLum(Dc, dot(d.Sc, LUM_W));
         Rc = mix(d.Sc, Rc, d.Da);
     }
-    FragColor = postProcess(vec4(Rc, 1.0));
-}
-)";
-
-const char* ADD_BLEND_FRAG = R"(
-void main() {
-    getFragData();
-    vec3 Rc = min(One, d.Sc + d.Dc);
     FragColor = postProcess(vec4(Rc, 1.0));
 }
 )";

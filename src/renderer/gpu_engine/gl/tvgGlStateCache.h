@@ -55,7 +55,7 @@ struct GlStateCache
     void enable(GLenum capability);
     void disable(GLenum capability);
 
-    void blendFunc(GLenum source, GLenum destination);
+    void blendFuncSeparate(GLenum source, GLenum destination, GLenum sourceAlpha, GLenum destinationAlpha);
     void depthFunc(GLenum function);
     void depthMask(GLboolean enabled);
     void colorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
@@ -106,15 +106,17 @@ struct GlStateCache
         }
     };
 
-    // Arguments passed to glBlendFunc().
+    // Arguments passed to glBlendFuncSeparate().
     struct BlendFuncState
     {
         GLenum source = 0;
         GLenum destination = 0;
+        GLenum sourceAlpha = 0;
+        GLenum destinationAlpha = 0;
 
         bool operator==(const BlendFuncState& rhs) const
         {
-            return source == rhs.source && destination == rhs.destination;
+            return source == rhs.source && destination == rhs.destination && sourceAlpha == rhs.sourceAlpha && destinationAlpha == rhs.destinationAlpha;
         }
     };
 

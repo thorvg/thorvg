@@ -247,7 +247,7 @@ void GlRenderer::initShaders()
     // blit Renderer
     mPrograms.push(new GlProgram(BLIT_VERT_SHADER, BLIT_FRAG_SHADER));
 
-    // blend programs: image, scene, solid shape, and three gradient types (17 each)
+    // Reserve custom blend programs for each source.
     while (mPrograms.count < static_cast<uint32_t>(RT_None)) mPrograms.push(nullptr);
 }
 
@@ -270,11 +270,16 @@ static Matrix _viewMatrix(const GlGeometry& geometry, const Matrix& viewMatrix, 
     return viewMatrix;
 }
 
+static bool _nativeBlend(BlendMethod method)
+{
+    return method == BlendMethod::Normal || method == BlendMethod::Screen || method == BlendMethod::Exclusion || method == BlendMethod::Add;
+}
+
 GlRenderTask* GlRenderer::createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo)
 {
     dstCopyFbo = nullptr;
 
-    if (mBlendMethod == BlendMethod::Normal) return new GlRenderTask(mPrograms[type]);
+    if (_nativeBlend(mBlendMethod)) return new GlRenderTask(mPrograms[type], mBlendMethod);
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 #if defined(THORVG_GL_TARGET_GL)
@@ -326,7 +331,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     auto viewRegion = viewportRegion(vp, bbox);
     auto stencilMode = shape.geometry.stencilMode(flag);
 
-    if (!stroke && !blendShape && stencilMode == GlStencilMode::None && shape.clips.empty()) {
+    if (!stroke && _nativeBlend(mBlendMethod) && stencilMode == GlStencilMode::None && shape.clips.empty()) {
         mSolidBatch.draw(*this, shape, c, depth, viewRegion, viewportRegion(vp, viewBounds));
         return;
     }
@@ -350,7 +355,9 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
     }
     RenderColor color = {c.r, c.g, c.b, a};
 
-    if (stroke && (blendShape || a == 255)) {
+    // A copied destination can be overwritten repeatedly. Native blending
+    // must keep stencil coverage even for opaque, overlapping strokes.
+    if (stroke && (dstCopyFbo || (!blendShape && a == 255))) {
         stencilMode = GlStencilMode::None;
     }
 
@@ -457,7 +464,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     if (flag & RenderUpdateFlag::GradientStroke) {
         auto strokeWidth = shape.geometry.strokeRenderWidth;
         if (strokeWidth < MIN_GL_STROKE_WIDTH) {
-            alpha = strokeWidth / MIN_GL_STROKE_WIDTH;
+            alpha *= strokeWidth / MIN_GL_STROKE_WIDTH;
         }
     }
 
@@ -523,7 +530,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
     auto stencilMode = shape.geometry.stencilMode(flag);
-    if (stroke && (mBlendMethod != BlendMethod::Normal || opaque)) stencilMode = GlStencilMode::None;
+    if (stroke && (dstCopyFbo || (mBlendMethod == BlendMethod::Normal && opaque))) stencilMode = GlStencilMode::None;
     auto preparation = mStencilCoverBatch.prepare(*this, task, shape, flag, stencilMode, nullptr, viewBounds);
 
     mStencilCoverBatch.draw(currentPass(), task, preparation);
@@ -588,12 +595,10 @@ GlRenderPass* GlRenderer::currentPass()
 
 bool GlRenderer::beginComplexBlending(const RenderRegion& vp, RenderRegion bounds)
 {
-    if (vp.invalid()) return false;
+    if (_nativeBlend(mBlendMethod) || vp.invalid()) return false;
 
     bounds.intersect(vp);
     if (bounds.invalid()) return false;
-
-    if (mBlendMethod == BlendMethod::Normal) return false;
 
     if (mBlendPool.empty()) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
 
@@ -655,10 +660,8 @@ void GlRenderer::endBlendingCompose(GlRenderTask* stencilTask)
 GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
 {
     // custom blend shaders
-    static const char* shaderFunc[17] {
-        NORMAL_BLEND_FRAG,
+    static const char* shaderFunc[BlendShaderCount] {
         MULTIPLY_BLEND_FRAG,
-        SCREEN_BLEND_FRAG,
         OVERLAY_BLEND_FRAG,
         DARKEN_BLEND_FRAG,
         LIGHTEN_BLEND_FRAG,
@@ -667,25 +670,15 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         HARD_LIGHT_BLEND_FRAG,
         SOFT_LIGHT_BLEND_FRAG,
         DIFFERENCE_BLEND_FRAG,
-        EXCLUSION_BLEND_FRAG,
         HUE_BLEND_FRAG,
         SATURATION_BLEND_FRAG,
         COLOR_BLEND_FRAG,
-        LUMINOSITY_BLEND_FRAG,
-        ADD_BLEND_FRAG
+        LUMINOSITY_BLEND_FRAG
     };
 
-    uint32_t methodInd = (uint32_t)method;
-    uint32_t shaderInd = methodInd;
-
-    switch (source) {
-        case BlendSource::Scene: shaderInd += (uint32_t)RT_Blend_Scene_Normal; break;
-        case BlendSource::Image: shaderInd += (uint32_t)RT_Blend_Image_Normal; break;
-        case BlendSource::Solid: shaderInd += (uint32_t)RT_ShapeBlend_Solid_Normal; break;
-        case BlendSource::LinearGradient: shaderInd += (uint32_t)RT_ShapeBlend_Linear_Normal; break;
-        case BlendSource::RadialGradient: shaderInd += (uint32_t)RT_ShapeBlend_Radial_Normal; break;
-        case BlendSource::ConicGradient: shaderInd += (uint32_t)RT_ShapeBlend_Conic_Normal; break;
-    }
+    // Native Normal, Screen, Exclusion and Add have no custom shader slots.
+    uint32_t methodInd = (uint32_t)method - 1 - (method > BlendMethod::Screen) - (method > BlendMethod::Exclusion);
+    uint32_t shaderInd = RT_Blend + (uint32_t)source * BlendShaderCount + methodInd;
 
     if (mPrograms[shaderInd]) return mPrograms[shaderInd];
 
@@ -881,7 +874,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         }
         delete(selfPass);
         delete(maskPass);
-    } else if (glCmp->blendMethod != BlendMethod::Normal) {
+    } else if (!_nativeBlend(glCmp->blendMethod)) {
         auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
             if (mBlendPool.count < 1) mBlendPool.push(new GlRenderTargetPool(surface.w, surface.h, mStateCache));
@@ -923,6 +916,7 @@ void GlRenderer::endRenderPass(RenderCompositor* cmp)
         auto renderPass = mRenderPassStack.pick();
         if (!renderPass->isEmpty()) {
             auto task = renderPass->endRenderPass<GlDrawBlitTask>(mPrograms[RT_Image], currentPass()->getFboId());
+            task->blendMethod = glCmp->blendMethod;
             task->setRenderSize(glCmp->bbox.w(), glCmp->bbox.h());
             prepareCmpTask(task, glCmp->bbox, renderPass->getFboWidth(), renderPass->getFboHeight());
             task->setDrawDepth(currentPass()->nextDrawDepth());
@@ -1015,8 +1009,6 @@ bool GlRenderer::sync()
     // Applications sharing the context must reset any other OpenGL state that
     // can affect rendering before calling sync().
 
-    // Blend function for straight alpha
-    mStateCache.blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     mStateCache.enable(GL_BLEND);
     mStateCache.enable(GL_SCISSOR_TEST);
     GL_CHECK(glCullFace(GL_FRONT_AND_BACK));
@@ -1213,7 +1205,8 @@ bool GlRenderer::renderImage(void* data)
 
     auto drawDepth = currentPass()->nextDrawDepth();
 
-    if (currentPass()->fbo == &mRootTarget && mBlendMethod == BlendMethod::Normal && image->clips.empty() && image->geometry.viewport == vp) {
+    auto nativeBlend = _nativeBlend(mBlendMethod);
+    if (currentPass()->fbo == &mRootTarget && nativeBlend && image->clips.empty() && image->geometry.viewport == vp) {
         auto viewRegion = viewportRegion(vp, bbox);
         mSolidBatch.draw(*this, *image, drawDepth, viewRegion, viewRegion);
         return true;
@@ -1221,7 +1214,7 @@ bool GlRenderer::renderImage(void* data)
 
     if (!image->clips.empty()) drawClip(image->clips, bbox);
 
-    auto task = new GlRenderTask(mPrograms[RT_Image]);
+    auto task = new GlRenderTask(mPrograms[RT_Image], nativeBlend ? mBlendMethod : BlendMethod::Normal);
     task->setDrawDepth(drawDepth);
     image->geometry.draw(task, &mGpuBuffer, RenderUpdateFlag::Image);
 

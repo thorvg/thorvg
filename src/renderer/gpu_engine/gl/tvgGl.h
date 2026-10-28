@@ -265,7 +265,7 @@
         typedef void (*PFNGLDEPTHMASKPROC)(GLboolean flag);
         typedef void (*PFNGLDISABLEPROC)(GLenum cap);
         typedef void (*PFNGLENABLEPROC)(GLenum cap);
-        typedef void (*PFNGLBLENDFUNCPROC)(GLenum sfactor, GLenum dfactor);
+        // typedef void (*PFNGLBLENDFUNCPROC)(GLenum sfactor, GLenum dfactor);
         typedef void (*PFNGLSTENCILFUNCPROC)(GLenum func, GLint ref, GLuint mask);
         typedef void (*PFNGLSTENCILOPPROC)(GLenum fail, GLenum zfail, GLenum zpass);
         typedef void (*PFNGLDEPTHFUNCPROC)(GLenum func);
@@ -498,7 +498,7 @@
         #define GL_MIN                            0x8007
         #define GL_MAX                            0x8008
         typedef void (*PFNGLBLENDEQUATIONPROC)(GLenum mode);
-        //typedef void (*PFNGLBLENDFUNCSEPARATEPROC)(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
+        typedef void (*PFNGLBLENDFUNCSEPARATEPROC)(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
         //typedef void (*PFNGLMULTIDRAWARRAYSPROC)(GLenum mode, const GLint *first, const GLsizei *count, GLsizei drawcount);
         //typedef void (*PFNGLMULTIDRAWELEMENTSPROC)(GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei drawcount);
         //typedef void (*PFNGLPOINTPARAMETERFPROC)(GLenum pname, GLfloat param);
@@ -1196,7 +1196,7 @@
     extern PFNGLDEPTHMASKPROC              glDepthMask;
     extern PFNGLDISABLEPROC                glDisable;
     extern PFNGLENABLEPROC                 glEnable;
-    extern PFNGLBLENDFUNCPROC              glBlendFunc;
+    // extern PFNGLBLENDFUNCPROC              glBlendFunc;
     extern PFNGLSTENCILFUNCPROC            glStencilFunc;
     extern PFNGLSTENCILOPPROC              glStencilOp;
     extern PFNGLDEPTHFUNCPROC              glDepthFunc;
@@ -1266,7 +1266,7 @@
 
     //GL_VERSION_1_4
     extern PFNGLBLENDEQUATIONPROC     glBlendEquation;
-    //extern PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate;
+    extern PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate;
     //extern PFNGLMULTIDRAWARRAYSPROC   glMultiDrawArrays;
     //extern PFNGLMULTIDRAWELEMENTSPROC glMultiDrawElements;
     //extern PFNGLPOINTPARAMETERFPROC   glPointParameterf;
