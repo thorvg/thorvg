@@ -64,7 +64,7 @@ void GlSolidBatch::draw(GlRenderer& renderer, const DrawData& data, int32_t dept
     auto vertexCount = buffer->vertex.count / data.vertexSize;
     auto indexCount = buffer->index.count;
 
-    if (!appendable(pass, data, viewBounds)) {
+    if (!appendable(pass, data, viewBounds) || task->blendMethod != renderer.mBlendMethod) {
         emit(renderer, pass, data, depth, viewRegion, viewBounds, vertexCount, indexCount);
         return;
     }
@@ -88,7 +88,7 @@ bool GlSolidBatch::appendable(const GlRenderPass* pass, const DrawData& data, co
 
 void GlSolidBatch::emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds, uint32_t vertexCount, uint32_t indexCount)
 {
-    auto drawTask = new GlRenderTask(data.program);
+    auto drawTask = new GlRenderTask(data.program, renderer.mBlendMethod);
     drawTask->setViewMatrix(pass->getViewMatrix());
     drawTask->setDrawDepth(depth);
 

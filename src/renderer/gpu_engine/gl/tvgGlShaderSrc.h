@@ -61,9 +61,7 @@ extern const char* BLEND_SHAPE_GRADIENT_FRAG_HEADER;
 extern const char* BLEND_FRAG_LUM_HELPER;
 extern const char* BLEND_FRAG_SAT_HELPER;
 
-extern const char* NORMAL_BLEND_FRAG;
 extern const char* MULTIPLY_BLEND_FRAG;
-extern const char* SCREEN_BLEND_FRAG;
 extern const char* OVERLAY_BLEND_FRAG;
 extern const char* DARKEN_BLEND_FRAG;
 extern const char* LIGHTEN_BLEND_FRAG;
@@ -72,12 +70,10 @@ extern const char* COLOR_BURN_BLEND_FRAG;
 extern const char* HARD_LIGHT_BLEND_FRAG;
 extern const char* SOFT_LIGHT_BLEND_FRAG;
 extern const char* DIFFERENCE_BLEND_FRAG;
-extern const char* EXCLUSION_BLEND_FRAG;
 extern const char* HUE_BLEND_FRAG;
 extern const char* SATURATION_BLEND_FRAG;
 extern const char* COLOR_BLEND_FRAG;
 extern const char* LUMINOSITY_BLEND_FRAG;
-extern const char* ADD_BLEND_FRAG;
 
 extern const char* EFFECT_VERTEX;
 extern const char* GAUSSIAN_VERTICAL;
