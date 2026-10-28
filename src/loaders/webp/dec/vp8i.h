@@ -246,7 +246,6 @@ struct VP8Decoder {
   size_t alpha_data_size_;
   int is_alpha_decoded_;  // true if alpha_data_ is decoded in alpha_plane_
   uint8_t* alpha_plane_;  // output. Persistent, contains the whole data.
-  int alpha_dithering_;   // derived from decoding options (0=off, 100=full).
 };
 
 //------------------------------------------------------------------------------
@@ -275,9 +274,6 @@ VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io);
 // Must always be called in pair with VP8EnterCritical().
 // Returns false in case of error.
 int VP8ExitCritical(VP8Decoder* const dec, VP8Io* const io);
-// Initialize alpha dithering post-process if needed.
-void VP8InitAlphaDithering(const WebPDecoderOptions* const options,
-                           VP8Decoder* const dec);
 // Process the last decoded row (filtering + output).
 int VP8ProcessRow(VP8Decoder* const dec, VP8Io* const io);
 // To be called at the start of a new scanline, to initialize predictors.

@@ -495,7 +495,6 @@ static VP8StatusCode DecodeInto(const uint8_t* const data, size_t data_size,
       status = WebPAllocateDecBuffer(io.width, io.height,
                                      params->output);
       if (status == VP8_STATUS_OK) {  // Decode
-          VP8InitAlphaDithering(params->options, dec);
           if (!VP8Decode(dec, &io)) {
               status = dec->status_;
           }

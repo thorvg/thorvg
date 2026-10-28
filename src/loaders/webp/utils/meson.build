@@ -4,12 +4,10 @@ source_file = [
    'color_cache.h',
    'endian_inl.h',
    'huffman.h',
-   'quant_levels_dec.h',
    'utils.h',
    'bit_reader.cpp',
    'color_cache.cpp',
    'huffman.cpp',
-   'quant_levels_dec.cpp',
 ]
 
 webp_deb += [declare_dependency(
