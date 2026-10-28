@@ -317,24 +317,6 @@ static void PrecomputeFilterStrengths(VP8Decoder* const dec) {
 }
 
 //------------------------------------------------------------------------------
-// Alpha dithering
-
-void VP8InitAlphaDithering(const WebPDecoderOptions* const options,
-                           VP8Decoder* const dec)
-{
-    assert(dec != NULL);
-    if (options != NULL) {
-        // potentially allow alpha dithering
-        dec->alpha_dithering_ = options->alpha_dithering_strength;
-        if (dec->alpha_dithering_ > 100) {
-            dec->alpha_dithering_ = 100;
-        } else if (dec->alpha_dithering_ < 0) {
-            dec->alpha_dithering_ = 0;
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
 // This function is called after a row of macroblocks is finished decoding.
 // It also takes into account the following restrictions:
 //  * In case of in-loop filtering, we must hold off sending some of the bottom
