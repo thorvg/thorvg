@@ -96,6 +96,7 @@ struct PictureImpl : Picture
         this->w = w;
         this->h = h;
         resizing = true;
+        impl.mark(RenderUpdateFlag::Transform);
     }
 
     Result filterMethod(FilterMethod method)
