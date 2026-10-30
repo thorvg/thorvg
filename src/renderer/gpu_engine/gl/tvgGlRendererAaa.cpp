@@ -161,9 +161,29 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
     return false;  // Coverage has no stroke mesh; use the shape bounds fallback.
 }
 
-bool GlRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
+static bool _intersectsCoverage(const CoverageMap& map, const RenderRegion& region)
 {
+    auto bounds = RenderRegion::intersect(map.bounds, region);
+    if (bounds.invalid()) return false;
+
+    for (auto y = bounds.sy(); y < bounds.yMax; ++y) {
+        auto row = map.data + size_t(y - map.bounds.sy()) * map.stride + (bounds.sx() - map.bounds.sx());
+        for (auto x = bounds.sx(); x < bounds.xMax; ++x) {
+            if (*row++) return true;
+        }
+    }
     return false;
+}
+
+bool GlRenderer::intersectsShape(RenderData data, const RenderRegion& region)
+{
+    auto shape = static_cast<GlShape*>(data);
+    if (shape->opacity == 0) return false;
+
+    // Maps already include transforms and clipping, but are generated independently of paint.
+    auto& rshape = *shape->rshape;
+    if (shape->valid.fill && (rshape.fill || rshape.color.a > 0) && _intersectsCoverage(shape->fillCoverage.map, region)) return true;
+    return shape->valid.stroke && (rshape.stroke->fill || rshape.stroke->color.a > 0) && _intersectsCoverage(shape->strokeCoverage.map, region);
 }
 
 static const GlCoverageMap& _clipMap(RenderData data)
