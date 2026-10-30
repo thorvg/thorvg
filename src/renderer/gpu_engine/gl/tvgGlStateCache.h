@@ -45,6 +45,9 @@ struct GlStateCache
     void beginVertexLayout();
     void setVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized,
                                 GLsizei stride, size_t offset, GLuint sourceBuffer);
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    void setVertexAttribDivisor(GLuint index, GLuint divisor);
+#endif
     void setVertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
     void endVertexLayout();
 
@@ -230,6 +233,9 @@ struct GlStateCache
         CachedValue<bool> enabled;                  // glEnableVertexAttribArray(), glDisableVertexAttribArray()
         CachedValue<VertexPointerState> pointer;    // glVertexAttribPointer()
         CachedValue<VertexConstantState> constant;  // glVertexAttrib4f()
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        CachedValue<GLuint> divisor;
+#endif
         bool known = false;                         // Index has cache-managed OpenGL state
         bool used = false;                          // Index is used by the current vertex layout
     };

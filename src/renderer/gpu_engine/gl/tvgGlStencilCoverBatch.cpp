@@ -22,6 +22,7 @@
 
 #include "tvgGlRenderer.h"
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 // WebGL uses smaller batch caps to limit wasm memory. Native GL keeps larger caps
 // for fewer render tasks. BATCH_REGION_RESET_THRESHOLD only releases cached bounds.
 #ifdef __EMSCRIPTEN__
@@ -334,3 +335,4 @@ bool GlStencilCoverBatch::mergeCover(GlRenderTask* cover, const RenderRegion& vi
     delete cover;
     return true;
 }
+#endif //THORVG_ANALYTIC_AA_SUPPORT
