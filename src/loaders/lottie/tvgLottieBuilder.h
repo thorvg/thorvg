@@ -53,7 +53,7 @@ struct RenderText
     int line = 0, space = 0, idx = 0;
     float lineSpace = 0.0f, totalLineSpace = 0.0f;
     char *p;  //current processing character
-    int nChars;
+    int nChars = 0;
     float scale;
     Scene* textScene;
     Scene* lineScene;
@@ -61,8 +61,13 @@ struct RenderText
     LottieTextFollowPath* follow;
     bool perpendicular = false;
 
-    RenderText(LottieText* text, const TextDocument& doc) : p(doc.text), nChars(strlen(p)), scale(doc.size), textScene(Scene::gen()), lineScene(Scene::gen())
+    RenderText(LottieText* text, const TextDocument& doc) :
+        p(doc.text), scale(doc.size), textScene(Scene::gen()), lineScene(Scene::gen())
     {
+        // letters, not bytes: a UTF-8 letter's first byte isn't 10xxxxxx
+        for (auto c = p; *c; ++c) {
+            if ((*c & 0xc0) != 0x80) ++nChars;
+        }
     }
 
     ~RenderText()
