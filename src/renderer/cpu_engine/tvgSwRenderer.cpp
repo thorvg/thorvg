@@ -81,6 +81,7 @@ struct SwTask : Task
         return true;
     }
 
+    virtual bool immediate() { return false; }
     virtual bool clip(SwRle* target) = 0;
     virtual ~SwTask() {}
 };
@@ -95,6 +96,21 @@ struct SwShapeTask : SwTask
     ~SwShapeTask()
     {
         shapeFree(shape);
+    }
+
+    bool immediate() override
+    {
+        if (TaskScheduler::threads() == 0) return false;
+
+        if (flags[0] & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Clip)) {
+            //Trimmed paths are checked against their generated outline in shapeGenRle().
+            shape.fastTrack = clips.empty() && !rshape->trimpath() && shapeFastTrack(rshape->path, transform);
+        }
+        if (shape.fastTrack && !rshape->fill && !rshape->stroke) {
+            run(0);
+            return true;
+        }
+        return false;
     }
 
     /* We assume that if the stroke width is greater than 2,
@@ -173,6 +189,7 @@ struct SwShapeTask : SwTask
 
     dismiss:
         shapeReset(shape);
+        shape.fastTrack = false;
         rleReset(shape.strokeRle);
         invisible();
     }
@@ -869,6 +886,8 @@ SwTask* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const A
     if (task->ready(ready)) return task;
 
     if (flags) {
+        if (task->immediate()) return task;
+
         ARRAY_FOREACH(p, clips) {
             task->depend(static_cast<Task*>(*p));
         }

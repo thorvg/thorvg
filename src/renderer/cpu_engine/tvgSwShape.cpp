@@ -288,9 +288,8 @@ static SwOutline* _genDashOutline(const RenderShape* rshape, SwMpool* mpool, uns
     return outline;
 }
 
-static bool _axisAlignedRect(const SwOutline* outline)
+static bool _axisAlignedRect(const RenderPath& path, const SwPoint* pts)
 {
-    auto& path = *outline->path;
     // TODO: We can return false if the coordinates have a fractional part, for smoother rectangle movement
     if (path.cmds.count != 5 || (path.cmds[0] != PathCommand::MoveTo && path.cmds[0] != PathCommand::LineTo)) return false;
     for (uint32_t i = 1; i < 4; ++i) {
@@ -298,10 +297,10 @@ static bool _axisAlignedRect(const SwOutline* outline)
     }
     if (path.cmds[4] != PathCommand::Close && path.cmds[4] != PathCommand::LineTo) return false;
 
-    auto pt1 = outline->out.data + 0;
-    auto pt2 = outline->out.data + 1;
-    auto pt3 = outline->out.data + 2;
-    auto pt4 = outline->out.data + 3;
+    auto pt1 = pts + 0;
+    auto pt2 = pts + 1;
+    auto pt3 = pts + 2;
+    auto pt4 = pts + 3;
 
     auto a = SwPoint{pt1->x, pt3->y};
     auto b = SwPoint{pt3->x, pt1->y};
@@ -331,6 +330,19 @@ static SwOutline* _genOutline(const RenderShape* rshape, SwMpool* mpool, unsigne
 /* External Class Implementation                                        */
 /************************************************************************/
 
+bool shapeFastTrack(const RenderPath& path, const Matrix& transform)
+{
+    if (path.pts.count < 4) return false;
+
+    SwPoint pts[4];
+    for (uint32_t i = 0; i < 4; ++i) {
+        auto pt = path.pts[i] * transform;
+        //Match the fixed-point conversion in utilExport().
+        pts[i] = {int32_t(pt.x * 64.0f), int32_t(pt.y * 64.0f)};
+    }
+    return _axisAlignedRect(path, pts);
+}
+
 bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool composite, bool antiAlias)
 {
     auto outline = _genOutline(rshape, mpool, tid, rshape->trimpath());
@@ -343,7 +355,8 @@ bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transf
     utilExport(outline, transform, bbox);
 
     shape.outline = outline;
-    shape.fastTrack = !composite && _axisAlignedRect(outline);
+    if (rshape->trimpath()) shape.fastTrack = _axisAlignedRect(*outline->path, outline->out.data);
+    shape.fastTrack &= !composite;
 
     if (!utilBBox(bbox, clipBox, renderBox, shape.fastTrack)) return false;
     shape.bbox = renderBox;
@@ -364,7 +377,6 @@ void shapeReset(SwShape& shape)
     rleReset(shape.rle);
     shape.outline = nullptr;
     shape.bbox.reset();
-    shape.fastTrack = false;
 }
 
 
