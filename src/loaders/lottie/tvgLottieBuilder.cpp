@@ -1748,7 +1748,7 @@ void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, flo
     auto pos = layer->remap(comp, frameNo, exps);
     if (pos < 0.0f) active = false;    
 
-    auto value = active ? this->volume * ctrl->volume(frameNo, tween, exps) : 100.0f;
+    auto value = active ? this->volume * ctrl->volume(frameNo, tween, exps).x : 100.0f;
 
     // audio condition is changed
     if ((active != ctrl->prevActive) || (active && !tvg::equal(value, ctrl->prevVolume))) {
