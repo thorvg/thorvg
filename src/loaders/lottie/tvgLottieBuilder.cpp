@@ -1131,12 +1131,20 @@ bool LottieBuilder::updateTextRange(LottieText* text, float frameNo, Shape* shap
     ARRAY_FOREACH(p, text->ranges) {
         auto range = *p;
         auto basedIdx = ctx.idx;
+        auto basedLen = ctx.nChars;
 
-        if (range->based == LottieTextRange::Based::CharsExcludingSpaces) basedIdx = ctx.idx - ctx.space;
-        else if (range->based == LottieTextRange::Based::Words) basedIdx = ctx.line + ctx.space;
-        else if (range->based == LottieTextRange::Based::Lines) basedIdx = ctx.line;
+        if (range->based == LottieTextRange::Based::CharsExcludingSpaces) {
+            basedIdx = ctx.idx - ctx.space;
+            basedLen = ctx.nChars - ctx.nSpaces - (ctx.nLines - 1);
+        } else if (range->based == LottieTextRange::Based::Words) {
+            basedIdx = ctx.line + ctx.space;
+            basedLen = ctx.nLines + ctx.nSpaces;
+        } else if (range->based == LottieTextRange::Based::Lines) {
+            basedIdx = ctx.line;
+            basedLen = ctx.nLines;
+        }
 
-        auto f = range->factor(frameNo, float(ctx.nChars), (float)basedIdx);
+        auto f = range->factor(frameNo, float(basedLen), (float)basedIdx);
         if (tvg::zero(f)) continue;
 
         needGroup = true;
