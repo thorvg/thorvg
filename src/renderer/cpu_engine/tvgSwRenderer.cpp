@@ -793,7 +793,8 @@ bool SwRenderer::render(RenderCompositor* cmp, const RenderEffect* effect, bool 
     }
 
     //TODO: Support grayscale effects.
-    if (p->recoverSfc->channelSize != sizeof(uint32_t)) direct = false;
+    auto masking = p->recoverCmp && p->recoverCmp->method != MaskMethod::None;
+    if (p->recoverSfc->channelSize != sizeof(uint32_t) || masking || p->recoverSfc->blender) direct = false;
     
     switch (effect->type) {
         case SceneEffect::MotionBlur: {
