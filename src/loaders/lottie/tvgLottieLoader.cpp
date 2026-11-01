@@ -133,71 +133,40 @@ Result LottieLoader::header()
             ++p;
             continue;
         }
-        if (depth != 1) {
+        if (*p != '"') {
             ++p;
             continue;
         }
-        //version
-        if (!strncmp(p, "\"v\":", 4)) {
-            p += 4;
-            continue;
+        auto key = ++p;
+        while (*p != '\0' && *p != '"') {
+            if (*p == '\\' && *(p + 1) != '\0') ++p;
+            ++p;
         }
-
-        //framerate
-        if (!strncmp(p, "\"fr\":", 5)) {
-            p += 5;
-            auto e = strchr(p, ',');
-            if (!e) e = strchr(p, '}');
-            if (!e) return Result::InvalidArguments;
-            frameRate = toFloat(p, nullptr);
-            p = e;
-            continue;
-        }
-
-        //start frame
-        if (!strncmp(p, "\"ip\":", 5)) {
-            p += 5;
-            auto e = strchr(p, ',');
-            if (!e) e = strchr(p, '}');
-            if (!e) return Result::InvalidArguments;
-            startFrame = toFloat(p, nullptr);
-            p = e;
-            continue;
-        }
-
-        //end frame
-        if (!strncmp(p, "\"op\":", 5)) {
-            p += 5;
-            auto e = strchr(p, ',');
-            if (!e) e = strchr(p, '}');
-            if (!e) return Result::InvalidArguments;
-            endFrame = toFloat(p, nullptr);
-            p = e;
-            continue;
-        }
-
-        //width
-        if (!strncmp(p, "\"w\":", 4)) {
-            p += 4;
-            auto e = strchr(p, ',');
-            if (!e) e = strchr(p, '}');
-            if (!e) return Result::InvalidArguments;
-            w = toFloat(p, nullptr);
-            p = e;
-            continue;
-        }
-        //height
-        if (!strncmp(p, "\"h\":", 4)) {
-            p += 4;
-            auto e = strchr(p, ',');
-            if (!e) e = strchr(p, '}');
-            if (!e) return Result::InvalidArguments;
-            h = toFloat(p, nullptr);
-            p = e;
-            continue;
-        }
+        if (*p == '\0') break;
+        auto len = p - key;
         ++p;
+        if (depth != 1) continue;
+
+        auto v = p;
+        while (*v == ' ' || *v == '\t' || *v == '\n' || *v == '\r')
+            ++v;
+        if (*v != ':') continue;
+        ++v;
+
+        float* field = nullptr;
+        if (len == 2 && !strncmp(key, "fr", 2)) field = &frameRate;
+        else if (len == 2 && !strncmp(key, "ip", 2)) field = &startFrame;
+        else if (len == 2 && !strncmp(key, "op", 2)) field = &endFrame;
+        else if (len == 1 && *key == 'w') field = &w;
+        else if (len == 1 && *key == 'h') field = &h;
+        if (!field) continue;
+
+        char* e;
+        *field = toFloat(v, &e);
+        p = e;
     }
+
+    if (depth != 0) return Result::InvalidArguments;
 
     if (frameRate < FLOAT_EPSILON) {
         TVGLOG("LOTTIE", "Not a Lottie file? Frame rate is 0!");
