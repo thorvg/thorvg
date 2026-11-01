@@ -79,3 +79,4 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Mao Shengrong @suda-morris
 - Alexander Musienko @dnepromell
 - Mikhail Teterin @UnitedMarsupials
+- Malvis Light @LightSideMeowshop
