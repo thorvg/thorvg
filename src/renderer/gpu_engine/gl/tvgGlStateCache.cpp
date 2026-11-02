@@ -277,11 +277,11 @@ void GlStateCache::disable(GLenum capability)
     setCapability(capability, false);
 }
 
-void GlStateCache::blendFunc(GLenum source, GLenum destination)
+void GlStateCache::blendFuncSeparate(GLenum source, GLenum destination, GLenum sourceAlpha, GLenum destinationAlpha)
 {
-    BlendFuncState state = {source, destination};
+    BlendFuncState state = {source, destination, sourceAlpha, destinationAlpha};
     if (blendFunction.matches(state)) return;
-    GL_CHECK(glBlendFunc(source, destination));
+    GL_CHECK(glBlendFuncSeparate(source, destination, sourceAlpha, destinationAlpha));
     blendFunction.set(state);
 }
 

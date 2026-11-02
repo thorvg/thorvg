@@ -87,13 +87,12 @@ bool PngLoader::read()
 
     ColorSpace cs;
 
-    // TODO: we can acquire a pre-multiplied image. See "png_structrp"
     if (BitmapLoader::cs == ColorSpace::ARGB8888 || BitmapLoader::cs == ColorSpace::ARGB8888S) {
-        image->format = PNG_FORMAT_BGRA;
-        cs = ColorSpace::ARGB8888S;
+        image->format = PNG_FORMAT_BGRA | PNG_FORMAT_FLAG_ASSOCIATED_ALPHA;
+        cs = ColorSpace::ARGB8888;
     } else {
-        image->format = PNG_FORMAT_RGBA;
-        cs = ColorSpace::ABGR8888S;
+        image->format = PNG_FORMAT_RGBA | PNG_FORMAT_FLAG_ASSOCIATED_ALPHA;
+        cs = ColorSpace::ABGR8888;
     }
 
     auto buffer = tvg::malloc<png_byte>(PNG_IMAGE_SIZE((*image)));

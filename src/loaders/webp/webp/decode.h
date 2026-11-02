@@ -54,47 +54,20 @@ WEBP_EXTERN(uint8_t*) WebPDecodeBGRA(const uint8_t* data, size_t data_size,
 //------------------------------------------------------------------------------
 // Output colorspaces and buffer
 
-// Colorspaces
-// Note: the naming describes the byte-ordering of packed samples in memory.
-// For instance, MODE_BGRA relates to samples ordered as B,G,R,A,B,G,R,A,...
-// Non-capital names (e.g.:MODE_Argb) relates to pre-multiplied RGB channels.
-// RGBA-4444 and RGB-565 colorspaces are represented by following byte-order:
-// RGBA-4444: [r3 r2 r1 r0 g3 g2 g1 g0], [b3 b2 b1 b0 a3 a2 a1 a0], ...
-// RGB-565: [r4 r3 r2 r1 r0 g5 g4 g3], [g2 g1 g0 b4 b3 b2 b1 b0], ...
-// In the case WEBP_SWAP_16BITS_CSP is defined, the bytes are swapped for
-// these two modes:
-// RGBA-4444: [b3 b2 b1 b0 a3 a2 a1 a0], [r3 r2 r1 r0 g3 g2 g1 g0], ...
-// RGB-565: [g2 g1 g0 b4 b3 b2 b1 b0], [r4 r3 r2 r1 r0 g5 g4 g3], ...
-
-typedef enum WEBP_CSP_MODE {
-  MODE_RGB = 0, MODE_RGBA = 1,
-  MODE_BGR = 2, MODE_BGRA = 3,
-  MODE_ARGB = 4, MODE_RGBA_4444 = 5,
-  MODE_RGB_565 = 6,
-  // RGB-premultiplied transparent modes (alpha value is preserved)
-  MODE_rgbA = 7,
-  MODE_bgrA = 8,
-  MODE_Argb = 9,
-  MODE_rgbA_4444 = 10,
-  // YUV modes must come after RGB ones.
-  MODE_YUV = 11, MODE_YUVA = 12,  // yuv 4:2:0
-  MODE_LAST = 13
+// Premultiplied output colorspaces, named by byte order in memory.
+typedef enum WEBP_CSP_MODE
+{
+    MODE_rgbA = 0,
+    MODE_bgrA = 1,
+    MODE_LAST = 2
 } WEBP_CSP_MODE;
 
-// Some useful macros:
 static WEBP_INLINE int WebPIsPremultipliedMode(WEBP_CSP_MODE mode) {
-  return (mode == MODE_rgbA || mode == MODE_bgrA || mode == MODE_Argb ||
-          mode == MODE_rgbA_4444);
+    return (mode == MODE_rgbA || mode == MODE_bgrA);
 }
 
 static WEBP_INLINE int WebPIsAlphaMode(WEBP_CSP_MODE mode) {
-  return (mode == MODE_RGBA || mode == MODE_BGRA || mode == MODE_ARGB ||
-          mode == MODE_RGBA_4444 || mode == MODE_YUVA ||
-          WebPIsPremultipliedMode(mode));
-}
-
-static WEBP_INLINE int WebPIsRGBMode(WEBP_CSP_MODE mode) {
-  return (mode < MODE_YUV);
+    return WebPIsPremultipliedMode(mode);
 }
 
 //------------------------------------------------------------------------------

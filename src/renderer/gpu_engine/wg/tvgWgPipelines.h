@@ -138,7 +138,7 @@ private:
     WGPURenderPipeline createRenderPipeline(WGPUDevice device, const char* pipelineLabel, WGPUShaderModule shaderModule, const char* vsEntryPoint, const char* fsEntryPoint,
                                             WGPUPipelineLayout pipelineLayout, WGPUVertexBufferLayout* vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount, WGPUColorWriteMask writeMask,
                                             WGPUTextureFormat colorTargetFormat, WGPUBlendState blendState, WGPUDepthStencilState depthStencilState, WGPUMultisampleState multisampleState);
-    WGPURenderPipeline createBlendPipeline(WgContext& context, const char* pipelineLabel, WGPUShaderModule shaderModule, const char* fsEntryPoint, WGPUPipelineLayout pipelineLayout,
+    WGPURenderPipeline createBlendPipeline(WgContext& context, const char* pipelineLabel, WGPUShaderModule shaderModule, WGPUShaderModule shaderModuleBlend, BlendMethod method, WGPUPipelineLayout pipelineLayout, WGPUPipelineLayout pipelineLayoutBlend,
                                            WGPUVertexBufferLayout* vertexBufferLayouts, const uint32_t vertexBufferLayoutsCount, WGPUCompareFunction stencilCompare);
     void releaseRenderPipeline(WGPURenderPipeline& renderPipeline);
     void releasePipelineLayout(WGPUPipelineLayout& pipelineLayout);

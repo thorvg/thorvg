@@ -41,7 +41,7 @@ static int EmitAlphaRGB(const VP8Io* const io, WebPDecParams* const p) {
     const int num_rows = io->mb_h;
     const int start_y = io->mb_y;
     uint8_t* const base_rgba = buf->rgba + start_y * buf->stride;
-    uint8_t* const dst = base_rgba + 3;   // alpha is last for (rgbA|bgrA|RGBA|BGRA)
+    uint8_t* const dst = base_rgba + 3;  // alpha is last for (rgbA|bgrA)
     const int has_alpha = WebPDispatchAlpha(alpha, io->width, mb_w,
                                             num_rows, dst, buf->stride);
 

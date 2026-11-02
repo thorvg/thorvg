@@ -1593,7 +1593,11 @@ LottieExpressions::Context& LottieExpressions::context()
     ScopedLock lock(_lockKey);
 
     for (auto context : contexts) {
-        if (context->tid == tid) return *context;
+        if (context->tid == tid) {
+            // a thread id can be reused by a new thread, which has no jerry context bound yet
+            jerry_port_context_set(context->ctx);
+            return *context;
+        }
     }
 
     auto context = new Context;

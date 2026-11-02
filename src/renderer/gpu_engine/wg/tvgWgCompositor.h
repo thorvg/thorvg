@@ -85,7 +85,7 @@ private:
     WGPUTextureView getDepthStencilView(WgContext& context, uint32_t width, uint32_t height, uint32_t sampleCount);
     void requestQuad(WgMesh& mesh, const WgRenderTargetState& src, const WgRenderTargetState& dst, const WgRenderTargetState* mask = nullptr);
     void copyEffectTexture(WgContext& context, WgRenderTarget* dst, const WgRenderTargetState& src, bool clear = false);
-    void copyTexture(const WgRenderTarget* dst, const WgRenderTarget* src);
+    bool copyBackdrop(WgContext& context, BlendMethod method);
 
     // base meshes draw
     void drawMesh(WgContext& context, WgMesh* meshData);
@@ -95,16 +95,17 @@ private:
     // shapes
     void drawShape(WgContext& context, WgShape* rdata);
     void blendShape(WgContext& context, WgShape* rdata, BlendMethod blendMethod);
-    void clipShape(WgContext& context, WgShape* rdata);
+    void clipShape(WgContext& context, WgShape* rdata, BlendMethod blendMethod);
 
     // strokes
+    void stencilStrokes(WgContext& context, WgShape* rdata);
     void drawStrokes(WgContext& context, WgShape* rdata);
     void blendStrokes(WgContext& context, WgShape* rdata, BlendMethod blendMethod);
 
     // images
     void drawImage(WgContext& context, WgImage* rdata);
     void blendImage(WgContext& context, WgImage* rdata, BlendMethod blendMethod);
-    void clipImage(WgContext& context, WgImage* rdata);
+    void clipImage(WgContext& context, WgImage* rdata, BlendMethod blendMethod);
 
     // scenes
     void drawScene(WgContext& context, WgRenderTarget* scene, WgCompose* compose, WgMesh& mesh);

@@ -302,6 +302,7 @@ bool GlStencilCoverBatch::mergeCover(GlRenderTask* cover, const RenderRegion& vi
 
     auto dst = task->coverTasks.last();
     if (dst->program != cover->program) return false;
+    if (dst->blendMethod != cover->blendMethod) return false;
     if (!dst->bindResources.empty() || !cover->bindResources.empty()) return false;
     if (!dst->useDrawArrays || !cover->useDrawArrays) return false;
     if (dst->arrayMode != GL_TRIANGLES || cover->arrayMode != GL_TRIANGLES) return false;

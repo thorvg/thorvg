@@ -20,11 +20,9 @@
 //------------------------------------------------------------------------------
 // WebPDecBuffer
 
-// Only the 32-bit RGBA / BGRA colorspaces (straight or premultiplied) are
-// supported for output.
+// Only premultiplied 32-bit RGBA / BGRA colorspaces are supported for output.
 static int IsValidColorspace(int webp_csp_mode) {
-  return (webp_csp_mode == MODE_RGBA || webp_csp_mode == MODE_BGRA ||
-          webp_csp_mode == MODE_rgbA || webp_csp_mode == MODE_bgrA);
+    return (webp_csp_mode == MODE_rgbA || webp_csp_mode == MODE_bgrA);
 }
 
 #define BYTES_PER_PIXEL 4
