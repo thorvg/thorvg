@@ -517,12 +517,15 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
 
     if (w == 0 || h == 0) return Result::InvalidArguments;
 
+    auto format = type == 0 ? WGPUTextureFormat_BGRA8Unorm : wgpuTextureGetFormat((WGPUTexture)target);
+
     if (opaque) cs = ColorSpace::ABGR8888;  // Opaque surface composition uses the internal ABGR format.
 
     // context has been changed, need to recreate all instances
     if ((mContext.device != ctx.device) || (mContext.instance != ctx.instance) || mContext.adapter != ctx.adapter) {
         release();
         mContext.initialize(ctx);
+        mContext.format = format;
         mRenderTargetPool.initialize(w, h);
         mRenderTargetRoot.initialize(mContext, w, h);
         mCompositor.initialize(mContext, w, h);
@@ -534,6 +537,11 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
         mRenderTargetPool.initialize(w, h);
         mRenderTargetRoot.initialize(mContext, w, h);
         mCompositor.resize(mContext, w, h);
+    }
+
+    if (mContext.format != format) {
+        mContext.format = format;
+        mCompositor.pipelines.initializeBlit(mContext);
     }
 
     mSurface.stride = w;
