@@ -53,9 +53,9 @@ bool WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread&
             context.releaseTextureView(textureView);
             textureView = context.createTextureView(texture);
         }
-        stops.clear();
-        for (uint32_t i = 0; i < stopCnt; ++i)
-            stops.push(fillStops[i]);
+        stops.reserve(stopCnt);
+        if (stopCnt > 0) memcpy(stops.data, fillStops, sizeof(Fill::ColorStop) * stopCnt);
+        stops.count = stopCnt;
     }
     // get sampler by spread type. Conic gradients always use repeat to filter
     // across the first/last ramp texels at their seam.
