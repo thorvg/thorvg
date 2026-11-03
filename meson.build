@@ -162,8 +162,14 @@ configure_file(
     configuration: config_h
 )
 
-if get_option('tests')
-   subdir('test')
+tests = get_option('tests')
+if tests
+    if import('fs').exists('test/meson.build')
+        subdir('test')
+    else
+        warning('Unit tests are unavailable; skipping tests.')
+        tests = false
+    endif
 endif
 
 summary(
@@ -175,7 +181,7 @@ summary(
     'Partial Rendering': get_option('partial'),
     'SIMD': simd_type,
     'Log Message': get_option('log'),
-    'Tests': get_option('tests')
+    'Tests': tests
   },
   bool_yn: true,
 )
