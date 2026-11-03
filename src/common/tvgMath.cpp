@@ -398,7 +398,7 @@ uint32_t Bezier::segments(float scale) const
     static constexpr uint32_t MaxSegments = 1u << 10; // 2^10 segments cap keeps runtime bounded
     // Depth first, the halves still to flatten are only a few: they're kept on the stack,
     // and only a deeper subdivision moves them to the heap.
-    static constexpr uint32_t Local = 32;
+    static constexpr uint32_t Local = 8;
     Bezier local[Local];
     auto stack = local;
     uint32_t reserved = Local;
