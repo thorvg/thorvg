@@ -26,7 +26,11 @@
 RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     auto shape = static_cast<GlShape*>(data);
-    if (!shape) {
+    if (shape) {
+        // A shared clip can still be read by earlier coverage tasks.
+        if (clipper) doneCoverage();
+        shape->done();
+    } else {
         shape = new GlShape;
         shape->rshape = &rshape;
         flags = RenderUpdateFlag::All;
@@ -41,34 +45,42 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     // Keep stroke selection even when clipping removes its entire coverage.
     shape->clipStroke = rshape.stroke && !tvg::zero(rshape.stroke->width) && !tvg::zero(rshape.stroke->trim.begin - rshape.stroke->trim.end) &&
                         rshape.stroke->width * sqrtf(transform.e11 * transform.e11 + transform.e12 * transform.e12) > 0.0f;
-    // Generate and clip CPU maps before staging their encoded atlas data.
-    if (updateFill) {
-        shape->fillCoverage.status = generateFillCoverage(rshape, transform, vport, shape->fillCoverage.map);
-        if (!clips.empty() && shape->fillCoverage.status == CoverageStatus::Ready) shape->fillCoverage.status = clipCoverage(shape->fillCoverage.map, clips);
-    }
-    if (update) {
-        shape->strokeCoverage.status = generateStrokeCoverage(rshape, transform, vport, shape->strokeCoverage.map);
-        if (!clips.empty() && shape->strokeCoverage.status == CoverageStatus::Ready) shape->strokeCoverage.status = clipCoverage(shape->strokeCoverage.map, clips);
-    }
-    if (updateFill || !shape->fillCoverage.region.texture) {
-        if (!stageCoverage(shape->fillCoverage)) shape->fillCoverage.status = CoverageStatus::Error;
-    }
-    if (update || !shape->strokeCoverage.region.texture) {
-        if (!stageCoverage(shape->strokeCoverage)) shape->strokeCoverage.status = CoverageStatus::Error;
-    }
     shape->geometry.transform(transform);
     shape->geometry.viewport = vport;
     shape->geometry.fillRule = rshape.rule;
     shape->geometry.fillWorld = true;
-    shape->geometry.fillBBox = shape->fillCoverage.map.bounds;
-    shape->geometry.strokeBBox = shape->strokeCoverage.map.bounds;
-    shape->valid.fill = shape->fillCoverage.status == CoverageStatus::Ready;
-    shape->valid.stroke = shape->strokeCoverage.status == CoverageStatus::Ready;
     shape->opacity = opacity;
 
-    if (flags & RenderUpdateFlag::Clip) shape->clips = clips;
+    if (updateFill || update) {
+        shape->clips = clips;
+        shape->updateFill |= updateFill;
+        shape->updateStroke |= update;
+        ARRAY_FOREACH(p, clips) static_cast<GlShape*>(*p)->done();
+        TaskScheduler::request(shape);
+    }
 
     return shape;
+}
+
+void GlShape::run(TVG_UNUSED unsigned tid)
+{
+    if (updateFill) {
+        fillCoverage.status = generateFillCoverage(*rshape, geometry.matrix, geometry.viewport, fillCoverage.map);
+        if (!clips.empty() && fillCoverage.status == CoverageStatus::Ready) fillCoverage.status = GlRenderer::clipCoverage(fillCoverage.map, clips);
+    }
+    if (updateStroke) {
+        strokeCoverage.status = generateStrokeCoverage(*rshape, geometry.matrix, geometry.viewport, strokeCoverage.map);
+        if (!clips.empty() && strokeCoverage.status == CoverageStatus::Ready) strokeCoverage.status = GlRenderer::clipCoverage(strokeCoverage.map, clips);
+    }
+    geometry.fillBBox = fillCoverage.map.bounds;
+    geometry.strokeBBox = strokeCoverage.map.bounds;
+    valid.fill = fillCoverage.status == CoverageStatus::Ready;
+    valid.stroke = strokeCoverage.status == CoverageStatus::Ready;
+}
+
+void GlRenderer::doneCoverage()
+{
+    INLIST_FOREACH(coverageShapes, shape) shape->done();
 }
 
 bool GlRenderer::renderShape(RenderData data)
@@ -164,6 +176,7 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 bool GlRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 {
     auto shape = static_cast<GlShape*>(data);
+    shape->done();
     if (shape->opacity == 0) return false;
 
     // Maps already include transforms and clipping, but are generated independently of paint.
