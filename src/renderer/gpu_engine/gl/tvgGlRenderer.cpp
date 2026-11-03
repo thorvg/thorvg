@@ -90,6 +90,7 @@ void GlRenderer::clearDisposes()
 void GlRenderer::flush()
 {
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
+    doneCoverage();
     INLIST_FOREACH(coverageShapes, shape) {
         for (auto coverage : {&shape->fillCoverage, &shape->strokeCoverage}) {
             coverage->region = {};
@@ -791,6 +792,9 @@ bool GlRenderer::sync()
 
 RenderRegion GlRenderer::region(RenderData data)
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (data) static_cast<GlDrawable*>(data)->done();
+#endif
     return data ? static_cast<GlDrawable*>(data)->geometry.bounds() : RenderRegion{};
 }
 
@@ -994,6 +998,9 @@ bool GlRenderer::renderImage(void* data)
 
 void GlRenderer::dispose(RenderData data)
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    doneCoverage();
+#endif
     auto drawable = static_cast<GlDrawable*>(data);
     drawable->destroy(*this);
     delete (drawable);
@@ -1044,6 +1051,7 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
     image->clipCoverage.map.reset();
     image->clipCoverage.status = CoverageStatus::Empty;
     if (!image->clips.empty()) {
+        for (auto& p : image->clips) static_cast<GlShape*>(p)->done();
         image->clipCoverage.map.bounds = image->geometry.bounds();
         image->clipCoverage.map.bounds.intersect(vport);
         image->clipCoverage.status = clipCoverage(image->clipCoverage.map, image->clips);
@@ -1067,6 +1075,19 @@ bool GlRenderer::preUpdate()
 bool GlRenderer::postUpdate()
 {
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
+    // Join all readers before staging can change a shared clip's status.
+    doneCoverage();
+    INLIST_FOREACH(coverageShapes, shape) {
+        if (shape->updateFill || !shape->fillCoverage.region.texture) {
+            if (!stageCoverage(shape->fillCoverage)) shape->fillCoverage.status = CoverageStatus::Error;
+        }
+        if (shape->updateStroke || !shape->strokeCoverage.region.texture) {
+            if (!stageCoverage(shape->strokeCoverage)) shape->strokeCoverage.status = CoverageStatus::Error;
+        }
+        shape->valid.fill = shape->fillCoverage.status == CoverageStatus::Ready;
+        shape->valid.stroke = shape->strokeCoverage.status == CoverageStatus::Ready;
+        shape->updateFill = shape->updateStroke = false;
+    }
     coverageAtlas.flush(mStateCache);
 #endif
     return true;
