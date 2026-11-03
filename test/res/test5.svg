@@ -1,0 +1,25 @@
+<svg viewBox="0 0 100 100">
+    <!-- HSL Color Parsing coverage -->
+    <!-- 1. HSL Sector 1 (Yellow-Green) -->
+    <rect x="0" y="0" width="10" height="10" fill="hsl(90, 100%, 50%)" />
+    <!-- 2. HSL Sector 2 (Green-Cyan) -->
+    <rect x="20" y="0" width="10" height="10" fill="hsl(150, 100%, 50%)" />
+    <!-- 3. HSL Sector 3 (Cyan-Blue) -->
+    <rect x="40" y="0" width="10" height="10" fill="hsl(210, 100%, 50%)" />
+    <!-- 4. HSL Sector 4 (Blue-Magenta) -->
+    <rect x="60" y="0" width="10" height="10" fill="hsl(270, 100%, 50%)" />
+    <!-- 5. HSL Sector 5 (Magenta-Red) -->
+    <rect x="80" y="0" width="10" height="10" fill="hsl(330, 100%, 50%)" />
+    <!-- 6. HSL Zero Saturation (Gray) -->
+    <rect x="0" y="20" width="10" height="10" fill="hsl(0, 0%, 50%)" />
+    <!-- 7. HSL Hue 360 -->
+    <rect x="20" y="20" width="10" height="10" fill="hsl(360, 100%, 50%)" />
+    <!-- 8. HSL Lightness > 0.5 (also covers Sector 0) -->
+    <rect x="40" y="20" width="10" height="10" fill="hsl(0, 100%, 75%)" />
+    <!-- 9. HSL Zero Lightness (Black) -->
+    <rect x="60" y="20" width="10" height="10" fill="hsl(0, 100%, 0%)" />
+    <!-- 10. Float precision artifact (Default branch) -->
+    <rect x="80" y="20" width="10" height="10" fill="hsl(-0.00001, 100%, 50%)" />
+    <!-- Data URI for URL decoding coverage -->
+    <image href="data:image/svg+xml,%3Csvg+viewBox%3D%220%200%2010%2010%22%3E%3Crect+fill%3D%22%23F00%22+width%3D%2210%22+height%3D%2210%22%2F%3E%3C%2Fsvg%3E" height="10" width="10" x="0" y="40" />
+</svg>
