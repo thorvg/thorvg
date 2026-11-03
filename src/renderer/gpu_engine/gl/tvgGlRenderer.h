@@ -133,6 +133,7 @@ struct GlRenderer : RenderMethod
     GlCoverageAtlas coverageAtlas;
     Inlist<GlShape> coverageShapes;
     Inlist<GlImage> coverageImages;
+    void doneCoverage();
     static CoverageStatus clipCoverage(CoverageMap& map, const Array<RenderData>& clips);
     bool stageCoverage(GlCoverageMap& coverage);
     void bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage);
