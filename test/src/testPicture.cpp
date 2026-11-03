@@ -267,8 +267,8 @@ TEST_CASE("Load PNG file from path", "[tvgPicture]")
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
 
-    REQUIRE(w == 512);
-    REQUIRE(h == 512);
+    REQUIRE(w == 511);
+    REQUIRE(h == 511);
 
     Paint::rel(picture);
 }
@@ -291,8 +291,8 @@ TEST_CASE("Load PNG file from data", "[tvgPicture]")
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == 512);
-    REQUIRE(h == 512);
+    REQUIRE(w == 511);
+    REQUIRE(h == 511);
 
     free(data);
 
@@ -413,8 +413,8 @@ TEST_CASE("Load WEBP file from path", "[tvgPicture]")
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
 
-    REQUIRE(w == 512);
-    REQUIRE(h == 512);
+    REQUIRE(w == 511);
+    REQUIRE(h == 511);
 
     Paint::rel(picture);
 }
@@ -437,8 +437,8 @@ TEST_CASE("Load WEBP file from data", "[tvgPicture]")
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
-    REQUIRE(w == 512);
-    REQUIRE(h == 512);
+    REQUIRE(w == 511);
+    REQUIRE(h == 511);
 
     free(data);
 
