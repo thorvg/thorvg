@@ -60,11 +60,11 @@ if wg_engine
     endif
 endif
 
-tests = executable('tvgUnitTests',
+unit_tests = executable('tvgUnitTests',
     test_file,
     include_directories : headers,
     link_with : thorvg_lib,
     cpp_args : test_compiler_flags,
     dependencies : test_dep)
 
-test('Unit Tests', tests)
+test('Unit Tests', unit_tests)
