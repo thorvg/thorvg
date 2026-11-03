@@ -145,7 +145,7 @@ TEST_CASE("Scene Effects", "[tvgScene]")
         REQUIRE(scene->add(shape) == Result::Success);
 
         auto picture = tvg::Picture::gen();
-        picture->load(TEST_DIR"/tiger.svg");
+        picture->load(TEST_DIR"/test0.svg");
 
         scene->add(picture);
         REQUIRE(canvas->add(scene) == Result::Success);
