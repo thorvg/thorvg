@@ -31,6 +31,7 @@
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
 #include "tvgGlCoverageAtlas.h"
 #include "tvgInlist.h"
+#include "tvgTaskScheduler.h"
 #endif
 
 struct GlStageBuffer;
@@ -150,6 +151,9 @@ struct GlDrawable
 {
     virtual ~GlDrawable() = default;
     virtual void destroy(GlRenderer& renderer) = 0;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    virtual void done() {}
+#endif
     bool prepare(RenderUpdateFlag& updateFlags, const Point& viewSize, uint8_t opacity, bool clipper);
 
     GlGeometry geometry;
@@ -171,11 +175,18 @@ struct GlCoverageMap
 #endif
 
 struct GlShape : GlDrawable
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+              , Task
+#endif
 {
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
+    void run(unsigned tid) override;
+    void done() override { Task::done(); }
     void destroy(GlRenderer& renderer) override;
     INLIST_ITEM(GlShape);
     GlCoverageMap fillCoverage, strokeCoverage;
+    bool updateFill = false;
+    bool updateStroke = false;
     bool clipStroke = false;
 #else
     void destroy(GlRenderer& renderer) override {}
