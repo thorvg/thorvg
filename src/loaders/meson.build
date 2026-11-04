@@ -13,36 +13,15 @@ if lottie_loader
 endif
 
 if png_loader
-    if get_option('static')
-        subdir('png')
-    else
-        subdir('external_png')
-        if not png_dep.found()
-            subdir('png')
-        endif
-    endif
+    subdir('png')
 endif
 
 if jpg_loader
-    if get_option('static')
-        subdir('jpg')
-    else
-        subdir('external_jpg')
-        if not jpg_dep.found()
-            subdir('jpg')
-        endif
-    endif
+    subdir('jpg')
 endif
 
 if webp_loader
-    if get_option('static')
-        subdir('webp')
-    else
-        subdir('external_webp')
-        if not webp_dep.found()
-            subdir('webp')
-        endif
-    endif
+    subdir('webp')
 endif
 
 if media_loader

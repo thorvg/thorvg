@@ -1,17 +1,8 @@
-webp_deb = []
-
-subdir('dec')
-subdir('dsp')
-subdir('utils')
-subdir('webp')
-
-source_file = [
-   'tvgWebpLoader.h',
-   'tvgWebpLoader.cpp',
-]
-
-subloader_dep += [declare_dependency(
-    include_directories : include_directories('.'),
-    dependencies : webp_deb,
-    sources : source_file
-    )]
+if get_option('static')
+    subdir('static')
+else
+    subdir('external')
+    if not webp_dep.found()
+        subdir('static')
+    endif
+endif
