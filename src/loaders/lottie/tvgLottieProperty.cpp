@@ -168,8 +168,8 @@ Result LottieColorStop::operator()(float frameNo, Fill* fill, LottieExpressions*
     if (frame->interpolator) t = frame->interpolator->progress(t);
 
     if (frame->hold) {
-        if (t < 1.0f) fill->colorStops(frame->value.data, count);
-        else fill->colorStops((frame + 1)->value.data, count);
+        if (t < 1.0f) return fill->colorStops(frame->value.data, count);
+        return fill->colorStops((frame + 1)->value.data, count);
     }
 
     auto s = frame->value.data;
