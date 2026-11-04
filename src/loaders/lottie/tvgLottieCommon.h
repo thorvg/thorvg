@@ -90,6 +90,7 @@ struct TextDocument
     struct {
         Point pos;
         Point size{};
+        bool positioned = false;
     } bbox;
     struct {
         RGB32 color;
