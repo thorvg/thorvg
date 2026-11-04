@@ -1,11 +1,8 @@
-source_file = [
-   'tvgJpgd.h',
-   'tvgJpgLoader.h',
-   'tvgJpgd.cpp',
-   'tvgJpgLoader.cpp',
-]
-
-subloader_dep += [declare_dependency(
-    include_directories : include_directories('.'),
-    sources : source_file
-)]
+if get_option('static')
+    subdir('static')
+else
+    subdir('external')
+    if not jpg_dep.found()
+        subdir('static')
+    endif
+endif

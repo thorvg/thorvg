@@ -1,12 +1,8 @@
-source_file = [
-    'tvgLodePng.h',
-    'tvgPngLoader.h',
-    'tvgLodePng.cpp',
-    'tvgLodePngUtil.cpp',
-    'tvgPngLoader.cpp',
-]
-
-subloader_dep += [declare_dependency(
-    include_directories : include_directories('.'),
-    sources : source_file
-)]
+if get_option('static')
+    subdir('static')
+else
+    subdir('external')
+    if not png_dep.found()
+        subdir('static')
+    endif
+endif
