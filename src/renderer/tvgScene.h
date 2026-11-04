@@ -170,12 +170,22 @@ struct SceneImpl : Scene
 
         //Merge regions
         RenderRegion pRegion = {INT32_MAX, INT32_MAX, 0, 0};
+        auto merged = false;
         for (auto paint : paints) {
+            // never-updated paints cover no pixels: leave them out of the union
+            if (!paint->pImpl->renderer) continue;
+            merged = true;
             auto region = paint->pImpl->bounds();
             if (region.xMin < pRegion.xMin) pRegion.xMin = region.xMin;
             if (pRegion.xMax < region.xMax) pRegion.xMax = region.xMax;
             if (region.yMin < pRegion.yMin) pRegion.yMin = region.yMin;
             if (pRegion.yMax < region.yMax) pRegion.yMax = region.yMax;
+        }
+
+        // no updated paint to bound: keep the cache stale so the next query recomputes
+        if (!merged) {
+            vdirty = true;
+            return {};
         }
 
         //Extends the render region if post effects require
@@ -312,8 +322,8 @@ struct SceneImpl : Scene
         auto itr = paints.begin();
         while (itr != paints.end()) {
             auto paint = PAINT((*itr));
-            //when the paint is destroyed damage will be triggered
-            if (paint->refCnt > 1 && partialDmg) paint->damage();
+            // damage the old area whether or not the paint survives: see remove()
+            if (partialDmg) paint->damage();
             paint->unref();
             paints.erase(itr++);
         }
@@ -326,8 +336,9 @@ struct SceneImpl : Scene
     Result remove(Paint* paint)
     {
         if (PAINT(paint)->parent != this) return Result::InsufficientCondition;
-        //when the paint is destroyed damage will be triggered
-        if (PAINT(paint)->refCnt > 1) PAINT(paint)->damage();
+        // damage the old area whether or not the paint survives: destroying a paint only disposes its render task,
+        // so nothing else would mark the area it covered for clearing under partial rendering
+        PAINT(paint)->damage();
         PAINT(paint)->unref();
         paints.remove(paint);
         return Result::Success;

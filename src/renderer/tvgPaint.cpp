@@ -129,6 +129,9 @@ static bool _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Matri
 
 RenderRegion Paint::Impl::bounds()
 {
+    // a paint that has never been updated has no render data and covers no pixels (nor do its descendants)
+    if (!renderer) return {};
+
     RenderRegion ret;
     PAINT_METHOD(ret, bounds());
     return ret;
