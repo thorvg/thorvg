@@ -62,6 +62,7 @@ media_loader = get_option('loaders').contains('media')
 # Savers
 all_savers = get_option('savers').contains('all')
 gif_saver = all_savers or get_option('savers').contains('gif')
+svg_saver = all_savers or get_option('savers').contains('svg')
 
 # Logging
 logging = get_option('log')
@@ -103,6 +104,10 @@ endif
 
 if gif_saver
     config_h.set10('THORVG_GIF_SAVER_SUPPORT', true)
+endif
+
+if svg_saver
+    config_h.set10('THORVG_SVG_SAVER_SUPPORT', true)
 endif
 
 # Vectorization
@@ -213,6 +218,7 @@ summary(
 summary(
   {
     'GIF': gif_saver,
+    'SVG': svg_saver,
   },
   section: 'Saver',
   bool_yn: true,
