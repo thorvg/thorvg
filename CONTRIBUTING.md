@@ -47,61 +47,75 @@ Unexpected Pass:    0
 Skipped:            0
 Timeout:            0
 ```
-
 ## Commit Message
-[Module][Feature]: [Title]
 
-[Description]
+Keep each line of the commit message within 72 characters, except for API declarations, URLs, code snippets, or other references.
 
-- [Module] refers to the sub-module primarily affected by your change. Most of the time, this indicates the name of a sub-folder. This helps identify the appropriate reviewers for your change. If your change doesn't belong to any sub-modules, you can either replace this with a suitable name or skip it. The name should be written entirely in lowercase letters.
-  - e.g., build, doc, infra, common, cpu_engine, gl, svg, wasm, ...
+### Format
 
-- [Feature] indicates the primary function or feature you modified. This field is optional.
-  - e.g., canvas, shape, paint, scene, picture, task-scheduler, loader, builder, ...
+```text
+module[/feature]: Short description
 
-- [Title] provides a brief description of your change and should be encapsulated in a single sentence.
-  - e.g., "Fixed a typo."
-  - e.g., "Addressed compile warnings."
-  - e.g., "Refactored code."
-  - e.g., "Resolved a rendering bug causing overlapped shapes to display improperly."
+[Detailed description]
 
-- [Description] doesn't have a strict format. However, it should detail what you accomplished in this patch as comprehensively as possible.
+[issue: #123]
+```
 
- If you've resolved bugs, include the following details:
-  - The type of bug.
-  - Steps to reproduce it.
-  - The root cause.
-  - The solution applied.
+- **Module** identifies the primary sub-module affected by the change. Use lowercase names, preferably matching the corresponding source directory (e.g., `build`, `doc`, `infra`, `common`, `cpu_engine`, `gl`, `svg`, `wasm`). For changes spanning multiple modules, choose the most relevant one or use a suitable general category.
+- **Feature** optionally identifies a specific component or functionality within the module (e.g., `canvas`, `shape`, `paint`, `scene`, `picture`, `loader`, `task-scheduler`).
+- **Title** briefly summarizes the change in a single line. Use the imperative mood (e.g., `fix`, `add`, `update`, `refactor`, `optimize`) and avoid unnecessary details.
+- **Description** explains what changed and why. It is optional for trivial changes but recommended for bug fixes, new features, performance improvements, and significant refactoring.
 
-  For new features or functions, cover:
-  - The nature of the feature.
-  - Full API specifications (if there are any API additions).
-  - Its necessity or rationale.
-  - Any conditions or restrictions.
-  - Relevant examples or references.
+### Description Guidelines
 
- Finally, include any related issue ticket numbers in this section, if applicable.
+For **bug fixes**, describe the following when relevant:
 
+- The incorrect behavior and steps to reproduce it, or a link to the relevant issue for details.
+- The root cause of the problem.
+- How the change resolves the issue.
 
-Here's a sample commit message for clarity:
+For **new features or API changes**, include:
 
-- renderer/paint: Introduced path clipping feature
+- The functionality introduced and its purpose.
+- Any added, modified, or removed public API declarations.
+- Relevant limitations, restrictions, or compatibility concerns.
+- Usage examples or references, when helpful.
 
-  We've added a new method, Paint::composite(), to support various composite behaviors. This allows paints to interact with other paint instances based on the chosen composite method. Initially, we're introducing the "ClipPath" method for path-based clipping.
+For **performance improvements or refactoring**, explain the motivation, significant implementation changes, and their impact. Include benchmark results when applicable.
 
-  targetPaint->composite(srcPaint, CompositeMethod::ClipPath);
+Reference related GitHub issues using issue: #123, when applicable.
 
-  Note: If the source paint lacks path information, clipping may not produce the desired effect.
+For **API changes**, prefix each API declaration with a symbol indicating the type of change:
 
-  API Additions:
-  enum CompositeMethod {None = 0, ClipPath};
-  Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method) const noexcept;
+- `+` Added API
+- `*` Modified API
+- `-` Removed API
 
-  Examples: Introduced ClipPath
+Example:
 
-  References: [Provide any relevant links, such as screenshots.]
+```cpp
++Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method);
+*Result Paint::opacity(uint8_t opacity) noexcept;
+-Result Paint::deprecated() noexcept;
+```
 
-  Issues: [Link to the issue]
+### Example
+
+```text
+renderer/paint: add path clipping support
+
+Introduce Paint::composite() to support compositing between paint
+objects. Initially, the API supports ClipPath for path-based clipping.
+
+The source paint defines the clipping region applied to the target.
+
+API:
+ +Result Paint::composite(std::unique_ptr<Paint> target, CompositeMethod method)
+
+Note: The clipping source must contain valid path geometry.
+
+issue: #123
+```
 
 ## Pull Request
 
