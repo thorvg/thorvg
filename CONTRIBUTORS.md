@@ -80,3 +80,4 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Alexander Musienko @dnepromell
 - Mikhail Teterin @UnitedMarsupials
 - Malvis Light @LightSideMeowshop
+- Naail Abdul Rahman @kudanai
