@@ -262,7 +262,7 @@ static SvgFontWeight _toFontWeight(const char* str)
 
 static SvgMaskType _toMaskType(const char* str)
 {
-    return STR_AS(str, "Alpha") ? SvgMaskType::Alpha : SvgMaskType::Luminance;
+    return STR_AS(str, "alpha") ? SvgMaskType::Alpha : SvgMaskType::Luminance;
 }
 
 
