@@ -123,15 +123,14 @@ if get_option('file') == true
     config_h.set10('THORVG_FILE_IO_SUPPORT', true)
 endif
 
-
 # Extra
-lottie_exp = lottie_loader and get_option('extra').contains('lottie_exp')
+lottie_exp = lottie_loader and (get_option('extra').contains('all') or get_option('extra').contains('lottie_exp'))
 
 if lottie_exp
     config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
 endif
 
-openmp = get_option('extra').contains('openmp')
+openmp = get_option('extra').contains('all') or get_option('extra').contains('openmp')
 
 if openmp
     config_h.set10('THORVG_OPENMP_SUPPORT', true)

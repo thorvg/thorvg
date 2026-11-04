@@ -59,6 +59,6 @@ option('file',
 
 option('extra',
    type: 'array',
-   choices: ['', 'opengl_es', 'lottie_exp', 'openmp'],
+   choices: ['', 'opengl_es', 'lottie_exp', 'openmp', 'all'],
    value: ['openmp'],
    description: 'Enable support for extra options')
