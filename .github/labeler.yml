@@ -8,20 +8,20 @@
   - README.md
 
 "font":
-  - src/loaders/sfnt/**/*
+  - src/modules/sfnt/**/*
 
 "image":
-   - src/loaders/jpg/**/*
-   - src/loaders/png/**/*
-   - src/loaders/webp/**/*
-   - src/loaders/raw/**/*
-   - src/savers/gif/**/*
+   - src/modules/jpg/**/*
+   - src/modules/png/**/*
+   - src/modules/webp/**/*
+   - src/modules/raw/**/*
+   - src/modules/gif/**/*
 
 "svg":
-  - src/loaders/svg/**/*
+   - src/modules/svg/**/*
 
-"tvg":
-  - src/loaders/tvg/**/*
+"media":
+   - src/modules/media/**/*
 
 "test":
   - test/**/*
@@ -35,7 +35,7 @@
   - meson_option.txt
 
 "lottie":
-  - src/loaders/lottie/**/*
+  - src/modules/lottie/**/*
 
 "cpu":
   - src/renderer/cpu_engine/**/*
