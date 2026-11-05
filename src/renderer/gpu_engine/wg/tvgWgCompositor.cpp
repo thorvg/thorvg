@@ -83,11 +83,14 @@ void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t heigh
 
 void WgCompositor::initPools(WgContext& context)
 {
-    for (uint32_t i = 0; i < 256; i++) {
-        float opacity = i / 255.0f;
-        context.allocateBufferUniform(bufferOpacities[i], &opacity, sizeof(float));
-        bindGroupOpacities[i] = context.layouts.createBindGroupBuffer1Un(bufferOpacities[i]);
-    }
+    // TODO: Evaluate staging scene opacity with other uniforms.
+    constexpr uint32_t stride = 256;
+    auto opacities = tvg::calloc<float>(256, stride);
+    for (uint32_t i = 0; i < 256; i++) opacities[i * stride / sizeof(float)] = i / 255.0f;
+    context.allocateBufferUniform(bufferOpacities, opacities, 256 * stride);
+    free(opacities);
+    for (uint32_t i = 0; i < 256; i++)
+        bindGroupOpacities[i] = context.layouts.createBindGroupBuffer1Un(bufferOpacities, i * stride, sizeof(float));
 }
 
 
@@ -115,10 +118,8 @@ void WgCompositor::release(WgContext& context)
 void WgCompositor::releasePools(WgContext& context)
 {
     // release opacity pool
-    for (uint32_t i = 0; i < 256; i++) {
-        context.layouts.releaseBindGroup(bindGroupOpacities[i]);
-        context.releaseBuffer(bufferOpacities[i]);
-    }
+    for (uint32_t i = 0; i < 256; i++) context.layouts.releaseBindGroup(bindGroupOpacities[i]);
+    context.releaseBuffer(bufferOpacities);
 }
 
 
