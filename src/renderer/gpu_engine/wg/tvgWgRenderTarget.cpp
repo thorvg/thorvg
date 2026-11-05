@@ -32,14 +32,14 @@ static uint32_t _renderTargetSize(uint32_t value, uint32_t limit)
     return size < limit ? size : limit;
 }
 
-void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t height)
+void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t height, bool multisample)
 {
     this->width = width;
     this->height = height;
     texture = context.createTexStorage(width, height, WGPUTextureFormat_RGBA8Unorm);
-    textureMS = context.createTexAttachement(width, height, WGPUTextureFormat_RGBA8Unorm, 4);
+    if (multisample) textureMS = context.createTexAttachement(width, height, WGPUTextureFormat_RGBA8Unorm, 4);
     texView = context.createTextureView(texture);
-    texViewMS = context.createTextureView(textureMS);
+    if (multisample) texViewMS = context.createTextureView(textureMS);
     bgRead = context.layouts.createBindGroupStrorage1RO(texView);
     bgWrite = context.layouts.createBindGroupStrorage1WO(texView);
     bgTexture = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);

@@ -144,8 +144,8 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
         // update global view matrix handles
         updateViewMat(context, width, height);
         // initialize intermediate render targets
-        targetTemp0.initialize(context, width, height);
-        targetTemp1.initialize(context, width, height);
+        targetTemp0.initialize(context, width, height, false);
+        targetTemp1.initialize(context, width, height, false);
         bindGroupStorageTemp = context.layouts.createBindGroupStrorage2RO(targetTemp0.texView, targetTemp1.texView);
     }
 }
