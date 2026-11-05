@@ -1164,6 +1164,13 @@ static void _handleMixBlendModeAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* n
     node->style->flags |= SvgStyleFlags::BlendMode;
 }
 
+static void _handleImageRenderingAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
+{
+    auto nearest = STR_AS(value, "pixelated") || STR_AS(value, "crisp-edges");
+    node->style->imageRendering = nearest ? FilterMethod::Nearest : FilterMethod::Bilinear;
+    node->style->flags |= SvgStyleFlags::ImageRendering;
+}
+
 static void _handleTextAnchorAttr(TVG_UNUSED SvgParserContext* ctx, SvgNode* node, const char* value)
 {
     node->style->flags |= SvgStyleFlags::TextAnchor;
@@ -1289,6 +1296,7 @@ static constexpr struct
     STYLE_DEF(paint-order, PaintOrder, SvgStyleFlags::PaintOrder),
     STYLE_DEF(filter, Filter, SvgStyleFlags::Filter),
     STYLE_DEF(mix-blend-mode, MixBlendMode, SvgStyleFlags::BlendMode),
+    STYLE_DEF(image-rendering, ImageRendering, SvgStyleFlags::ImageRendering),
     STYLE_DEF(text-anchor, TextAnchor, SvgStyleFlags::TextAnchor),
     STYLE_DEF(alignment-baseline, AlignmentBaseline, SvgStyleFlags::AlignmentBaseline),
     STYLE_DEF(dominant-baseline, DominantBaseline, SvgStyleFlags::DominantBaseline),
@@ -3139,6 +3147,7 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
     if (!(child->flags & SvgStyleFlags::DominantBaseline)) child->dominantBaseline = parent->dominantBaseline;
     if (!(child->flags & SvgStyleFlags::LetterSpacing)) child->letterSpacing = parent->letterSpacing;
     if (!(child->flags & SvgStyleFlags::WordSpacing)) child->wordSpacing = parent->wordSpacing;
+    if (!(child->flags & SvgStyleFlags::ImageRendering)) child->imageRendering = parent->imageRendering;
 }
 
 
@@ -3155,6 +3164,7 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
     if (from->flags & SvgStyleFlags::PaintOrder) to->paintOrder = from->paintOrder;
     if (from->flags & SvgStyleFlags::Display) to->display = from->display;
     if (from->flags & SvgStyleFlags::BlendMode) to->blendMode = from->blendMode;
+    if (from->flags & SvgStyleFlags::ImageRendering) to->imageRendering = from->imageRendering;
     if (from->flags & SvgStyleFlags::TextAnchor) to->textAnchor = from->textAnchor;
     if (from->flags & SvgStyleFlags::AlignmentBaseline) to->alignmentBaseline = from->alignmentBaseline;
     if (from->flags & SvgStyleFlags::DominantBaseline) to->dominantBaseline = from->dominantBaseline;
