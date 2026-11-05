@@ -23,6 +23,7 @@
 #ifndef _TVG_LOTTIE_MODEL_H_
 #define _TVG_LOTTIE_MODEL_H_
 
+#include <algorithm>
 #include "tvgCommon.h"
 #include "tvgStr.h"
 #include "tvgText.h"
@@ -814,8 +815,10 @@ struct LottieGradient : LottieObject
         if (!colorStops.populated) {
             auto count = colorStops.count;  //colorstop count can be modified after population
             if (colorStops.frames) {
+                // every keyframe must have enough stops for the shared count.
+                colorStops.count = UINT16_MAX;
                 ARRAY_FOREACH(v, *colorStops.frames) {
-                    colorStops.count = populate(v->value, count);
+                    colorStops.count = std::min<uint32_t>(colorStops.count, populate(v->value, count));
                 }
             } else {
                 colorStops.count = populate(colorStops.value, count);
