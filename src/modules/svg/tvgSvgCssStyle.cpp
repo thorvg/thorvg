@@ -151,6 +151,11 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         to->blendMode = from->blendMode;
         _markCopied(to, from, SvgStyleFlags::BlendMode);
     }
+    if (((from->flags & SvgStyleFlags::ImageRendering) && !(keep & SvgStyleFlags::ImageRendering)) ||
+        _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::ImageRendering)) {
+        to->imageRendering = from->imageRendering;
+        _markCopied(to, from, SvgStyleFlags::ImageRendering);
+    }
     if (((from->flags & SvgStyleFlags::TextAnchor) && !(keep & SvgStyleFlags::TextAnchor)) || _isImportanceApplicable(to->flagsImportance, from->flagsImportance, SvgStyleFlags::TextAnchor)) {
         to->textAnchor = from->textAnchor;
         _markCopied(to, from, SvgStyleFlags::TextAnchor);
