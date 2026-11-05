@@ -12,24 +12,24 @@
 
 "font":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/sfnt/**/*
+      - any-glob-to-any-file: src/modules/sfnt/**/*
 
 "image":
   - changed-files:
       - any-glob-to-any-file:
-          - src/loaders/jpg/**/*
-          - src/loaders/png/**/*
-          - src/loaders/webp/**/*
-          - src/loaders/raw/**/*
-          - src/savers/gif/**/*
+          - src/modules/jpg/**/*
+          - src/modules/png/**/*
+          - src/modules/webp/**/*
+          - src/modules/raw/**/*
+          - src/modules/gif/**/*
 
 "svg":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/svg/**/*
+      - any-glob-to-any-file: src/modules/svg/**/*
 
 "media":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/media/**/*
+      - any-glob-to-any-file: src/modules/media/**/*
 
 "test":
   - changed-files:
@@ -44,7 +44,7 @@
 
 "lottie":
   - changed-files:
-      - any-glob-to-any-file: src/loaders/lottie/**/*
+      - any-glob-to-any-file: src/modules/lottie/**/*
 
 "cpu":
   - changed-files:

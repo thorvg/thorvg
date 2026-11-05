@@ -4,13 +4,13 @@
 * @hermet
 /src/renderer/cpu_engine @Nor-s
 /src/renderer/gpu_engine @wenjieshen
-/src/loaders/lottie @tinyjin @Nor-s
-/src/loaders/svg @JSUYA
-/src/loaders/png @Nor-s
-/src/loaders/webp @Nor-s
-/src/loaders/media/android @Nor-s
-/src/loaders/media/apple @Nor-s
-/src/loaders/media/web @tinyjin
-/src/savers/gif @Nor-s
+/src/modules/lottie @tinyjin @Nor-s
+/src/modules/svg @JSUYA
+/src/modules/png @Nor-s
+/src/modules/webp @Nor-s
+/src/modules/media/android @Nor-s
+/src/modules/media/apple @Nor-s
+/src/modules/media/web @tinyjin
+/src/modules/gif @Nor-s
 /test @Nor-s
 /.github/workflows @Nor-s
