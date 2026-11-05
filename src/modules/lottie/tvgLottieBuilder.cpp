@@ -1697,7 +1697,15 @@ static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
 {
     if (parent->children.count == 0) return false;
     if (parent->buildDone) return true;
-    parent->buildDone = true;
+
+    // the composition is referenced again while still being built: the precomp
+    // references form a cycle (e.g. A -> A or A -> B -> A). Skip the reference
+    // instead of linking a cyclic layer graph that recurses forever at update.
+    if (parent->building) {
+        TVGERR("LOTTIE", "Cyclic precomp reference detected. Skipping to prevent infinite recursion.");
+        return false;
+    }
+    parent->building = true;
 
     ARRAY_FOREACH(p, parent->children) {
         auto child = static_cast<LottieLayer*>(*p);
@@ -1726,6 +1734,9 @@ static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
         //attach the necessary font data
         if (child->type == LottieLayer::Text) _attachFont(comp, child);
     }
+
+    parent->building = false;
+    parent->buildDone = true;
     return true;
 }
 

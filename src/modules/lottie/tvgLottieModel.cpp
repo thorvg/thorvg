@@ -506,6 +506,7 @@ LottieGroup::LottieGroup(LottieObject::Type type) : LottieObject(type)
 {
     reqFragment = false;
     buildDone = false;
+    building = false;
     trimpath = false;
     visible = false;
     allowMerge = true;
