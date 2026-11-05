@@ -234,6 +234,33 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[2].y == Approx(16.0f).margin(0.000001));
         REQUIRE(pts[3].y == Approx(16.0f).margin(0.000001));
 
+        //Picture
+        auto data = unique_ptr<uint32_t[]>(new uint32_t[200*300]());
+        auto picture = Picture::gen();
+        REQUIRE(picture->load(data.get(), 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
+        REQUIRE(picture->origin(0.5f, 0.5f) == Result::Success);
+        REQUIRE(picture->translate(100.0f, 100.0f) == Result::Success);
+        REQUIRE(canvas->add(picture) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+
+        REQUIRE(picture->bounds(&x, &y, &w, &h) == Result::Success);
+        REQUIRE(x == Approx(0.0f).margin(0.000001));
+        REQUIRE(y == Approx(-50.0f).margin(0.000001));
+        REQUIRE(w == Approx(200.0f).margin(0.000001));
+        REQUIRE(h == Approx(300.0f).margin(0.000001));
+
+        REQUIRE(picture->bounds(pts) == Result::Success);
+        REQUIRE(pts[0].x == Approx(0.0f).margin(0.000001));
+        REQUIRE(pts[3].x == Approx(0.0f).margin(0.000001));
+        REQUIRE(pts[0].y == Approx(-50.0f).margin(0.000001));
+        REQUIRE(pts[1].y == Approx(-50.0f).margin(0.000001));
+        REQUIRE(pts[1].x == Approx(200.0f).margin(0.000001));
+        REQUIRE(pts[2].x == Approx(200.0f).margin(0.000001));
+        REQUIRE(pts[2].y == Approx(250.0f).margin(0.000001));
+        REQUIRE(pts[3].y == Approx(250.0f).margin(0.000001));
+
+        REQUIRE(canvas->sync() == Result::Success);
+
 #ifdef THORVG_TTF_LOADER_SUPPORT
         //Text
         REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
