@@ -175,7 +175,8 @@ enum struct SvgStyleFlags
     DominantBaseline = 0x800000,
     FontWeight = 0x1000000,
     LetterSpacing = 0x2000000,
-    WordSpacing = 0x4000000
+    WordSpacing = 0x4000000,
+    ImageRendering = 0x8000000
 };
 
 constexpr bool operator&(SvgStyleFlags a, SvgStyleFlags b)
@@ -586,6 +587,7 @@ struct SvgStyleProperty
     bool letterSpacingRelative;
     bool wordSpacingRelative;
     BlendMethod blendMode;
+    FilterMethod imageRendering;
 };
 
 struct SvgNode
