@@ -48,9 +48,10 @@ public:
 private:
     RGB32 getColor(const char *str);
     FillRule getFillRule();
-    MaskMethod getMaskMethod(bool inversed);
+    MaskMethod getMaskMethod();
     LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
     LottieEffect* getEffect(int type);
+    LottieMergePath::Mode getMergeMode();
 
     void getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property);
     void getInterpolatorPoint(Point& pt);
@@ -97,6 +98,7 @@ private:
     LottieTrimpath* parseTrimpath();
     LottieRepeater* parseRepeater();
     LottieOffsetPath* parseOffsetPath();
+    LottieMergePath* parseMergePath();
     LottiePuckerBloat* parsePuckerBloat();
     LottieZigZag* parseZigZag();
     LottieFont* parseFont();
