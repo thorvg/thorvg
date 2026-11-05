@@ -838,6 +838,7 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
     }
     if (node->transform) m = *node->transform * m;
     picture->transform(m);
+    picture->filter(node->style->imageRendering);
 
     auto p = _applyFilter(ctx, picture, node, vBox, svgPath);
     p = _applyComposition(ctx, p, node, vBox, svgPath);
