@@ -264,6 +264,11 @@ PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC      glRenderbufferStorageMultisample;
 PFNGLBINDVERTEXARRAYPROC                     glBindVertexArray;
 PFNGLDELETEVERTEXARRAYSPROC                  glDeleteVertexArrays;
 PFNGLGENVERTEXARRAYSPROC                     glGenVertexArrays;
+#if defined(THORVG_GL_DESKTOP_ATTACHMENT_QUERY)
+// Only non-Apple desktop GL needs this entry point. GLES uses the existing
+// glGetIntegerv path, and Apple deliberately keeps the offscreen target.
+PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC glGetFramebufferAttachmentParameteriv;
+#endif
 
 //GL_VERSION_3_1
 PFNGLGETUNIFORMBLOCKINDEXPROC      glGetUniformBlockIndex;
@@ -385,6 +390,9 @@ bool glInit()
     GL_FUNCTION_FETCH(glGenFramebuffers, PFNGLGENFRAMEBUFFERSPROC);
     GL_FUNCTION_FETCH(glFramebufferTexture2D, PFNGLFRAMEBUFFERTEXTURE2DPROC);
     GL_FUNCTION_FETCH(glFramebufferRenderbuffer, PFNGLFRAMEBUFFERRENDERBUFFERPROC);
+#if defined(THORVG_GL_DESKTOP_ATTACHMENT_QUERY)
+    GL_FUNCTION_FETCH(glGetFramebufferAttachmentParameteriv, PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC);
+#endif
     GL_FUNCTION_FETCH(glBlitFramebuffer, PFNGLBLITFRAMEBUFFERPROC);
     GL_FUNCTION_FETCH(glRenderbufferStorageMultisample, PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC);
     GL_FUNCTION_FETCH(glBindVertexArray, PFNGLBINDVERTEXARRAYPROC);
