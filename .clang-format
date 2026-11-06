@@ -41,7 +41,12 @@ DerivePointerAlignment: false
 
 # Spacing
 ForEachMacros: [ARRAY_FOREACH]
-SpaceBeforeParens: ControlStatementsExceptControlMacros
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterForeachMacros: false
+  AfterIfMacros: false
+  AfterPlacementOperator: false
 SpaceInEmptyParentheses: false
 SpacesInParentheses: false
 SpaceAfterCStyleCast: false
@@ -83,6 +88,9 @@ BreakStringLiterals: true
 # Comments
 ReflowComments: true
 SpacesBeforeTrailingComments: 2
+SpacesInLineCommentPrefix:
+  Minimum: 0
+  Maximum: -1
 
 # Empty lines
 MaxEmptyLinesToKeep: 1
