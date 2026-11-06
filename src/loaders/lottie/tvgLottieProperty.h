@@ -68,7 +68,6 @@ struct LottieVectorFrame
     float no;                   //frame number
     LottieInterpolator* interpolator;
     T outTangent, inTangent;
-    float length;
     bool hasTangent = false;
     bool hold = false;
 
@@ -84,7 +83,7 @@ struct LottieVectorFrame
 
         if (hasTangent) {
             Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-            return bz.at(bz.atApprox(t * length, length));
+            return bz.at(bz.atFraction(t));
         } else {
             return tvg::lerp(value, next->value, t);
         }
@@ -100,15 +99,11 @@ struct LottieVectorFrame
         auto t = (frameNo - no) / (next->no - no);
         if (interpolator) t = interpolator->progress(t);
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-        t = bz.atApprox(t * length, length);
+        t = bz.atFraction(t);
         return bz.angle(t >= 1.0f ? 0.99f : (t <= 0.0f ? 0.01f : t));
     }
 
-    void prepare(LottieVectorFrame* next)
-    {
-        Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
-        length = bz.lengthApprox();
-    }
+    void prepare(TVG_UNUSED LottieVectorFrame* next) {}
 };
 
 struct LottieExpression

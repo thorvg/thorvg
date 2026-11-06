@@ -555,9 +555,8 @@ struct Bezier
     void split(Bezier& left, Bezier& right) const;
     void split(float at, Bezier& left, Bezier& right) const;
     float length() const;
-    float lengthApprox() const;
     float at(float at, float length) const;
-    float atApprox(float at, float length) const;
+    float atFraction(float fraction) const;
     bool flatten(float tolerance) const;
     uint32_t segments(float scale = 1.0f) const;
 

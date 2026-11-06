@@ -29,11 +29,6 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-static float _lengthApprox(const Point& pt1, const Point& pt2)
-{
-    return tvg::length(pt1, pt2);
-}
-
 static float _length(const Point& pt1, const Point& pt2)
 {
     Point diff = {pt2.x - pt1.x, pt2.y - pt1.y};
@@ -310,11 +305,6 @@ float Bezier::length() const
     return _bezLength(*this, _length);
 }
 
-float Bezier::lengthApprox() const
-{
-    return _bezLength(*this, _lengthApprox);
-}
-
 void Bezier::split(float t, Bezier& left)
 {
     left.start = start;
@@ -331,9 +321,31 @@ float Bezier::at(float at, float length) const
     return _bezAt(*this, at, length, _length);
 }
 
-float Bezier::atApprox(float at, float length) const
+//the parameter where the curve has gone `fraction` of its length: measured over 64 chords, the
+//parameter interpolated within the chord the length falls in
+float Bezier::atFraction(float fraction) const
 {
-    return _bezAt(*this, at, length, _lengthApprox);
+    constexpr int N = 64;
+    float len[N + 1];
+    len[0] = 0.0f;
+    auto prev = start;
+    for (int i = 1; i <= N; ++i) {
+        auto pt = at(float(i) / N);
+        len[i] = len[i - 1] + _length(prev, pt);
+        prev = pt;
+    }
+    if (fraction <= 0.0f) return 0.0f;
+    if (fraction >= 1.0f) return 1.0f;
+    auto target = fraction * len[N];
+    int lo = 0, hi = N;
+    while (hi - lo > 1) {
+        auto mid = (lo + hi) / 2;
+        if (len[mid] < target) lo = mid;
+        else hi = mid;
+    }
+    auto seg = len[hi] - len[lo];
+    auto f = (seg > 0.0f) ? (target - len[lo]) / seg : 0.0f;
+    return (float(lo) + f) / N;
 }
 
 void Bezier::bounds(BBox& box, const Point& start, const Point& ctrl1, const Point& ctrl2, const Point& end)
