@@ -274,6 +274,8 @@ bool LottieParser::getValue(float& val)
         while (nextArrayValue()) getFloat();
     } else {
         val = getFloat();
+        //discard rest
+        while (state == kHasNumber) getFloat();
     }
     return false;
 }
