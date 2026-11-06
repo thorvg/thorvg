@@ -1,11 +1,3 @@
-source_file = [
-   'tvgGifEncoder.h',
-   'tvgGifSaver.h',
-   'tvgGifEncoder.cpp',
-   'tvgGifSaver.cpp',
-]
-
-submodule_dep += [declare_dependency(
-    include_directories : include_directories('.'),
-    sources : source_file
-)]
+if gif_saver
+    subdir('save')
+endif
