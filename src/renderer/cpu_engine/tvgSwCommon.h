@@ -494,6 +494,7 @@ bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& rende
 
 void shapeReset(SwShape& shape);
 void shapeDelOutline(SwShape& shape);
+bool shapeFastTrack(const RenderPath& path, const Matrix& transform);
 bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool composite, bool antiAlias);
 void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid);
 bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool antiAlias);
