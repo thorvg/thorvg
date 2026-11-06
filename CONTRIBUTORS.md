@@ -18,6 +18,7 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Jay WenJie @wenjieshen
 - SoonGeon Noh @Nor-s
 - Abdelrahman Ashraf @theashraf
+- Benjamin Halko @BenjaminHalko
 
 ## Contributors
 - Prudhvi Raj Vasireddi @prudhvirajv
@@ -52,7 +53,6 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Marcin Baszczewski @baszczewski
 - Fabian Blatz @faxe1008
 - Jakub Marcowski @Chubercik
-- Benjamin Halko @BenjaminHalko
 - Benson Muite @bkmgit
 - kkocdko @kkocdko
 - Giseong Ji @jiggyjiggy

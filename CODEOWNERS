@@ -11,6 +11,6 @@
 /src/modules/media/android @Nor-s
 /src/modules/media/apple @Nor-s
 /src/modules/media/web @tinyjin
-/src/modules/gif @Nor-s
+/src/modules/gif/load @BenjaminHalko
 /test @Nor-s
 /.github/workflows @Nor-s
