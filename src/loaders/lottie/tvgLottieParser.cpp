@@ -945,7 +945,10 @@ char* LottieParser::captureType()
 
 void LottieParser::parseObject(Array<LottieObject*>& parent)
 {
-    enterObject();
+    if (!enterObject()) {
+        state = kError;
+        return;
+    }
 
     auto type = captureType();
     auto freeType = false;
