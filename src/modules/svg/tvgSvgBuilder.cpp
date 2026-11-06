@@ -100,7 +100,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     }
 
     // A non-invertible gradient transform paints nothing, so drop the paint.
-    // TODO(jsuya): inverse() cannot be used here since it fails for certain values; it should be improved.
+    // TODO: inverse() cannot be used here since it fails for certain values; it should be improved.
     auto det = (double)finalTransform.e11 * (double)finalTransform.e22 - (double)finalTransform.e12 * (double)finalTransform.e21;
     if (det == 0.0) {
         delete(fillGrad);
@@ -159,7 +159,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
     }
 
     // A non-invertible gradient transform paints nothing, so drop the paint.
-    // TODO(jsuya): inverse() cannot be used here since it fails for certain values; it should be improved.
+    // TODO: inverse() cannot be used here since it fails for certain values; it should be improved.
     auto det = (double)finalTransform.e11 * (double)finalTransform.e22 - (double)finalTransform.e12 * (double)finalTransform.e21;
     if (det == 0.0) {
         delete(fillGrad);
