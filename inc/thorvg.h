@@ -5,6 +5,8 @@
 #include <functional>
 #include <list>
 #include <cstdarg>
+#include <cstddef>
+#include <cstdlib>
 
 #define TVG_VERSION_MAJOR 1  // for compile-time checks
 #define TVG_VERSION_MINOR 0  // for compile-time checks
@@ -372,6 +374,21 @@ struct Region
     int32_t xMin, yMin;
     int32_t xMax, yMax;
 };
+
+/**
+ * @brief Heap allocator callbacks
+ *
+ * The default heap allocator points to std::malloc, std::calloc, std::realloc and std::free.
+ * Change to equivalent heap allocator functions when necessary.
+ */
+struct HeapAllocator
+{
+    void* (*alloc)(size_t) = std::malloc;
+    void* (*calloc)(size_t, size_t) = std::calloc;
+    void* (*realloc)(void*, size_t) = std::realloc;
+    void (*free)(void*) = std::free;
+};
+
 
 /**
  * @brief Describes the font metrics of a text object.
@@ -2661,6 +2678,9 @@ struct TVG_API Initializer final
      * @param[in] threads The number of worker threads to create.
      *                    A value of 0 disables worker threads, executing rendering tasks on the calling thread.
      *
+     * @param[in] allocator The custom allocator callback struct
+     *                      Leave it default to use std::malloc/std::calloc/std::realloc/std::free
+     *
      * @return Result indicating success or failure of initialization.
      *
      * @note Initialization is reference-counted. Each successful call increments the reference count.
@@ -2671,7 +2691,7 @@ struct TVG_API Initializer final
      *
      * @see Initializer::term()
      */
-    static Result init(uint32_t threads = 0) noexcept;
+    static Result init(uint32_t threads = 0, const HeapAllocator &allocator = {}) noexcept;
 
     /**
      * @brief Terminates the ThorVG engine.
