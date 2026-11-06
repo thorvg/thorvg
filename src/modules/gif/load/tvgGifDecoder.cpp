@@ -355,25 +355,21 @@ uint8_t* GifDecoder::deinterlace(uint8_t* pixels, uint16_t width, uint16_t heigh
     return dst;
 }
 
-void GifDecoder::indexToRGBA(GifFrame& frame, const uint8_t* pixels, const uint8_t* palette, uint32_t paletteSize, size_t pixelCnt)
+void GifDecoder::indexToPixels(GifFrame& frame, const uint8_t* pixels, const uint8_t* palette, uint32_t paletteSize, size_t pixelCnt)
 {
-    auto transIdx = frame.transparentIndex;
-    auto transparent = frame.transparent;
+    uint32_t colors[256] = {};
+    auto abgr = (cs == ColorSpace::ABGR8888);
 
-    for (size_t i = 0; i < pixelCnt; i++) {
-        auto index = pixels[i];
-        if (transparent && index == transIdx) {
-            frame.pixels[i] = 0;
-        } else if (index < paletteSize) {
-            auto r = palette[index * 3 + 0];
-            auto g = palette[index * 3 + 1];
-            auto b = palette[index * 3 + 2];
-            if (cs == ColorSpace::ABGR8888) std::swap(r, b);
-            frame.pixels[i] = 0xFF000000 | static_cast<uint32_t>(b) | (static_cast<uint32_t>(g) << 8) | (static_cast<uint32_t>(r) << 16);
-        } else {
-            frame.pixels[i] = 0;
-        }
+    for (uint32_t i = 0; i < paletteSize; i++) {
+        auto r = palette[i * 3 + 0];
+        auto g = palette[i * 3 + 1];
+        auto b = palette[i * 3 + 2];
+        if (abgr) std::swap(r, b);
+        colors[i] = 0xFF000000 | static_cast<uint32_t>(b) | (static_cast<uint32_t>(g) << 8) | (static_cast<uint32_t>(r) << 16);
     }
+    if (frame.transparent) colors[frame.transparentIndex] = 0;
+
+    for (size_t i = 0; i < pixelCnt; i++) frame.pixels[i] = colors[pixels[i]];
 }
 
 bool GifDecoder::readImageFrame(GifFrame& frame)
@@ -414,7 +410,7 @@ bool GifDecoder::readImageFrame(GifFrame& frame)
         }
 
         frame.pixels = tvg::malloc<uint32_t>(pixelCnt * sizeof(uint32_t));
-        indexToRGBA(frame, pixels, palette, paletteSize, pixelCnt);
+        indexToPixels(frame, pixels, palette, paletteSize, pixelCnt);
         ret = true;
     }
 

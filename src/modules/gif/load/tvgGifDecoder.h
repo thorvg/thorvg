@@ -81,7 +81,7 @@ private:
     void skipExtension();
     uint8_t* readImageData(uint32_t& size);
     uint8_t* deinterlace(uint8_t* pixels, uint16_t width, uint16_t height);
-    void indexToRGBA(GifFrame& frame, const uint8_t* pixels, const uint8_t* palette, uint32_t paletteSize, size_t pixelCnt);
+    void indexToPixels(GifFrame& frame, const uint8_t* pixels, const uint8_t* palette, uint32_t paletteSize, size_t pixelCnt);
     bool readImageFrame(GifFrame& frame);
     bool parseBlocks();
 };
