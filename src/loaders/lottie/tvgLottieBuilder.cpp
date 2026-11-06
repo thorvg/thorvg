@@ -1340,10 +1340,10 @@ void LottieBuilder::updateLocalFont(LottieLayer* layer, float frameNo, LottieTex
             if (!updateTextRange(text, frameNo, shape, doc, ctx)) _commit(glyph, shape, ctx);
             ctx.cursor.x += advance;
             ctx.p += glyph->len;
-            ctx.idx += glyph->len;
-        } else {
-            ++ctx.p;
             ++ctx.idx;
+        } else {
+            if ((*ctx.p & 0xc0) != 0x80) ++ctx.idx;  // count a letter by its first byte
+            ++ctx.p;
         }
     }
 }
