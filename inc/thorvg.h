@@ -390,7 +390,6 @@ struct TextMetrics
     float advance;  ///< The total vertical advance between lines of text: ascent - descent + linegap (i.e., ascent + |descent| + linegap when descent is negative).
 };
 
-
 /**
  * @brief Describes the layout metrics of a glyph.
  *
@@ -400,7 +399,7 @@ struct TextMetrics
  *
  * The advance value represents the distance the pen position moves along the
  * baseline (inline direction), regardless of whether the text is laid out
- * horizontally or vertically.
+ * horizontally or vertically. Any kerning with the next glyph is included.
  *
  * The bounding box is defined in the glyph’s local coordinate space and is
  * independent of any layout direction or transformation.
