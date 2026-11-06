@@ -46,7 +46,7 @@ The following primitives are supported by ThorVG: <br />
 - **Text**: unicode, scalable TTF/OTF fonts, and multi-line text layout
 - **Images**: SVG, PNG, JPEG, WebP, and raw bitmaps
 - **Effects**: Gaussian & motion blur, drop shadow, tint, tritone, color replacement, and fill effects
-- **Animations**: Lottie (JSON) playback and rendering
+- **Animations**: Lottie and GIF playback and rendering
 
 <p align="center">
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_primitives.png">
