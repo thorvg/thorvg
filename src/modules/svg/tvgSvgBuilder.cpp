@@ -79,6 +79,8 @@ static void _transformMultiply(const Matrix* mBBox, Matrix* gradTransf)
 
 static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const Box& vBox, const Box& viewport, int opacity)
 {
+    if (g->stops.empty()) return nullptr;
+
     Fill::ColorStop* stops;
     auto fillGrad = LinearGradient::gen();
     auto isTransform = (g->transform ? true : false);
@@ -100,7 +102,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
     // A non-invertible gradient transform paints nothing, so drop the paint.
     // TODO(jsuya): inverse() cannot be used here since it fails for certain values; it should be improved.
     auto det = (double)finalTransform.e11 * (double)finalTransform.e22 - (double)finalTransform.e12 * (double)finalTransform.e21;
-    if (g->stops.count == 0 || det == 0.0) {
+    if (det == 0.0) {
         delete(fillGrad);
         return nullptr;
     }
@@ -130,6 +132,8 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
 
 static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const Box& vBox, const Box& viewport, int opacity)
 {
+    if (g->stops.empty()) return nullptr;
+
     Fill::ColorStop *stops;
     auto fillGrad = RadialGradient::gen();
     auto isTransform = (g->transform ? true : false);
@@ -157,7 +161,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
     // A non-invertible gradient transform paints nothing, so drop the paint.
     // TODO(jsuya): inverse() cannot be used here since it fails for certain values; it should be improved.
     auto det = (double)finalTransform.e11 * (double)finalTransform.e22 - (double)finalTransform.e12 * (double)finalTransform.e21;
-    if (g->stops.count == 0 || det == 0.0) {
+    if (det == 0.0) {
         delete(fillGrad);
         return nullptr;
     }
