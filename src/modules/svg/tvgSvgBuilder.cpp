@@ -101,8 +101,7 @@ static LinearGradient* _applyLinearGradientProperty(SvgStyleGradient* g, const B
 
     // A non-invertible gradient transform paints nothing, so drop the paint.
     // TODO: inverse() cannot be used here since it fails for certain values; it should be improved.
-    auto det = (double)finalTransform.e11 * (double)finalTransform.e22 - (double)finalTransform.e12 * (double)finalTransform.e21;
-    if (det == 0.0) {
+    if (tvg::zero(finalTransform.e11 * finalTransform.e22 - finalTransform.e12 * finalTransform.e21)) {
         delete(fillGrad);
         return nullptr;
     }
@@ -160,8 +159,7 @@ static RadialGradient* _applyRadialGradientProperty(SvgStyleGradient* g, const B
 
     // A non-invertible gradient transform paints nothing, so drop the paint.
     // TODO: inverse() cannot be used here since it fails for certain values; it should be improved.
-    auto det = (double)finalTransform.e11 * (double)finalTransform.e22 - (double)finalTransform.e12 * (double)finalTransform.e21;
-    if (det == 0.0) {
+    if (tvg::zero(finalTransform.e11 * finalTransform.e22 - finalTransform.e12 * finalTransform.e21)) {
         delete(fillGrad);
         return nullptr;
     }
