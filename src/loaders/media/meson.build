@@ -13,6 +13,8 @@ elif system == 'android'
     subdir('android')
 elif system == 'emscripten'
     subdir('web')
+elif system == 'linux'
+    subdir('linux')
 else
     # Use the fallback factory when no platform-specific media backend is available.
     source_file += ['tvgMediaLoader.cpp']
