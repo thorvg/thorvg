@@ -20,10 +20,122 @@
  * SOFTWARE.
  */
 
+#include "config.h"
 #include "tvgGlShaderSrc.h"
 
 #define TVG_COMPOSE_SHADER(shader) #shader
 
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+const char* COVERAGE_VERT_SHADER = R"(
+uniform float uDepth;
+uniform mat3 uViewMatrix;
+uniform highp usampler2D uCoverageRuns;
+#ifdef COVERAGE_BATCH
+layout(location = 0) in float aCoverageIndex;
+struct CoverageMap {
+    vec4 bounds;
+    ivec4 atlas;  // page origin, packed row width, first instance
+    vec4 color;
+};
+layout(std140) uniform CoverageInfo {
+    ivec4 format;
+    CoverageMap maps[64];
+} uCoverageInfo;
+#else
+layout(location = 1) in vec4 aColor;
+layout(std140) uniform CoverageInfo {
+    vec4 bounds;
+    ivec4 atlas;  // page origin, packed row width, run format
+} uCoverageInfo;
+layout(std140) uniform TransformInfo {
+    mat3 invTransform;
+} uTransformInfo;
+#endif
+out vec4 vColor;
+out vec2 vPos;
+out vec2 vCoverageCoord;
+flat out float vCoverage;
+flat out ivec3 vCoverageAtlas;
+
+void main()
+{
+    const vec2 corners[6] = vec2[6](vec2(0, 0), vec2(0, 1), vec2(1, 0),
+                                   vec2(1, 0), vec2(0, 1), vec2(1, 1));
+    vec2 corner = corners[gl_VertexID % 6];
+#ifdef COVERAGE_BATCH
+    CoverageMap map = uCoverageInfo.maps[int(aCoverageIndex)];
+    vec4 bounds = map.bounds;
+    ivec4 atlas = map.atlas;
+    int runs = uCoverageInfo.format.x;
+    int index = gl_InstanceID - atlas.w;
+    vColor = map.color;
+#else
+    vec4 bounds = uCoverageInfo.bounds;
+    ivec4 atlas = uCoverageInfo.atlas;
+    int runs = atlas.w;
+    int index = gl_VertexID / 6;
+    vColor = aColor;
+#endif
+    vCoverageAtlas = ivec3(atlas.xy, runs);
+    vec2 pos;
+    if (runs != 0) {
+        ivec2 coord = atlas.xy + ivec2(index % atlas.z, index / atlas.z);
+        uvec4 run = texelFetch(uCoverageRuns, coord, 0);
+        pos = vec2(run.xy) + corner * vec2(run.z, 1);
+        vCoverage = float(run.w) / 255.0;
+    } else {
+        pos = corner * bounds.zw;
+        vCoverage = 1.0;
+    }
+    vCoverageCoord = pos;
+    pos += bounds.xy;
+    gl_Position = vec4((uViewMatrix * vec3(pos, 1.0)).xy, uDepth, 1.0);
+#ifndef COVERAGE_BATCH
+    vPos = (uTransformInfo.invTransform * vec3(pos, 1.0)).xy;
+#endif
+}
+)";
+
+const char* COVERAGE_FRAG_HEADER = R"(
+#define COVERAGE
+uniform highp sampler2D uCoverageTexture;
+in vec2 vCoverageCoord;
+flat in float vCoverage;
+flat in ivec3 vCoverageAtlas;
+
+float coverage()
+{
+    if (vCoverageAtlas.z != 0) return vCoverage;
+    return texelFetch(uCoverageTexture, vCoverageAtlas.xy + ivec2(vCoverageCoord), 0).r;
+}
+#define main paintMain
+)";
+
+const char* COVERAGE_FRAG_MAIN = R"(
+#undef main
+void main()
+{
+    float c = coverage();
+    if (c == 0.0) discard;
+    paintMain();
+    FragColor *= c;
+}
+)";
+
+const char* COVERAGE_BLEND_FRAG_MAIN = R"(
+#undef main
+void main()
+{
+    float c = coverage();
+    if (c == 0.0) discard;
+    paintMain();
+    vec2 uv = (gl_FragCoord.xy - uBlendRegion.region.xy) / uBlendRegion.region.zw;
+    FragColor = mix(texture(uDstTexture, uv), FragColor, c);
+}
+)";
+#endif
+
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                           \n
     uniform mat3 uViewMatrix;                                       \n
@@ -38,6 +150,8 @@ const char* COLOR_VERT_SHADER = TVG_COMPOSE_SHADER(
         vColor = aColor;                                            \n
     }                                                               \n);
 
+#endif
+
 const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
     in vec4 vColor;                                          \n
     out vec4 FragColor;                                      \n
@@ -48,6 +162,7 @@ const char* COLOR_FRAG_SHADER = TVG_COMPOSE_SHADER(
         FragColor = vec4(uColor.rgb * uColor.a, uColor.a);   \n
     }                                                        \n);
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                                           \n
     uniform mat3 uViewMatrix;                                                       \n
@@ -66,6 +181,8 @@ const char* GRADIENT_VERT_SHADER = TVG_COMPOSE_SHADER(
     }                                                                               \n
 );
 
+
+#endif
 
 //See: GlRenderer::initShaders()
 const char* STR_GRADIENT_FRAG_COMMON_VARIABLES = TVG_COMPOSE_SHADER(
@@ -352,19 +469,27 @@ const char* IMAGE_VERT_SHADER = TVG_COMPOSE_SHADER(
     }                                                                                       \n
 );
 
-const char* IMAGE_FRAG_SHADER = TVG_COMPOSE_SHADER(
-    layout(std140) uniform ColorInfo {                                                      \n
-        ivec4 params;                                                                       \n
-    } uColorInfo;                                                                           \n
-    uniform sampler2D uTexture;                                                             \n
-    in vec2 vUV;                                                                            \n
-    out vec4 FragColor;                                                                     \n
-                                                                                            \n
-    void main()                                                                             \n
-    {                                                                                       \n
-        FragColor = texture(uTexture, vUV) * float(uColorInfo.params.x) / 255.0;             \n
-   }                                                                                        \n
-);
+const char* IMAGE_FRAG_SHADER = R"(
+layout(std140) uniform ColorInfo {
+    ivec4 params;
+} uColorInfo;
+uniform sampler2D uTexture;
+#ifdef COVERAGE
+in vec2 vPos;
+#else
+in vec2 vUV;
+#endif
+out vec4 FragColor;
+
+void main()
+{
+#ifdef COVERAGE
+    vec2 vUV = vPos / vec2(textureSize(uTexture, 0));
+    if (any(lessThan(vUV, vec2(0))) || any(greaterThanEqual(vUV, vec2(1)))) discard;
+#endif
+    FragColor = texture(uTexture, vUV) * float(uColorInfo.params.x) / 255.0;
+}
+)";
 
 const char* MASK_VERT_SHADER = TVG_COMPOSE_SHADER(
     uniform float uDepth;                                   \n
@@ -655,11 +780,8 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return R; }
 )";
 
-// GL keeps a viewport-sized dst copy, so src/dst can share vUV.
-// GLES/WebGL must keep a full resolved dst copy because MSAA resolve/blit is only valid for the
-// full buffer there; down-blitting into a smaller FBO would add another full copy pass. Rebuild
-// dst UV from gl_FragCoord + BlendRegion instead of reusing vUV.
-#if defined(THORVG_GL_TARGET_GL)
+#if defined(THORVG_GL_TARGET_GL) || defined(THORVG_ANALYTIC_AA_SUPPORT)
+// Source and destination copies share the same viewport and texture coordinates.
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
 uniform sampler2D uSrcTexture;
 uniform sampler2D uDstTexture;
@@ -717,6 +839,7 @@ void getFragData() {
 vec4 postProcess(vec4 R) { return mix(vec4(d.Dc, d.Da), R, d.Sa * d.So); }
 )";
 #else
+// GLES/WebGL MSAA resolves the full destination buffer, so its UV differs from the source.
 const char* BLEND_IMAGE_FRAG_HEADER = R"(
 layout(std140) uniform BlendRegion {
     vec4 region;
