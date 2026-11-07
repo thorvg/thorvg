@@ -64,7 +64,7 @@ private:
     uint32_t viewMatWidth{};
     uint32_t viewMatHeight{};
     // opacity value pool
-    WGPUBuffer bufferOpacities[256]{};
+    WGPUBuffer bufferOpacities{};
     WGPUBindGroup bindGroupOpacities[256]{};
     // current render pass handles
     WGPURenderPassEncoder renderPassEncoder{};
