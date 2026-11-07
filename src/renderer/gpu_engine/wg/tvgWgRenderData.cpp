@@ -118,21 +118,25 @@ void WgShape::expand(const BBox& bbox)
     this->bbox.max = tvg::max(this->bbox.max, bbox.max);
 }
 
-void WgShape::update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity)
+void WgShape::update(const RenderShape& rshape, const RenderRegion& vport, uint8_t opacity)
 {
     shape.setting.valid = rshape.fill || (rshape.color.a * opacity > 0);
     stroke.setting.valid = rshape.stroke && (rshape.stroke->fill || (rshape.stroke->color.a * opacity > 0));
-
-    shape.solid.opacity = shapeOpacity;
-    stroke.solid.opacity = strokeOpacity;
 
     fillRule = rshape.rule;
     viewport = vport;
 }
 
+// The opacities, after the geometry: a fill too thin to draw is drawn as a faint stroke.
+void WgShape::update(ColorSpace cs, uint8_t opacity)
+{
+    shape.solid.opacity = shape.setting.update(cs, opacity);
+    stroke.solid.opacity = stroke.setting.update(cs, opacity);
+}
+
 void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag)
 {
-    reset();  // Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
+    resetGeometry();  // Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
 
     convex = false;
     strokeFirst = rshape.strokeFirst();
@@ -226,6 +230,11 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
 void WgShape::reset()
 {
     clips.clear();
+    resetGeometry();
+}
+
+void WgShape::resetGeometry()
+{
     stroke.mesh.clear();
     stroke.bboxMesh.clear();
     stroke.bbox.init();

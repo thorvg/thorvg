@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
 #include <cassert>
 #include "tvgTaskScheduler.h"
 #include "tvgWgRenderer.h"
@@ -260,14 +261,23 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     auto shape = data ? (WgShape*)data : mPaintPool.shape();
     if (!data) flags = RenderUpdateFlag::All;
 
-    // update geometry
-    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->update(rshape, transform, flags);
+    // update geometry and opacities: made for every shape at once, in makeGeometries()
+    if (shape->geometry < mGeometries.count && mGeometries[shape->geometry].shape == shape) {
+        auto& pending = mGeometries[shape->geometry];
+        pending = {shape, &rshape, transform, RenderUpdateFlag(pending.flags | flags), opacity};
+    } else {
+        shape->geometry = mGeometries.count;
+        mGeometries.push({shape, &rshape, transform, flags, opacity});
+    }
+
+    // (a new geometry comes without the clips: those of this update are assigned below)
+    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->clips.clear();
 
     // update transform
     if (flags & RenderUpdateFlag::Transform) shape->transform = transform;
 
     // update paint settings
-    shape->update(rshape, vport, shape->shape.setting.update(mSurface.cs, opacity), shape->stroke.setting.update(mSurface.cs, opacity), opacity);
+    shape->update(rshape, vport, opacity);
 
     // shape
     if (shape->shape.setting.valid) {
@@ -323,6 +333,7 @@ RenderData WgRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 
 bool WgRenderer::preRender()
 {
+    makeGeometries();
     if (mContext.invalid()) return false;
 
     mSolidBatch = {};
@@ -409,12 +420,20 @@ bool WgRenderer::postRender()
 void WgRenderer::dispose(RenderData data) {
     if (!mContext.queue) return;
     ScopedLock lock(mDisposeKey);
+    // (its geometry, if still to be made, isn't: its shape is gone)
+    auto paint = (WgPaint*)data;
+    if (paint && paint->type() == Type::Shape) {
+        auto shape = static_cast<WgShape*>(paint);
+        if (shape->geometry < mGeometries.count && mGeometries[shape->geometry].shape == shape) mGeometries[shape->geometry].shape = nullptr;
+        shape->geometry = UINT32_MAX;
+    }
     mDisposedPaints.push(data);
 }
 
 
 bool WgRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 {
+    makeGeometries();
     if (data) {
         auto shape = static_cast<WgShape*>(data);
         if (shape->stroke.setting.valid) {
@@ -438,6 +457,7 @@ bool WgRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 
 RenderRegion WgRenderer::region(RenderData data)
 {
+    makeGeometries();
     return data ? static_cast<WgPaint*>(data)->region() : RenderRegion{};
 }
 
@@ -554,6 +574,8 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
 WgRenderer::~WgRenderer()
 {
     release();
+    ARRAY_FOREACH(p, mGeometryTasks)
+        delete (*p);
 
     _rendererMtx.lock();
     --_rendererCnt;
@@ -721,9 +743,50 @@ bool WgRenderer::preUpdate()
     return true;
 }
 
+void WgGeometryTask::run(TVG_UNUSED unsigned tid)
+{
+    for (auto item = items; item < items + count; ++item) {
+        auto shape = item->shape;
+        if (!shape) continue;  // disposed meanwhile
+        if (item->flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->update(*item->rshape, item->transform, item->flags);
+        shape->update(cs, item->opacity);
+    }
+}
+
+// Each shape's geometry, flattened, stroked and triangulated apart from the others: shared
+// out between the task scheduler's threads and this one.
+void WgRenderer::makeGeometries()
+{
+    auto count = mGeometries.count;
+    if (count == 0) return;
+
+    auto shares = std::min(TaskScheduler::threads() + 1, count);
+    while (mGeometryTasks.count < shares)
+        mGeometryTasks.push(new WgGeometryTask);
+
+    auto items = mGeometries.data;
+    for (uint32_t i = 0; i < shares; ++i) {
+        auto task = mGeometryTasks[i];
+        task->items = items;
+        task->count = count / shares + (i < count % shares ? 1 : 0);
+        task->cs = mSurface.cs;
+        items += task->count;
+        // the last share is this thread's
+        if (i + 1 < shares) TaskScheduler::request(task);
+        else task->run(0);
+    }
+    for (uint32_t i = 0; i + 1 < shares; ++i)
+        mGeometryTasks[i]->done();
+
+    ARRAY_FOREACH(p, mGeometries) {
+        if (p->shape) p->shape->geometry = UINT32_MAX;
+    }
+    mGeometries.clear();
+}
 
 bool WgRenderer::postUpdate()
 {
+    makeGeometries();
     if (mContext.invalid()) return false;
     return mTextures.flushPreprocess(mContext);
 }
@@ -755,6 +818,7 @@ Result WgRenderer::dirtyRegions(Region* regions, TVG_UNUSED uint32_t cnt) const
 bool WgRenderer::intersectsShape(RenderData data, TVG_UNUSED const RenderRegion& region)
 {
     if (!data) return false;
+    makeGeometries();
     auto shape = (WgShape*)data;
     RenderRegion bbox = {
         (int32_t)shape->bbox.min.x, (int32_t)shape->bbox.min.y,

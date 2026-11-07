@@ -24,6 +24,7 @@
 #define _TVG_WG_RENDERER_H_
 
 #include "tvgRender.h"
+#include "tvgTaskScheduler.h"
 #include "tvgWgSolidBatch.h"
 #include "tvgWgStencilBatch.h"
 #include "tvgWgTextureMgr.h"
@@ -40,6 +41,26 @@ struct WgPaintPool
 
     WgShape* shape();
     WgImage* image();
+};
+
+// A shape's geometry (flattening, strokes, triangulation) and the opacities that depend on it,
+// made once the update has prepared every shape, spread over the task scheduler's threads.
+struct WgGeometry
+{
+    WgShape* shape;
+    const RenderShape* rshape;
+    Matrix transform;
+    RenderUpdateFlag flags;
+    uint8_t opacity;
+};
+
+struct WgGeometryTask : Task
+{
+    WgGeometry* items = nullptr;
+    uint32_t count = 0;
+    ColorSpace cs = ColorSpace::Unknown;
+
+    void run(unsigned tid) override;
 };
 
 struct WgRenderer : RenderMethod
@@ -93,6 +114,11 @@ private:
 
     void clearTargets();
     void surfaceConfigure(RenderSurface& rsurface, WGPUSurface wsurface, WgContext& context);
+    void makeGeometries();
+
+    // the shapes prepared since the last makeGeometries(), and the tasks that make them
+    Array<WgGeometry> mGeometries;
+    Array<WgGeometryTask*> mGeometryTasks;
 
     RenderSurface mSurface;  // main surface
     WgRenderTarget mRenderTargetRoot;
