@@ -505,7 +505,7 @@ Fill* LottieGradient::fill(float frameNo, uint8_t opacity, LottieTween& tween, L
 LottieGroup::LottieGroup(LottieObject::Type type) : LottieObject(type)
 {
     reqFragment = false;
-    buildDone = false;
+    builded = false;
     building = false;
     trimpath = false;
     visible = false;

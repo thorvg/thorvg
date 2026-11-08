@@ -1696,7 +1696,7 @@ static void _attachFont(LottieComposition* comp, LottieLayer* parent)
 static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
 {
     if (parent->children.count == 0) return false;
-    if (parent->buildDone) return true;
+    if (parent->builded) return true;
 
     // the composition is referenced again while still being built: the precomp
     // references form a cycle (e.g. A -> A or A -> B -> A). Skip the reference
@@ -1736,7 +1736,7 @@ static bool _buildComposition(LottieComposition* comp, LottieRootLayer* parent)
     }
 
     parent->building = false;
-    parent->buildDone = true;
+    parent->builded = true;
     return true;
 }
 
