@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgPaint.h"
+#include "tvgFill.h"
 
 namespace tvg
 {
@@ -96,6 +97,8 @@ struct ShapeImpl : Shape
 
     bool skip(RenderUpdateFlag flag)
     {
+        if (rs.fill) flag |= rs.fill->pImpl->renderFlag;
+        if (rs.stroke && rs.stroke->fill) flag |= rs.stroke->fill->pImpl->renderFlag;
         return (flag == RenderUpdateFlag::None);
     }
 
@@ -108,7 +111,17 @@ struct ShapeImpl : Shape
             opacity = 255;
         }
 
+        auto fill = rs.fill ? rs.fill->pImpl : nullptr;
+        auto strokeFill = rs.stroke && rs.stroke->fill ? rs.stroke->fill->pImpl : nullptr;
+        if (fill) flag |= fill->renderFlag;
+        if (strokeFill) {
+            if (strokeFill->renderFlag & RenderUpdateFlag::Gradient) flag |= RenderUpdateFlag::GradientStroke;
+            if (strokeFill->renderFlag & RenderUpdateFlag::GradientStops) flag |= RenderUpdateFlag::GradientStrokeStops;
+        }
+
         impl.rd = renderer->prepare(rs, impl.rd, transform, clips, opacity, flag, clipper);
+        if (fill) fill->renderFlag = RenderUpdateFlag::None;
+        if (strokeFill) strokeFill->renderFlag = RenderUpdateFlag::None;
         return true;
     }
 

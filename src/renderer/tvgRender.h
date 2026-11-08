@@ -54,6 +54,8 @@ enum RenderUpdateFlag : uint16_t
     Blend = 1 << 7,
     Clip = 1 << 8,
     Children = 1 << 9,  // Force update propagation to child paints
+    GradientStops = 1 << 10,
+    GradientStrokeStops = 1 << 11,
     All = 0xffff
 };
 
