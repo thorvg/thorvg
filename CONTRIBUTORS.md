@@ -81,3 +81,4 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Mikhail Teterin @UnitedMarsupials
 - Malvis Light @LightSideMeowshop
 - Naail Abdul Rahman @kudanai
+- TipicoDev @TipicoDev
