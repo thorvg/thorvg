@@ -1092,12 +1092,12 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
     Array<LottieObject*> children;
     BlendMethod blendMethod = BlendMethod::Normal;
 
-    bool reqFragment : 1;   //requirement to fragment the render context
-    bool buildDone : 1;     //completed in building the composition.
+    bool reqFragment : 1;   // requirement to fragment the render context
+    bool builded : 1;       // completed in building the composition.
     bool building : 1;      // currently building the composition (cyclic reference guard).
-    bool trimpath : 1;      //this group has a trimpath.
-    bool visible : 1;       //this group has visible contents.
-    bool allowMerge : 1;    //if this group is consisted of simple (transformed) shapes.
+    bool trimpath : 1;      // this group has a trimpath.
+    bool visible : 1;       // this group has visible contents.
+    bool allowMerge : 1;    // if this group is consisted of simple (transformed) shapes.
 };
 
 struct LottieRootLayer : LottieGroup
