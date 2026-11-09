@@ -296,8 +296,7 @@ struct PictureImpl : Picture
     RenderRegion bounds()
     {
         if (vector) return vector->pImpl->bounds();
-        else if (impl.renderer) return impl.renderer->region(impl.rd);
-        return {};
+        return impl.renderer->region(impl.rd);
     }
 
     Result load(Loader* loader)

@@ -129,6 +129,7 @@ static bool _compFastTrack(RenderMethod* renderer, Paint* cmpTarget, const Matri
 
 RenderRegion Paint::Impl::bounds()
 {
+    if (!renderer) return {};
     RenderRegion ret;
     PAINT_METHOD(ret, bounds());
     return ret;

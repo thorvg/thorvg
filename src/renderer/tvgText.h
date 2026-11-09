@@ -103,8 +103,8 @@ struct TextImpl : Text
 
     RenderRegion bounds()
     {
-        if (!load()) return {};
-        return to<ShapeImpl>(shape)->bounds();
+        if (load()) return to<ShapeImpl>(shape)->bounds();
+        return {};
     }
 
     bool render(RenderMethod* renderer, TVG_UNUSED CompositionFlag flag)
