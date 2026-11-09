@@ -48,6 +48,7 @@ endif
 
 # Loaders
 all_loaders = get_option('loaders').contains('all')
+tvg_loader = all_loaders or get_option('loaders').contains('tvg')
 svg_loader = all_loaders or get_option('loaders').contains('svg')
 png_loader = all_loaders or get_option('loaders').contains('png')
 jpg_loader = all_loaders or get_option('loaders').contains('jpg')
@@ -68,6 +69,10 @@ gif_saver = all_savers or get_option('savers').contains('gif')
 logging = get_option('log')
 
 # Loaders/savers config
+if tvg_loader
+    config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
+endif
+
 if svg_loader
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
@@ -202,6 +207,7 @@ summary(
 
 summary(
   {
+    'TVG': svg_loader,
     'SVG': svg_loader,
     'TTF': ttf_loader,
     'OTF': otf_loader,

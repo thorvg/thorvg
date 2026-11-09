@@ -11,8 +11,8 @@ option('partial',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'otf', 'webp', 'gif', 'media', 'all'],
-   value: ['svg', 'lottie', 'ttf'],
+   choices: ['', 'tvg', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'otf', 'webp', 'gif', 'media', 'all'],
+   value: ['tvg', 'svg', 'lottie', 'ttf'],
    description: 'Enable File Loaders in thorvg')
 
 option('savers',

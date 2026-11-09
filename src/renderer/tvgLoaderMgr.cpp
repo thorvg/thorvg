@@ -25,6 +25,10 @@
 #include "tvgLoaderMgr.h"
 #include "tvgLock.h"
 
+#ifdef THORVG_TVG_LOADER_SUPPORT
+    #include "tvgTvgLoader.h"
+#endif
+
 #ifdef THORVG_SVG_LOADER_SUPPORT
     #include "tvgSvgLoader.h"
 #endif
@@ -77,6 +81,9 @@ static Inlist<tvg::Loader> _activeLoaders;
 static tvg::Loader* _find(FileType type)
 {
     switch (type) {
+#ifdef THORVG_TVG_LOADER_SUPPORT
+        case FileType::Tvg: return new TvgLoader;
+#endif
 #ifdef THORVG_SVG_LOADER_SUPPORT
         case FileType::Svg: return new SvgLoader;
 #endif
@@ -108,6 +115,7 @@ static tvg::Loader* _find(FileType type)
 #ifdef THORVG_LOG_ENABLED
     auto toString = [](FileType type) {
         switch (type) {
+            case FileType::Tvg: return "TVG";
             case FileType::Svg:  return "SVG";
             case FileType::Lot:  return "LOT";
             case FileType::Sfnt: return "SFNT";
@@ -131,7 +139,8 @@ static tvg::Loader* _findByPath(const char* filename, Result& ret)
     auto ext = fileext(filename);
     if (ext) {
         auto type = FileType::Unknown;
-        if (!strcmp(ext, "svg")) type = FileType::Svg;
+        if (!strcmp(ext, "tvg")) type = FileType::Tvg;
+        else if (!strcmp(ext, "svg")) type = FileType::Svg;
         else if (!strcmp(ext, "lot") || !strcmp(ext, "json")) type = FileType::Lot;
         else if (!strcmp(ext, "ttf") || !strcmp(ext, "ttc") || !strcmp(ext, "otf") || !strcmp(ext, "otc")) type = FileType::Sfnt;
         else if (!strcmp(ext, "png")) type = FileType::Png;
@@ -154,7 +163,8 @@ static FileType _convert(const char* mimeType)
 
     auto type = FileType::Unknown;
 
-    if (!strcmp(mimeType, "svg") || !strcmp(mimeType, "svg+xml")) type = FileType::Svg;
+    if (!strcmp(mimeType, "tvg")) type = FileType::Tvg;
+    else if (!strcmp(mimeType, "svg") || !strcmp(mimeType, "svg+xml")) type = FileType::Svg;
     else if (!strcmp(mimeType, "lot") || !strcmp(mimeType, "lottie+json")) type = FileType::Lot;
     else if (!strcmp(mimeType, "ttf") || !strcmp(mimeType, "otf")) type = FileType::Sfnt;
     else if (!strcmp(mimeType, "png")) type = FileType::Png;
