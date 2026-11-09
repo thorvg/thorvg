@@ -308,6 +308,34 @@ TEST_CASE("Text Spacing", "[tvgText]")
     Initializer::term();
 }
 
+TEST_CASE("Text Glyph Metrics", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto text = Text::gen();
+        REQUIRE(text);
+
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+
+        GlyphMetrics metrics;
+        const char* next = nullptr;
+        auto str = "A\xf3\xb0\x80\x80";  //U+F0000 (private use) is not in the font
+
+        REQUIRE(text->metrics(str, metrics, &next) == Result::Success);
+        REQUIRE(metrics.advance > 0.0f);
+        REQUIRE(next == str + 1);
+
+        //unsupported glyphs must return InvalidArguments on every query
+        REQUIRE(text->metrics(next, metrics) == Result::InvalidArguments);
+        REQUIRE(text->metrics(next, metrics) == Result::InvalidArguments);
+
+        Paint::rel(text);
+    }
+    Initializer::term();
+}
+
 #endif
 
 #ifdef THORVG_OTF_LOADER_SUPPORT
