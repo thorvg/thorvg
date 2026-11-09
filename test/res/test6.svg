@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400" height="400" viewBox="0 0 400 400">
+  <image x="0" y="0" width="200" height="200" href="test.png"/>
+  <image x="200" y="0" width="200" height="200" xlink:href="image/logo.png"/>
+  <image x="0" y="200" width="200" height="200" href="https://example.invalid/missing.png"/>
+  <image x="200" y="200" width="200" height="200" href="nested.svg"/>
+</svg>
