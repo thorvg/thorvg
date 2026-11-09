@@ -36,6 +36,11 @@ public:
         this->expressions = expressions;
     }
 
+    ~LottieParser()
+    {
+        tvg::free(slots);
+    }
+
     bool parse();
     const char* sid(bool first = false);
     LottieProperty* parse(LottieSlot* slot);
