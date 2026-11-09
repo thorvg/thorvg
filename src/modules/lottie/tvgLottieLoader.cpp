@@ -51,6 +51,7 @@ bool LottieLoader::prepare()
         auto slotcode = gen(parser.slots, true);
         apply(slotcode, true);
         del(slotcode, true);
+        tvg::free(parser.slots);
         parser.slots = nullptr;
     }
     builder->build(comp);
@@ -261,7 +262,7 @@ bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
 {
     if (curSlot == slotcode) return true;
 
-    if (!ready() || comp->slots.count == 0) return false;
+    if (!ready() || comp->slots.empty()) return false;
 
     auto applied = false;
 
@@ -336,7 +337,7 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
         ++idx;
     }
 
-    tvg::free((char*)temp);
+    if (!byDefault) tvg::free((char*)temp);
 
     //Success, valid custom slot.
     if (custom->props.count > 0) {
