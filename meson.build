@@ -196,7 +196,7 @@ summary(
     'GL': gl_engine,
     'WebGPU': wg_engine,
   },
-  section: 'Raster Engine',
+  section: 'Render Backend',
   bool_yn: true,
 )
 
