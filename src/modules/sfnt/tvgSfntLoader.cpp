@@ -268,8 +268,8 @@ SfntGlyphMetrics* SfntLoader::request(uint32_t code)
     if (it) return &it->val;
     auto& rtgm = glyphs[code];
     if (reader->convert(rtgm, code, rtgm.path)) return &rtgm;
-
     TVGERR("SFNT", "invalid glyph id, codepoint(0x%x)", code);
+    glyphs.remove(code);
     return nullptr;
 }
 
