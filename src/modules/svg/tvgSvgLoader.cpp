@@ -4225,6 +4225,8 @@ Result SvgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     this->size = size;
     owner = ops.owner;
     ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
+    auto rpath = static_cast<const PictureOps*>(&ops)->rpath;
+    if (rpath && rpath[0]) svgPath = string(rpath) + "/";
 
     return header();
 }
@@ -4237,6 +4239,7 @@ Result SvgLoader::open(const char* path, const LoaderOps& ops)
     if ((content = Loader::open(path, size, true))) {
         ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
         owner = Ownership::Transfer;
+        svgPath = path;
         return header();
     }
     return Result::InvalidArguments;
