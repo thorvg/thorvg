@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgInlist.h"
 #include "tvgShape.h"
+#include "tvgLottieModel.h"
 #include "tvgLottieExpressions.h"
 #include "tvgLottieModifier.h"
 #include "tvgLottieTween.h"
