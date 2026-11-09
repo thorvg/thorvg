@@ -811,17 +811,19 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
         //TODO: protect against recursive svg image loading
         //Temporarily disable embedded svg:
         const char *dot = strrchr(href, '.');
-        if (dot && STR_AS(dot, ".svg")) {
-            TVGLOG("SVG", "Embedded svg file is disabled.");
-            Paint::rel(picture);
-            return nullptr;
-        }
+        auto svg = dot && STR_AS(dot, ".svg");
         string imagePath = href;
-        if (strncmp(href, "/", 1)) {
+        auto url = !strncmp(href, "https://", 8) || !strncmp(href, "http://", 7);
+        if (!url && strncmp(href, "/", 1)) {
             auto last = svgPath.find_last_of("/");
             imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1)) + imagePath;
         }
-        if (picture->load(imagePath.c_str()) != Result::Success) {
+        auto resolver = ctx.resolver;
+        auto valid = resolver && !resolver->fallback && resolver->func(picture, imagePath.c_str(), resolver->data);
+        if (!valid && !svg && !url) valid = (picture->load(imagePath.c_str()) == Result::Success);
+        if (!valid && resolver && resolver->fallback) valid = resolver->func(picture, imagePath.c_str(), resolver->data);
+        if (!valid) {
+            if (svg) TVGLOG("SVG", "Embedded svg file is disabled.");
             Paint::rel(picture);
             return nullptr;
         }

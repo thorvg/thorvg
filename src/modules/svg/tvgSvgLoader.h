@@ -40,6 +40,7 @@ struct SvgLoader : ImageLoader, Task
     Result open(const char* path, const LoaderOps& ops) override;
     Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool resize(Paint* paint, float w, float h) override;
+    bool cacheable() override { return !ctx.resolver; }
     bool read() override;
     bool close() override;
 
