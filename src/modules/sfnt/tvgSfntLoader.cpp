@@ -265,7 +265,7 @@ SfntGlyphMetrics* SfntLoader::request(uint32_t code)
     if (code == 0) return nullptr;
 
     auto it = glyphs.find(code);
-    if (it) return &it->val;
+    if (it) return (it->val.idx == INVALID_GLYPH) ? nullptr : &it->val;
     auto& rtgm = glyphs[code];
     if (reader->convert(rtgm, code, rtgm.path)) return &rtgm;
 
