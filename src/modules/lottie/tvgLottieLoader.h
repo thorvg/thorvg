@@ -27,10 +27,10 @@
 #include "tvgInlist.h"
 #include "tvgLoader.h"
 #include "tvgTaskScheduler.h"
+#include "tvgLottieBuilder.h"
 #include "thorvg_lottie.h"
 
 struct LottieComposition;
-struct LottieBuilder;
 struct LottieProperty;
 struct LottieSlot;
 
@@ -53,21 +53,6 @@ struct LottieCustomSlot
 
 struct LottieLoader : AnimLoader, Task
 {
-    const char* content = nullptr;      //lottie file data
-    uint32_t size = 0;                  //lottie data size
-    float frameNo = 0.0f;               //current frame number
-    float frameCnt = 0.0f;
-    float frameRate = 0.0f;
-
-    LottieBuilder* builder;
-    LottieComposition* comp = nullptr;
-    Inlist<LottieCustomSlot> slots;     //user custom slot list
-    uint32_t curSlot = 0;               //current applied slotcode
-
-    Key key;
-    char* dirName = nullptr;            //base resource directory
-    bool build = true;                  //require building the lottie scene
-
     LottieLoader();
     ~LottieLoader();
 
@@ -101,8 +86,24 @@ struct LottieLoader : AnimLoader, Task
     bool quality(uint8_t value);
     void resolver(std::function<void(const tvg::LottieAudioResolver&, void*)> func, void* data);
     void volume(float value);
+    float volume();
 
 private:
+    const char* content = nullptr;  // lottie file data
+    uint32_t size = 0;              // lottie data size
+    float frameNo = 0.0f;           // current frame number
+    float frameCnt = 0.0f;
+    float frameRate = 0.0f;
+
+    LottieBuilder builder;
+    LottieComposition* comp = nullptr;
+    Inlist<LottieCustomSlot> slots;  // user custom slot list
+    uint32_t curSlot = 0;            // current applied slotcode
+
+    Key key;
+    char* dirName = nullptr;  // base resource directory
+    bool build = true;        // require building the lottie scene
+
     bool ready();
     Result header();
     void clear();

@@ -21,10 +21,7 @@
  */
 
 #include "tvgCommon.h"
-#include "thorvg_lottie.h"
 #include "tvgLottieLoader.h"
-#include "tvgLottieModel.h"
-#include "tvgLottieBuilder.h"
 #include "tvgAnimation.h"
 
 
@@ -160,7 +157,7 @@ Result LottieAnimation::volume(float value) noexcept
 float LottieAnimation::volume() const noexcept
 {
     FETCH_LOADER(0.0f);
-    return loader->builder->volume;
+    return loader->volume();
 }
 
 
