@@ -340,8 +340,9 @@ struct SwCompositor : RenderCompositor
 
 struct SwCellPool
 {
-    #define DEFAULT_POOL_SIZE 16368
-
+    // approximately 64 KiB balances memory usage and rendering performance.
+    // TODO: find a better strategy for sizing the pool.
+    static constexpr uint32_t DEFAULT_POOL_SIZE = (64 * 1024 / sizeof(SwCell)) * sizeof(SwCell);
     uint32_t size;
     SwCell* buffer;
 
