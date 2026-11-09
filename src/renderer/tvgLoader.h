@@ -88,6 +88,7 @@ struct Loader
     bool allowCache()
     {
         if (type == FileType::Lot) return false;
+        if (type == FileType::Svg) return false;
         if (type == FileType::Gif) return false;
         if (type == FileType::Media) return false;
 
