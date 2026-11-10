@@ -298,6 +298,23 @@ bool LottieParser::getValue(Point& pt)
     return true;
 }
 
+
+bool LottieParser::getValue(AudioLevel& level)
+{
+    if (peekType() == kArrayType) {
+        enterArray();
+        if (!nextArrayValue()) return false;
+    }
+
+    level.v[0] = level.v[1] = getFloat();
+    if (peekType() == kNumberType) level.v[1] = getFloat();
+
+    while (nextArrayValue()) getFloat();  //drop
+
+    return true;
+}
+
+
 bool LottieParser::getValue(Point3& pt)
 {
     if (peekType() == kNullType) {

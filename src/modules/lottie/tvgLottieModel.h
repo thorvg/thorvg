@@ -1149,8 +1149,8 @@ struct LottieLayer : LottieRootLayer
     LottieRenderPooler<tvg::Shape> statical;  //static pooler for solid fill and clipper
 
     struct AudioControl {
-        LottieFloat volume = 100.0f;
-        float prevVolume = -1.0f;
+        LottieAudioLevel volume = AudioLevel{100.0f, 100.0f};
+        AudioLevel prevVolume = {-1.0f, -1.0f};
         bool prevActive = false;
     } *audioCtrl = nullptr;
 

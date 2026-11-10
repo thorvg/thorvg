@@ -1759,13 +1759,19 @@ void LottieBuilder::updateAudio(LottieComposition* comp, LottieLayer* layer, flo
     auto pos = layer->remap(comp, frameNo, exps);
     if (pos < 0.0f) active = false;    
 
-    auto value = active ? this->volume * ctrl->volume(frameNo, tween, exps) : 100.0f;
+    AudioLevel value = {100.0f, 100.0f};
+    if (active) {
+        value = ctrl->volume(frameNo, exps);
+        for (auto& v : value.v) v *= this->volume;
+    }
+
+    auto changed = !tvg::equal(value.v[0], ctrl->prevVolume.v[0]) || !tvg::equal(value.v[1], ctrl->prevVolume.v[1]);
 
     // audio condition is changed
-    if ((active != ctrl->prevActive) || (active && !tvg::equal(value, ctrl->prevVolume))) {
+    if ((active != ctrl->prevActive) || (active && changed)) {
         auto& src = audio->src;
         auto offset = active ? pos / comp->frameRate : 0.0f;
-        LottieAudioResolver info = {src.data, src.mimeType, src.size, offset, value, active, (src.size > 0)};
+        LottieAudioResolver info = {src.data, src.mimeType, src.size, offset, {value.v[0], value.v[1]}, active, (src.size > 0)};
         audioResolver.func(info, audioResolver.data);
     }
 
