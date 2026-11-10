@@ -2151,7 +2151,10 @@ static bool _attrParseFontFace(void* data, const char* key, const char* value)
         if (font.name) tvg::free(font.name);
         font.name = _unquote(value);
     } else if (STR_AS(key, "src")) {
-        font.srcLen = _srcFromUrl(value, font.src);
+        char* src;
+        tvg::free(font.src);
+        font.srcLen = _srcFromUrl(value, src);
+        font.src = font.srcLen ? duplicate(src, font.srcLen) : nullptr;
     }
 
     return true;
@@ -4129,6 +4132,7 @@ void SvgParserContext::clear(bool all)
     ARRAY_FOREACH(p, fonts) {
         Text::unload(p->name);
         tvg::free(p->decoded);
+        tvg::free(p->src);
         tvg::free(p->name);
     }
     ARRAY_FOREACH(a, access) {
