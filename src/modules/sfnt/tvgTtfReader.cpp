@@ -221,6 +221,11 @@ bool TtfReader::convert(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset
 
     for (uint32_t i = 0; i < cntrsCnt; ++i) {
         endPts[i] = (uint32_t)u16(outline);
+        // contour endpoint indices must be strictly increasing
+        if (i > 0 && endPts[i] <= endPts[i - 1]) {
+            tvg::free(endPts);
+            return false;
+        }
         outline += 2;
     }
     outline += 2U + u16(outline);
