@@ -339,8 +339,7 @@ struct ShapeImpl : Shape
 
     void resetPath()
     {
-        rs.path.cmds.clear();
-        rs.path.pts.clear();
+        rs.path.clear();
         impl.mark(RenderUpdateFlag::Path);
     }
 
@@ -374,9 +373,7 @@ struct ShapeImpl : Shape
         auto dup = to<ShapeImpl>(shape);
 
         //Path
-        dup->rs.path.clear();
-        dup->rs.path.cmds.push(rs.path.cmds);
-        dup->rs.path.pts.push(rs.path.pts);
+        dup->rs.path = rs.path;
 
         //Fill
         delete(dup->rs.fill);
@@ -401,8 +398,7 @@ struct ShapeImpl : Shape
     void reset()
     {
         PAINT(this)->reset();
-        rs.path.cmds.clear();
-        rs.path.pts.clear();
+        rs.path.clear();
 
         rs.color.a = 0;
         rs.rule = FillRule::NonZero;

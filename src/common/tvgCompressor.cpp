@@ -20,12 +20,11 @@
  * SOFTWARE.
  */
 
-#include "config.h"
 #include "tvgCommon.h"
 #include "tvgCompressor.h"
 
-namespace tvg {
-
+namespace tvg
+{
 
 /************************************************************************/
 /* B64 Implementation                                                   */
@@ -76,7 +75,6 @@ size_t b64Decode(const char* encoded, const size_t len, char** decoded)
     *decoded = output;
     return idx;
 }
-
 
 /************************************************************************/
 /* DJB2 Implementation                                                  */

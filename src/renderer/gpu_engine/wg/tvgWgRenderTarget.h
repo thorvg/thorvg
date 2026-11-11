@@ -35,7 +35,7 @@ struct WgRenderTarget
     WGPUBindGroup bgTextureLinear{};  // Linear + clamp for subpixel sampling, such as motion blur.
     uint32_t width{}, height{};
 
-    void initialize(WgContext& context, uint32_t width, uint32_t height);
+    void initialize(WgContext& context, uint32_t width, uint32_t height, bool multisample = true);
     WGPUBindGroup getBindGroupTextureLinear(WgContext& context);
     void release(WgContext& context);
 };

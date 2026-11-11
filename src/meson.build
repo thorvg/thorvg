@@ -43,10 +43,9 @@ endif
 
 subdir('common')
 subdir('renderer')
-subdir('loaders')
-subdir('savers')
+subdir('modules')
 
-thorvg_lib_dep = [common_dep, utils_dep, loader_dep, saver_dep]
+thorvg_lib_dep = [common_dep, utils_dep, module_dep]
 
 if host_machine.system() != 'windows' and host_machine.system() != 'android' and host_machine.system() != 'emscripten'
     thread_dep = meson.get_compiler('cpp').find_library('pthread')

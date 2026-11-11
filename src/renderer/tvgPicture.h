@@ -96,6 +96,7 @@ struct PictureImpl : Picture
         this->w = w;
         this->h = h;
         resizing = true;
+        impl.mark(RenderUpdateFlag::Transform);
     }
 
     Result filterMethod(FilterMethod method)
@@ -126,10 +127,11 @@ struct PictureImpl : Picture
 
     bool bounds(Point* pt4, const Matrix& m, TVG_UNUSED bool obb)
     {
-        pt4[0] = Point{0.0f, 0.0f} * m;
-        pt4[1] = Point{w, 0.0f} * m;
-        pt4[2] = Point{w, h} * m;
-        pt4[3] = Point{0.0f, h} * m;
+        auto pivot = Point{-origin.x * w, -origin.y * h};
+        pt4[0] = pivot * m;
+        pt4[1] = Point{pivot.x + w, pivot.y} * m;
+        pt4[2] = Point{pivot.x + w, pivot.y + h} * m;
+        pt4[3] = Point{pivot.x, pivot.y + h} * m;
         return true;
     }
 
@@ -294,8 +296,7 @@ struct PictureImpl : Picture
     RenderRegion bounds()
     {
         if (vector) return vector->pImpl->bounds();
-        else if (impl.renderer) return impl.renderer->region(impl.rd);
-        return {};
+        return impl.renderer->region(impl.rd);
     }
 
     Result load(Loader* loader)

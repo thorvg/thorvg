@@ -692,8 +692,13 @@ void StrokeDashPath::segment(Segment seg, float len, RenderPath& out, bool allow
         Segment left, right;
         while (len - curLen > DASH_PATTERN_THRESHOLD) {
             if (curLen > 0.0f) {
+                auto remaining = len - curLen;
+                if (!(remaining < len)) {
+                    TVGERR("GPU_ENGINE", "Dash data overflow!");
+                    break;
+                }
                 splitFn(seg, curLen, left, right);
-                len -= curLen;
+                len = remaining;
                 if (!opGap) {
                     if (move || dash.pattern[curIdx] - curLen < FLOAT_EPSILON) {
                         out.moveTo(map(getStartPt(left)));

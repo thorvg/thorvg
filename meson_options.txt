@@ -11,7 +11,7 @@ option('partial',
 
 option('loaders',
    type: 'array',
-   choices: ['', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'otf', 'webp', 'media', 'all'],
+   choices: ['', 'svg', 'png', 'jpg', 'lottie', 'ttf', 'otf', 'webp', 'gif', 'media', 'all'],
    value: ['svg', 'lottie', 'ttf'],
    description: 'Enable File Loaders in thorvg')
 
@@ -59,6 +59,6 @@ option('file',
 
 option('extra',
    type: 'array',
-   choices: ['', 'opengl_es', 'lottie_exp', 'openmp'],
+   choices: ['', 'opengl_es', 'lottie_exp', 'openmp', 'all'],
    value: ['openmp'],
    description: 'Enable support for extra options')

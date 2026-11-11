@@ -18,6 +18,13 @@ jobs:
         run: |
           meson setup builddir thorvg -Dextra="lottie_exp,openmp"
           meson dist -C builddir
+          cd builddir/meson-dist
+          for archive in *.tar.xz; do
+            xz --decompress "$archive"
+            tar --delete --file="${archive%.xz}" "${archive%.tar.xz}/test"
+            xz "${archive%.xz}"
+            sha256sum "$archive" > "$archive.sha256sum"
+          done
       - name: Upload to release
         uses: softprops/action-gh-release@v3
         with:

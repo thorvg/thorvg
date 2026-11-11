@@ -55,6 +55,7 @@ lottie_loader = all_loaders or get_option('loaders').contains('lottie')
 ttf_loader = all_loaders or get_option('loaders').contains('ttf')
 otf_loader = all_loaders or get_option('loaders').contains('otf')
 webp_loader = all_loaders or get_option('loaders').contains('webp')
+gif_loader = all_loaders or get_option('loaders').contains('gif')
 
 # experimental in the development
 media_loader = get_option('loaders').contains('media')
@@ -77,6 +78,10 @@ endif
 
 if jpg_loader
     config_h.set10('THORVG_JPG_LOADER_SUPPORT', true)
+endif
+
+if gif_loader
+    config_h.set10('THORVG_GIF_LOADER_SUPPORT', true)
 endif
 
 if lottie_loader
@@ -123,15 +128,14 @@ if get_option('file') == true
     config_h.set10('THORVG_FILE_IO_SUPPORT', true)
 endif
 
-
 # Extra
-lottie_exp = lottie_loader and get_option('extra').contains('lottie_exp')
+lottie_exp = lottie_loader and (get_option('extra').contains('all') or get_option('extra').contains('lottie_exp'))
 
 if lottie_exp
     config_h.set10('THORVG_LOTTIE_EXPRESSIONS_SUPPORT', true)
 endif
 
-openmp = get_option('extra').contains('openmp')
+openmp = get_option('extra').contains('all') or get_option('extra').contains('openmp')
 
 if openmp
     config_h.set10('THORVG_OPENMP_SUPPORT', true)
@@ -162,17 +166,14 @@ configure_file(
     configuration: config_h
 )
 
-if get_option('tests')
-   fs = import('fs')
-   git = find_program('git', required: false)
-   if not fs.exists('test/meson.build') and fs.exists('.git') and git.found()
-      run_command(git, '-C', meson.current_source_dir(), 'submodule', 'update', '--init', '--', 'test', check: false)
-   endif
-   if fs.exists('test/meson.build')
-      subdir('test')
-   else
-      warning('Unit tests are unavailable in this source archive; skipping.')
-   endif
+tests = get_option('tests')
+if tests
+    if import('fs').exists('test/meson.build')
+        subdir('test')
+    else
+        warning('Unit tests are unavailable; skipping tests.')
+        tests = false
+    endif
 endif
 
 summary(
@@ -184,7 +185,7 @@ summary(
     'Partial Rendering': get_option('partial'),
     'SIMD': simd_type,
     'Log Message': get_option('log'),
-    'Tests': get_option('tests')
+    'Tests': tests
   },
   bool_yn: true,
 )
@@ -195,7 +196,7 @@ summary(
     'GL': gl_engine,
     'WebGPU': wg_engine,
   },
-  section: 'Raster Engine',
+  section: 'Render Backend',
   bool_yn: true,
 )
 
@@ -208,6 +209,7 @@ summary(
     'PNG': png_loader,
     'JPG': jpg_loader,
     'WEBP': webp_loader,
+    'GIF': gif_loader,
     'MEDIA': media_loader,
   },
   section: 'Loader',
