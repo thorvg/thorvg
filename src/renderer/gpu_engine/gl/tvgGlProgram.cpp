@@ -41,7 +41,6 @@ static const char* const UNIFORM_BLOCK_NAMES[] = {
     "DropShadow",
     "Params",
     "BlendRegion",
-    "TransformInfo",
     "GradientInfo",
     "ColorInfo",
 };
@@ -49,7 +48,7 @@ static const char* const UNIFORM_BLOCK_NAMES[] = {
 static_assert(sizeof(UNIFORM_NAMES) / sizeof(UNIFORM_NAMES[0]) == static_cast<uint32_t>(GlShaderUniform::Count), "Missing uniform name");
 static_assert(sizeof(UNIFORM_BLOCK_NAMES) / sizeof(UNIFORM_BLOCK_NAMES[0]) == static_cast<uint32_t>(GlShaderUniformBlock::Count), "Missing uniform block name");
 
-GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
+GlProgram::GlProgram(const char* vertSrc, const char* fragSrc, const char* vertPrefix)
 {
     for (auto& location : mUniformLocations)
         location = UNKNOWN_LOCATION;
@@ -60,7 +59,7 @@ GlProgram::GlProgram(const char* vertSrc, const char* fragSrc)
     for (auto& binding : mSamplerBindings)
         binding = -1;
 
-    auto shader = GlShader(vertSrc, fragSrc);
+    auto shader = GlShader(vertSrc, fragSrc, vertPrefix);
 
     // Create the program object
     uint32_t progObj = glCreateProgram();

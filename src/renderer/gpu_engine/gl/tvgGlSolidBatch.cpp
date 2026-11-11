@@ -93,13 +93,12 @@ void GlSolidBatch::emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData
     drawTask->setDrawDepth(depth);
 
     if (data.flag == RenderUpdateFlag::Image) {
-        uint32_t info[4] = {data.opacity, 0, 0, 0};
         drawTask->addBindResource(GlBindingResource{
             1,
             GlShaderUniformBlock::ColorInfo,
             renderer.mGpuBuffer.getBufferId(),
-            renderer.mGpuBuffer.push(info, sizeof(info), true),
-            sizeof(info),
+            renderer.mGpuBuffer.getImageOpacityOffset(static_cast<uint8_t>(data.opacity)),
+            sizeof(GlImageOpacityBlock),
         });
     }
 

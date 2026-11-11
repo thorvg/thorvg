@@ -44,7 +44,6 @@ enum class GlShaderUniformBlock : uint8_t
     DropShadow,
     Params,
     BlendRegion,
-    TransformInfo,
     GradientInfo,
     ColorInfo,
     Count,
@@ -52,7 +51,7 @@ enum class GlShaderUniformBlock : uint8_t
 
 struct GlProgram
 {
-    GlProgram(const char* vertSrc, const char* fragSrc);
+    GlProgram(const char* vertSrc, const char* fragSrc, const char* vertPrefix = "");
     ~GlProgram();
 
     int32_t getUniformLocation(GlShaderUniform uniform);
