@@ -37,12 +37,13 @@ void GlSolidBatch::draw(GlRenderer& renderer, const GlCoverageMap& coverage, con
         int32_t format[4];
         MapInfo maps[64];
     };
-
     auto pass = renderer.currentPass();
     auto program = renderer.mPrograms[GlRenderer::RT_Color];
     auto runs = coverage.format == GlCoverageFormat::Runs;
-    if (!task || pass->lastTask() != task || task->program != program || task->blendMethod != renderer.mBlendMethod || texId != coverage.region.texture ||
-        coverageFormat != coverage.format || !(this->viewBounds == viewBounds) || coverageCount == 64) {
+    auto rectangle = coverage.format == GlCoverageFormat::Rect;
+    auto texture = coverage.region.texture;
+    if (!task || pass->lastTask() != task || task->program != program || task->blendMethod != renderer.mBlendMethod ||
+        (texId && texture && texId != texture) || !(this->viewBounds == viewBounds) || coverageCount == 64) {
         task = new GlRenderTask(program, renderer.mBlendMethod);
         task->setViewMatrix(pass->getViewMatrix());
         task->useDrawArrays = true;
@@ -50,28 +51,37 @@ void GlSolidBatch::draw(GlRenderer& renderer, const GlCoverageMap& coverage, con
         task->setViewport(viewRegion);
 
         BatchInfo info = {};
-        info.format[0] = runs ? 1 : 0;
+        info.format[0] = int32_t(runs);
         coverageOffset = renderer.mGpuBuffer.push(&info, sizeof(info), true);
         task->addBindResource(GlBindingResource{4, GlShaderUniformBlock::CoverageInfo, renderer.mGpuBuffer.getBufferId(), coverageOffset, sizeof(info)});
-        task->addBindResource(GlBindingResource{1, coverage.region.texture, GlShaderUniform::CoverageTexture});
+        task->addBindResource(GlBindingResource{1, texture, GlShaderUniform::CoverageTexture});
         pass->addRenderTask(task);
         this->viewBounds = viewBounds;
-        texId = coverage.region.texture;
-        coverageFormat = coverage.format;
+        texId = texture;
         coverageCount = 0;
     }
 
-    auto& bounds = coverage.map.bounds;
+    // A batch started by rectangles can adopt the first atlas page it uses.
+    if (!texId && texture) {
+        task->bindResources.last().resourceId = texture;
+        texId = texture;
+        if (runs) {
+            int32_t format = 1;
+            renderer.mGpuBuffer.update(coverageOffset, &format, sizeof(format));
+        }
+    }
     auto& rect = coverage.region.rect;
-    MapInfo info = {{float(bounds.sx()), float(bounds.sy()), float(bounds.w()), float(bounds.h())},
+    MapInfo info = {{},
                     {rect.sx(), rect.sy(), rect.sw(), int32_t(task->instanceCount)},
                     {color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f}};
+    coverage.shaderBounds(info.bounds);
     renderer.mGpuBuffer.update(coverageOffset + sizeof(int32_t) * 4 + coverageCount * sizeof(MapInfo), &info, sizeof(info));
 
     auto count = runs ? coverage.runCount : 1u;
     void* indices = nullptr;
     auto offset = renderer.mGpuBuffer.reserveAux(count, &indices);
-    memset(indices, coverageCount, count);
+    // The seventh bit identifies an analytic rectangle in the same batch.
+    memset(indices, coverageCount | (rectangle ? 64 : 0), count);
     if (coverageCount == 0) {
         task->addVertexLayout(GlVertexLayout{0, 1, 1, offset, GL_UNSIGNED_BYTE, GL_FALSE, renderer.mGpuBuffer.getAuxBufferId(), 1});
     }

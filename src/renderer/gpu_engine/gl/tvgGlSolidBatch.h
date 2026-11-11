@@ -75,7 +75,6 @@ struct GlSolidBatch
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     uint32_t coverageCount = 0;
     uint32_t coverageOffset = 0;
-    GlCoverageFormat coverageFormat = GlCoverageFormat::Dense;
 #endif
 };
 
