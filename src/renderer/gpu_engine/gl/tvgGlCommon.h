@@ -171,6 +171,24 @@ struct GlCoverageMap
     GlCoverageRegion region;  // Non-owning atlas location; CPU runs remain available for restaging.
     GlCoverageFormat format = GlCoverageFormat::Dense;
     uint32_t runCount = 0;
+    Point rect[2];
+
+    bool drawable() const { return region.texture || format == GlCoverageFormat::Rect; }
+
+    void shaderBounds(float (&bounds)[4]) const
+    {
+        if (format == GlCoverageFormat::Rect) {
+            bounds[0] = rect[0].x;
+            bounds[1] = rect[0].y;
+            bounds[2] = rect[1].x;
+            bounds[3] = rect[1].y;
+        } else {
+            bounds[0] = float(map.bounds.sx());
+            bounds[1] = float(map.bounds.sy());
+            bounds[2] = float(map.bounds.sw());
+            bounds[3] = float(map.bounds.sh());
+        }
+    }
 };
 #endif
 
@@ -188,6 +206,7 @@ struct GlShape : GlDrawable
     bool updateFill = false;
     bool updateStroke = false;
     bool clipStroke = false;
+    bool isClipper = false;
 #else
     void destroy(GlRenderer& renderer) override {}
 #endif

@@ -23,6 +23,42 @@
 #include "tvgGlRenderer.h"
 
 
+static bool _axisAlignedRect(const RenderShape& shape, const Matrix& transform, const RenderRegion& viewport, GlCoverageMap& coverage)
+{
+    auto& path = shape.path;
+    if (path.pts.count != 4 || path.cmds.count != 5 || shape.trimpath()) return false;
+    if (path.cmds[0] != PathCommand::MoveTo) return false;
+    for (uint32_t i = 1; i < 4; ++i) {
+        if (path.cmds[i] != PathCommand::LineTo) return false;
+    }
+    if (path.cmds[4] != PathCommand::Close) return false;
+
+    auto pt1 = path.pts[0] * transform;
+    auto pt2 = path.pts[1] * transform;
+    auto pt3 = path.pts[2] * transform;
+    auto pt4 = path.pts[3] * transform;
+
+    auto a = Point{pt1.x, pt3.y};
+    auto b = Point{pt3.x, pt1.y};
+    if (!((pt2.x == a.x && pt2.y == a.y && pt4.x == b.x && pt4.y == b.y) ||
+          (pt2.x == b.x && pt2.y == b.y && pt4.x == a.x && pt4.y == a.y))) return false;
+
+    // Clip in floating point before computing the integer pixel bounds.
+    Point lo = {std::max(std::min(pt1.x, pt3.x), float(viewport.xMin)), std::max(std::min(pt1.y, pt3.y), float(viewport.yMin))};
+    Point hi = {std::min(std::max(pt1.x, pt3.x), float(viewport.xMax)), std::min(std::max(pt1.y, pt3.y), float(viewport.yMax))};
+    coverage.map.reset();
+    coverage.status = CoverageStatus::Empty;
+    if (hi.x > lo.x && hi.y > lo.y) {
+        coverage.rect[0] = lo;
+        coverage.rect[1] = hi;
+        coverage.map.bounds = {int32_t(floorf(lo.x)), int32_t(floorf(lo.y)), int32_t(ceilf(hi.x)), int32_t(ceilf(hi.y))};
+        coverage.format = GlCoverageFormat::Rect;
+        coverage.status = CoverageStatus::Ready;
+    }
+    return true;
+}
+
+
 RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     auto shape = static_cast<GlShape*>(data);
@@ -41,7 +77,8 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     const auto& previous = shape->geometry.viewport;
     auto changed = !(previous == vport);
     auto update = changed || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Stroke | RenderUpdateFlag::Clip));
-    auto updateFill = update || shape->geometry.fillRule != rshape.rule;
+    auto updateFill = update || shape->geometry.fillRule != rshape.rule || shape->isClipper != clipper;
+    shape->isClipper = clipper;
     // Keep stroke selection even when clipping removes its entire coverage.
     shape->clipStroke = rshape.stroke && !tvg::zero(rshape.stroke->width) && !tvg::zero(rshape.stroke->trim.begin - rshape.stroke->trim.end) &&
                         rshape.stroke->width * sqrtf(transform.e11 * transform.e11 + transform.e12 * transform.e12) > 0.0f;
@@ -65,8 +102,11 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 void GlShape::run(TVG_UNUSED unsigned tid)
 {
     if (updateFill) {
-        fillCoverage.status = generateFillCoverage(*rshape, geometry.matrix, geometry.viewport, fillCoverage.map);
-        if (!clips.empty() && fillCoverage.status == CoverageStatus::Ready) fillCoverage.status = GlRenderer::clipCoverage(fillCoverage.map, clips);
+        if (fillCoverage.format == GlCoverageFormat::Rect) fillCoverage.format = GlCoverageFormat::Dense;
+        if (isClipper || !clips.empty() || !_axisAlignedRect(*rshape, geometry.matrix, geometry.viewport, fillCoverage)) {
+            fillCoverage.status = generateFillCoverage(*rshape, geometry.matrix, geometry.viewport, fillCoverage.map);
+            if (!clips.empty() && fillCoverage.status == CoverageStatus::Ready) fillCoverage.status = GlRenderer::clipCoverage(fillCoverage.map, clips);
+        }
     }
     if (updateStroke) {
         strokeCoverage.status = generateStrokeCoverage(*rshape, geometry.matrix, geometry.viewport, strokeCoverage.map);
@@ -113,7 +153,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const RenderColor& c, RenderUpdat
 
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
     auto& coverage = stroke ? shape.strokeCoverage : shape.fillCoverage;
-    if (!coverage.region.texture) return;
+    if (!coverage.drawable()) return;
     auto bbox = coverage.map.bounds;
     bbox.intersect(viewBounds);
     if (bbox.invalid()) return;
@@ -144,7 +184,7 @@ inline bool GlRenderer::primitiveBounds(const GlShape& shape, RenderUpdateFlag f
 {
     auto stroke = (flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke);
     const auto& coverage = stroke ? shape.strokeCoverage : shape.fillCoverage;
-    if (!coverage.region.texture) return false;
+    if (!coverage.drawable()) return false;
     bounds = coverage.map.bounds;
     return true;
 }
@@ -181,7 +221,11 @@ bool GlRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 
     // Maps already include transforms and clipping, but are generated independently of paint.
     auto& rshape = *shape->rshape;
-    if (shape->valid.fill && (rshape.fill || rshape.color.a > 0) && intersectsCoverage(shape->fillCoverage.map, region)) return true;
+    const auto& fill = shape->fillCoverage;
+    if (shape->valid.fill && (rshape.fill || rshape.color.a > 0)) {
+        if (fill.format == GlCoverageFormat::Rect ? RenderRegion::intersect(fill.map.bounds, region).valid() :
+                                                  intersectsCoverage(fill.map, region)) return true;
+    }
     return shape->valid.stroke && (rshape.stroke->fill || rshape.stroke->color.a > 0) && intersectsCoverage(shape->strokeCoverage.map, region);
 }
 
@@ -223,6 +267,10 @@ void GlShape::destroy(GlRenderer& renderer)
 
 bool GlRenderer::stageCoverage(GlCoverageMap& coverage)
 {
+    if (coverage.format == GlCoverageFormat::Rect) {
+        if (coverage.region.texture) coverageAtlas.retire(coverage.region);
+        return true;
+    }
     GlCoverageData packed;
     if (coverage.status != CoverageStatus::Ready || !packGlCoverage(coverage.map, coverageAtlas.maxTextureSize(), packed)) {
         coverageAtlas.retire(coverage.region);
@@ -240,14 +288,13 @@ bool GlRenderer::stageCoverage(GlCoverageMap& coverage)
 
 void GlRenderer::bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage)
 {
-    auto& bounds = coverage.map.bounds;
     auto& rect = coverage.region.rect;
     auto runs = coverage.format == GlCoverageFormat::Runs;
     struct {
         float bounds[4];
         int32_t atlas[4];
-    } info = {{float(bounds.sx()), float(bounds.sy()), float(bounds.w()), float(bounds.h())},
-              {rect.sx(), rect.sy(), rect.sw(), runs ? 1 : 0}};
+    } info = {{}, {rect.sx(), rect.sy(), rect.sw(), int32_t(coverage.format)}};
+    coverage.shaderBounds(info.bounds);
 
     task->setViewMatrix(currentPass()->getViewMatrix());
     task->useDrawArrays = true;
