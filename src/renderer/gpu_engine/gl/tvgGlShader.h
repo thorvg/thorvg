@@ -27,14 +27,14 @@
 
 struct GlShader
 {
-    GlShader(const char* vertSrc, const char* fragSrc);
+    GlShader(const char* vertSrc, const char* fragSrc, const char* vertPrefix);
     ~GlShader();
 
     uint32_t getVertexShader();
     uint32_t getFragmentShader();
 
 private:
-    uint32_t compileShader(uint32_t type, char* shaderSrc);
+    uint32_t compileShader(uint32_t type, const char* source, const char* prefix);
 
     uint32_t mVtShader;
     uint32_t mFrShader;

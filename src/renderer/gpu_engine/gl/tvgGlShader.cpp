@@ -26,36 +26,24 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
-uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
+uint32_t GlShader::compileShader(uint32_t type, const char* source, const char* prefix)
 {
-    GLuint shader;
-    GLint compiled;
-
-    // Create the shader object
-    shader = glCreateShader(type);
-
-    /**
-     * [0] shader version string
-     * [1] precision declaration
-     * [2] shader source
-     */
-    const char* shaderPack[3];
-    // but in general All Desktop GPU should use OpenGL version ( #version 330 core )
-#if defined (THORVG_GL_TARGET_GLES)
-    shaderPack[0] ="#version 300 es\n";
+    auto shader = glCreateShader(type);
+    const char* sources[] = {
+#if defined(THORVG_GL_TARGET_GLES)
+        "#version 300 es\n"
 #else
-    shaderPack[0] ="#version 330 core\n";
+        "#version 330 core\n"
 #endif
-    shaderPack[1] = "precision highp float;\n precision highp int;\n";
-    shaderPack[2] = shaderSrc;
+        "precision highp float;\nprecision highp int;\n",
+        prefix,
+        source,
+    };
 
-    // Load the shader source
-    glShaderSource(shader, 3, shaderPack, NULL);
-
-    // Compile the shader
+    glShaderSource(shader, sizeof(sources) / sizeof(sources[0]), sources, nullptr);
     glCompileShader(shader);
 
-    // Check the compile status
+    GLint compiled;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 
     if (!compiled)
@@ -81,10 +69,10 @@ uint32_t GlShader::compileShader(uint32_t type, char* shaderSrc)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-GlShader::GlShader(const char* vertSrc, const char* fragSrc)
+GlShader::GlShader(const char* vertSrc, const char* fragSrc, const char* vertPrefix)
 {
-    mVtShader = compileShader(GL_VERTEX_SHADER, const_cast<char*>(vertSrc));
-    mFrShader = compileShader(GL_FRAGMENT_SHADER, const_cast<char*>(fragSrc));
+    mVtShader = compileShader(GL_VERTEX_SHADER, vertSrc, vertPrefix);
+    mFrShader = compileShader(GL_FRAGMENT_SHADER, fragSrc, "");
 }
 
 

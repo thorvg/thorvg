@@ -184,22 +184,22 @@ void GlRenderer::initShaders()
     mPrograms.reserve((int)RT_None);
 
 #if 1  //for optimization
-    #define LINEAR_TOTAL_LENGTH 2819
+    #define LINEAR_TOTAL_LENGTH 2820
     #define RADIAL_TOTAL_LENGTH 5301
-    #define CONIC_TOTAL_LENGTH 3072
+    #define CONIC_TOTAL_LENGTH 3069
     #define BLEND_TOTAL_LENGTH 7567
 #else
     #define COMMON_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + 1
-    #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_VARIABLES) + strlen(STR_LINEAR_GRADIENT_FUNCTIONS) + strlen(STR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
-    #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_RADIAL_GRADIENT_FUNCTIONS) + strlen(STR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
-    #define CONIC_TOTAL_LENGTH strlen(STR_CONIC_GRADIENT_VARIABLES) + strlen(STR_CONIC_GRADIENT_FUNCTIONS) + strlen(STR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
-    #define BLEND_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_RADIAL_GRADIENT_VARIABLES) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + strlen(STR_RADIAL_GRADIENT_FUNCTIONS) + strlen(BLEND_SHAPE_GRADIENT_FRAG_HEADER) + strlen(BLEND_FRAG_LUM_HELPER) + strlen(BLEND_FRAG_SAT_HELPER) + strlen(COLOR_BURN_BLEND_FRAG) + 1
+    #define LINEAR_TOTAL_LENGTH strlen(STR_LINEAR_GRADIENT_BLOCK) + strlen(STR_LINEAR_GRADIENT_FUNCTIONS) + strlen(STR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
+    #define RADIAL_TOTAL_LENGTH strlen(STR_RADIAL_GRADIENT_BLOCK) + strlen(STR_RADIAL_GRADIENT_FUNCTIONS) + strlen(STR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
+    #define CONIC_TOTAL_LENGTH strlen(STR_CONIC_GRADIENT_BLOCK) + strlen(STR_CONIC_GRADIENT_FUNCTIONS) + strlen(STR_GRADIENT_MAIN) + COMMON_TOTAL_LENGTH
+    #define BLEND_TOTAL_LENGTH strlen(STR_GRADIENT_FRAG_COMMON_VARIABLES) + strlen(STR_RADIAL_GRADIENT_BLOCK) + strlen(STR_GRADIENT_FRAG_COMMON_FUNCTIONS) + strlen(STR_RADIAL_GRADIENT_FUNCTIONS) + strlen(BLEND_SHAPE_GRADIENT_FRAG_HEADER) + strlen(BLEND_FRAG_LUM_HELPER) + strlen(BLEND_FRAG_SAT_HELPER) + strlen(COLOR_BURN_BLEND_FRAG) + 1
 #endif
 
     char linearGradientFragShader[LINEAR_TOTAL_LENGTH];
     snprintf(linearGradientFragShader, LINEAR_TOTAL_LENGTH, "%s%s%s%s%s",
         STR_GRADIENT_FRAG_COMMON_VARIABLES,
-        STR_LINEAR_GRADIENT_VARIABLES,
+        STR_LINEAR_GRADIENT_BLOCK,
         STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
         STR_LINEAR_GRADIENT_FUNCTIONS,
         STR_GRADIENT_MAIN
@@ -208,7 +208,7 @@ void GlRenderer::initShaders()
     char radialGradientFragShader[RADIAL_TOTAL_LENGTH];
     snprintf(radialGradientFragShader, RADIAL_TOTAL_LENGTH, "%s%s%s%s%s",
         STR_GRADIENT_FRAG_COMMON_VARIABLES,
-        STR_RADIAL_GRADIENT_VARIABLES,
+        STR_RADIAL_GRADIENT_BLOCK,
         STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
         STR_RADIAL_GRADIENT_FUNCTIONS,
         STR_GRADIENT_MAIN
@@ -217,16 +217,16 @@ void GlRenderer::initShaders()
     char conicGradientFragShader[CONIC_TOTAL_LENGTH];
     snprintf(conicGradientFragShader, CONIC_TOTAL_LENGTH, "%s%s%s%s%s",
         STR_GRADIENT_FRAG_COMMON_VARIABLES,
-        STR_CONIC_GRADIENT_VARIABLES,
+        STR_CONIC_GRADIENT_BLOCK,
         STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
         STR_CONIC_GRADIENT_FUNCTIONS,
         STR_GRADIENT_MAIN
     );
 
     mPrograms.push(new GlProgram(COLOR_VERT_SHADER, COLOR_FRAG_SHADER));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, linearGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, radialGradientFragShader));
-    mPrograms.push(new GlProgram(GRADIENT_VERT_SHADER, conicGradientFragShader));
+    mPrograms.push(new GlProgram(STR_GRADIENT_VERT_BODY, linearGradientFragShader, STR_LINEAR_GRADIENT_BLOCK));
+    mPrograms.push(new GlProgram(STR_GRADIENT_VERT_BODY, radialGradientFragShader, STR_RADIAL_GRADIENT_BLOCK));
+    mPrograms.push(new GlProgram(STR_GRADIENT_VERT_BODY, conicGradientFragShader, STR_CONIC_GRADIENT_BLOCK));
     mPrograms.push(new GlProgram(IMAGE_VERT_SHADER, IMAGE_FRAG_SHADER));
 
     // compose Renderer
@@ -433,31 +433,18 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
 
     task->setViewport(viewRegion);
 
-    // transform buffer (inverse fill-space transform)
     float invMat3[GL_MAT3_STD140_SIZE];
     Matrix inv;
     inverse(&fill->transform(), &inv);
     if (!(flag & RenderUpdateFlag::GradientStroke)) {
         // World-space meshes need inverse model before gradient lookup. Local
-        // gradient strokes already pass local positions to TransformInfo.
+        // gradient strokes already pass local positions to the shader.
         Matrix invShape;
         inverse(&shape.geometry.matrix, &invShape);
         inv = inv * invShape;
     }
     if (conic) inv = tvg::gpuConicTransform({x, y}, angle) * inv;
     getMatrix3Std140(inv, invMat3);
-
-    float transformInfo[GL_MAT3_STD140_SIZE];
-    memcpy(transformInfo, invMat3, GL_MAT3_STD140_BYTES);
-    auto transformOffset = mGpuBuffer.push(transformInfo, sizeof(transformInfo), true);
-
-    task->addBindResource(GlBindingResource{
-        0,
-        GlShaderUniformBlock::TransformInfo,
-        mGpuBuffer.getBufferId(),
-        transformOffset,
-        sizeof(transformInfo),
-    });
 
     auto alpha = shape.opacity / 255.f;
 
@@ -468,8 +455,7 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
         }
     }
 
-    // gradient block
-    GlBindingResource gradientBinding{};
+    uint32_t gradientOffset, gradientSize;
     bool opaque;
 
     if (type == Type::LinearGradient) {
@@ -478,21 +464,11 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
         GlLinearGradientBlock gradientBlock;
         opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, fill->spread(), alpha);
 
-        float x1, x2, y1, y2;
-        linearFill->linear(&x1, &y1, &x2, &y2);
+        linearFill->linear(&gradientBlock.startPos[0], &gradientBlock.startPos[1], &gradientBlock.endPos[0], &gradientBlock.endPos[1]);
+        memcpy(gradientBlock.invTransform, invMat3, sizeof(invMat3));
 
-        gradientBlock.startPos[0] = x1;
-        gradientBlock.startPos[1] = y1;
-        gradientBlock.stopPos[0] = x2;
-        gradientBlock.stopPos[1] = y2;
-
-        gradientBinding = GlBindingResource{
-            2,
-            GlShaderUniformBlock::GradientInfo,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlLinearGradientBlock), true),
-            sizeof(GlLinearGradientBlock),
-        };
+        gradientSize = sizeof(gradientBlock);
+        gradientOffset = mGpuBuffer.push(&gradientBlock, gradientSize, true);
     } else if (radial) {
         GlRadialGradientBlock gradientBlock;
         opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, fill->spread(), alpha);
@@ -503,30 +479,26 @@ void GlRenderer::drawPrimitive(GlShape& shape, const Fill* fill, RenderUpdateFla
         gradientBlock.centerPos[3] = y;
         gradientBlock.radius[0] = fr;
         gradientBlock.radius[1] = r;
+        memcpy(gradientBlock.invTransform, invMat3, sizeof(invMat3));
 
-        gradientBinding = GlBindingResource{
-            2,
-            GlShaderUniformBlock::GradientInfo,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlRadialGradientBlock), true),
-            sizeof(GlRadialGradientBlock),
-        };
+        gradientSize = sizeof(gradientBlock);
+        gradientOffset = mGpuBuffer.push(&gradientBlock, gradientSize, true);
     } else {
         GlConicGradientBlock gradientBlock;
         opaque = _packGradientBlock(gradientBlock.nStops, gradientBlock.stopPoints, gradientBlock.stopColors, stops, stopCnt, FillSpread::Pad, alpha);
+        memcpy(gradientBlock.invTransform, invMat3, sizeof(invMat3));
 
-        gradientBinding = GlBindingResource{
-            2,
-            GlShaderUniformBlock::GradientInfo,
-            mGpuBuffer.getBufferId(),
-            mGpuBuffer.push(&gradientBlock, sizeof(GlConicGradientBlock), true),
-            sizeof(GlConicGradientBlock),
-        };
+        gradientSize = sizeof(gradientBlock);
+        gradientOffset = mGpuBuffer.push(&gradientBlock, gradientSize, true);
     }
 
-    task->addBindResource(gradientBinding);
-
-    // TransformInfo uses slot 0 and GradientInfo uses slot 2, so BlendRegion moves to 3.
+    task->addBindResource(GlBindingResource{
+        2,
+        GlShaderUniformBlock::GradientInfo,
+        mGpuBuffer.getBufferId(),
+        gradientOffset,
+        gradientSize,
+    });
     bindBlendTarget(task, dstCopyFbo, viewRegion, 3);
 
     auto stencilMode = shape.geometry.stencilMode(flag);
@@ -702,7 +674,8 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
         return mPrograms[shaderInd];
     }
 
-    vertShader = (source == BlendSource::Solid) ? COLOR_VERT_SHADER : GRADIENT_VERT_SHADER;
+    vertShader = COLOR_VERT_SHADER;
+    const char* gradientUniforms = "";
     switch (source) {
         case BlendSource::Solid:
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s",
@@ -712,9 +685,11 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
                      shaderFunc[methodInd]);
             break;
         case BlendSource::LinearGradient:
+            vertShader = STR_GRADIENT_VERT_BODY;
+            gradientUniforms = STR_LINEAR_GRADIENT_BLOCK;
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s",
                      STR_GRADIENT_FRAG_COMMON_VARIABLES,
-                     STR_LINEAR_GRADIENT_VARIABLES,
+                     gradientUniforms,
                      STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
                      STR_LINEAR_GRADIENT_FUNCTIONS,
                      BLEND_SHAPE_GRADIENT_FRAG_HEADER,
@@ -723,9 +698,11 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
                      shaderFunc[methodInd]);
             break;
         case BlendSource::RadialGradient:
+            vertShader = STR_GRADIENT_VERT_BODY;
+            gradientUniforms = STR_RADIAL_GRADIENT_BLOCK;
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s",
                      STR_GRADIENT_FRAG_COMMON_VARIABLES,
-                     STR_RADIAL_GRADIENT_VARIABLES,
+                     gradientUniforms,
                      STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
                      STR_RADIAL_GRADIENT_FUNCTIONS,
                      BLEND_SHAPE_GRADIENT_FRAG_HEADER,
@@ -734,9 +711,11 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
                      shaderFunc[methodInd]);
             break;
         case BlendSource::ConicGradient:
+            vertShader = STR_GRADIENT_VERT_BODY;
+            gradientUniforms = STR_CONIC_GRADIENT_BLOCK;
             snprintf(fragShader, BLEND_TOTAL_LENGTH, "%s%s%s%s%s%s%s%s",
                      STR_GRADIENT_FRAG_COMMON_VARIABLES,
-                     STR_CONIC_GRADIENT_VARIABLES,
+                     gradientUniforms,
                      STR_GRADIENT_FRAG_COMMON_FUNCTIONS,
                      STR_CONIC_GRADIENT_FUNCTIONS,
                      BLEND_SHAPE_GRADIENT_FRAG_HEADER,
@@ -749,7 +728,7 @@ GlProgram* GlRenderer::getBlendProgram(BlendMethod method, BlendSource source)
             break;
     }
 
-    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader);
+    mPrograms[shaderInd] = new GlProgram(vertShader, fragShader, gradientUniforms);
     return mPrograms[shaderInd];
 }
 
