@@ -50,6 +50,7 @@ struct GlStageBuffer
     uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false);
     uint32_t pushAux(void* data, uint32_t size);
     uint32_t pushIndex(void* data, uint32_t size);
+    uint32_t getImageOpacityOffset(uint8_t opacity);
     uint32_t reserve(uint32_t size, void** dst, bool alignGpuOffset = false);
     uint32_t reserveAux(uint32_t size, void** dst);
     uint32_t reserveIndex(uint32_t size, void** dst);
@@ -69,6 +70,7 @@ private:
     Array<uint8_t> mStageBuffer = {};
     Array<uint8_t> mAuxBuffer = {};
     Array<uint8_t> mIndexBuffer = {};
+    uint32_t mImageOpacityOffsets[UINT8_MAX + 1];
 };
 
 #endif /* _TVG_GL_GPU_BUFFER_H_ */

@@ -37,7 +37,6 @@ constexpr float MIN_GL_STROKE_WIDTH = 1.0f;
 constexpr float MIN_GL_STROKE_ALPHA = 0.25f;
 
 constexpr uint32_t GL_MAT3_STD140_SIZE = 12; // mat3 is 3 vec4 columns in std140
-constexpr uint32_t GL_MAT3_STD140_BYTES = GL_MAT3_STD140_SIZE * sizeof(float);
 
 // Texture allocation and parameter setup must choose a unit explicitly instead
 // of inheriting the last draw-time sampler unit. This unit is not reserved:
@@ -177,19 +176,21 @@ struct GlIntersector
 struct GlLinearGradientBlock
 {
     alignas(16) float nStops[4] = {};
-    alignas(16) float startPos[2] = {};
-    alignas(8) float stopPos[2] = {};
-    alignas(8) float stopPoints[MAX_GRADIENT_STOPS] = {};
+    alignas(16) float startPos[2];
+    alignas(8) float endPos[2];
+    alignas(16) float stopPoints[MAX_GRADIENT_STOPS] = {};
     alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
+    alignas(16) float invTransform[GL_MAT3_STD140_SIZE];
 };
 
 struct GlRadialGradientBlock
 {
     alignas(16) float nStops[4] = {};
-    alignas(16) float centerPos[4] = {};
-    alignas(16) float radius[2] = {};
+    alignas(16) float centerPos[4];
+    alignas(16) float radius[2];
     alignas(16) float stopPoints[MAX_GRADIENT_STOPS] = {};
     alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
+    alignas(16) float invTransform[GL_MAT3_STD140_SIZE];
 };
 
 struct GlConicGradientBlock
@@ -197,7 +198,10 @@ struct GlConicGradientBlock
     alignas(16) float nStops[4] = {};
     alignas(16) float stopPoints[MAX_GRADIENT_STOPS] = {};
     alignas(16) float stopColors[4 * MAX_GRADIENT_STOPS] = {};
+    alignas(16) float invTransform[GL_MAT3_STD140_SIZE];
 };
+
+using GlImageOpacityBlock = int32_t[4];
 
 struct GlCompositor : RenderCompositor
 {
