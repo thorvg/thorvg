@@ -148,6 +148,8 @@ private:
         LottieLayer* layer = nullptr;
         LottieObject* parent = nullptr;
     } context;
+
+    bool violated = false;  // violated asset
 };
 
 #endif //_TVG_LOTTIE_PARSER_H_

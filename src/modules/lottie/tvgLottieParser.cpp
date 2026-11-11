@@ -278,10 +278,13 @@ bool LottieParser::getValue(float& val)
     return false;
 }
 
-
 bool LottieParser::getValue(Point& pt)
 {
-    if (peekType() == kNullType) return false;
+    if (peekType() == kNullType) {
+        getNull();
+        return false;
+    }
+
     if (peekType() == kArrayType) {
         enterArray();
         if (!nextArrayValue()) return false;
@@ -297,7 +300,11 @@ bool LottieParser::getValue(Point& pt)
 
 bool LottieParser::getValue(Point3& pt)
 {
-    if (peekType() == kNullType) return false;
+    if (peekType() == kNullType) {
+        getNull();
+        return false;
+    }
+
     if (peekType() == kArrayType) {
         enterArray();
         if (!nextArrayValue()) return false;
@@ -354,11 +361,12 @@ void LottieParser::parseSlotProperty(T& prop)
 template<typename T>
 bool LottieParser::parseTangent(const char *key, LottieVectorFrame<T>& value)
 {
-    if (KEY_AS("ti") && getValue(value.inTangent)) ;
-    else if (KEY_AS("to") && getValue(value.outTangent)) ;       
-    else return false;
+    if (KEY_AS("ti")) {
+        if (getValue(value.inTangent)) value.hasTangent = true;
+    } else if (KEY_AS("to")) {
+        if (getValue(value.outTangent)) value.hasTangent = true;
+    } else return false;
 
-    value.hasTangent = true;
     return true;
 }
 
@@ -914,11 +922,10 @@ LottieObject* LottieParser::parseObject(const char* type)
     return nullptr;
 }
 
-
-//capture the type name if the upcoming type is irregularly addressed after the actual properties.
+// capture the type name if the upcoming type is irregularly addressed after the actual properties.
 char* LottieParser::captureType()
 {
-    if (!isPrimitive() || !strcmp(val.GetString(), "ty")) return nullptr;
+    if (state != kHasKey || !strcmp(val.GetString(), "ty")) return nullptr;
 
     auto level = 0;
     for (auto p = getPos(); *p != '\0'; ++p) {
@@ -941,7 +948,6 @@ char* LottieParser::captureType()
     }
     return nullptr;
 }
-
 
 void LottieParser::parseObject(Array<LottieObject*>& parent)
 {
@@ -1552,6 +1558,7 @@ LottieLayer* LottieParser::parseLayer(LottieRootLayer* precomp)
     layer->precomp = precomp;
     context.layer = layer;
 
+    auto shapes = false;
     auto ddd = false;
     RGB32 color;
 
@@ -1573,7 +1580,11 @@ LottieLayer* LottieParser::parseLayer(LottieRootLayer* precomp)
             layer->transform = parseTransform(ddd);
         }
         else if (KEY_AS("ao")) layer->autoOrient = getInt();
-        else if (KEY_AS("shapes")) parseShapes(layer->children);
+        else if (KEY_AS("shapes"))
+        {
+            parseShapes(layer->children);
+            shapes = true;
+        }
         else if (KEY_AS("ip")) layer->inPoint = getFloat();
         else if (KEY_AS("op")) layer->outPoint = getFloat();
         else if (KEY_AS("st")) layer->startFrame = getFloat();
@@ -1594,6 +1605,8 @@ LottieLayer* LottieParser::parseLayer(LottieRootLayer* precomp)
         else if (KEY_AS("au")) parseVolume(layer);
         else skip();
     }
+
+    if (shapes && layer->type != LottieLayer::Shape) violated = true;
 
     layer->prepare(&color);
 
@@ -1792,7 +1805,8 @@ bool LottieParser::parse()
         else skip();
     }
 
-    if (Invalid() || !comp->root) {
+    if (violated || !comp->root || Invalid()) {
+        TVGERR("LOTTIE", "Invalid or malformed Lottie asset!");
         delete(comp);
         return false;
     }
