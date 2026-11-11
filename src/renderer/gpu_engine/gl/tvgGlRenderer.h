@@ -32,7 +32,9 @@
 #include "tvgGlEffect.h"
 #include "tvgGlStateCache.h"
 #include "tvgGlSolidBatch.h"
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 #include "tvgGlStencilCoverBatch.h"
+#endif
 
 struct GlRenderer : RenderMethod
 {
@@ -63,6 +65,9 @@ struct GlRenderer : RenderMethod
         RT_RadGradient,
         RT_ConGradient,
         RT_Image,
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        RT_ClipImage,
+#endif
         RT_MaskAlpha,
         RT_MaskAlphaInv,
         RT_MaskLuma,
@@ -124,17 +129,42 @@ struct GlRenderer : RenderMethod
     void disposeTexture(GLuint texId);
 
     TextureMgr textures;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    GlCoverageAtlas coverageAtlas;
+    Inlist<GlShape> coverageShapes;
+    Inlist<GlImage> coverageImages;
+    void doneCoverage();
+    static CoverageStatus clipCoverage(CoverageMap& map, const Array<RenderData>& clips);
+    bool stageCoverage(GlCoverageMap& coverage);
+    void bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage);
+
+#endif
 
     GlRenderer(); 
     ~GlRenderer();
 
     void initShaders();
+    GlProgram* createShapeProgram(const char* vertSrc, const char* fragSrc, bool blend = false, bool batch = false);
+    static constexpr uint32_t RECT_INDEX[] = {0, 1, 2, 2, 1, 3};
+    static constexpr uint32_t RECT_INDEX_COUNT = sizeof(RECT_INDEX) / sizeof(RECT_INDEX[0]);
     static RenderRegion viewportRegion(const RenderRegion& vp, const RenderRegion& bbox);
+    static bool nativeBlend(BlendMethod method)
+    {
+        return method == BlendMethod::Normal || method == BlendMethod::Screen || method == BlendMethod::Exclusion || method == BlendMethod::Add;
+    }
     GlRenderTask* createPrimitiveTask(RenderTypes type, BlendSource source, const RenderRegion& viewRegion, GlRenderTarget*& dstCopyFbo);
     void bindBlendTarget(GlRenderTask* task, const GlRenderTarget* dstCopyFbo, const RenderRegion& viewRegion, uint32_t binding);
+    inline void drawShapePaint(GlShape* shape, int32_t drawDepth1, int32_t drawDepth2);
+    static inline bool primitiveBounds(const GlShape& shape, RenderUpdateFlag flag, RenderRegion& bounds);
+    // Bind backend geometry, adjust inverse fill coordinates, and return its opacity.
+    inline float bindGradientGeometry(GlRenderTask* task, const GlShape& shape, RenderUpdateFlag flag, Matrix& inverseFill);
+    inline void submitGradient(GlRenderTask* task, GlShape& shape, RenderUpdateFlag flag, bool opaque, const RenderRegion& viewBounds);
     void drawPrimitive(GlShape& sdata, const RenderColor& c, RenderUpdateFlag flag, int32_t depth);
     void drawPrimitive(GlShape& sdata, const Fill* fill, RenderUpdateFlag flag, int32_t depth);
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
+    static bool skipClips(const Array<RenderData>& clips);
     void drawClip(Array<RenderData>& clips, const RenderRegion& viewBounds);
+#endif
 
     GlRenderPass* currentPass();
 
@@ -166,7 +196,9 @@ struct GlRenderer : RenderMethod
     Array<GlRenderPass*> mRenderPassStack;
     Array<GlCompositor*> mComposeStack;
     GlSolidBatch mSolidBatch;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     GlStencilCoverBatch mStencilCoverBatch;
+#endif
 
     //Disposed resources. They should be released on synced call.
     struct {

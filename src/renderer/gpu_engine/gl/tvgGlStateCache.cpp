@@ -73,6 +73,9 @@ void GlStateCache::invalidateVertexArrayState()
     for (auto& attribute : vertexAttributes) {
         attribute.enabled.invalidate();
         attribute.pointer.invalidate();
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        attribute.divisor.invalidate();
+#endif
         attribute.used = false;
     }
 }
@@ -201,6 +204,16 @@ void GlStateCache::setVertexAttribPointer(GLuint index, GLint size, GLenum type,
     GL_CHECK(glVertexAttribPointer(index, size, type, normalized, stride, reinterpret_cast<const void*>(offset)));
     attribute.pointer.set(pointer);
 }
+
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+void GlStateCache::setVertexAttribDivisor(GLuint index, GLuint divisor)
+{
+    auto& attribute = vertexAttribute(index);
+    if (attribute.divisor.matches(divisor)) return;
+    GL_CHECK(glVertexAttribDivisor(index, divisor));
+    attribute.divisor.set(divisor);
+}
+#endif
 
 void GlStateCache::setVertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
