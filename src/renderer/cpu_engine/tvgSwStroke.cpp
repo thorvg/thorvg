@@ -158,6 +158,7 @@ static void _borderArcTo(SwStroke& stroke, int32_t side)
     auto rotate = _sideToRotate(side);
     auto angleStart = stroke.angleIn + rotate;
     auto angleDiff = remainderf(stroke.angleOut - stroke.angleIn, MATH_2PI);
+    if (!std::isfinite(angleDiff)) return;
     if (tvg::equal(angleDiff, MATH_PI)) angleDiff = -rotate * 2.0f;
 
     auto a = Point{stroke.width, 0.0f};

@@ -122,7 +122,12 @@ static void _dashCubicTo(SwDashStroke& dash, const Point& ctrl1, const Point& ct
         while ((len - dash.curLen) > DASH_PATTERN_THRESHOLD) {
             Bezier left, right;
             if (dash.curLen > 0) {
-                len -= dash.curLen;
+                auto remaining = len - dash.curLen;
+                if (!(remaining < len)) {
+                    TVGERR("SW_ENGINE", "Dash data overflow!");
+                    break;
+                }
+                len = remaining;
                 cur.split(dash.curLen, left, right);
                 if (!dash.curOpGap) {
                     if (dash.move || dash.pattern[dash.curIdx] - dash.curLen < FLOAT_EPSILON) {
