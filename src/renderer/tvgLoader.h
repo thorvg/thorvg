@@ -187,7 +187,7 @@ struct BitmapLoader : ImageLoader
 struct AnimLoader : ImageLoader
 {
     float segmentBegin = 0.0f;
-    float segmentEnd = 0.0f;
+    float segmentEnd = 1.0f;
 
     AnimLoader(FileType type) : ImageLoader(type, true) {}
     virtual ~AnimLoader() {}
