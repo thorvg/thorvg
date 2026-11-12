@@ -572,9 +572,9 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result OtfReader::header()
+Result OtfReader::header(FontFace& info)
 {
-    if (SfntReader::header() == Result::Success) return CFF();
+    if (SfntReader::header(info) == Result::Success) return CFF();
     return Result::InvalidArguments;
 }
 

@@ -37,6 +37,7 @@ struct LoaderMgr
     static Loader* loader(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner);
     static Loader* loader(const char* name, const char* data, uint32_t size, const char* mimeType, const LoaderOps& ops);
     static Loader* font(const char* name);
+    static uint32_t faces(const char* family, const FontFace** faces);
     static Loader* anyfont();
     static bool retrieve(const char* filename);
     static bool retrieve(Loader* loader);

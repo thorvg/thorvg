@@ -276,9 +276,9 @@ bool TtfReader::convert(RenderPath& path, SfntGlyph& glyph, uint32_t glyphOffset
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result TtfReader::header()
+Result TtfReader::header(FontFace& info)
 {
-    if (SfntReader::header() == Result::Success) {
+    if (SfntReader::header(info) == Result::Success) {
         kern = table("kern");
         if (kern) {
             auto entry = static_cast<const uint8_t*>(bsearch("kern", data + 12, u16(4), 16, cmpu32));

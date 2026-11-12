@@ -644,7 +644,7 @@ struct SvgNodeIdPair
     char *id;
 };
 
-struct FontFace
+struct SvgFontFace
 {
     char* name = nullptr;
     char* src = nullptr;
@@ -672,7 +672,7 @@ struct SvgParserContext
     Array<SvgStyleGradient*> gradientStack; //For stops
     Array<SvgNodeIdPair> nodesToStyle;
     Array<char*> images;        //embedded images
-    Array<FontFace> fonts;
+    Array<SvgFontFace> fonts;
 
     // TODO: We can remove map and directly use the name instead of id in ThorVG v2
     // TODO: Maybe we can replace this with std::map. Currently, ArrayList seems fast enough.

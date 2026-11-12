@@ -26,6 +26,47 @@
 /* Internal Class Implementation                                        */
 /************************************************************************/
 
+static char* _name(const uint8_t* data, uint32_t length)
+{
+    if (!length || (length & 1)) return nullptr;
+    auto text = tvg::malloc<char>((length / 2) * 3 + 1);
+    if (!text) return nullptr;
+    auto out = text;
+    for (uint32_t i = 0; i < length; i += 2) {
+        auto cp = (static_cast<uint32_t>(data[i]) << 8) | data[i + 1];
+        if (cp >= 0xd800 && cp <= 0xdbff) {
+            if (length - i < 4) break;
+            auto low = (static_cast<uint32_t>(data[i + 2]) << 8) | data[i + 3];
+            if (low < 0xdc00 || low > 0xdfff) break;
+            cp = 0x10000 + ((cp - 0xd800) << 10) + low - 0xdc00;
+            i += 2;
+        } else if (cp >= 0xdc00 && cp <= 0xdfff) break;
+
+        // Embedded NULs cannot be exposed as complete C-string names.
+        if (cp == 0) break;
+        if (cp < 0x80) *out++ = cp;
+        else if (cp < 0x800) {
+            *out++ = 0xc0 | (cp >> 6);
+            *out++ = 0x80 | (cp & 0x3f);
+        } else if (cp < 0x10000) {
+            *out++ = 0xe0 | (cp >> 12);
+            *out++ = 0x80 | ((cp >> 6) & 0x3f);
+            *out++ = 0x80 | (cp & 0x3f);
+        } else {
+            *out++ = 0xf0 | (cp >> 18);
+            *out++ = 0x80 | ((cp >> 12) & 0x3f);
+            *out++ = 0x80 | ((cp >> 6) & 0x3f);
+            *out++ = 0x80 | (cp & 0x3f);
+        }
+        if (i + 2 == length) {
+            *out = '\0';
+            return text;
+        }
+    }
+    tvg::free(text);
+    return nullptr;
+}
+
 bool SfntReader::validate(uint32_t offset, uint32_t margin) const
 {
     if ((offset > size) || (size - offset < margin)) {
@@ -35,7 +76,7 @@ bool SfntReader::validate(uint32_t offset, uint32_t margin) const
     return true;
 }
 
-uint32_t SfntReader::table(const char* tag) const
+uint32_t SfntReader::table(const char* tag, uint32_t* length) const
 {
     auto tableCnt = u16(4);
     if (!validate(12, (uint32_t)tableCnt * 16)) return 0;
@@ -44,7 +85,13 @@ uint32_t SfntReader::table(const char* tag) const
         TVGLOG("SFNT", "No searching table = %s", tag);
         return 0;
     }
-    return u32((uint32_t)((uint8_t*)match - data + 8));
+    auto record = static_cast<uint32_t>(static_cast<uint8_t*>(match) - data);
+    auto offset = u32(record + 8);
+    if (length) {
+        *length = u32(record + 12);
+        if (!validate(offset, *length)) return 0;
+    }
+    return offset;
 }
 
 uint32_t SfntReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) const
@@ -208,7 +255,7 @@ uint32_t SfntReader::glyph(uint32_t codepoint)
 /* External Class Implementation                                        */
 /************************************************************************/
 
-Result SfntReader::header()
+Result SfntReader::header(FontFace& info)
 {
     if (!validate(0, 12)) return Result::InvalidArguments;
 
@@ -247,5 +294,71 @@ Result SfntReader::header()
     hmtx = table("hmtx");
     if (!validate(hmtx, metrics.numHmtx * 4)) return Result::InvalidArguments;
 
+    metadata(info);
     return Result::Success;
+}
+
+void SfntReader::metadata(FontFace& info) const
+{
+    uint32_t length;
+    if (auto os2 = table("OS/2", &length)) {
+        if (length >= 8) {
+            auto weight = u16(os2 + 4);
+            auto width = u16(os2 + 6);
+            if (weight >= 1 && weight <= 1000) info.style.weight = static_cast<FontWeight>(weight);
+            if (width >= 1 && width <= 9) info.style.width = static_cast<FontWidth>(width);
+        }
+        if (length >= 64) {
+            auto flags = u16(os2 + 62);
+            if (u16(os2) >= 4 && (flags & (1 << 9))) info.style.slant = FontSlant::Oblique;
+            else info.style.slant = (flags & 1) ? FontSlant::Italic : FontSlant::Normal;
+        }
+    }
+
+    auto names = table("name", &length);
+    if (!names || length < 6) return;
+    auto version = u16(names);
+    auto count = u16(names + 2);
+    auto storage = u16(names + 4);
+    uint32_t recordsEnd = 6 + count * 12;
+    if (version > 1 || recordsEnd > length || storage < recordsEnd || storage > length) return;
+
+    uint16_t tags = 0;
+    if (version == 1) {
+        if (length - recordsEnd < 2) return;
+        tags = u16(names + recordsEnd);
+        if (2u + tags * 4u > length - recordsEnd || storage < recordsEnd + 2u + tags * 4u) return;
+    }
+    auto best = 0;
+    for (uint32_t i = 0; i < count; ++i) {
+        auto record = names + 6 + i * 12;
+        auto platform = u16(record);
+        auto encoding = u16(record + 2);
+        auto language = u16(record + 4);
+        auto id = u16(record + 6);
+        if (id != 1 && id != 16) continue;
+        auto bytes = u16(record + 8);
+        uint32_t offset = u16(record + 10);
+        if (platform != 0 && !(platform == 3 && (encoding == 0 || encoding == 1 || encoding == 10))) continue;
+        if (offset > length - storage || bytes > length - storage - offset) continue;
+
+        auto english = platform == 3 && (language & 0x3ff) == 9;
+        if (language >= 0x8000) {
+            auto index = language - 0x8000;
+            if (version != 1 || index >= tags) continue;
+            auto tag = names + recordsEnd + 2 + index * 4;
+            auto tagLength = u16(tag);
+            uint32_t tagOffset = u16(tag + 2);
+            if (tagOffset > length - storage || tagLength > length - storage - tagOffset || (tagLength & 1)) continue;
+            auto text = names + storage + tagOffset;
+            english = tagLength >= 4 && u16(text) == 'e' && u16(text + 2) == 'n' && (tagLength == 4 || u16(text + 4) == '-');
+        }
+        auto rank = (id == 16 ? 32 : 0) + (english ? 8 : 0) + (platform == 0 ? 3 : 2);
+        if (rank <= best) continue;
+        auto text = _name(data + names + storage + offset, bytes);
+        if (!text) continue;
+        tvg::free(const_cast<char*>(info.family));
+        info.family = text;
+        best = rank;
+    }
 }

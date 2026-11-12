@@ -51,6 +51,10 @@ Result Text::load(const char* filename) noexcept
     return LoaderMgr::loader(filename, ops, ret) ? Result::Success: ret;
 }
 
+uint32_t Text::faces(const char* family, const FontFace** faces) noexcept
+{
+    return LoaderMgr::faces(family, faces);
+}
 
 Result Text::load(const char* name, const char* data, uint32_t size, const char* mimeType, bool copy) noexcept
 {

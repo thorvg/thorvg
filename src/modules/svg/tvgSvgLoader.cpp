@@ -2149,7 +2149,7 @@ static bool _attrParseFontFace(void* data, const char* key, const char* value)
 
 static void _createFontFace(SvgParserContext* ctx, const char* buf, unsigned bufLength, parseAttributes func)
 {
-    ctx->fonts.push(FontFace());
+    ctx->fonts.push(SvgFontFace());
     func(buf, bufLength, _attrParseFontFace, ctx);
 }
 

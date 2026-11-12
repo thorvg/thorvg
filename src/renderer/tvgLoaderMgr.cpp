@@ -73,6 +73,28 @@ atomic<ColorSpace> BitmapLoader::cs{ColorSpace::ARGB8888};
 
 static Key _key;
 static Inlist<tvg::Loader> _activeLoaders;
+static Array<FontFace> _faces;
+static bool _facesDirty = true;
+
+static FontLoader* _font(const char* name)
+{
+    if (!name) return nullptr;
+    INLIST_FOREACH(_activeLoaders, loader)
+    {
+        if (!loader->cached || loader->type != FileType::Sfnt) continue;
+        auto font = static_cast<FontLoader*>(loader);
+        if (font->info.name && tvg::equal(name, font->info.name)) return font;
+    }
+    return nullptr;
+}
+
+static int _faceOrder(const void* lhs, const void* rhs)
+{
+    auto a = static_cast<const FontFace*>(lhs);
+    auto b = static_cast<const FontFace*>(rhs);
+    auto family = strcmp(a->family ? a->family : "", b->family ? b->family : "");
+    return family ? family : strcmp(a->name, b->name);
+}
 
 static tvg::Loader* _find(FileType type)
 {
@@ -209,6 +231,9 @@ bool LoaderMgr::init()
 
 bool LoaderMgr::term()
 {
+    ScopedLock lock(_key);
+    _faces.reset();
+    _facesDirty = true;
     // force clean up the font loaders which is globally used.
     INLIST_SAFE_FOREACH(_activeLoaders, loader) {
         if (loader->type != FileType::Sfnt) continue;
@@ -223,7 +248,11 @@ bool LoaderMgr::retrieve(Loader* loader)
     if (!loader) return false;
 
     if (loader->close()) {
-        if (loader->cached) _activeLoaders.remove(loader);
+        if (loader->cached) {
+            ScopedLock lock(_key);
+            _activeLoaders.remove(loader);
+            if (loader->type == FileType::Sfnt) _facesDirty = true;
+        }
         delete (loader);
     }
     return true;
@@ -245,6 +274,7 @@ tvg::Loader* LoaderMgr::loader(const char* filename, LoaderOps& ops, Result& ret
             if (loader->cache(filename)) {
                 ScopedLock lock(_key);
                 _activeLoaders.back(loader);
+                if (loader->type == FileType::Sfnt) _facesDirty = true;
             }
             return loader;
         }
@@ -260,6 +290,7 @@ tvg::Loader* LoaderMgr::loader(const char* filename, LoaderOps& ops, Result& ret
                 if (loader->cache(filename)) {
                     ScopedLock lock(_key);
                     _activeLoaders.back(loader);
+                    if (loader->type == FileType::Sfnt) _facesDirty = true;
                 }
                 return loader;
             }
@@ -297,6 +328,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
                 if (ops.owner == Ownership::Borrow && loader->cache(HASH_KEY(data))) {
                     ScopedLock lock(_key);
                     _activeLoaders.back(loader);
+                    if (loader->type == FileType::Sfnt) _facesDirty = true;
                 }
                 return loader;
             } else {
@@ -316,6 +348,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
             if (ops.owner == Ownership::Borrow && loader->cache(HASH_KEY(data))) {
                 ScopedLock lock(_key);
                 _activeLoaders.back(loader);
+                if (loader->type == FileType::Sfnt) _facesDirty = true;
             }
             return loader;
         }
@@ -350,21 +383,25 @@ tvg::Loader* LoaderMgr::loader(const uint32_t* data, uint32_t w, uint32_t h, Col
 tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size, TVG_UNUSED const char* mimeType, const LoaderOps& ops)
 {
 #ifdef THORVG_SFNT_LOADER_SUPPORT
-    if (auto loader = font(name)) {
-        // user owned memory can be freed anytime.
-        if (loader->owner != Ownership::Borrow) {
-            if (ops.owner == Ownership::Transfer) tvg::free((char*)data);
-            return loader;
+    {
+        ScopedLock lock(_key);
+        if (auto loader = _font(name)) {
+            ++loader->sharing;
+            if (loader->owner != Ownership::Borrow) {
+                if (ops.owner == Ownership::Transfer) tvg::free(const_cast<char*>(data));
+                return loader;
+            }
         }
     }
 
     // function is dedicated for SFNT-based font loading
     auto loader = new SfntLoader;
     if (loader->open(data, size, ops) == Result::Success) {
-        loader->name = duplicate(name);
+        loader->info.name = duplicate(name);
         loader->cached = true;  // force it.
         ScopedLock lock(_key);
         _activeLoaders.back(loader);
+        _facesDirty = true;
         return loader;
     }
 
@@ -377,14 +414,40 @@ tvg::Loader* LoaderMgr::loader(const char* name, const char* data, uint32_t size
 tvg::Loader* LoaderMgr::font(const char* name)
 {
     ScopedLock lock(_key);
-    INLIST_FOREACH(_activeLoaders, loader) {
-        if (loader->type != FileType::Sfnt) continue;
-        if (loader->cached && tvg::equal(name, static_cast<FontLoader*>(loader)->name)) {
-            ++loader->sharing;
-            return loader;
+    auto loader = _font(name);
+    if (loader) ++loader->sharing;
+    return loader;
+}
+
+uint32_t LoaderMgr::faces(const char* family, const FontFace** faces)
+{
+    if (faces) *faces = nullptr;
+    ScopedLock lock(_key);
+    if (_facesDirty) {
+        _faces.clear();
+        INLIST_FOREACH(_activeLoaders, loader)
+        {
+            if (!loader->cached || loader->type != FileType::Sfnt) continue;
+            auto font = static_cast<FontLoader*>(loader);
+            if (_font(font->info.name) != font) continue;
+            _faces.push(font->info);
         }
+        if (_faces.count > 1) qsort(_faces.data, _faces.count, sizeof(FontFace), _faceOrder);
+        _facesDirty = false;
     }
-    return nullptr;
+
+    if (!family) {
+        if (faces && _faces.count) *faces = _faces.data;
+        return _faces.count;
+    }
+    for (uint32_t i = 0; i < _faces.count; ++i) {
+        if (!_faces[i].family || !tvg::equal(family, _faces[i].family)) continue;
+        auto begin = i;
+        while (++i < _faces.count && _faces[i].family && tvg::equal(family, _faces[i].family)) {}
+        if (faces) *faces = _faces.data + begin;
+        return i - begin;
+    }
+    return 0;
 }
 
 tvg::Loader* LoaderMgr::anyfont()

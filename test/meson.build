@@ -13,6 +13,7 @@ test_file = [
     'src/testAccessor.cpp',
     'src/testAnimation.cpp',
     'src/testFill.cpp',
+    'src/testFontQuery.cpp',
     'src/testInitializer.cpp',
     'src/testLottie.cpp',
     'src/testMain.cpp',

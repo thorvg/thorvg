@@ -416,6 +416,82 @@ struct GlyphMetrics
     Point max;      ///< The maximum point of the glyph bounding box in local space.
 };
 
+/**
+ * @brief OpenType weight classes. Values from 1 to 1000 are valid, including unnamed values.
+ * @note Experimental API
+ */
+enum struct FontWeight : uint16_t
+{
+    Thin = 100,
+    ExtraLight = 200,  // ultra light
+    Light = 300,
+    Normal = 400,  // regular
+    Medium = 500,
+    SemiBold = 600,  // DemiBold
+    Bold = 700,
+    ExtraBold = 800,  //  UltraBold
+    Black = 900       // Heavy
+};
+
+/**
+ * @brief OpenType width classes, from ultra-condensed (1) to ultra-expanded (9).
+ * @note Experimental API
+ */
+enum struct FontWidth : uint16_t
+{
+    UltraCondensed = 1,
+    ExtraCondensed = 2,
+    Condensed = 3,
+    SemiCondensed = 4,
+    Normal = 5,  // medium
+    SemiExpanded = 6,
+    Expanded = 7,
+    ExtraExpanded = 8,
+    UltraExpanded = 9,
+};
+
+/**
+ * @brief The slant classification of a font face.
+ * @note Experimental API
+ */
+enum struct FontSlant : int8_t
+{
+    Normal,  // upright
+    Italic,
+    Oblique,
+};
+
+/**
+ * @brief Style attributes read from a font face.
+ * @note Missing or invalid attributes use normal defaults: weight 400, upright slant and width 5.
+ * @note Experimental API
+ */
+struct FontStyle
+{
+    FontWeight weight = FontWeight::Normal;
+    FontSlant slant = FontSlant::Normal;
+    FontWidth width = FontWidth::Normal;
+};
+
+/**
+ * @brief Describes a registered, selectable font face.
+ *
+ * Strings are null-terminated UTF-8 owned by ThorVG. Missing names are nullptr.
+ * The strings and the array returned by Text::faces() must not be modified or freed.
+ * They remain valid until a font is loaded or unloaded, or the engine is terminated.
+ *
+ * @see Text::faces()
+ * @note Experimental API
+ */
+struct FontFace
+{
+    const char* name = nullptr;    ///< A non-null key that selects this face through Text::font().
+    const char* family = nullptr;  ///< Typographic family, falling back to the legacy family.
+    // const char* subfamily;
+    // const char* fullName;
+    // const char* postscript;
+    FontStyle style;
+};
 
 /**
  * @class Paint
@@ -2090,20 +2166,22 @@ struct TVG_API Scene : Paint
 struct TVG_API Text : Paint
 {
     /**
-     * @brief Sets the font family for the text.
+     * @brief Selects a registered font face for the text.
      *
      * This function specifies the name of the font to be used when rendering text.
      *
-     * @param[in] name The name of the font. This should match a font available through the canvas backend.
+     * @param[in] name A selection key returned by Text::faces(), a registered alias or a filename without its extension.
      *                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the engine.
      *
      * @retval Result::InsufficientCondition when the specified @p name cannot be found.
      *
-     * @note This function only sets the font family name. Use @ref size() to define the font size.
+     * @note A family name alone does not select a style. Use Text::faces() to retrieve its faces.
+     * @note Use @ref size() to define the font size.
      * @note If the @p name is not specified, ThorVG will select an available fallback font.
      *
      * @see Text::size()
      * @see Text::load()
+     * @see Text::faces()
      *
      * @since 1.0
      */
@@ -2350,6 +2428,24 @@ struct TVG_API Text : Paint
      * @note Experimental API
      */
     Result metrics(const char* ch, GlyphMetrics& metrics, const char** next = nullptr) const noexcept;
+
+    /**
+     * @brief Retrieves registered font faces, optionally filtered by their internal family name.
+     *
+     * @param[in] family A case-sensitive UTF-8 family name, or nullptr for all registered faces.
+     * @param[out] faces Receives a read-only, engine-owned array. Pass nullptr to retrieve only the count.
+     *
+     * @return The number of faces. If no face matches, returns zero and sets @p faces to nullptr.
+     *
+     * Repeated queries do not invalidate earlier results. Font loading, unloading and engine termination
+     * may invalidate all returned arrays and strings; serialize these operations with use of the results.
+     * Each entry represents a selectable face, not an alias or a localized name record.
+     * This function does not scan system fonts, select a fallback or change font reference counts.
+     *
+     * @see FontFace
+     * @note Experimental API
+     */
+    static uint32_t faces(const char* family = nullptr, const FontFace** faces = nullptr) noexcept;
 
     /**
      * @brief Loads a scalable font data (ttf/otf) from a file.

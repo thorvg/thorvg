@@ -33,7 +33,7 @@ struct OtfReader : SfntReader
         SfntReader(data, size)
     {}
 
-    Result header() override;
+    Result header(FontFace& info) override;
     bool positioning(uint32_t lglyph, uint32_t rglyph, Point& out) override;
     bool convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path) override;
 

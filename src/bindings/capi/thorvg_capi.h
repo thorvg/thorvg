@@ -362,6 +362,49 @@ typedef enum
     TVG_TEXT_WRAP_HYPHENATION    ///< Reserved. No Support.
 } Tvg_Text_Wrap;
 
+/**
+ * @brief The slant classification of a registered font face.
+ * @note Experimental API
+ */
+typedef enum
+{
+    TVG_FONT_SLANT_NORMAL = 0,
+    TVG_FONT_SLANT_ITALIC,
+    TVG_FONT_SLANT_OBLIQUE
+} Tvg_Font_Slant;
+
+/**
+ * @brief OpenType style attributes.
+ * @note Missing or invalid attributes use normal defaults: weight 400, upright slant and width 5.
+ * @note Experimental API
+ */
+typedef struct
+{
+    uint16_t weight;  ///< OpenType weight from 1 to 1000, including intermediate values.
+    int8_t slant;     ///< A Tvg_Font_Slant value.
+    uint16_t width;   ///< OpenType width class from 1 to 9.
+} Tvg_Font_Style;
+
+/**
+ * @brief Describes a registered, selectable font face.
+ *
+ * Strings are null-terminated UTF-8 owned by ThorVG. Optional names may be NULL.
+ * Arrays and strings must not be modified or freed and may be invalidated by
+ * font loading, unloading or engine termination.
+ *
+ * @see tvg_font_get_faces()
+ * @note Experimental API
+ */
+typedef struct
+{
+    const char* name;  ///< A non-NULL key accepted by tvg_text_set_font().
+    const char* family;
+    // const char* subfamily;
+    // const char* fullName;
+    // const char* postscript;
+    Tvg_Font_Style style;
+} Tvg_Font_Face;
+
 /** \} */  // end addtogroup ThorVGCapi_Text
 
 /**
@@ -2558,21 +2601,23 @@ TVG_API Tvg_Result tvg_scene_add_effect_tritone(Tvg_Paint scene, int shadow_r, i
 TVG_API Tvg_Paint tvg_text_new(void);
 
 /**
- * @brief Sets the font family for the text.
+ * @brief Selects a registered font face for the text.
  *
  * This function specifies the name of the font to be used when rendering text.
  *
  * @param[in] text The text object.
- * @param[in] name The name of the font. This should match a font available through the canvas backend.
+ * @param[in] name A selection key returned by tvg_font_get_faces(), a registered alias or a filename without its extension.
  *                 If set to @c nullptr, ThorVG will attempt to select a fallback font available on the engine.
  *
  * @retval TVG_RESULT_INSUFFICIENT_CONDITION  The specified @p name cannot be found.
  *
- * @note This function only sets the font family name. Use @ref size() to define the font size.
+ * @note A family name alone does not select a style. Use tvg_font_get_faces() to retrieve its faces.
+ * @note Use tvg_text_set_size() to define the font size.
  * @note If the @p name is not specified, ThorVG will select an available fallback font.
  *
  * @see tvg_text_set_size()
  * @see tvg_font_load()
+ * @see tvg_font_get_faces()
  *
  * @since 1.0
  */
@@ -2857,6 +2902,23 @@ TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* 
  * @since 0.15
  */
 TVG_API Tvg_Result tvg_font_load(const char* path);
+
+/**
+ * @brief Retrieves registered font faces, optionally filtered by a case-sensitive family name.
+ *
+ * @param[in] family The internal UTF-8 family name, or NULL for all registered faces.
+ * @param[out] faces Receives a read-only, engine-owned array, or NULL if no face matches.
+ *                   Pass NULL to retrieve only the count.
+ *
+ * @return The number of faces in the array.
+ *
+ * Repeated queries preserve earlier results. Font loading, unloading and engine termination
+ * may invalidate all arrays and strings; serialize these operations with use of the results.
+ * This function does not scan system fonts or select a fallback.
+ *
+ * @note Experimental API
+ */
+TVG_API uint32_t tvg_font_get_faces(const char* family, const Tvg_Font_Face** faces);
 
 /**
  * @brief Loads a scalable font data from a memory block of a given size.

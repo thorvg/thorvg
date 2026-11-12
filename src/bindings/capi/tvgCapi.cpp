@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <cstddef>
 #include "config.h"
 #include <string>
 #include <thorvg.h>
@@ -33,6 +34,12 @@
 
 using namespace std;
 using namespace tvg;
+
+static_assert(sizeof(Tvg_Font_Style) == sizeof(FontStyle), "Font style ABI mismatch");
+static_assert(sizeof(Tvg_Font_Face) == sizeof(FontFace), "Font face ABI mismatch");
+static_assert(offsetof(Tvg_Font_Style, slant) == offsetof(FontStyle, slant), "Font slant ABI mismatch");
+static_assert(offsetof(Tvg_Font_Style, width) == offsetof(FontStyle, width), "Font width ABI mismatch");
+static_assert(offsetof(Tvg_Font_Face, style) == offsetof(FontFace, style), "Font attributes ABI mismatch");
 
 #ifdef __cplusplus
 extern "C" {
@@ -1075,6 +1082,13 @@ TVG_API Tvg_Result tvg_font_load(const char* path)
     return (Tvg_Result) Text::load(path);
 }
 
+TVG_API uint32_t tvg_font_get_faces(const char* family, const Tvg_Font_Face** faces)
+{
+    const FontFace* result = nullptr;
+    auto count = Text::faces(family, faces ? &result : nullptr);
+    if (faces) *faces = reinterpret_cast<const Tvg_Font_Face*>(result);
+    return count;
+}
 
 TVG_API Tvg_Result tvg_font_load_data(const char* name, const char* data, uint32_t size, const char *mimetype, bool copy)
 {

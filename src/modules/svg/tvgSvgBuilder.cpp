@@ -1447,8 +1447,7 @@ static void _updateInvalidViewSize(Scene* scene, Box& vBox, float& w, float& h, 
     if (!useH) h *= vBox.h;
 }
 
-
-static void _loadFonts(Array<FontFace>& fonts)
+static void _loadFonts(Array<SvgFontFace>& fonts)
 {
     if (fonts.empty()) return;
 

@@ -226,9 +226,15 @@ struct FontLoader : Loader
 {
     static constexpr const float DPI = 96.0f / 72.0f;  // dpi base?
 
-    char* name = nullptr;
+    FontFace info;
 
     FontLoader(FileType type) : Loader(type) {}
+
+    ~FontLoader() override
+    {
+        tvg::free(const_cast<char*>(info.name));
+        tvg::free(const_cast<char*>(info.family));
+    }
 
     using Loader::read;
 

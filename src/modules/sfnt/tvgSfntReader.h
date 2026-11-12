@@ -62,7 +62,7 @@ struct SfntReader
         data(data), size(size) {}
     virtual ~SfntReader() {}
 
-    virtual Result header();
+    virtual Result header(FontFace& info);
     virtual bool positioning(uint32_t lglyph, uint32_t rglyph, Point& out) = 0;
     virtual bool convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path) = 0;
 
@@ -71,7 +71,8 @@ protected:
     uint32_t hmtx = 0;  // horizontal metrics
     uint32_t maxp = 0;  // maximum profile
 
-    uint32_t table(const char* tag) const;
+    void metadata(FontFace& info) const;
+    uint32_t table(const char* tag, uint32_t* length = nullptr) const;
     bool validate(uint32_t offset, uint32_t margin) const;
     uint32_t cmap_12_13(uint32_t table, uint32_t codepoint, int which) const;
     uint32_t cmap_4(uint32_t table, uint32_t codepoint) const;
