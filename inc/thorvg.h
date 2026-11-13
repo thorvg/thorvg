@@ -2352,6 +2352,19 @@ struct TVG_API Text : Paint
     Result metrics(const char* ch, GlyphMetrics& metrics, const char** next = nullptr) const noexcept;
 
     /**
+     * @brief Retrieves the number of glyphs in the laid-out text.
+     *
+     * @return The number of output glyphs, or zero if text layout is unavailable.
+     *
+     * @note Each supported Unicode codepoint counts as one glyph, including spaces.
+     *       Line breaks and characters omitted by ellipsis are excluded.
+     *       Dots added for ellipsis are included.
+     * @see Text::text()
+     * @note Experimental API
+     */
+    uint32_t length() const noexcept;
+
+    /**
      * @brief Loads a scalable font data (ttf/otf) from a file.
      *
      * ThorVG efficiently caches the loaded data using the specified @p path as a key.

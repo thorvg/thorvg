@@ -244,6 +244,37 @@ TEST_CASE("Text Layout", "[tvgText]")
     Initializer::term();
 }
 
+TEST_CASE("Text Length", "[tvgText]")
+{
+    Initializer::init();
+    {
+        auto text = Text::gen();
+        REQUIRE(text);
+        REQUIRE(text->length() == 0);
+
+        REQUIRE(Text::load(TEST_DIR"/PublicSans-Regular.ttf") == Result::Success);
+        REQUIRE(text->font("PublicSans-Regular") == Result::Success);
+        REQUIRE(text->size(80) == Result::Success);
+        REQUIRE(text->text("A \xc3\xa9\nB") == Result::Success);
+        REQUIRE(text->length() == 4);
+        REQUIRE(text->length() == 4);
+
+        REQUIRE(text->text("ABCDEFGHIJ") == Result::Success);
+        REQUIRE(text->length() == 10);
+        REQUIRE(text->layout(1, 100) == Result::Success);
+        REQUIRE(text->wrap(TextWrap::Ellipsis) == Result::Success);
+        REQUIRE(text->length() == 3);
+
+        REQUIRE(text->wrap(TextWrap::None) == Result::Success);
+        REQUIRE(text->length() == 10);
+        REQUIRE(text->text("") == Result::Success);
+        REQUIRE(text->length() == 0);
+
+        Paint::rel(text);
+    }
+    Initializer::term();
+}
+
 TEST_CASE("Text Wrap Mode", "[tvgText]")
 {
     Initializer::init();

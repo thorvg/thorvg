@@ -153,10 +153,14 @@ struct TextImpl : Text
         impl.mark(RenderUpdateFlag::Path);
     }
 
+    uint32_t length()
+    {
+        return load() ? fm.length : 0;
+    }
+
     uint32_t lines()
     {
-        if (load()) return fm.lines;
-        return 0;
+        return load() ? fm.lines : 0;
     }
 
     void layout(float w, float h)

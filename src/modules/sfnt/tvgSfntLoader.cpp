@@ -287,6 +287,7 @@ void SfntLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, c
         }
         auto rtgm = request(code);  //right side glyph between the two adjacent glyphs
         if (!rtgm) continue;
+        ++fm.length;
 
         Point offset{};
         if (ltgm) reader->positioning(ltgm->idx, rtgm->idx, offset);
@@ -319,6 +320,7 @@ void SfntLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, c
         }
         auto rtgm = request(code); //right side glyph between the two adjacent glyphs
         if (!rtgm) continue;
+        ++fm.length;
 
         Point offset{};
         if (ltgm) reader->positioning(ltgm->idx, rtgm->idx, offset);
@@ -366,6 +368,7 @@ void SfntLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, c
         }
         auto rtgm = request(code); //right side glyph between the two adjacent glyphs
         if (!rtgm) continue;
+        ++fm.length;
 
         Point offset{};
         if (ltgm) reader->positioning(ltgm->idx, rtgm->idx, offset);
@@ -421,6 +424,7 @@ void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf
         uint32_t pts = 0;
         uint32_t cmds = 0;
         float xadv = 0.0f;
+        uint32_t length = 0;
     } capture;   //the last path for reverting the last character if the ... space is not enough
     auto stop = false;
 
@@ -440,7 +444,8 @@ void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf
 
         //normal case
         if (cursor.x + xadv < box.x) {
-            capture = {out.pts.count, out.cmds.count, xadv};
+            capture = {out.pts.count, out.cmds.count, xadv, fm.length};
+            ++fm.length;
             _build(rtgm->path, cursor, offset, out);
             cursor.x += xadv;
         //ellipsis
@@ -457,7 +462,9 @@ void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf
                 out.pts.count = capture.pts;
                 out.cmds.count = capture.cmds;
                 cursor.x -= capture.xadv;
+                fm.length = capture.length;
             }
+            fm.length += 3;
             //append ...
             auto tmp = (rtgm->advance + offset.x) * fm.spacing.x;
             for (int i = 0; i < 3; ++i) {
@@ -561,6 +568,7 @@ bool SfntLoader::get(FontMetrics& fm, char* text, uint32_t len, RenderPath& out)
     out.clear();
 
     fm.lines = 1;
+    fm.length = 0;
 
     if (!text || fm.fontSize == 0.0f) return false;
 
