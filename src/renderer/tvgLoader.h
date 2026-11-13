@@ -212,7 +212,6 @@ struct FontMetrics
     Point align{}, box{}, spacing{1.0f, 1.0f};
     float fontSize = 0.0f;
     uint32_t lines = 1;  // line count
-    uint32_t length = 0;  // output glyph count
     TextWrap wrap = TextWrap::None;
 
     void* engine = nullptr;  // engine extension
@@ -237,7 +236,8 @@ struct FontLoader : Loader
     virtual void transform(Paint* paint, FontMetrics& fm, float italicShear) = 0;
     virtual void release(FontMetrics& fm) = 0;
     virtual void metrics(const FontMetrics& fm, TextMetrics& out) = 0;
-    virtual bool metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out, const char** next) = 0;
+    virtual bool metrics(const FontMetrics& fm, uint32_t idx, GlyphMetrics& out) = 0;
+    virtual uint32_t length(const FontMetrics& fm) = 0;
     virtual void copy(const FontMetrics& in, FontMetrics& out) = 0;
 };
 }

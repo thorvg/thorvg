@@ -133,10 +133,10 @@ struct TextImpl : Text
         return Result::Success;
     }
 
-    Result metrics(const char* ch, GlyphMetrics& metrics, const char** next)
+    Result metrics(uint32_t idx, GlyphMetrics& metrics)
     {
         if (!loader || fm.fontSize <= 0.0f) return Result::InsufficientCondition;
-        if (ch && loader->metrics(fm, ch, metrics, next)) return Result::Success;
+        if (loader->metrics(fm, idx, metrics)) return Result::Success;
         return Result::InvalidArguments;
     }
 
@@ -155,7 +155,7 @@ struct TextImpl : Text
 
     uint32_t length()
     {
-        return load() ? fm.length : 0;
+        return load() ? loader->length(fm) : 0;
     }
 
     uint32_t lines()

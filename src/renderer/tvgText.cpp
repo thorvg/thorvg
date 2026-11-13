@@ -134,9 +134,9 @@ Result Text::metrics(TextMetrics& metrics) const noexcept
     return to<TextImpl>(this)->metrics(metrics);
 }
 
-Result Text::metrics(const char* ch, GlyphMetrics& metrics, const char** next) const noexcept
+Result Text::metrics(uint32_t idx, GlyphMetrics& metrics) const noexcept
 {
-    return to<TextImpl>(this)->metrics(ch, metrics, next);
+    return to<TextImpl>(this)->metrics(idx, metrics);
 }
 
 uint32_t Text::length() const noexcept
