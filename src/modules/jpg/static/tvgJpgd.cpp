@@ -173,7 +173,7 @@ private:
     uint8_t* m_huff_num[JPGD_MAX_HUFF_TABLES];      // pointer to number of Huffman codes per bit size
     uint8_t* m_huff_val[JPGD_MAX_HUFF_TABLES];      // pointer to Huffman codes per bit size
     jpgd_quant_t* m_quant[JPGD_MAX_QUANT_TABLES]; // pointer to quantization tables
-    int m_scan_type;                              // Gray, Yh1v1, Yh1v2, Yh2v1, Yh2v2 (CMYK111, CMYK4114 no longer supported)
+    int m_scan_type;                              // Gray, Yh1v1, Yh1v2, Yh2v1, Yh2v2, YhxVy (CMYK111, CMYK4114 no longer supported)
     int m_comps_in_frame;                         // # of components in frame
     int m_comp_h_samp[JPGD_MAX_COMPONENTS];       // component's horizontal sampling factor
     int m_comp_v_samp[JPGD_MAX_COMPONENTS];       // component's vertical sampling factor
@@ -270,6 +270,7 @@ private:
     void H2V1Convert();
     void H1V2Convert();
     void H1V1Convert();
+    void HxVyConvert();
     void find_eoi();
     inline uint32_t get_char();
     inline uint32_t get_char(bool *pPadding_flag);
@@ -299,7 +300,7 @@ enum JPEG_MARKER
   M_APP0  = 0xE0, M_APP15 = 0xEF, M_JPG0  = 0xF0, M_JPG13 = 0xFD, M_COM   = 0xFE, M_TEM   = 0x01, M_ERROR = 0x100, RST0   = 0xD0
 };
 
-enum JPEG_SUBSAMPLING { JPGD_GRAYSCALE = 0, JPGD_YH1V1, JPGD_YH2V1, JPGD_YH1V2, JPGD_YH2V2 };
+enum JPEG_SUBSAMPLING { JPGD_GRAYSCALE = 0, JPGD_YH1V1, JPGD_YH2V1, JPGD_YH1V2, JPGD_YH2V2, JPGD_YHXVY };
 
 #define CONST_BITS  13
 #define PASS1_BITS  2
@@ -1654,6 +1655,38 @@ void jpeg_decoder::H2V2Convert()
     }
 }
 
+// YCbCr HxVy (luma sampled at hx:vy, chroma at 1:1, hx*vy + 2 m_blocks per MCU) to RGB
+// Generic path for the factor combinations that have no dedicated converter (e.g. 4:1:1). Converts one line per call.
+void jpeg_decoder::HxVyConvert()
+{
+    auto hs = m_comp_h_samp[0];
+    auto vs = m_comp_v_samp[0];
+    auto row = m_max_mcu_y_size - m_mcu_lines_left;
+    auto lumaBlocks = hs * vs;
+    auto d = m_pScan_line_0;
+    auto s = m_pSample_buf;
+
+    //luma block row within the MCU & the chroma line shared by the vs luma lines
+    auto y = (row >> 3) * hs * 64 + (row & 7) * 8;
+    auto c = lumaBlocks * 64 + (row / vs) * 8;
+
+    for (int i = m_max_mcus_per_row; i > 0; i--) {
+        for (int x = 0; x < hs * 8; x++) {
+            int yy = s[y + (x >> 3) * 64 + (x & 7)];
+            int cb = s[c + x / hs];
+            int cr = s[c + 64 + x / hs];
+
+            d[0] = clamp(yy + m_crr[cr]);
+            d[1] = clamp(yy + ((m_crg[cr] + m_cbg[cb]) >> 16));
+            d[2] = clamp(yy + m_cbb[cb]);
+            d[3] = 255;
+            d += 4;
+        }
+        s += (lumaBlocks + 2) * 64;
+    }
+}
+
+
 // Find the end of image (EOI) marker.
 void jpeg_decoder::find_eoi()
 {
@@ -1706,6 +1739,11 @@ int jpeg_decoder::decode(uint8_t* dst)
         }
         case JPGD_YH1V1: {
             H1V1Convert();
+            src = m_pScan_line_0;
+            break;
+        }
+        case JPGD_YHXVY: {
+            HxVyConvert();
             src = m_pScan_line_0;
             break;
         }
@@ -1933,8 +1971,15 @@ bool jpeg_decoder::init_frame()
 {
     int i;
 
+    //the standard limits the sampling factors to 1..4 (this also guards the divisions in the mcu block order)
+    for (i = 0; i < m_comps_in_frame; i++) {
+        if (m_comp_h_samp[i] < 1 || m_comp_h_samp[i] > 4 || m_comp_v_samp[i] < 1 || m_comp_v_samp[i] > 4) return stop_decoding(JPGD_UNSUPPORTED_SAMP_FACTORS);
+    }
+
     if (m_comps_in_frame == 1) {
-        if ((m_comp_h_samp[0] != 1) || (m_comp_v_samp[0] != 1)) return stop_decoding(JPGD_UNSUPPORTED_SAMP_FACTORS);
+        //a single component scan is not interleaved: its MCU is always one block, whatever the declared sampling factors are
+        m_comp_h_samp[0] = 1;
+        m_comp_v_samp[0] = 1;
         m_scan_type = JPGD_GRAYSCALE;
         m_max_blocks_per_mcu = 1;
         m_max_mcu_x_size = 8;
@@ -1964,7 +2009,14 @@ bool jpeg_decoder::init_frame()
             m_max_blocks_per_mcu = 6;
             m_max_mcu_x_size = 16;
             m_max_mcu_y_size = 16;
-        } else return stop_decoding(JPGD_UNSUPPORTED_SAMP_FACTORS);
+        } else {
+            //an MCU holds up to 10 blocks
+            m_max_blocks_per_mcu = m_comp_h_samp[0] * m_comp_v_samp[0] + 2;
+            if (m_max_blocks_per_mcu > JPGD_MAX_BLOCKS_PER_MCU) return stop_decoding(JPGD_UNSUPPORTED_SAMP_FACTORS);
+            m_scan_type = JPGD_YHXVY;
+            m_max_mcu_x_size = m_comp_h_samp[0] * 8;
+            m_max_mcu_y_size = m_comp_v_samp[0] * 8;
+        }
     } else return stop_decoding(JPGD_UNSUPPORTED_COLORSPACE);
 
     m_max_mcus_per_row = (m_image_x_size + (m_max_mcu_x_size - 1)) / m_max_mcu_x_size;
@@ -1972,7 +2024,7 @@ bool jpeg_decoder::init_frame()
 
     // Color conversion uses temporary scan lines; grayscale writes directly to the output.
     if (m_scan_type != JPGD_GRAYSCALE) {
-        int scan_line_size = ((m_image_x_size + 15) & 0xFFF0) * 4;
+        int scan_line_size = m_max_mcus_per_row * m_max_mcu_x_size * 4;
         m_pScan_line_0 = (uint8_t*)alloc(scan_line_size, true);
         if ((m_scan_type == JPGD_YH1V2) || (m_scan_type == JPGD_YH2V2)) {
             m_pScan_line_1 = (uint8_t*)alloc(scan_line_size, true);
