@@ -588,6 +588,5 @@ bool OtfReader::convert(SfntGlyph& glyph, uint32_t codepoint, RenderPath& path)
 {
     glyph.idx = SfntReader::glyph(codepoint);
     if (glyph.idx == INVALID_GLYPH) return false;
-    if (glyphMetrics(glyph)) return charStrings(path, glyph.idx);
-    return false;
+    return glyphMetrics(glyph) ? charStrings(path, glyph.idx) : false;
 }
