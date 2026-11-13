@@ -191,6 +191,16 @@ struct Array
         return count == reserved;
     }
 
+    void compact()
+    {
+        if (count == reserved) return;
+        if (count == 0) reset();
+        else {
+            data = tvg::realloc<T>(data, sizeof(T) * count);
+            reserved = count;
+        }
+    }
+
     ~Array()
     {
         tvg::free(data);
