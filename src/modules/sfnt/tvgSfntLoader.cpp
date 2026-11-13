@@ -260,7 +260,7 @@ void SfntLoader::clear()
     reader = nullptr;
 }
 
-SfntGlyphMetrics* SfntLoader::request(uint32_t code)
+SfntGlyph* SfntLoader::request(uint32_t code)
 {
     if (code == 0) return nullptr;
 
@@ -275,7 +275,7 @@ SfntGlyphMetrics* SfntLoader::request(uint32_t code)
 
 void SfntLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out)
 {
-    SfntGlyphMetrics* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
+    SfntGlyph* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
     Point cursor = {};
     uint32_t line = 0;  //the begin pos of the last line among path
 
@@ -308,7 +308,7 @@ void SfntLoader::wrapNone(FontMetrics& fm, const Point& box, const char* utf8, c
 
 void SfntLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out)
 {
-    SfntGlyphMetrics* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
+    SfntGlyph* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
     uint32_t line = 0;  //the begin pos of the last line among path
     Point cursor = {};
 
@@ -353,7 +353,7 @@ void SfntLoader::wrapChar(FontMetrics& fm, const Point& box, const char* utf8, c
 
 void SfntLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out, bool smart)
 {
-    SfntGlyphMetrics* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
+    SfntGlyph* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
     auto word = 0;  //the begin pos of the last word among path
     auto wadv = 0.0f;  //word advance size
@@ -417,7 +417,7 @@ void SfntLoader::wrapWord(FontMetrics& fm, const Point& box, const char* utf8, c
 
 void SfntLoader::wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out)
 {
-    SfntGlyphMetrics* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
+    SfntGlyph* ltgm = nullptr;  // left side glyph between the two adjacent glyphs
     auto line = 0;  //the begin pos of the last line among path
     Point cursor = {};
     struct {

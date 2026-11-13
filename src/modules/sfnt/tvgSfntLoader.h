@@ -31,7 +31,7 @@ using namespace std;
 
 struct SfntMetrics : FontMetrics
 {
-    SfntGlyphMetrics* baseGlyph;  // Use as the reference glyph width for italic transform
+    SfntGlyph* baseGlyph;  // Use as the reference glyph width for italic transform
 };
 
 struct SfntLoader : public FontLoader
@@ -39,7 +39,7 @@ struct SfntLoader : public FontLoader
 #if defined(_WIN32) && (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
     void* mapping = nullptr;
 #endif
-    Map<uint32_t, SfntGlyphMetrics> glyphs;  // glyph cache. key: codepoint
+    Map<uint32_t, SfntGlyph> glyphs;  // glyph cache. key: codepoint
     SfntReader* reader = nullptr;
     char* text = nullptr;
     bool nomap = false;
@@ -72,7 +72,7 @@ private:
     void wrapChar(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
     void wrapWord(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out, bool smart);
     void wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
-    SfntGlyphMetrics* request(uint32_t code);
+    SfntGlyph* request(uint32_t code);
     void clear();
 };
 

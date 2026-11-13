@@ -38,10 +38,6 @@ struct SfntGlyph
     float advance;       //advance width/height
     float lsb;           //left side bearing
     BBox bbox{};
-};
-
-struct SfntGlyphMetrics : SfntGlyph
-{
     RenderPath path;     //outline path
 };
 
