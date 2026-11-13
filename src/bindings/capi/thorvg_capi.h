@@ -2841,6 +2841,21 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
 TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics, const char** next);
 
 /**
+ * @brief Retrieves the number of glyphs in the laid-out text.
+ *
+ * @param[in] text The text object.
+ *
+ * @return The number of output glyphs, or zero if @p text is NULL or text layout is unavailable.
+ *
+ * @note Each supported Unicode codepoint counts as one glyph, including spaces.
+ *       Line breaks and characters omitted by ellipsis are excluded.
+ *       Dots added for ellipsis are included.
+ * @see tvg_text_get_text()
+ * @note Experimental API
+ */
+TVG_API uint32_t tvg_text_get_length(const Tvg_Paint text);
+
+/**
  * @brief Loads a scalable font data from a file.
  *
  * ThorVG efficiently caches the loaded data using the specified @p path as a key.
