@@ -1069,6 +1069,11 @@ TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* 
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+TVG_API uint32_t tvg_text_get_length(const Tvg_Paint text)
+{
+    if (text) return reinterpret_cast<Text*>(text)->length();
+    return 0;
+}
 
 TVG_API Tvg_Result tvg_font_load(const char* path)
 {

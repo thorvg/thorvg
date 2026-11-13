@@ -124,12 +124,10 @@ Result Text::wrap(TextWrap mode) noexcept
     return Result::Success;
 }
 
-
 uint32_t Text::lines() noexcept
 {
     return to<TextImpl>(this)->lines();
 }
-
 
 Result Text::metrics(TextMetrics& metrics) const noexcept
 {
@@ -141,6 +139,10 @@ Result Text::metrics(const char* ch, GlyphMetrics& metrics, const char** next) c
     return to<TextImpl>(this)->metrics(ch, metrics, next);
 }
 
+uint32_t Text::length() const noexcept
+{
+    return to<TextImpl>(this)->length();
+}
 
 const char* Text::text() const noexcept
 {
