@@ -43,6 +43,8 @@ struct WgRenderTargetState
 
 class WgCompositor
 {
+    friend struct WgRenderer;
+
 private:
     // pipelines
     WgPipelines pipelines{};

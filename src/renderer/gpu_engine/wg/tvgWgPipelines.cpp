@@ -444,14 +444,7 @@ void WgPipelines::initialize(WgContext& context)
                                                WGPUColorWriteMask_All, offscreenTargetFormat, composeBlends[i], depthStencilStateScene, multisampleState);
     }
 
-    blit = createRenderPipeline(context.device, "The render pipeline blit", shaderBlit, "vs_main", "fs_main", layoutBlit, vertexBufferLayoutsImage, 3,
-                                WGPUColorWriteMask_All, context.format, blendStateSrc,  // must be preferred screen pixel format
-                                depthStencilStateScene, multisampleStateX1);
-
-    // TODO: either premultiplied blit or unpremultplied bit used.
-    blitUnpremultiplied = createRenderPipeline(context.device, "The render pipeline blit unpremultiplied", shaderBlit, "vs_main", "fs_main_unpremultiplied", layoutBlit, vertexBufferLayoutsImage, 3,
-                                               WGPUColorWriteMask_All, context.format, blendStateSrc,  // must be preferred screen pixel format
-                                               depthStencilStateScene, multisampleStateX1);
+    initializeBlit(context);
 
     // effects
     effectMotionBlur = createRenderPipeline(context.device, "The render pipeline motion blur", shaderEffects, "vs_main", "fs_main_motion", layoutEffects, vertexBufferLayoutsImage, 3,
@@ -474,6 +467,18 @@ void WgPipelines::initialize(WgContext& context)
 
     effectTritone = createRenderPipeline(context.device, "The render pipeline tritone effect", shaderEffects, "vs_main", "fs_main_tritone", layoutEffects, vertexBufferLayoutsImage, 3,
                                          WGPUColorWriteMask_All, offscreenTargetFormat, blendStateSrc, depthStencilStateScene, multisampleStateX1);
+}
+
+void WgPipelines::initializeBlit(WgContext& context)
+{
+    const WGPUBlendComponent blend{WGPUBlendOperation_Add, WGPUBlendFactor_One, WGPUBlendFactor_Zero};
+    const auto depthStencilState = makeDepthStencilState(WGPUCompareFunction_Always, WGPUOptionalBool_False, WGPUCompareFunction_Always, WGPUStencilOperation_Zero);
+    WGPURenderPipeline* pipelines[]{&blit, &blitUnpremultiplied};
+    for (auto pipeline : pipelines) {
+        releaseRenderPipeline(*pipeline);
+        *pipeline = createRenderPipeline(context.device, "The render pipeline blit", shaderBlit, "vs_main", pipeline == &blit ? "fs_main" : "fs_main_unpremultiplied", layoutBlit, vertexBufferLayoutsImage, 3,
+                                         WGPUColorWriteMask_All, context.format, {blend, blend}, depthStencilState, {nullptr, 1, 0xFFFFFFFF, false});
+    }
 }
 
 void WgPipelines::releaseGraphicHandles(WgContext& context)
