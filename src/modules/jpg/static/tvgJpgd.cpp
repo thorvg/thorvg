@@ -1978,6 +1978,8 @@ bool jpeg_decoder::init_frame()
 
     if (m_comps_in_frame == 1) {
         //a single component scan is not interleaved: its MCU is always one block, whatever the declared sampling factors are
+        m_comp_h_samp[0] = 1;
+        m_comp_v_samp[0] = 1;
         m_scan_type = JPGD_GRAYSCALE;
         m_max_blocks_per_mcu = 1;
         m_max_mcu_x_size = 8;
