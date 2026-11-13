@@ -2832,7 +2832,7 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
  *                  following the processed UTF-8 character.
  *
  * @return TVG_RESULT_INSUFFICIENT_CONDITION if no font or size has been set yet.
- * @return TVG_RESULT_INVALID_ARGUMENT if the given character is invalid or not supported.
+ * @return TVG_RESULT_INVALID_ARGUMENT if the character or its glyph data is invalid.
  *
  * @see Tvg_Glyph_Metrics
  * @note Currently, ThorVG only supports horizontal text layout.
@@ -2847,7 +2847,7 @@ TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* 
  *
  * @return The number of output glyphs, or zero if @p text is NULL or text layout is unavailable.
  *
- * @note Each supported Unicode codepoint counts as one glyph, including spaces.
+ * @note Each displayed Unicode codepoint counts as one glyph, including spaces and missing glyphs.
  *       Line breaks and characters omitted by ellipsis are excluded.
  *       Dots added for ellipsis are included.
  * @see tvg_text_get_text()

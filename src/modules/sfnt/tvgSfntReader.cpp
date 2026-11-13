@@ -64,13 +64,14 @@ uint32_t SfntReader::cmap_12_13(uint32_t table, uint32_t codepoint, int fmt) con
         if (fmt == 12) return (codepoint - firstCode) + glyphOffset;
         else return glyphOffset;
     }
-    return -1;
+    return 0;
 }
 
 uint32_t SfntReader::cmap_4(uint32_t table, uint32_t codepoint) const
 {
     // cmap format 4 only supports the Unicode BMP.
-    if (codepoint > 0xffff || !validate(table, 8)) return -1;
+    if (!validate(table, 8)) return -1;
+    if (codepoint > 0xffff) return 0;
 
     auto segmentCnt = u16(table);
     if (segmentCnt == 0 || (segmentCnt & 1)) return -1;
@@ -136,9 +137,9 @@ uint32_t SfntReader::cmap_6(uint32_t table, uint32_t codepoint) const
     auto entryCnt = u16(table + 2);
     if (!validate(table, 4 + 2 * entryCnt)) return -1;
 
-    if (codepoint < firstCode) return -1;
+    if (codepoint < firstCode) return 0;
     codepoint -= firstCode;
-    if (codepoint >= entryCnt) return -1;
+    if (codepoint >= entryCnt) return 0;
     return u16(table + 4 + 2 * codepoint);
 }
 
