@@ -2343,7 +2343,7 @@ struct TVG_API Text : Paint
      *                  following the processed UTF-8 character.
      *
      * @return Result::InsufficientCondition if no font or size has been set yet.
-     * @return Result::InvalidArguments if the given character is invalid or not supported.
+     * @return Result::InvalidArguments if the character or its glyph data is invalid.
      *
      * @see GlyphMetrics
      * @note Currently, ThorVG only supports horizontal text layout.
@@ -2356,7 +2356,7 @@ struct TVG_API Text : Paint
      *
      * @return The number of output glyphs, or zero if text layout is unavailable.
      *
-     * @note Each supported Unicode codepoint counts as one glyph, including spaces.
+     * @note Each displayed Unicode codepoint counts as one glyph, including spaces and missing glyphs.
      *       Line breaks and characters omitted by ellipsis are excluded.
      *       Dots added for ellipsis are included.
      * @see Text::text()

@@ -358,9 +358,9 @@ TEST_CASE("Text Glyph Metrics", "[tvgText]")
         REQUIRE(metrics.advance > 0.0f);
         REQUIRE(next == str + 1);
 
-        //unsupported glyphs must return InvalidArguments on every query
-        REQUIRE(text->metrics(next, metrics) == Result::InvalidArguments);
-        REQUIRE(text->metrics(next, metrics) == Result::InvalidArguments);
+        // unsupported characters use the missing glyph, including cached queries.
+        REQUIRE(text->metrics(next, metrics) == Result::Success);
+        REQUIRE(text->metrics(next, metrics) == Result::Success);
 
         Paint::rel(text);
     }
