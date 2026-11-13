@@ -79,10 +79,7 @@ struct PictureImpl : Picture
             auto m = transform * Matrix{scale, 0, pivot.x, 0, scale, pivot.y, 0, 0, 1};
             impl.rd = renderer->prepare(bitmap, impl.rd, m, clips, opacity, filter, flag);
         } else if (vector) {
-            if (resizing) {
-                loader->resize(vector, w, h);
-                resizing = false;
-            }
+            resize();
             needComposition(opacity);
             vector->blend(pImpl->blendMethod); //propagate blend method to nested vector scene
             translateR(const_cast<Matrix*>(&transform), pivot);
@@ -97,6 +94,13 @@ struct PictureImpl : Picture
         this->h = h;
         resizing = true;
         impl.mark(RenderUpdateFlag::Transform);
+    }
+
+    void resize()
+    {
+        if (!resizing || !vector) return;
+        loader->resize(vector, w, h);
+        resizing = false;
     }
 
     Result filterMethod(FilterMethod method)
