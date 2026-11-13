@@ -1383,7 +1383,7 @@ TVG_API Tvg_Result tvg_lottie_animation_set_audio_resolver(Tvg_Animation animati
     auto anim = reinterpret_cast<tvg::LottieAnimation*>(animation);
     if (!resolver) return (Tvg_Result) anim->resolver(nullptr, nullptr);
     return (Tvg_Result) anim->resolver([resolver](const tvg::LottieAudioResolver& in, void* data) {
-        Tvg_Audio_Info info{in.src, in.mimeType, in.size, in.offset, in.volume, in.active, in.embedded};
+        Tvg_Audio_Info info{in.src, in.mimeType, in.size, in.offset, {in.volume[0], in.volume[1]}, in.active, in.embedded};
         resolver(&info, data);
     }, data);
 #endif

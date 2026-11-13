@@ -3451,7 +3451,7 @@ typedef struct {
     const char* mimeType; ///< MIME type string; valid when @c embedded; may be @c NULL.
     uint32_t    size;     ///< Embedded data size in bytes; valid when @c embedded.
     float       offset;   ///< Position within the audio file in seconds; valid when @c active.
-    float       volume;   ///< Volume [0, 100]; valid when @c active.
+    float       volume[2]; ///< Left and right channel volumes [0, 100]; valid when @c active.
     bool        active;   ///< @c true while the layer is within its playback range.
     bool        embedded; ///< @c true if @p src points to embedded audio data; @c false if it is a file path or URL.
 } Tvg_Audio_Info;

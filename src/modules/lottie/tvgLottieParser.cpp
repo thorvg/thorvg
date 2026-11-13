@@ -291,7 +291,7 @@ bool LottieParser::getValue(Point& pt)
     }
 
     pt.x = getFloat();
-    pt.y = getFloat();
+    pt.y = (state == kExitingArray) ? pt.x : getFloat();
 
     while (nextArrayValue()) getFloat();  //drop
 
