@@ -1045,7 +1045,7 @@ static SvgBaseline _effectiveBaseline(const SvgStyleProperty* style)
     return style->dominantBaseline;
 }
 
-static void _applyTextBaseline(Text* text, SvgBaseline baseline, Matrix& transform)
+static void _applyTextBaseline(Text* text, SvgBaseline baseline, float xHeight, Matrix& transform)
 {
     if (baseline == SvgBaseline::Auto || baseline == SvgBaseline::Alphabetic) return;
 
@@ -1061,8 +1061,7 @@ static void _applyTextBaseline(Text* text, SvgBaseline baseline, Matrix& transfo
         case SvgBaseline::AfterEdge: shift = tm.descent; break;
         case SvgBaseline::Central: shift = 0.5f * (tm.ascent + tm.descent); break;
         case SvgBaseline::Middle: {  // half the x-height (top extent of 'x')
-            GlyphMetrics gm;
-            if (text->metrics("x", gm) == Result::Success && gm.max.y > 0.0f) shift = 0.5f * gm.max.y;
+            if (xHeight > 0.0f) shift = 0.5f * xHeight;
             else shift = 0.27f * tm.ascent;  // fallback when the 'x' glyph is missing
             break;
         }
@@ -1088,6 +1087,13 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     }
     text->size(size);
 
+    auto xHeight = 0.0f;
+    if (baseline == SvgBaseline::Middle) {
+        text->text("x");
+        GlyphMetrics gm;
+        if (text->length() && text->metrics(0, gm) == Result::Success) xHeight = gm.max.y;
+    }
+
     auto processedText = _processText(textNode->text, xmlSpace);
     text->text(processedText);
     tvg::free(processedText);
@@ -1098,7 +1104,7 @@ static Text* _buildText(const SvgTextNode* textNode, SvgXmlSpace xmlSpace, const
     translateR(&textTransform, {textNode->x + textNode->dx, textNode->y + textNode->dy - tm.ascent});
     text->transform(textTransform);
 
-    _applyTextBaseline(text, baseline, textTransform);
+    _applyTextBaseline(text, baseline, xHeight, textTransform);
 
     return text;
 }
@@ -1112,14 +1118,18 @@ static float _applySpacing(Text* text, float letterSpacing, float wordSpacing)
     uint32_t gaps = 0;
     uint32_t spaces = 0;
     GlyphMetrics gm;
-    while (utf8 && *utf8) {
+    auto count = text->length();
+    for (uint32_t idx = 0; idx + 1 < count; ++idx) {
+        while (utf8 && *utf8 == '\n') ++utf8;
+        if (!utf8 || !*utf8) return 1.0f;
         auto space = *utf8 == ' ';
-        if (text->metrics(utf8, gm, &utf8) != Result::Success) return 1.0f;
-        if (utf8 && *utf8) {
-            advance += gm.advance;
-            ++gaps;
-            if (space) ++spaces;
-        }
+        if (text->metrics(idx, gm) != Result::Success) return 1.0f;
+        advance += gm.advance;
+        ++gaps;
+        if (space) ++spaces;
+        do {
+            ++utf8;
+        } while ((*utf8 & 0xc0) == 0x80);
     }
     if (advance <= 0.0f) return 1.0f;
 
@@ -1133,12 +1143,11 @@ static float _applySpacing(Text* text, float letterSpacing, float wordSpacing)
 static void _updatePos(Text* text, const SvgTextNode& textNode, float anchor, float spacingScale, Point& textPos)
 {
     auto advance = 0.0f;
-    if (auto utf8 = text->text()) {
-        GlyphMetrics gm;
-        while (utf8 && *utf8) {
-            if (text->metrics(utf8, gm, &utf8) != Result::Success) break;
-            advance += gm.advance;
-        }
+    auto count = text->length();
+    GlyphMetrics gm;
+    for (uint32_t idx = 0; idx < count; ++idx) {
+        if (text->metrics(idx, gm) != Result::Success) break;
+        advance += gm.advance;
     }
     // Text::spacing() scales every glyph advance, so scale the measured
     // advance the same way to stay in sync with the rendered output.

@@ -2823,22 +2823,23 @@ TVG_API Tvg_Result tvg_text_get_text_metrics(const Tvg_Paint text, Tvg_Text_Metr
  * The returned values reflect the font size applied to the text object,
  * but do not include any transformations (e.g., scale, rotation, or translation).
  *
- * The input character must be a single UTF-8 encoded character.
+ * The index refers to the current output glyph order, from 0 to tvg_text_get_length() - 1.
+ * Spaces and dots added for ellipsis are included, while line breaks and omitted characters are excluded.
+ * When ellipsis is applied, the last index refers to the final dot.
  *
  * @param[in] text The text object.
- * @param[in] ch A pointer to a UTF-8 encoded character.
+ * @param[in] idx The zero-based output glyph index.
  * @param[out] metrics A pointer to a @ref Tvg_Glyph_Metrics structure to be filled with the resulting values.
- * @param[out] next An optional pointer that receives the position immediately
- *                  following the processed UTF-8 character.
  *
  * @return TVG_RESULT_INSUFFICIENT_CONDITION if no font or size has been set yet.
- * @return TVG_RESULT_INVALID_ARGUMENT if the character or its glyph data is invalid.
+ * @return TVG_RESULT_INVALID_ARGUMENT if @p text or @p metrics is NULL, or @p idx is greater than or equal to tvg_text_get_length().
  *
  * @see Tvg_Glyph_Metrics
+ * @see tvg_text_get_length()
  * @note Currently, ThorVG only supports horizontal text layout.
  * @note Experimental API
  */
-TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, const char* ch, Tvg_Glyph_Metrics* metrics, const char** next);
+TVG_API Tvg_Result tvg_text_get_glyph_metrics(const Tvg_Paint text, uint32_t idx, Tvg_Glyph_Metrics* metrics);
 
 /**
  * @brief Retrieves the number of glyphs in the laid-out text.

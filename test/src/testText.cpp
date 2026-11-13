@@ -351,16 +351,25 @@ TEST_CASE("Text Glyph Metrics", "[tvgText]")
         REQUIRE(text->size(80) == Result::Success);
 
         GlyphMetrics metrics;
-        const char* next = nullptr;
         auto str = "A\xf3\xb0\x80\x80";  //U+F0000 (private use) is not in the font
+        REQUIRE(text->text(str) == Result::Success);
+        REQUIRE(text->length() == 2);
 
-        REQUIRE(text->metrics(str, metrics, &next) == Result::Success);
+        REQUIRE(text->metrics(0, metrics) == Result::Success);
         REQUIRE(metrics.advance > 0.0f);
-        REQUIRE(next == str + 1);
 
         // unsupported characters use the missing glyph, including cached queries.
-        REQUIRE(text->metrics(next, metrics) == Result::Success);
-        REQUIRE(text->metrics(next, metrics) == Result::Success);
+        REQUIRE(text->metrics(1, metrics) == Result::Success);
+        REQUIRE(metrics.advance > 0.0f);
+        auto missing = metrics;
+        REQUIRE(text->metrics(1, metrics) == Result::Success);
+        REQUIRE(metrics.advance == missing.advance);
+        REQUIRE(metrics.bearing == missing.bearing);
+        REQUIRE(metrics.min.x == missing.min.x);
+        REQUIRE(metrics.min.y == missing.min.y);
+        REQUIRE(metrics.max.x == missing.max.x);
+        REQUIRE(metrics.max.y == missing.max.y);
+        REQUIRE(text->metrics(text->length(), metrics) == Result::InvalidArguments);
 
         Paint::rel(text);
     }

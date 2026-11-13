@@ -2335,21 +2335,22 @@ struct TVG_API Text : Paint
      * The returned values reflect the font size applied to the text object,
      * but do not include any transformations (e.g., scale, rotation, or translation).
      *
-     * The input character must be a single UTF-8 encoded character.
+     * The index refers to the current output glyph order, from 0 to length() - 1.
+     * Spaces and dots added for ellipsis are included, while line breaks and omitted characters are excluded.
+     * When ellipsis is applied, the last index refers to the final dot.
      *
-     * @param[in] ch A pointer to a UTF-8 encoded character.
+     * @param[in] idx The zero-based output glyph index.
      * @param[out] metrics A reference to a @ref GlyphMetrics structure to be filled with the resulting values.
-     * @param[out] next An optional pointer that receives the position immediately
-     *                  following the processed UTF-8 character.
      *
      * @return Result::InsufficientCondition if no font or size has been set yet.
-     * @return Result::InvalidArguments if the character or its glyph data is invalid.
+     * @return Result::InvalidArguments if @p idx is greater than or equal to length().
      *
      * @see GlyphMetrics
+     * @see Text::length()
      * @note Currently, ThorVG only supports horizontal text layout.
      * @note Experimental API
      */
-    Result metrics(const char* ch, GlyphMetrics& metrics, const char** next = nullptr) const noexcept;
+    Result metrics(uint32_t idx, GlyphMetrics& metrics) const noexcept;
 
     /**
      * @brief Retrieves the number of glyphs in the laid-out text.
