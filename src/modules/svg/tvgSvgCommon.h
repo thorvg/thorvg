@@ -28,6 +28,7 @@
 #include "tvgInlist.h"
 #include "tvgColor.h"
 #include "tvgAccessor.h"
+#include "tvgLoader.h"
 
 #define STR_AS(A, B) !strcmp((A), (B))
 
@@ -682,6 +683,7 @@ struct SvgParserContext
 
     OpenedTagType openedTag = OpenedTagType::Other;
     bool accessible;  // allow the Accessor to retain the SVG node names
+    const AssetResolver* resolver = nullptr;  // do not free this
 
     void clear(bool all);
 };

@@ -2151,7 +2151,10 @@ static bool _attrParseFontFace(void* data, const char* key, const char* value)
         if (font.name) tvg::free(font.name);
         font.name = _unquote(value);
     } else if (STR_AS(key, "src")) {
-        font.srcLen = _srcFromUrl(value, font.src);
+        char* src;
+        tvg::free(font.src);
+        font.srcLen = _srcFromUrl(value, src);
+        font.src = font.srcLen ? duplicate(src, font.srcLen) : nullptr;
     }
 
     return true;
@@ -4129,6 +4132,7 @@ void SvgParserContext::clear(bool all)
     ARRAY_FOREACH(p, fonts) {
         Text::unload(p->name);
         tvg::free(p->decoded);
+        tvg::free(p->src);
         tvg::free(p->name);
     }
     ARRAY_FOREACH(a, access) {
@@ -4225,6 +4229,9 @@ Result SvgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     this->size = size;
     owner = ops.owner;
     ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
+    ctx.resolver = static_cast<const PictureOps*>(&ops)->resolver;
+    auto rpath = static_cast<const PictureOps*>(&ops)->rpath;
+    if (rpath && rpath[0]) svgPath = string(rpath) + "/";
 
     return header();
 }
@@ -4236,7 +4243,9 @@ Result SvgLoader::open(const char* path, const LoaderOps& ops)
 
     if ((content = Loader::open(path, size, true))) {
         ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
+        ctx.resolver = static_cast<const PictureOps*>(&ops)->resolver;
         owner = Ownership::Transfer;
+        svgPath = path;
         return header();
     }
     return Result::InvalidArguments;

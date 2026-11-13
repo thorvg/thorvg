@@ -250,6 +250,43 @@ TEST_CASE("Load SVG Data", "[tvgPicture]")
     Paint::rel(picture);
 }
 
+TEST_CASE("SVG Asset Resolver", "[tvgPicture]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        vector<string> resolved[3];
+        auto resolver = [](Paint* p, const char* src, void* data) -> bool {
+            static_cast<vector<string>*>(data)->push_back(src);
+            uint32_t pixel = 0xff0000ff;
+            return (static_cast<Picture*>(p)->load(&pixel, 1, 1, ColorSpace::ARGB8888, true) == Result::Success);
+        };
+
+        auto picture = Picture::gen();
+        REQUIRE(picture);
+        REQUIRE(picture->resolver(resolver, &resolved[0]) == Result::Success);
+        REQUIRE(picture->load(TEST_DIR "/test6.svg") == Result::Success);
+#ifdef THORVG_PNG_LOADER_SUPPORT
+        REQUIRE(resolved[0] == vector<string>{TEST_DIR "/image/logo.png", "https://example.invalid/missing.png", TEST_DIR "/nested.svg"});
+#endif
+
+        auto picture2 = Picture::gen();
+        REQUIRE(picture2->resolver(resolver, &resolved[1], false) == Result::Success);
+        REQUIRE(picture2->load(TEST_DIR "/test6.svg") == Result::Success);
+        REQUIRE(resolved[1] == vector<string>{TEST_DIR "/test.png", TEST_DIR "/image/logo.png", "https://example.invalid/missing.png", TEST_DIR "/nested.svg"});
+
+        auto svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\"><image width=\"10\" height=\"10\" href=\"local.png\"/></svg>";
+        auto picture3 = Picture::gen();
+        REQUIRE(picture3->resolver(resolver, &resolved[2], false) == Result::Success);
+        REQUIRE(picture3->load(svg, strlen(svg), "svg", "") == Result::Success);
+        REQUIRE(resolved[2] == vector<string>{"local.png"});
+
+        Paint::rel(picture);
+        Paint::rel(picture2);
+        Paint::rel(picture3);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 #endif
 
 #ifdef THORVG_PNG_LOADER_SUPPORT
