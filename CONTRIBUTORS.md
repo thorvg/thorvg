@@ -82,3 +82,4 @@ For definitions and responsibilities of each project role, see [Roles & Responsi
 - Malvis Light @LightSideMeowshop
 - Naail Abdul Rahman @kudanai
 - TipicoDev @TipicoDev
+- Asish Kumar @officialasishkumar
