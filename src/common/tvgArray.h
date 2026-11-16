@@ -25,9 +25,6 @@
 
 #include "tvgCommon.h"
 
-#define ARRAY_FOREACH(A, B) \
-    for (auto A = (B).begin(); A < (B).end(); ++A)
-
 #define ARRAY_REVERSE_FOREACH(A, B) \
     for (auto A = (B).end() - 1; A >= (B).begin(); --A)
 

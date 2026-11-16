@@ -192,8 +192,8 @@ static void _build(const RenderPath& in, const Point& cursor, const Point& offse
 {
     out.cmds.push(in.cmds);
     out.pts.grow(in.pts.count);
-    ARRAY_FOREACH(p, in.pts) {
-        out.pts.push(*p + cursor + offset);
+    for (auto& p : in.pts) {
+        out.pts.push(p + cursor + offset);
     }
 }
 

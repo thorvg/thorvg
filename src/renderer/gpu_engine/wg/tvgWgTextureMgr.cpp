@@ -98,9 +98,7 @@ bool WgTextureMgr::flushPreprocess(WgContext& context)
     }
 
     WGPUCommandEncoder encoder{};
-    ARRAY_FOREACH(p, prepRequests)
-    {
-        auto* entry = *p;
+    for (auto entry : prepRequests) {
         auto preprocess = entry->preprocess & (Premultiply | Bgr);
         auto width = wgpuTextureGetWidth(entry->texture);
         auto height = wgpuTextureGetHeight(entry->texture);
@@ -181,9 +179,9 @@ const WgTextureEntry* WgTextureMgr::retain(WgContext& context, const RenderSurfa
     if (!entry->texture || refreshTexture) upload(context, *entry, surface, filter);
 
     if ((entry->preprocess & Queued) && !(entry->preprocess & (Premultiply | Bgr))) {
-        ARRAY_FOREACH(p, prepRequests) {
-            if (*p != entry) continue;
-            *p = prepRequests.last();
+        for (auto& p : prepRequests) {
+            if (p != entry) continue;
+            p = prepRequests.last();
             prepRequests.pop();
             break;
         }

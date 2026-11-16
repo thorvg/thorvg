@@ -2186,8 +2186,8 @@ static SvgNode* _findNodeById(SvgNode *node, const char* id)
     if (node->id && STR_AS(node->id, id)) return node;
 
     if (node->child.count > 0) {
-        ARRAY_FOREACH(p, node->child) {
-            if (auto result = _findNodeById(*p, id)) return result;
+        for (auto& p : node->child) {
+            if (auto result = _findNodeById(p, id)) return result;
         }
     }
     return nullptr;
@@ -2216,8 +2216,8 @@ static bool _checkPostponed(SvgNode* node, SvgNode* cloneNode, int depth)
         return false;
     }
 
-    ARRAY_FOREACH(p, node->child) {
-        if (_checkPostponed(*p, cloneNode, depth + 1)) return true;
+    for (auto& p : node->child) {
+        if (_checkPostponed(p, cloneNode, depth + 1)) return true;
     }
 
     return false;
@@ -3006,8 +3006,8 @@ static GradientFactoryMethod _findGradientFactory(const char* name)
 
 static void _cloneGradStops(Array<Fill::ColorStop>& dst, const Array<Fill::ColorStop>& src)
 {
-    ARRAY_FOREACH(p, src) {
-        dst.push(*p);
+    for (auto& p : src) {
+        dst.push(p);
     }
 }
 
@@ -3136,8 +3136,8 @@ static void _styleInherit(SvgStyleProperty* child, const SvgStyleProperty* paren
         if (parent->stroke.dash.array.count > 0) {
             child->stroke.dash.array.clear();
             child->stroke.dash.array.reserve(parent->stroke.dash.array.count);
-            ARRAY_FOREACH(p, parent->stroke.dash.array) {
-                child->stroke.dash.array.push(*p);
+            for (auto& p : parent->stroke.dash.array) {
+                child->stroke.dash.array.push(p);
             }
         }
     }
@@ -3205,8 +3205,8 @@ static void _styleCopy(SvgStyleProperty* to, const SvgStyleProperty* from)
         if (from->stroke.dash.array.count > 0) {
             to->stroke.dash.array.clear();
             to->stroke.dash.array.reserve(from->stroke.dash.array.count);
-            ARRAY_FOREACH(p, from->stroke.dash.array) {
-                to->stroke.dash.array.push(*p);
+            for (auto& p : from->stroke.dash.array) {
+                to->stroke.dash.array.push(p);
             }
         }
     }
@@ -3322,8 +3322,8 @@ static void _cloneNode(SvgNode* from, SvgNode* parent, int depth)
     _styleInherit(newNode->style, parent->style);
     _copyAttr(newNode, from);
 
-    ARRAY_FOREACH(p, from->child) {
-        _cloneNode(*p, newNode, depth + 1);
+    for (auto& p : from->child) {
+        _cloneNode(p, newNode, depth + 1);
     }
 }
 
@@ -3397,9 +3397,9 @@ static int _svgLoaderParserXmlTagName(const char* content, char* tagName, unsign
 
 static bool _hasTspanChild(const SvgNode* node, const SvgNode* exclude = nullptr)
 {
-    ARRAY_FOREACH(p, node->child) {
-        if (*p == exclude) continue;
-        if ((*p)->type == SvgNodeType::Tspan && ((*p)->node.text.text || !(*p)->child.empty())) return true;
+    for (auto& p : node->child) {
+        if (p == exclude) continue;
+        if (p->type == SvgNodeType::Tspan && (p->node.text.text || !p->child.empty())) return true;
     }
     return false;
 }
@@ -3650,7 +3650,7 @@ static void _free(SvgNode* node)
 {
     if (!node) return;
 
-    ARRAY_FOREACH(p, node->child) _free(*p);
+    for (auto& p : node->child) _free(p);
     node->child.reset();
 
     tvg::free(node->id);
@@ -3675,9 +3675,9 @@ static void _free(SvgNode* node)
              break;
          }
          case SvgNodeType::Defs: {
-            ARRAY_FOREACH(p, node->node.defs.gradients) {
-                 (*p)->clear();
-                 tvg::free(*p);
+             for (auto& p : node->node.defs.gradients) {
+                 p->clear();
+                 tvg::free(p);
              }
              node->node.defs.gradients.reset();
              break;
@@ -3725,8 +3725,8 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
 
     while (name) {
         auto isDuplicate = false;
-        ARRAY_FOREACH(p, applyClasses) {
-            if (STR_AS(*p, name)) {
+        for (auto& p : applyClasses) {
+            if (STR_AS(p, name)) {
                 isDuplicate = true;
                 break;
             }
@@ -3763,8 +3763,8 @@ static bool _cssApplyClass(SvgNode* node, const char* classString, SvgNode* styl
 
 static void _cssApplyStyleToPostponeds(Array<SvgNodeIdPair>& postponeds, SvgNode* style)
 {
-    ARRAY_FOREACH(p, postponeds) {
-        auto node = p->node;
+    for (auto& p : postponeds) {
+        auto node = p.node;
         _cssApplyClass(node, node->style->cssClass, style);
     }
 }
@@ -3882,8 +3882,8 @@ static void _updateStyle(SvgNode* node, SvgStyleProperty* parentStyle)
         node->style->wordSpacing *= _findEmBaseFontSize(node);
         node->style->wordSpacingRelative = false;
     }
-    ARRAY_FOREACH(p, node->child) {
-        _updateStyle(*p, node->style);
+    for (auto& p : node->child) {
+        _updateStyle(p, node->style);
     }
 }
 
@@ -3892,16 +3892,16 @@ static void _updateGradient(SvgParserContext* ctx, SvgNode* node, Array<SvgStyle
     auto duplicate = [&](SvgParserContext* ctx, Array<SvgStyleGradient*>* gradients, const char* id) -> SvgStyleGradient* {
         SvgStyleGradient* result = nullptr;
 
-        ARRAY_FOREACH(p, *gradients) {
-            if ((*p)->id && STR_AS((*p)->id, id)) {
-                result = _cloneGradient(*p);
+        for (auto& p : *gradients) {
+            if (p->id && STR_AS(p->id, id)) {
+                result = _cloneGradient(p);
                 break;
             }
         }
         if (result && result->ref) {
-            ARRAY_FOREACH(p, *gradients) {
-                if ((*p)->id && STR_AS((*p)->id, result->ref)) {
-                    _inheritGradient(ctx, result, *p);
+            for (auto& p : *gradients) {
+                if (p->id && STR_AS(p->id, result->ref)) {
+                    _inheritGradient(ctx, result, p);
                     break;
                 }
             }
@@ -3910,8 +3910,8 @@ static void _updateGradient(SvgParserContext* ctx, SvgNode* node, Array<SvgStyle
     };
 
     if (node->child.count > 0) {
-        ARRAY_FOREACH(p, node->child) {
-            _updateGradient(ctx, *p, gradients);
+        for (auto& p : node->child) {
+            _updateGradient(ctx, p, gradients);
         }
     } else {
         if (node->style->fill.paint.url) {
@@ -3951,8 +3951,8 @@ static void _updatePattern(SvgNode* node, SvgNode* root, SvgNode* defs)
         auto& fill = node->style->fill.paint;
         if (fill.url && !fill.gradient && !fill.pattern) fill.pattern = lookup(fill.url);
     }
-    ARRAY_FOREACH(c, node->child) {
-        _updatePattern(*c, root, defs);
+    for (auto& c : node->child) {
+        _updatePattern(c, root, defs);
     }
 }
 
@@ -3967,8 +3967,8 @@ static void _updateComposite(SvgNode* node, SvgNode* root)
         if (findResult) node->style->mask.node = findResult;
     }
     if (node->child.count > 0) {
-        ARRAY_FOREACH(p, node->child) {
-            _updateComposite(*p, root);
+        for (auto& p : node->child) {
+            _updateComposite(p, root);
         }
     }
 }
@@ -3979,8 +3979,8 @@ static void _updateFilter(SvgNode* node, SvgNode* root)
     if (node->style->filter.url && !node->style->filter.node) {
         node->style->filter.node = _findNodeById(root, node->style->filter.url);
     }
-    ARRAY_FOREACH(child, node->child) {
-        _updateFilter(*child, root);
+    for (auto& child : node->child) {
+        _updateFilter(child, root);
     }
 }
 
@@ -4110,9 +4110,9 @@ void SvgParserContext::clear(bool all)
     tvg::free(parser);
     parser = nullptr;
 
-    ARRAY_FOREACH(p, gradients) {
-        (*p)->clear();
-        tvg::free(*p);
+    for (auto& p : gradients) {
+        p->clear();
+        tvg::free(p);
     }
     gradients.reset();
     gradientStack.reset();
@@ -4123,16 +4123,16 @@ void SvgParserContext::clear(bool all)
 
     if (!all) return;
 
-    ARRAY_FOREACH(p, images) {
-        tvg::free(*p);
+    for (auto& p : images) {
+        tvg::free(p);
     }
-    ARRAY_FOREACH(p, fonts) {
-        Text::unload(p->name);
-        tvg::free(p->decoded);
-        tvg::free(p->name);
+    for (auto& p : fonts) {
+        Text::unload(p.name);
+        tvg::free(p.decoded);
+        tvg::free(p.name);
     }
-    ARRAY_FOREACH(a, access) {
-        tvg::free(a->name);
+    for (auto& a : access) {
+        tvg::free(a.name);
     }
 }
 
@@ -4293,8 +4293,8 @@ Paint* SvgLoader::paint()
 const AccessorEntity* SvgLoader::access(uint32_t id)
 {
     this->done();
-    ARRAY_FOREACH(a, ctx.access) {
-        if (a->id == id) return a;
+    for (auto& a : ctx.access) {
+        if (a.id == id) return &a;
     }
     return nullptr;
 }
@@ -4302,7 +4302,7 @@ const AccessorEntity* SvgLoader::access(uint32_t id)
 void SvgLoader::access(AccessorCallback& cb)
 {
     this->done();
-    ARRAY_FOREACH(a, ctx.access) {
-        if (!cb.func(a->paint, cb.data)) return;
+    for (auto& a : ctx.access) {
+        if (!cb.func(a.paint, cb.data)) return;
     }
 }

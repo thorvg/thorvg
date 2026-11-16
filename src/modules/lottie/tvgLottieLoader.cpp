@@ -33,8 +33,8 @@
 
 LottieCustomSlot::~LottieCustomSlot()
 {
-    ARRAY_FOREACH(p, props) {
-        delete(p->prop);
+    for (auto& p : props) {
+        delete (p.prop);
     }
 }
 
@@ -267,15 +267,15 @@ bool LottieLoader::apply(uint32_t slotcode, bool byDefault)
 
     // Reset all slots if slotcode is 0
     if (slotcode == 0) {
-        ARRAY_FOREACH(p, comp->slots) (*p)->reset();
+        for (auto& p : comp->slots) p->reset();
         applied = true;
     } else {
         //Find the custom slot with the slotcode
         INLIST_FOREACH(this->slots, slot) {
             if (slot->code != slotcode) continue;
             //apply the custom slot property to the targets.
-            ARRAY_FOREACH(p, slot->props) {
-                p->target->apply(p->prop, byDefault);
+            for (auto& p : slot->props) {
+                p.target->apply(p.prop, byDefault);
             }
             applied = true;
             break;
@@ -295,8 +295,8 @@ bool LottieLoader::del(uint32_t slotcode, bool byDefault)
     INLIST_SAFE_FOREACH(this->slots, slot) {
         if (slot->code != slotcode) continue;
         if (!byDefault) {
-            ARRAY_FOREACH(p, slot->props) {
-                p->target->reset();
+            for (auto& p : slot->props) {
+                p.target->reset();
             }
             build = true;
         }
@@ -325,9 +325,9 @@ uint32_t LottieLoader::gen(const char* slots, bool byDefault)
     while (auto sid = djb2Encode(parser.sid(idx == 0))) {
         //Associates the overrding target to apply for the current custom slot
         auto found = false;
-        ARRAY_FOREACH(p, comp->slots) {
-            if ((*p)->sid != sid) continue;  //find target
-            if (auto prop = parser.parse(*p)) custom->props.push({prop, *p});
+        for (auto& p : comp->slots) {
+            if (p->sid != sid) continue;  // find target
+            if (auto prop = parser.parse(p)) custom->props.push({prop, p});
             found = true;
             break;
         }
@@ -437,10 +437,10 @@ bool LottieLoader::segment(const char* marker, float& begin, float& end)
 {
     if (!ready() || comp->markers.count == 0) return false;
 
-    ARRAY_FOREACH(p, comp->markers) {
-        if (!strcmp(marker, (*p)->name)) {
-            begin = (*p)->time;
-            end = (*p)->time + (*p)->duration;
+    for (auto& p : comp->markers) {
+        if (!strcmp(marker, p->name)) {
+            begin = p->time;
+            end = p->time + p->duration;
             return true;
         }
     }

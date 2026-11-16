@@ -65,8 +65,8 @@ void Stroker::run(const RenderPath& path, bool thinFill)
     auto validStrokeCap = false;
     auto pts = path.pts.data;
 
-    ARRAY_FOREACH(cmd, path.cmds) {
-        switch (*cmd) {
+    for (auto& cmd : path.cmds) {
+        switch (cmd) {
             case PathCommand::MoveTo: {
                 if (validStrokeCap) { // check this, so we can skip if path only contains move instruction
                     cap();

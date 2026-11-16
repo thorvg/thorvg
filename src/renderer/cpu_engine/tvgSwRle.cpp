@@ -874,8 +874,8 @@ SwRle* rleRender(const RenderRegion* bbox)
     auto y = bbox->yMin;
     auto len = (int32_t)bbox->w();
 
-    ARRAY_FOREACH(p, rle->spans) {
-        *p = {x, y++, len, 255};
+    for (auto& p : rle->spans) {
+        p = {x, y++, len, 255};
     }
 
     return rle;

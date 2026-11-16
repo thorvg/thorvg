@@ -130,9 +130,9 @@ void WgCompositor::resize(WgContext& context, uint32_t width, uint32_t height) {
         // release intermediate render target
         targetTemp1.release(context);
         targetTemp0.release(context);
-        ARRAY_FOREACH(attachment, depthStencilAttachments) {
-            context.releaseTextureView(attachment->view);
-            context.releaseTexture(attachment->texture);
+        for (auto& attachment : depthStencilAttachments) {
+            context.releaseTextureView(attachment.view);
+            context.releaseTexture(attachment.texture);
         }
         depthStencilAttachments.clear();
     }
@@ -162,8 +162,8 @@ void WgCompositor::setScissorRegion(const RenderRegion& region)
 
 WGPUTextureView WgCompositor::getDepthStencilView(WgContext& context, uint32_t width, uint32_t height, uint32_t sampleCount)
 {
-    ARRAY_FOREACH(attachment, depthStencilAttachments) {
-        if (attachment->width == width && attachment->height == height && attachment->sampleCount == sampleCount) return attachment->view;
+    for (auto& attachment : depthStencilAttachments) {
+        if (attachment.width == width && attachment.height == height && attachment.sampleCount == sampleCount) return attachment.view;
     }
     auto texture = context.createTexAttachement(width, height, WGPUTextureFormat_Depth24PlusStencil8, sampleCount);
     auto view = context.createTextureView(texture);
@@ -343,8 +343,8 @@ void WgCompositor::requestShape(WgShape* shape)
         if (strokeSettings.fillType == WgRenderSettingsType::Solid) strokeSolid.colorIdx = stageBufferSolidColor.append(strokeSolid.packedColor());
         else strokeSettings.bindGroupIdx = stageBufferPaint.append(strokeSettings.settings);
     }
-    ARRAY_FOREACH(p, shape->clips) {
-        requestShape((WgShape*)(*p));
+    for (auto& p : shape->clips) {
+        requestShape((WgShape*)(p));
     }
 }
 
@@ -352,8 +352,8 @@ void WgCompositor::requestImage(WgImage* image)
 {
     stageBufferGeometry.append(image);
     image->setting.bindGroupIdx = stageBufferPaint.append(image->setting.settings);
-    ARRAY_FOREACH(p, image->clips) {
-        requestShape((WgShape*)(*p));
+    for (auto& p : image->clips) {
+        requestShape((WgShape*)(p));
     }
 }
 
@@ -381,8 +381,7 @@ void WgCompositor::requestStencilBatch(const Array<WgShape*>& renderShapes, WgSt
     uint32_t pendingColorCount = 0;
     auto colorsStarted = false;
 
-    ARRAY_FOREACH(p, renderShapes) {
-        auto rdata = *p;
+    for (auto rdata : renderShapes) {
         auto& settings = rdata->shape.setting;
         const auto count = rdata->bboxMesh.vbuffer.count;
 
@@ -930,8 +929,8 @@ void WgCompositor::clearClipPath(WgContext& context, WgPaint* paint)
 {
     wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, currentTargetState->bounds.w(), currentTargetState->bounds.h());
     // get render data
-    ARRAY_FOREACH(p, paint->clips) {
-        WgShape* rdata = (WgShape*)(*p);
+    for (auto& p : paint->clips) {
+        WgShape* rdata = (WgShape*)(p);
         // set transformations
         wgpuRenderPassEncoderSetStencilReference(renderPassEncoder, 0);
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, bindGroupViewMat, 0, nullptr);

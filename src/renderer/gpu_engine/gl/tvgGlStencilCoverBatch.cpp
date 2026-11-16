@@ -166,11 +166,11 @@ bool GlStencilCoverBatch::intersects(const RenderRegion& bounds) const
 {
     auto min = ySorted ? bounds.yMin : bounds.xMin;
     auto max = ySorted ? bounds.yMax : bounds.xMax;
-    ARRAY_FOREACH(p, this->bounds) {
-        auto pMin = ySorted ? (*p).yMin : (*p).xMin;
-        if ((ySorted ? (*p).yMax : (*p).xMax) <= min) continue;
+    for (auto& p : this->bounds) {
+        auto pMin = ySorted ? p.yMin : p.xMin;
+        if ((ySorted ? p.yMax : p.xMax) <= min) continue;
         if (pMin >= max) break;
-        if ((*p).intersected(bounds)) return true;
+        if (p.intersected(bounds)) return true;
     }
 
     return false;

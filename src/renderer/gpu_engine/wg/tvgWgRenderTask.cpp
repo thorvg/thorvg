@@ -91,8 +91,8 @@ void WgSceneTask::stage(WgCompositor& compositor)
     if (targetState.bounds.invalid()) return;
     compositor.requestScene(targetState, composeMesh, effectMesh, dstScene ? &dstScene->targetState : nullptr, maskScene ? &maskScene->targetState : nullptr, !effects.empty());
     // stage all resources used by the scene tree
-    ARRAY_FOREACH(task, children) {
-        (*task)->stage(compositor);
+    for (auto& task : children) {
+        task->stage(compositor);
     }
 }
 
@@ -106,8 +106,8 @@ void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
     compositor.endRenderPass();
 
     // apply effect for current scene
-    ARRAY_FOREACH(effect, effects) {
-        runEffect(context, compositor, *effect);
+    for (auto& effect : effects) {
+        runEffect(context, compositor, effect);
     }
 
     if (!dstScene) return;  // there's no point in continuing (e.g., the root scene)
@@ -126,8 +126,7 @@ void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
 
 void WgSceneTask::runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
 {
-    ARRAY_FOREACH(task, children) {
-        WgRenderTask* renderTask = *task;
+    for (auto renderTask : children) {
         // we need to restore current render pass without clear
         compositor.beginRenderPassMS(context, encoder, targetState, false);
         // run children (shape or scene)

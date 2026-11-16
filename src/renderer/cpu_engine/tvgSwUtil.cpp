@@ -33,8 +33,8 @@ void utilExport(SwOutline* outline, const Matrix& transform, BBox& bbox)
 
     bbox = {{FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX}};
 
-    ARRAY_FOREACH(pt, outline->path->pts) {
-        auto t = *pt * transform;
+    for (auto& pt : outline->path->pts) {
+        auto t = pt * transform;
         if (bbox.min.x > t.x) bbox.min.x = t.x;
         if (bbox.max.x < t.x) bbox.max.x = t.x;
         if (bbox.min.y > t.y) bbox.min.y = t.y;

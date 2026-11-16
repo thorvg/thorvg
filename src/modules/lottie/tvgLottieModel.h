@@ -118,7 +118,7 @@ struct LottieFxCustom : LottieEffect
 
     ~LottieFxCustom()
     {
-        ARRAY_FOREACH(p, props) delete(p->property);
+        for (auto& p : props) delete (p.property);
     }
 
     Property* property(int type)
@@ -148,8 +148,8 @@ struct LottieFxCustom : LottieEffect
     LottieProperty* property(const char* name)
     {
         auto id = djb2Encode(name);
-        ARRAY_FOREACH(p, props) {
-            if (p->mn == id || p->nm == id) return p->property;
+        for (auto& p : props) {
+            if (p.mn == id || p.nm == id) return p.property;
         }
         return nullptr;
     }
@@ -317,7 +317,7 @@ struct LottieGlyph
 
     ~LottieGlyph()
     {
-        ARRAY_FOREACH(p, children) delete(*p);
+        for (auto& p : children) delete (p);
         tvg::free(code);
         tvg::free(family);
         tvg::free(style);
@@ -406,7 +406,7 @@ struct LottieFont
         // Prepared embedded data is owned by the font loader.
         if (path || !prepared) tvg::free(b64src);
 
-        ARRAY_FOREACH(p, chars) delete(*p);
+        for (auto& p : chars) delete (p);
         tvg::free(style);
         tvg::free(family);
         tvg::free(name);
@@ -501,7 +501,7 @@ struct LottieText : LottieObject, LottieRenderPooler<tvg::Shape>
 
     ~LottieText()
     {
-        ARRAY_FOREACH(p, ranges) delete(*p);
+        for (auto& p : ranges) delete (p);
         delete(follow);
     }
 };
@@ -817,8 +817,8 @@ struct LottieGradient : LottieObject
             if (colorStops.frames) {
                 // every keyframe must have enough stops for the shared count.
                 colorStops.count = UINT16_MAX;
-                ARRAY_FOREACH(v, *colorStops.frames) {
-                    colorStops.count = std::min<uint32_t>(colorStops.count, populate(v->value, count));
+                for (auto& v : *colorStops.frames) {
+                    colorStops.count = std::min<uint32_t>(colorStops.count, populate(v.value, count));
                 }
             } else {
                 colorStops.count = populate(colorStops.value, count);
@@ -1079,8 +1079,7 @@ struct LottieGroup : LottieObject, LottieRenderPooler<tvg::Shape>
         if (this->id == id) return this;
 
         //source has children, find recursively.
-        ARRAY_FOREACH(p, children) {
-            auto child = *p;
+        for (auto child : children) {
             if (child->type == LottieObject::Type::Group || child->type == LottieObject::Type::Layer) {
                 if (auto ret = static_cast<LottieGroup*>(child)->content(id)) return ret;
             } else if (child->id == id) return child;
@@ -1178,16 +1177,16 @@ struct LottieLayer : LottieRootLayer
 
     LottieEffect* effectById(unsigned long id)
     {
-        ARRAY_FOREACH(p, effects) {
-            if (id == (*p)->nm || id == (*p)->mn) return *p;
+        for (auto& p : effects) {
+            if (id == p->nm || id == p->mn) return p;
         }
         return nullptr;
     }
 
     LottieEffect* effectByIdx(int16_t ix)
     {
-        ARRAY_FOREACH(p, effects) {
-            if (ix == (*p)->ix) return *p;
+        for (auto& p : effects) {
+            if (ix == p->ix) return p;
         }
         return nullptr;
     }
@@ -1215,7 +1214,7 @@ struct LottieSlot
     ~LottieSlot()
     {
         if (!overridden) return;
-        ARRAY_FOREACH(pair, pairs) delete(pair->prop);
+        for (auto& pair : pairs) delete (pair.prop);
     }
 
     struct {
@@ -1264,8 +1263,7 @@ struct LottieComposition
 
     LottieLayer* asset(unsigned long id)
     {
-        ARRAY_FOREACH(p, assets) {
-            auto obj = *p;
+        for (auto obj : assets) {
             if (obj->id == id && obj->type == LottieObject::Layer) return static_cast<LottieLayer*>(obj);
         }
         return nullptr;

@@ -390,8 +390,8 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
     LottieInterpolator* interpolator = nullptr;
 
     //get a cached interpolator if it has any.
-    ARRAY_FOREACH(p, comp->interpolators) {
-        if (!strncmp((*p)->key, key, sizeof(buf))) interpolator = *p;
+    for (auto& p : comp->interpolators) {
+        if (!strncmp(p->key, key, sizeof(buf))) interpolator = p;
     }
 
     //new interpolator
@@ -475,9 +475,9 @@ void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProper
     auto val = djb2Encode(sid);
 
     //append object if the slot already exists.
-    ARRAY_FOREACH(p, comp->slots) {
-        if ((*p)->sid != val) continue;
-        (*p)->pairs.push({obj});
+    for (auto& p : comp->slots) {
+        if (p->sid != val) continue;
+        p->pairs.push({obj});
         prop.sid = val;
         return;
     }
@@ -1631,10 +1631,8 @@ LottieRootLayer* LottieParser::parseLayers()
 void LottieParser::postProcess(Array<LottieGlyph*>& glyphs)
 {
     //aggregate font characters
-    ARRAY_FOREACH(g, glyphs) {
-        auto glyph = *g;
-        ARRAY_FOREACH(f, comp->fonts) {
-            auto font = *f;
+    for (auto glyph : glyphs) {
+        for (auto font : comp->fonts) {
             if (!strcmp(font->family, glyph->family) && !strcmp(font->style, glyph->style)) {
                 font->chars.push(glyph);
                 free(glyph->family);
@@ -1646,8 +1644,8 @@ void LottieParser::postProcess(Array<LottieGlyph*>& glyphs)
         }
         delete(glyph);
     }
-    ARRAY_FOREACH(f, comp->fonts) {
-        (*f)->chars.compact();
+    for (auto& f : comp->fonts) {
+        f->chars.compact();
     }
 }
 
