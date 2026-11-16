@@ -466,9 +466,9 @@ void LottieParser::parsePropertyInternal(T& prop)
             else if (getValue(prop.value)) break; //multi value property with no keyframes
         }
         prop.prepare();
+        if (prop.frames) prop.frames->compact();
     }
 }
-
 
 void LottieParser::registerSlot(LottieObject* obj, const char* sid, LottieProperty& prop)
 {
@@ -679,9 +679,8 @@ void LottieParser::getPathSet(LottiePath* obj, LottiePathSet& path)
             if (peekType() == kArrayType) {
                 enterArray();
                 while (nextArrayValue()) parseKeyFrame(path);
-            } else {
-                getValue(path.value);
-            }
+                if (path.frames) path.frames->compact();
+            } else getValue(path.value);
         }
         else if (parseCommon(obj, path, key)) continue;
         else skip();
@@ -1646,6 +1645,9 @@ void LottieParser::postProcess(Array<LottieGlyph*>& glyphs)
             }
         }
         delete(glyph);
+    }
+    ARRAY_FOREACH(f, comp->fonts) {
+        (*f)->chars.compact();
     }
 }
 

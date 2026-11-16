@@ -34,6 +34,10 @@
 namespace tvg
 {
 
+// You aren't supposed to call them directly.
+void* arrayCompact(void* data, uint32_t count, uint32_t& reserved, size_t size);
+void* arrayGrow(void* data, uint32_t count, uint32_t& reserved, size_t size);
+
 template<class T>
 struct Array
 {
@@ -57,8 +61,7 @@ struct Array
     void push(T element)
     {
         if (count + 1 > reserved) {
-            reserved = count + (count + 2) / 2;
-            data = tvg::realloc<T>(data, sizeof(T) * reserved);
+            data = static_cast<T*>(arrayGrow(data, count, reserved, sizeof(T)));
         }
         data[count++] = element;
     }
@@ -193,12 +196,7 @@ struct Array
 
     void compact()
     {
-        if (count == reserved) return;
-        if (count == 0) reset();
-        else {
-            data = tvg::realloc<T>(data, sizeof(T) * count);
-            reserved = count;
-        }
+        data = static_cast<T*>(arrayCompact(data, count, reserved, sizeof(T)));
     }
 
     ~Array()
