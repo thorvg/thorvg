@@ -332,10 +332,10 @@ static bool _clipperUnion(SvgParserContext& ctx, Paint* content, const SvgNode* 
 
     Paint* unionRegion = nullptr;
     Scene* scene = nullptr;
-    ARRAY_FOREACH(p, clipNode->child) {
+    for (auto& p : clipNode->child) {
         auto child = Shape::gen();
         Paint* clipped = nullptr;
-        if (!_appendClipChild(ctx, *p, child, vBox, svgPath, &clipped)) {
+        if (!_appendClipChild(ctx, p, child, vBox, svgPath, &clipped)) {
             Paint::rel(child);
             continue;
         }
@@ -1152,12 +1152,11 @@ static bool _hasPositionedTspan(const SvgNode* node, int depth)
         TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
         return true;
     }
-    ARRAY_FOREACH(p, node->child)
-    {
-        if ((*p)->type != SvgNodeType::Tspan) continue;
-        auto& textNode = (*p)->node.text;
+    for (auto& p : node->child) {
+        if (p->type != SvgNodeType::Tspan) continue;
+        auto& textNode = p->node.text;
         if (textNode.text) return true;
-        if (_hasPositionedTspan(*p, depth + 1)) return true;
+        if (_hasPositionedTspan(p, depth + 1)) return true;
     }
     return false;
 }
@@ -1168,9 +1167,7 @@ static void _buildTspanScene(SvgParserContext& ctx, const SvgNode* node, Scene* 
         TVGERR("SVG", "Infinite recursive call - stopped after %d calls! Svg file may be incorrectly formatted.", depth);
         return;
     }
-    ARRAY_FOREACH(p, node->child)
-    {
-        auto child = *p;
+    for (auto child : node->child) {
         if (child->type != SvgNodeType::Tspan) continue;
 
         auto textNode = child->node.text;
@@ -1266,8 +1263,7 @@ static Scene* _sceneBuildHelper(SvgParserContext& ctx, const SvgNode* node, cons
     }
     if (!node->style->display || node->style->opacity == 0) return scene;
 
-    ARRAY_FOREACH(p, node->child) {
-        auto child = *p;
+    for (auto child : node->child) {
         Paint* paint = nullptr;
         if (child->type == SvgNodeType::ClipPath || child->type == SvgNodeType::Filter || child->type == SvgNodeType::Pattern) continue;
         if (_isGroupType(child->type)) {
@@ -1310,8 +1306,8 @@ static Paint* _buildBaseTile(SvgParserContext& ctx, SvgNode* patternNode, const 
 {
     Paint* paint = nullptr;
     Scene* tileScene = nullptr;
-    ARRAY_FOREACH(p, patternNode->child) {
-        auto child = _buildPatternChild(ctx, *p, vBox, svgPath);
+    for (auto& p : patternNode->child) {
+        auto child = _buildPatternChild(ctx, p, vBox, svgPath);
         if (!child) continue;
         if (!paint && !tileScene) {
             paint = child;
@@ -1456,40 +1452,40 @@ static void _loadFonts(Array<FontFace>& fonts)
     constexpr size_t MAX_SCAN = 40;
     constexpr size_t KEY_LEN = 10;  // "ttf;base64" / "otf;base64"
 
-    ARRAY_FOREACH(p, fonts) {
-        if (!p->name) continue;
+    for (auto& p : fonts) {
+        if (!p.name) continue;
 
         size_t shift = 0;
         const char* type = nullptr;
-        auto limit = (p->srcLen < MAX_SCAN) ? p->srcLen : MAX_SCAN;
+        auto limit = (p.srcLen < MAX_SCAN) ? p.srcLen : MAX_SCAN;
 
         for (size_t i = 0; i + KEY_LEN <= limit; ++i) {
-            if (!memcmp(p->src + i, "ttf;base64", KEY_LEN)) {
+            if (!memcmp(p.src + i, "ttf;base64", KEY_LEN)) {
                 shift = i + KEY_LEN + 1;  // skip ","
                 type = "ttf";
                 break;
             }
-            if (!memcmp(p->src + i, "otf;base64", KEY_LEN)) {
+            if (!memcmp(p.src + i, "otf;base64", KEY_LEN)) {
                 shift = i + KEY_LEN + 1;
                 type = "otf";
                 break;
             }
         }
         if (type) {
-            auto size = b64Decode(p->src + shift, p->srcLen - shift, &p->decoded);
-            Text::load(p->name, p->decoded, size, type);
+            auto size = b64Decode(p.src + shift, p.srcLen - shift, &p.decoded);
+            Text::load(p.name, p.decoded, size, type);
         }
     }
 }
 
 static bool _hasUserSpaceGradients(SvgParserContext& ctx)
 {
-    ARRAY_FOREACH(p, ctx.gradients) {
-        if ((*p)->userSpace) return true;
+    for (auto& p : ctx.gradients) {
+        if (p->userSpace) return true;
     }
     if (ctx.def) {
-        ARRAY_FOREACH(p, ctx.def->node.defs.gradients) {
-            if ((*p)->userSpace) return true;
+        for (auto& p : ctx.def->node.defs.gradients) {
+            if (p->userSpace) return true;
         }
     }
     return false;
@@ -1515,7 +1511,7 @@ Scene* svgSceneBuild(SvgParserContext& ctx, Box vBox, float w, float h, AspectRa
         _updateInvalidViewSize(docNode, vBox, w, h, viewFlag);
         if ((!tvg::equal(vBox.w, prevW) || !tvg::equal(vBox.h, prevH)) && _hasUserSpaceGradients(ctx)) {
             Paint::rel(docNode);
-            ARRAY_FOREACH(p, ctx.images) tvg::free(*p);
+            for (auto& p : ctx.images) tvg::free(p);
             ctx.images.clear();
             docNode = _sceneBuildHelper(ctx, ctx.doc, vBox, svgPath, false, 0);
         }

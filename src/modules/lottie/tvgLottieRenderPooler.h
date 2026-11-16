@@ -35,16 +35,16 @@ struct LottieRenderPooler
 
     ~LottieRenderPooler()
     {
-        ARRAY_FOREACH(p, pooler) {
-            (*p)->unref();
+        for (auto& p : pooler) {
+            p->unref();
         }
     }
 
     T* pooling(bool copy = false)
     {
         //return available one.
-        ARRAY_FOREACH(p, pooler) {
-            if ((*p)->refCnt() == 1) return *p;
+        for (auto& p : pooler) {
+            if (p->refCnt() == 1) return p;
         }
 
         //no empty, generate a new one.

@@ -99,9 +99,9 @@ void WgRenderTargetPool::initialize(uint32_t width, uint32_t height)
 
 void WgRenderTargetPool::release(WgContext& context)
 {
-    ARRAY_FOREACH(p, list) {
-       (*p)->release(context);
-       delete(*p);
+    for (auto& p : list) {
+        p->release(context);
+        delete (p);
     }
     list.clear();
     pool.clear();

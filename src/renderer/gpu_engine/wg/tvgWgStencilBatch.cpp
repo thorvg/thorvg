@@ -51,11 +51,11 @@ static bool intersects(const WgStencilBatch& batch, const RenderRegion& bounds)
 {
     const auto min = batch.ySorted ? bounds.yMin : bounds.xMin;
     const auto max = batch.ySorted ? bounds.yMax : bounds.xMax;
-    ARRAY_FOREACH(p, batch.bounds) {
-        const auto pMin = batch.ySorted ? (*p).yMin : (*p).xMin;
-        if ((batch.ySorted ? (*p).yMax : (*p).xMax) <= min) continue;
+    for (auto& p : batch.bounds) {
+        const auto pMin = batch.ySorted ? p.yMin : p.xMin;
+        if ((batch.ySorted ? p.yMax : p.xMax) <= min) continue;
         if (pMin >= max) break;
-        if ((*p).intersected(bounds)) return true;
+        if (p.intersected(bounds)) return true;
     }
     return false;
 }

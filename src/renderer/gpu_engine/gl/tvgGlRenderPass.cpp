@@ -56,7 +56,7 @@ GlRenderPass::~GlRenderPass()
 {
     if (mTasks.empty()) return;
 
-    ARRAY_FOREACH(p, mTasks) delete(*p);
+    for (auto& p : mTasks) delete (p);
 
     mTasks.clear();
 }

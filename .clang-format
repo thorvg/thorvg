@@ -40,7 +40,7 @@ ReferenceAlignment: Left
 DerivePointerAlignment: false
 
 # Spacing
-ForEachMacros: [ARRAY_FOREACH]
+ForEachMacros: [ARRAY_REVERSE_FOREACH]
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 SpaceInEmptyParentheses: false
 SpacesInParentheses: false

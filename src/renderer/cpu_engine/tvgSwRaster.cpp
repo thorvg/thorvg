@@ -671,12 +671,12 @@ static bool _rasterScaledMattedRleImage(SwSurface* surface, const SwImage& image
     auto sampleSize = _sampleSize(image.scale);
     int32_t miny = 0, maxy = 0;
 
-    ARRAY_FOREACH(span, image.rle->spans) {
-        SCALED_IMAGE_RANGE_Y(span->y)
-        auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        auto cmp = &surface->compositor->image.buf8[(span->y * surface->compositor->image.stride + span->x) * csize];
-        auto a = MULTIPLY(span->coverage, opacity);
-        for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst, cmp += csize) {
+    for (auto& span : image.rle->spans) {
+        SCALED_IMAGE_RANGE_Y(span.y)
+        auto dst = &surface->buf32[span.y * surface->stride + span.x];
+        auto cmp = &surface->compositor->image.buf8[(span.y * surface->compositor->image.stride + span.x) * csize];
+        auto a = MULTIPLY(span.coverage, opacity);
+        for (uint32_t x = static_cast<uint32_t>(span.x); x < static_cast<uint32_t>(span.x) + span.len; ++x, ++dst, cmp += csize) {
             SCALED_IMAGE_RANGE_X
             auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
             src = ALPHA_BLEND(src, (a == 255) ? alpha(cmp) : MULTIPLY(alpha(cmp), a));
@@ -697,18 +697,18 @@ static bool _rasterScaledBlendingRleImage(SwSurface* surface, const SwImage& ima
     auto sampleSize = _sampleSize(image.scale);
     int32_t miny = 0, maxy = 0;
 
-    ARRAY_FOREACH(span, image.rle->spans) {
-        SCALED_IMAGE_RANGE_Y(span->y)
-        auto dst = &surface->buf32[span->y * surface->stride + span->x];
-        auto alpha = MULTIPLY(span->coverage, opacity);
+    for (auto& span : image.rle->spans) {
+        SCALED_IMAGE_RANGE_Y(span.y)
+        auto dst = &surface->buf32[span.y * surface->stride + span.x];
+        auto alpha = MULTIPLY(span.coverage, opacity);
         if (alpha == 255) {
-            for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
+            for (uint32_t x = static_cast<uint32_t>(span.x); x < static_cast<uint32_t>(span.x) + span.len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
                 *dst = INTERPOLATE(surface->blender(surface, UNPREMULTIPLY(src), *dst), *dst, A(src));
             }
         } else {
-            for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
+            for (uint32_t x = static_cast<uint32_t>(span.x); x < static_cast<uint32_t>(span.x) + span.len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
                 *dst = INTERPOLATE(surface->blender(surface, UNPREMULTIPLY(src), *dst), *dst, MULTIPLY(alpha, A(src)));
@@ -725,11 +725,11 @@ static bool _rasterScaledRleImage(SwSurface* surface, const SwImage& image, cons
     int32_t miny = 0, maxy = 0;
 
     if (surface->channelSize == sizeof(uint32_t)) {
-        ARRAY_FOREACH(span, image.rle->spans) {
-            SCALED_IMAGE_RANGE_Y(span->y)
-            auto dst = &surface->buf32[span->y * surface->stride + span->x];
-            auto alpha = MULTIPLY(span->coverage, opacity);
-            for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
+        for (auto& span : image.rle->spans) {
+            SCALED_IMAGE_RANGE_Y(span.y)
+            auto dst = &surface->buf32[span.y * surface->stride + span.x];
+            auto alpha = MULTIPLY(span.coverage, opacity);
+            for (uint32_t x = static_cast<uint32_t>(span.x); x < static_cast<uint32_t>(span.x) + span.len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
                 if (alpha < 255) src = ALPHA_BLEND(src, alpha);
@@ -737,11 +737,11 @@ static bool _rasterScaledRleImage(SwSurface* surface, const SwImage& image, cons
             }
         }
     } else if (surface->channelSize == sizeof(uint8_t)) {
-        ARRAY_FOREACH(span, image.rle->spans) {
-            SCALED_IMAGE_RANGE_Y(span->y)
-            auto dst = &surface->buf8[span->y * surface->stride + span->x];
-            auto alpha = MULTIPLY(span->coverage, opacity);
-            for (uint32_t x = static_cast<uint32_t>(span->x); x < static_cast<uint32_t>(span->x) + span->len; ++x, ++dst) {
+        for (auto& span : image.rle->spans) {
+            SCALED_IMAGE_RANGE_Y(span.y)
+            auto dst = &surface->buf8[span.y * surface->stride + span.x];
+            auto alpha = MULTIPLY(span.coverage, opacity);
+            for (uint32_t x = static_cast<uint32_t>(span.x); x < static_cast<uint32_t>(span.x) + span.len; ++x, ++dst) {
                 SCALED_IMAGE_RANGE_X
                 auto src = scaleMethod(image.buf32, image.stride, image.w, image.h, sx, sy, miny, maxy, sampleSize);
                 *dst = MULTIPLY(A(src), alpha);

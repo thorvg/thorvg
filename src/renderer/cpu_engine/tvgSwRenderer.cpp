@@ -160,8 +160,8 @@ struct SwShapeTask : SwTask
         shapeDelOutline(shape);
 
         //Clip Path
-        ARRAY_FOREACH(p, clips) {
-            auto clipper = static_cast<SwTask*>(*p);
+        for (auto& p : clips) {
+            auto clipper = static_cast<SwTask*>(p);
             auto clipShape = clipper->clip(shape.rle);
             auto clipStroke = clipper->clip(shape.strokeRle);
             if (!clipShape && !clipStroke) goto dismiss;
@@ -220,8 +220,8 @@ struct SwImageTask : SwTask
             if (clips.count > 0) {
                 if (!imageGenRle(image, curBox, renderer->mpool, tid, false)) goto err;
                 if (image.rle) {
-                    ARRAY_FOREACH(p, clips) {
-                        auto clipper = static_cast<SwTask*>(*p);
+                    for (auto& p : clips) {
+                        auto clipper = static_cast<SwTask*>(p);
                         if (!clipper->clip(image.rle)) goto err;
                     }
                     if (!nodirty) dirtyRegion->add(prvBox, curBox);
@@ -268,10 +268,10 @@ bool SwRenderer::clear()
 bool SwRenderer::sync()
 {
     //clear if the rendering was not triggered.
-    ARRAY_FOREACH(p, tasks) {
-        (*p)->done();
-        if ((*p)->disposed) delete(*p);
-        else (*p)->pushed = false;
+    for (auto& p : tasks) {
+        p->done();
+        if (p->disposed) delete (p);
+        else p->pushed = false;
     }
     tasks.clear();
 
@@ -326,14 +326,14 @@ bool SwRenderer::preRender()
     if (!surface) return false;
     if (fulldraw || dirtyRegion.deactivated()) return true;
 
-    ARRAY_FOREACH(p, tasks) (*p)->done();
+    for (auto& p : tasks) p->done();
 
     dirtyRegion.commit();
 
     //clear buffer for partial regions
     for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
-        ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-            rasterClear(surface, p->x(), p->y(), p->w(), p->h());
+        for (auto& p : dirtyRegion.get(idx)) {
+            rasterClear(surface, p.x(), p.y(), p.w(), p.h());
         }
     }
 
@@ -344,10 +344,10 @@ bool SwRenderer::preRender()
 void SwRenderer::clearCompositors()
 {
     //Free Composite Caches
-    ARRAY_FOREACH(p, compositors) {
-        tvg::free((*p)->compositor->image.data);
-        delete((*p)->compositor);
-        delete(*p);
+    for (auto& p : compositors) {
+        tvg::free(p->compositor->image.data);
+        delete (p->compositor);
+        delete (p);
     }
     compositors.reset();
 }
@@ -391,8 +391,8 @@ Result SwRenderer::dirtyRegions(Region* regions, uint32_t cnt) const
     }
 
     for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
-        ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-            *regions++ = *p;
+        for (auto& p : dirtyRegion.get(idx)) {
+            *regions++ = p;
             if (--cnt == 0) return Result::Success;
         }
     }
@@ -439,10 +439,10 @@ bool SwRenderer::renderImage(RenderData data)
         } else if (task->curBox.valid()) {
             for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
                 if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
-                ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-                    if (task->curBox.xMax <= p->xMin) break;  // dirtyRegion is sorted in x order
-                    if (task->curBox.intersected(*p)) {
-                        auto bbox = RenderRegion::intersect(task->curBox, *p);
+                for (auto& p : dirtyRegion.get(idx)) {
+                    if (task->curBox.xMax <= p.xMin) break;  // dirtyRegion is sorted in x order
+                    if (task->curBox.intersected(p)) {
+                        auto bbox = RenderRegion::intersect(task->curBox, p);
                         raster(surface, task->image, task->transform, bbox, task->opacity);
                     }
                 }
@@ -495,14 +495,14 @@ bool SwRenderer::renderShape(RenderData data)
         } else if (task->curBox.valid()) {
             for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
                 if (!dirtyRegion.partition(idx).intersected(task->curBox)) continue;
-                ARRAY_FOREACH(p, dirtyRegion.get(idx)) {
-                    if (task->curBox.xMax <= p->xMin) break;  // dirtyRegion is sorted in x order
+                for (auto& p : dirtyRegion.get(idx)) {
+                    if (task->curBox.xMax <= p.xMin) break;  // dirtyRegion is sorted in x order
                     if (task->rshape->strokeFirst()) {
-                        if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
-                        if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
+                        if (task->rshape->stroke && task->curBox.intersected(p)) stroke(task, surface, RenderRegion::intersect(task->curBox, p));
+                        if (task->shape.bbox.intersected(p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, p));
                     } else {
-                        if (task->shape.bbox.intersected(*p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, *p));
-                        if (task->rshape->stroke && task->curBox.intersected(*p)) stroke(task, surface, RenderRegion::intersect(task->curBox, *p));
+                        if (task->shape.bbox.intersected(p)) fill(task, surface, RenderRegion::intersect(task->shape.bbox, p));
+                        if (task->rshape->stroke && task->curBox.intersected(p)) stroke(task, surface, RenderRegion::intersect(task->curBox, p));
                     }
                 }
             }
@@ -618,11 +618,10 @@ SwSurface* SwRenderer::request(int channelSize, bool square)
     }
 
     //Use cached data
-    ARRAY_FOREACH(p, compositors) {
-        auto cur = *p;
+    for (auto cur : compositors) {
         if (cur->compositor->valid && cur->compositor->image.channelSize == channelSize) {
             if (w == cur->w && h == cur->h) {
-                cmp = *p;
+                cmp = cur;
                 break;
             }
         }
@@ -872,8 +871,8 @@ SwTask* SwRenderer::prepareCommon(SwTask* task, const Matrix& transform, const A
     if (task->ready(ready)) return task;
 
     if (flags) {
-        ARRAY_FOREACH(p, clips) {
-            task->depend(static_cast<Task*>(*p));
+        for (auto& p : clips) {
+            task->depend(static_cast<Task*>(p));
         }
         TaskScheduler::request(task);
     }

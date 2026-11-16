@@ -192,9 +192,8 @@ struct ThinPathTracker
                 return;
             }
         }
-        ARRAY_FOREACH(pt, preAxisOverflow)
-        {
-            update(*pt);
+        for (auto& pt : preAxisOverflow) {
+            update(pt);
             if (!candidate) break;
         }
         clearPreAxisPoints();
@@ -325,8 +324,8 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
         }
     };
 
-    ARRAY_FOREACH(cmd, in.cmds) {
-        switch (*cmd) {
+    for (auto& cmd : in.cmds) {
+        switch (cmd) {
             case PathCommand::MoveTo: {
                 finalizeSubpath();
                 auto pt = *pts;
@@ -750,9 +749,8 @@ bool StrokeDashPath::gen(const RenderPath& in, RenderPath& out, bool allowDot, c
     DashSubpathState subpathState;
     Array<PieceRange> pieces;
 
-    ARRAY_FOREACH(cmd, in.cmds)
-    {
-        processCommand(*cmd, pts, initialState, start, subOut, out, subpathState, pieces, allowDot);
+    for (auto& cmd : in.cmds) {
+        processCommand(cmd, pts, initialState, start, subOut, out, subpathState, pieces, allowDot);
     }
     appendDashedSubpath(out, subOut, map(start), subpathState, pieces);
     return true;
