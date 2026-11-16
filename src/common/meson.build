@@ -8,6 +8,7 @@ source_file = [
    'tvgMap.h',
    'tvgMath.h',
    'tvgStr.h',
+   'tvgArray.cpp',
    'tvgCompressor.cpp',
    'tvgMath.cpp',
    'tvgStr.cpp'
