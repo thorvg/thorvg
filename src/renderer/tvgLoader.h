@@ -85,18 +85,9 @@ struct Loader
         tvg::free(hashpath);
     }
 
-    bool allowCache()
-    {
-        if (type == FileType::Lot) return false;
-        if (type == FileType::Gif) return false;
-        if (type == FileType::Media) return false;
-
-        return true;
-    }
-
     bool cache(uintptr_t data)
     {
-        if (!allowCache()) return false;
+        if (!cacheable()) return false;
         hashkey = data;
         cached = true;
         return true;
@@ -104,8 +95,7 @@ struct Loader
 
     bool cache(const char* path)
     {
-        if (!allowCache()) return false;
-
+        if (!cacheable()) return false;
         hashpath = tvg::duplicate(path);
         cached = true;
         return true;
@@ -115,6 +105,7 @@ struct Loader
     virtual Result open(const char* data, uint32_t size, const LoaderOps& ops) { return Result::NonSupport; }
     virtual bool resize(Paint* paint, float w, float h) { return false; }
     virtual bool sync() { return false; };  // finish immediately if any async update jobs, return true if something has been updated.
+    virtual bool cacheable() { return true; }
 
     virtual bool read()
     {

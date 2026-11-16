@@ -36,6 +36,8 @@ struct MediaLoader : BitmapLoader
     MediaLoader() : BitmapLoader(FileType::Media, true) {}
     virtual ~MediaLoader(){};
 
+    bool cacheable() override { return false; }
+
     virtual Result play() = 0;                // start or resume playback
     virtual Result pause() = 0;               // pause playback
     virtual Result stop() = 0;                // stop playback

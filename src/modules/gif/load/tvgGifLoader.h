@@ -36,6 +36,8 @@ struct GifLoader : AnimLoader, Task
     Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool read() override;
     bool sync() override;
+    bool cacheable() override { return false; }
+
     RenderSurface* bitmap() override;
     bool frame(float no) override;
     float curFrame() override;
