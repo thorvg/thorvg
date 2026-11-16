@@ -36,6 +36,7 @@ enum class GlShaderUniform : uint8_t
     Texture,
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     CoverageTexture,
+    CoverageFloatTexture,
 #endif
     Count,
 };

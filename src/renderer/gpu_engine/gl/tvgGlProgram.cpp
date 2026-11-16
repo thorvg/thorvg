@@ -35,6 +35,7 @@ static const char* const UNIFORM_NAMES[] = {
     "uTexture",
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     "uCoverageTexture",
+    "uCoverageFloatTexture",
 #endif
 };
 

@@ -23,8 +23,65 @@
 #include "tvgGlCoverageAtlas.h"
 #include "tvgGlCommon.h"
 #include "tvgGlStateCache.h"
+#include "tvgGlProgram.h"
 
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
+
+// One instance per directed edge, including its allocation's pixel bounds.
+struct GlCoverageEdge
+{
+    Point a, b;
+    float bounds[4];
+};
+
+static const char* EDGE_VERT = R"(
+layout(location = 0) in vec4 aEdge;
+layout(location = 1) in vec4 aBounds;
+uniform vec2 uSize;
+flat out vec4 vEdge;
+void main()
+{
+    const vec2 corners[6] = vec2[6](vec2(0,0), vec2(0,1), vec2(1,0),
+                                   vec2(1,0), vec2(0,1), vec2(1,1));
+    vec2 lo = aBounds.xy;
+    vec2 hi = aBounds.zw;
+    if (aEdge.y != aEdge.w) {
+        lo = max(lo, floor(min(aEdge.xy, aEdge.zw)));
+        hi.y = min(hi.y, ceil(max(aEdge.y, aEdge.w)));
+    }
+    hi = max(lo, hi);
+    vec2 p = mix(lo, hi, corners[gl_VertexID]);
+    gl_Position = vec4(p * uSize - 1.0, 0.0, 1.0);
+    vEdge = aEdge;
+}
+)";
+
+static const char* EDGE_FRAG = R"(
+flat in vec4 vEdge;
+out float FragColor;
+void main()
+{
+    // Horizontal instances clear entire allocations before additive draws.
+    if (vEdge.y == vEdge.w) { FragColor = 0.0; return; }
+    vec2 a = vEdge.xy, b = vEdge.zw;
+    float direction = sign(b.y - a.y);
+    if (a.y > b.y) { vec2 t = a; a = b; b = t; }
+    vec2 pixel = floor(gl_FragCoord.xy);
+    vec2 y = clamp(vec2(pixel.y, pixel.y + 1.0), a.y, b.y);
+    vec2 x = a.x + (y - a.y) * ((b.x - a.x) / (b.y - a.y)) - pixel.x;
+    float lo = min(x.x, x.y), hi = max(x.x, x.y);
+    float area;
+    if (hi <= 0.0) area = 1.0;
+    else if (lo >= 1.0) area = 0.0;
+    else if (hi - lo < 0.00001) area = clamp(1.0 - (lo + hi) * 0.5, 0.0, 1.0);
+    else {
+        // Integrate clamp(1-x,0,1) without subtracting large squared values.
+        vec2 c = clamp(vec2(lo, hi), 0.0, 1.0);
+        area = (max(-lo, 0.0) + (c.y - c.x) * (1.0 - (c.x + c.y) * 0.5)) / (hi - lo);
+    }
+    FragColor = direction * (y.y - y.x) * area;
+}
+)";
 
 struct GlCoverageAtlas::Page
 {
@@ -35,6 +92,8 @@ struct GlCoverageAtlas::Page
     Array<RenderRegion> free;
     RenderRegion dirty{};
     bool initialized = false;
+    Array<GlCoverageEdge> edges;
+    Array<RenderRegion> clears;
 
     ~Page() { tvg::free(data); }
 
@@ -71,6 +130,22 @@ struct GlCoverageAtlas::Page
     }
 };
 
+bool GlCoverageAtlas::gpuSupported()
+{
+    if (gpuSupport < 0) {
+#ifdef __EMSCRIPTEN__
+        auto context = emscripten_webgl_get_current_context();
+        gpuSupport = emscripten_webgl_enable_extension(context, "EXT_color_buffer_float") &&
+                     emscripten_webgl_enable_extension(context, "EXT_float_blend");
+#elif defined(THORVG_GL_TARGET_GL)
+        gpuSupport = 1;  // Floating-point rendering and blending are core in GL 3.3.
+#else
+        gpuSupport = 0;  // Native GLES capability discovery is outside this prototype.
+#endif
+    }
+    return gpuSupport != 0;
+}
+
 uint32_t GlCoverageAtlas::maxTextureSize()
 {
     if (!maxSize) {
@@ -104,16 +179,17 @@ bool GlCoverageAtlas::update(const GlCoverageData& packed, GlCoverageRegion& reg
             }
         }
     }
+    auto gpu = packed.format == GlCoverageFormat::Edges;
     auto bytes = packed.format == GlCoverageFormat::Runs ? 8u : 1u;
     if (!page) {
         page = new Page;
         page->format = packed.format;
         // Start at 64 KiB per page; long run rows use wide, shallow pages.
-        page->width = std::max(packed.width, std::min(maxTextureSize(), bytes == 8 ? 2048u : 256u));
-        page->height = std::max(packed.height, std::min(maxSize, 65536u / (page->width * bytes)));
-        page->data = tvg::calloc<uint8_t>(size_t(page->width) * page->height, bytes);
+        page->width = std::max(packed.width, std::min(maxTextureSize(), gpu ? 1024u : bytes == 8 ? 2048u : 256u));
+        page->height = std::max(packed.height, std::min(maxSize, gpu ? 1024u : 65536u / (page->width * bytes)));
+        if (!gpu) page->data = tvg::calloc<uint8_t>(size_t(page->width) * page->height, bytes);
         GL_CHECK(glGenTextures(1, &page->texture));
-        if (!page->data || !page->texture) {
+        if ((!gpu && !page->data) || !page->texture) {
             if (page->texture) glDeleteTextures(1, &page->texture);
             delete page;
             return false;
@@ -123,6 +199,7 @@ bool GlCoverageAtlas::update(const GlCoverageData& packed, GlCoverageRegion& reg
         pages.push(page);
     }
 
+    if (gpu) return true;
     auto src = static_cast<const uint8_t*>(packed.data);
     auto dst = page->data + (size_t(region.rect.yMin) * page->width + region.rect.xMin) * bytes;
     for (uint32_t y = 0; y < packed.height; ++y) {
@@ -135,8 +212,106 @@ bool GlCoverageAtlas::update(const GlCoverageData& packed, GlCoverageRegion& reg
     return true;
 }
 
+bool GlCoverageAtlas::updateEdges(const Array<Point>& edges, const RenderRegion& bounds, GlCoverageRegion& region)
+{
+    if (bounds.w() > maxTextureSize() || bounds.h() > maxSize) return false;
+    // A second update before flush must not sum old and new versions together.
+    if (auto page = find(region.texture)) {
+        for (const auto& rect : page->clears) {
+            if (rect == region.rect) { retire(region); break; }
+        }
+    }
+    GlCoverageData packed;
+    packed.format = GlCoverageFormat::Edges;
+    packed.width = bounds.w();
+    packed.height = bounds.h();
+    if (!update(packed, region)) return false;
+    auto page = find(region.texture);
+    auto rect = region.rect;
+    page->clears.push(rect);
+    Point offset = {float(rect.xMin - bounds.xMin), float(rect.yMin - bounds.yMin)};
+    page->edges.grow(edges.count / 2);
+    for (uint32_t i = 0; i < edges.count; i += 2) {
+        page->edges.push({edges[i] + offset, edges[i + 1] + offset,
+                          {float(rect.xMin), float(rect.yMin), float(rect.xMax), float(rect.yMax)}});
+    }
+    return true;
+}
+
+void GlCoverageAtlas::flushEdges(GlStateCache& state)
+{
+    auto pending = false;
+    for (auto page : pages) pending |= !page->clears.empty();
+    if (!pending) return;
+    if (!edgeProgram) {
+        edgeProgram = new GlProgram(EDGE_VERT, EDGE_FRAG);
+        glGenFramebuffers(1, &edgeFramebuffer);
+        glGenBuffers(1, &edgeBuffer);
+        glGenVertexArrays(1, &edgeVao);
+    }
+    GLint readFbo, drawFbo, unpackBuffer;
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFbo);
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFbo);
+    glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &unpackBuffer);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, edgeFramebuffer);
+    state.bindVertexArray(edgeVao);
+    state.useProgram(edgeProgram->getProgramId());
+    state.disable(GL_DEPTH_TEST);
+    state.disable(GL_STENCIL_TEST);
+    state.disable(GL_SCISSOR_TEST);
+    state.disable(GL_CULL_FACE);
+    state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glBlendEquation(GL_FUNC_ADD);
+    state.blendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ONE);
+    Array<GlCoverageEdge> instances;
+    for (auto page : pages) {
+        if (page->clears.empty()) continue;
+        state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, page->texture);
+        if (!page->initialized) {
+            // Half-float summation loses subpixel residuals under winding cancellation.
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, page->width, page->height, 0, GL_RED, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            page->initialized = true;
+        }
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, page->texture, 0);
+        state.viewport(0, 0, page->width, page->height);
+        float size[] = {2.0f / page->width, 2.0f / page->height};
+        glUniform2fv(glGetUniformLocation(edgeProgram->getProgramId(), "uSize"), 1, size);
+        instances.clear();
+        instances.reserve(page->clears.count + page->edges.count);
+        for (const auto& rect : page->clears) instances.push({{}, {}, {float(rect.xMin), float(rect.yMin), float(rect.xMax), float(rect.yMax)}});
+        instances.push(page->edges);
+        state.bindBuffer(GL_ARRAY_BUFFER, edgeBuffer);
+        glBufferData(GL_ARRAY_BUFFER, instances.count * sizeof(GlCoverageEdge), instances.data, GL_STREAM_DRAW);
+        state.beginVertexLayout();
+        for (uint32_t i = 0; i < 2; ++i) {
+            state.setVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, sizeof(GlCoverageEdge), i * sizeof(float) * 4, edgeBuffer);
+            state.setVertexAttribDivisor(i, 1);
+        }
+        state.endVertexLayout();
+        state.disable(GL_BLEND);
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, page->clears.count);
+        for (uint32_t i = 0; i < 2; ++i) {
+            state.setVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, sizeof(GlCoverageEdge),
+                                         page->clears.count * sizeof(GlCoverageEdge) + i * sizeof(float) * 4, edgeBuffer);
+        }
+        state.enable(GL_BLEND);
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, page->edges.count);
+        page->edges.clear();
+        page->clears.clear();
+    }
+    state.bindFramebuffer(GL_READ_FRAMEBUFFER, readFbo);
+    state.bindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFbo);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, unpackBuffer);
+}
+
 void GlCoverageAtlas::flush(GlStateCache& state)
 {
+    flushEdges(state);
     auto pending = false;
     for (auto page : pages) pending |= page->dirty.valid();
     if (!pending) return;
@@ -198,6 +373,13 @@ void GlCoverageAtlas::reclaim()
 
 void GlCoverageAtlas::clear(GlStateCache& state)
 {
+    delete edgeProgram;
+    edgeProgram = nullptr;
+    if (edgeFramebuffer) glDeleteFramebuffers(1, &edgeFramebuffer);
+    if (edgeBuffer) glDeleteBuffers(1, &edgeBuffer);
+    if (edgeVao) glDeleteVertexArrays(1, &edgeVao);
+    edgeFramebuffer = edgeBuffer = edgeVao = 0;
+    gpuSupport = -1;
     for (auto page : pages) {
         GL_CHECK(glDeleteTextures(1, &page->texture));
         delete page;

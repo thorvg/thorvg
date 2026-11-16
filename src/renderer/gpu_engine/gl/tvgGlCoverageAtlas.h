@@ -29,6 +29,7 @@
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
 
 struct GlStateCache;
+struct GlProgram;
 
 // Non-owning location; the atlas owns the texture.
 struct GlCoverageRegion
@@ -41,6 +42,8 @@ struct GlCoverageRegion
 struct GlCoverageAtlas
 {
     uint32_t maxTextureSize();
+    bool gpuSupported();
+    bool updateEdges(const tvg::Array<tvg::Point>& edges, const tvg::RenderRegion& bounds, GlCoverageRegion& region);
     // Copies packed bytes into CPU page storage; flush() uploads them to GL.
     bool update(const GlCoverageData& data, GlCoverageRegion& region);
     void flush(GlStateCache& state);
@@ -51,9 +54,13 @@ struct GlCoverageAtlas
 private:
     struct Page;
     Page* find(GLuint texture);
+    void flushEdges(GlStateCache& state);
     tvg::Array<Page*> pages;
     tvg::Array<GlCoverageRegion> retired;
     uint32_t maxSize = 0;
+    int8_t gpuSupport = -1;
+    GlProgram* edgeProgram = nullptr;
+    GLuint edgeFramebuffer = 0, edgeBuffer = 0, edgeVao = 0;
 };
 
 #endif //THORVG_ANALYTIC_AA_SUPPORT
