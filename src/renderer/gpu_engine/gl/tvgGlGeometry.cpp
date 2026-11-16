@@ -31,8 +31,8 @@
 
 bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Point& pt)
 {
-    ARRAY_FOREACH(c, clips) {
-        auto clip = static_cast<const GlShape*>(*c);
+    for (auto& c : clips) {
+        auto clip = static_cast<const GlShape*>(c);
         const auto& geometry = clip->geometry;
         if (clip->valid.fill) {
             auto p = geometry.fillWorld ? pt : pt * geometry.itransform();

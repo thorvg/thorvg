@@ -445,9 +445,8 @@ bool shapeStrokeBBox(SwShape& shape, const RenderShape* rshape, Point* pt4, cons
         strokeParseOutline(shape.stroke, *outline);
 
         auto func = [](SwStrokeBorder* border, const Matrix& m, Point& min, Point& max) {
-            ARRAY_FOREACH(pts, border->pts)
-            {
-                auto t = *pts * m;
+            for (auto& pts : border->pts) {
+                auto t = pts * m;
                 if (t.x < min.x) min.x = t.x;
                 if (t.x > max.x) max.x = t.x;
                 if (t.y < min.y) min.y = t.y;

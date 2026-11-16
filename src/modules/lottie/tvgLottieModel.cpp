@@ -183,10 +183,10 @@ void LottieSlot::reset()
 {
     if (!overridden) return;
 
-    ARRAY_FOREACH(pair, pairs) {
-        pair->obj->override(pair->prop, true);
-        delete(pair->prop);
-        pair->prop = nullptr;
+    for (auto& pair : pairs) {
+        pair.obj->override(pair.prop, true);
+        delete (pair.prop);
+        pair.prop = nullptr;
     }
     overridden = false;
 }
@@ -197,9 +197,9 @@ void LottieSlot::apply(LottieProperty* prop, bool byDefault)
     auto release = overridden || byDefault;
 
     //apply slot object to all targets
-    ARRAY_FOREACH(pair, pairs) {
-        auto backup = pair->obj->override(prop, release);
-        if (!release) pair->prop = backup;
+    for (auto& pair : pairs) {
+        auto backup = pair.obj->override(prop, release);
+        if (!release) pair.prop = backup;
     }
 
     if (!byDefault) overridden = true;
@@ -514,14 +514,14 @@ LottieGroup::LottieGroup(LottieObject::Type type) : LottieObject(type)
 
 void LottieGroup::clear()
 {
-    ARRAY_FOREACH(p, children) delete (*p);
+    for (auto& p : children) delete (p);
     children.reset();
 }
 
 LottieProperty* LottieGroup::property(uint16_t ix)
 {
-    ARRAY_FOREACH(p, children) {
-        auto child = static_cast<LottieObject*>(*p);
+    for (auto& p : children) {
+        auto child = static_cast<LottieObject*>(p);
         if (auto property = child->property(ix)) return property;
     }
 
@@ -531,7 +531,7 @@ LottieProperty* LottieGroup::property(uint16_t ix)
 
 void LottieGroup::prepare()
 {
-    if (children.count == 0) return;
+    if (children.empty()) return;
 
     size_t strokeCnt = 0;
     size_t fillCnt = 0;
@@ -611,9 +611,9 @@ float LottieRootLayer::remap(LottieComposition* comp, float frameNo, LottieExpre
 
 LottieLayer* LottieRootLayer::layerById(unsigned long id)
 {
-    ARRAY_FOREACH(p, children) {
-        if ((*p)->type != LottieObject::Type::Layer) continue;
-        auto layer = static_cast<LottieLayer*>(*p);
+    for (auto& p : children) {
+        if (p->type != LottieObject::Type::Layer) continue;
+        auto layer = static_cast<LottieLayer*>(p);
         if (layer->id == id) return layer;
     }
     return nullptr;
@@ -621,9 +621,9 @@ LottieLayer* LottieRootLayer::layerById(unsigned long id)
 
 LottieLayer* LottieRootLayer::layerByIdx(int16_t ix)
 {
-    ARRAY_FOREACH(p, children) {
-        if ((*p)->type != LottieObject::Type::Layer) continue;
-        auto layer = static_cast<LottieLayer*>(*p);
+    for (auto& p : children) {
+        if (p->type != LottieObject::Type::Layer) continue;
+        auto layer = static_cast<LottieLayer*>(p);
         if (layer->ix == ix) return layer;
     }
     return nullptr;
@@ -644,8 +644,8 @@ LottieLayer::~LottieLayer()
     //No need to free assets children because the Composition owns them.
     if (rid) children.clear();
 
-    ARRAY_FOREACH(p, masks) delete(*p);
-    ARRAY_FOREACH(p, effects) delete(*p);
+    for (auto& p : masks) delete (p);
+    for (auto& p : effects) delete (p);
 
     delete(transform);
     delete(audioCtrl);
@@ -704,13 +704,13 @@ LottieComposition::~LottieComposition()
     delete (root);
     tvg::free(name);
 
-    ARRAY_FOREACH(p, interpolators) {
-        tvg::free((*p)->key);
-        tvg::free(*p);
+    for (auto& p : interpolators) {
+        tvg::free(p->key);
+        tvg::free(p);
     }
 
-    ARRAY_FOREACH(p, assets) delete (*p);
-    ARRAY_FOREACH(p, fonts) delete (*p);
-    ARRAY_FOREACH(p, slots) delete (*p);
-    ARRAY_FOREACH(p, markers) delete (*p);
+    for (auto& p : assets) delete (p);
+    for (auto& p : fonts) delete (p);
+    for (auto& p : slots) delete (p);
+    for (auto& p : markers) delete (p);
 }

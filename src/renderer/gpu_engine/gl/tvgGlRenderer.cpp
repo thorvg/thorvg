@@ -94,8 +94,8 @@ static bool _skipRender(const Array<RenderData>& clips)
 
     // Clip geometries are prepared during update(), before this paint renders.
     // Clip masks are intersected, so one empty clip makes the paint invisible.
-    ARRAY_FOREACH(p, clips) {
-        auto clip = static_cast<GlShape*>(*p);
+    for (auto& p : clips) {
+        auto clip = static_cast<GlShape*>(p);
         auto flag = (clip->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
         if (!clip->geometry.drawable(flag)) return true;
     }
@@ -117,8 +117,7 @@ void GlRenderer::clearDisposes()
         mDisposed.textures.clear();
     }
 
-    ARRAY_FOREACH(p, mRenderPassStack)
-    delete (*p);
+    for (auto& p : mRenderPassStack) delete (p);
     mRenderPassStack.clear();
     mSolidBatch.clear();
     mStencilCoverBatch.clear();
@@ -131,13 +130,13 @@ void GlRenderer::flush()
 
     mRootTarget.reset();
 
-    ARRAY_FOREACH(p, mComposePool) delete(*p);
+    for (auto& p : mComposePool) delete (p);
     mComposePool.clear();
 
-    ARRAY_FOREACH(p, mBlendPool) delete(*p);
+    for (auto& p : mBlendPool) delete (p);
     mBlendPool.clear();
 
-    ARRAY_FOREACH(p, mComposeStack) delete(*p);
+    for (auto& p : mComposeStack) delete (p);
     mComposeStack.clear();
 }
 
@@ -171,7 +170,7 @@ GlRenderer::~GlRenderer()
     flush();
     textures.clear();
 
-    ARRAY_FOREACH(p, mPrograms) delete(*p);
+    for (auto& p : mPrograms) delete (p);
 
     _rendererMtx.lock();
     --_rendererCnt;

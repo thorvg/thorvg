@@ -105,8 +105,8 @@ struct SceneImpl : Scene
         if (fixed) renderer->partial(recover);
 
         if (effects) {
-            ARRAY_FOREACH(p, *effects) {
-                renderer->prepare(*p, transform);
+            for (auto& p : *effects) {
+                renderer->prepare(p, transform);
             }
         }
 
@@ -152,8 +152,8 @@ struct SceneImpl : Scene
             if (effects) {
                 //Notify the possibility of the direct composition of the effect result to the origin surface.
                 auto direct = (effects->count == 1) & (impl.marked(CompositionFlag::PostProcessing));
-                ARRAY_FOREACH(p, *effects) {
-                    if ((*p)->valid) renderer->render(cmp, *p, direct);
+                for (auto& p : *effects) {
+                    if (p->valid) renderer->render(cmp, p, direct);
                 }
             }
             renderer->endComposite(cmp);
@@ -180,8 +180,7 @@ struct SceneImpl : Scene
 
         //Extends the render region if post effects require
         if (effects) {
-            ARRAY_FOREACH(p, *effects) {
-                auto effect = *p;
+            for (auto effect : *effects) {
                 if (!effect->valid || !impl.renderer->region(effect)) continue;
                 // Each effect expands the output of the preceding effects.
                 pRegion.xMin += effect->extend.xMin;
@@ -259,31 +258,31 @@ struct SceneImpl : Scene
 
         if (effects) {
             dup->effects = new Array<RenderEffect*>;
-            ARRAY_FOREACH(p, *effects) {
+            for (auto& p : *effects) {
                 RenderEffect* ret = nullptr;
-                switch ((*p)->type) {
+                switch (p->type) {
                     case SceneEffect::GaussianBlur: {
-                        ret = new RenderEffectGaussianBlur(*(RenderEffectGaussianBlur*)(*p));
+                        ret = new RenderEffectGaussianBlur(*(RenderEffectGaussianBlur*)(p));
                         break;
                     }
                     case SceneEffect::MotionBlur: {
-                        ret = new RenderEffectMotionBlur(*(RenderEffectMotionBlur*)(*p));
+                        ret = new RenderEffectMotionBlur(*(RenderEffectMotionBlur*)(p));
                         break;
                     }
                     case SceneEffect::DropShadow: {
-                        ret = new RenderEffectDropShadow(*(RenderEffectDropShadow*)(*p));
+                        ret = new RenderEffectDropShadow(*(RenderEffectDropShadow*)(p));
                         break;
                     }
                     case SceneEffect::Fill: {
-                        ret = new RenderEffectFill(*(RenderEffectFill*)(*p));
+                        ret = new RenderEffectFill(*(RenderEffectFill*)(p));
                         break;
                     }
                     case SceneEffect::Tint: {
-                        ret = new RenderEffectTint(*(RenderEffectTint*)(*p));
+                        ret = new RenderEffectTint(*(RenderEffectTint*)(p));
                         break;
                     }
                     case SceneEffect::Tritone: {
-                        ret = new RenderEffectTritone(*(RenderEffectTritone*)(*p));
+                        ret = new RenderEffectTritone(*(RenderEffectTritone*)(p));
                         break;
                     }
                     default: break;
@@ -387,9 +386,9 @@ struct SceneImpl : Scene
     Result resetEffects(bool damage = true)
     {
         if (effects) {
-            ARRAY_FOREACH(p, *effects) {
-                if (impl.renderer) impl.renderer->dispose(*p);
-                delete(*p);
+            for (auto& p : *effects) {
+                if (impl.renderer) impl.renderer->dispose(p);
+                delete (p);
             }
             delete(effects);
             effects = nullptr;

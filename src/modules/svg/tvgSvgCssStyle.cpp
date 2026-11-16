@@ -123,7 +123,7 @@ static void _copyStyle(SvgStyleProperty* to, const SvgStyleProperty* from, bool 
         if (from->stroke.flags & SvgStrokeFlags::Dash) {
             to->stroke.dash.array.clear();
             to->stroke.dash.array.reserve(from->stroke.dash.array.count);
-            ARRAY_FOREACH(p, from->stroke.dash.array) to->stroke.dash.array.push(*p);
+            for (auto& p : from->stroke.dash.array) to->stroke.dash.array.push(p);
             to->stroke.flags |= SvgStrokeFlags::Dash;
             _markCopied(to, from, SvgStyleFlags::StrokeDashArray);
         }
@@ -215,9 +215,9 @@ void cssCopyStyleAttr(SvgNode* to, const SvgNode* from, bool overwrite)
 SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType type)
 {
     if (!style) return nullptr;
-    ARRAY_FOREACH(p, style->child) {
-        if ((*p)->type == type) {
-            if ((!title && !(*p)->id) || (title && (*p)->id && STR_AS((*p)->id, title))) return *p;
+    for (auto& p : style->child) {
+        if (p->type == type) {
+            if ((!title && !p->id) || (title && p->id && STR_AS(p->id, title))) return p;
         }
     }
     return nullptr;
@@ -227,9 +227,9 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title, SvgNodeType t
 SvgNode* cssFindStyleNode(const SvgNode* style, const char* title)
 {
     if (!style || !title) return nullptr;
-    ARRAY_FOREACH(p, style->child) {
-        if ((*p)->type == SvgNodeType::CssStyle) {
-            if ((*p)->id && STR_AS((*p)->id, title)) return *p;
+    for (auto& p : style->child) {
+        if (p->type == SvgNodeType::CssStyle) {
+            if (p->id && STR_AS(p->id, title)) return p;
         }
     }
     return nullptr;
@@ -238,10 +238,10 @@ SvgNode* cssFindStyleNode(const SvgNode* style, const char* title)
 
 void cssUpdateStyle(SvgNode* doc, SvgNode* style)
 {
-    ARRAY_FOREACH(p, doc->child) {
-        if (auto cssNode = cssFindStyleNode(style, nullptr, (*p)->type)) {
-            cssCopyStyleAttr(*p, cssNode);
+    for (auto& p : doc->child) {
+        if (auto cssNode = cssFindStyleNode(style, nullptr, p->type)) {
+            cssCopyStyleAttr(p, cssNode);
         }
-        cssUpdateStyle(*p, style);
+        cssUpdateStyle(p, style);
     }
 }

@@ -83,9 +83,7 @@ bool TextureMgr::flushPreprocess(GlStateCache& state, GLint restoreFbo)
     state.bindVertexArray(prepVao);
 
     int32_t currentFlags = 0;
-    ARRAY_FOREACH(p, prepRequests)
-    {
-        auto& request = *p;
+    for (auto& request : prepRequests) {
         if (request.width > prepStagingWidth || request.height > prepStagingHeight) {
             auto attach = (prepStagingWidth == 0);
             state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, prepStagingTex);

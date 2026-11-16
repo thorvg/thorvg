@@ -369,9 +369,9 @@ void WgRenderEffectPool::free(WgContext& context, WgRenderEffect* rdata)
 
 void WgRenderEffectPool::release(WgContext& context)
 {
-    ARRAY_FOREACH(p, mList) {
-        (*p)->release(context);
-        delete(*p);
+    for (auto& p : mList) {
+        p->release(context);
+        delete (p);
     }
     mPool.clear();
     mList.clear();
@@ -392,8 +392,8 @@ void WgStageBufferUniformBase::flush(WgContext& context, WGPUBuffer& buffer, con
 
 void WgStageBufferUniformBase::releaseBindGroups(WgContext& context)
 {
-    ARRAY_FOREACH(p, bbuffer)
-       context.layouts.releaseBindGroup(*p);
+    for (auto& p : bbuffer)
+        context.layouts.releaseBindGroup(p);
     bbuffer.clear();
 }
 
@@ -449,9 +449,9 @@ void WgStageBufferGeometry::appendSolidBatch(const Array<WgShape*>& renderShapes
         colors.vbuffer.grow(std::max(range.vertexCount, colors.vbuffer.reserved));
     range.colorOffset = colors.vbuffer.count * sizeof(RenderColor);
 
-    ARRAY_FOREACH(shape, renderShapes) {
-        const auto& mesh = (*shape)->shape.mesh;
-        colors.appendRepeated((*shape)->shape.solid.packedColor(), mesh.vbuffer.count);
+    for (auto& shape : renderShapes) {
+        const auto& mesh = shape->shape.mesh;
+        colors.appendRepeated(shape->shape.solid.packedColor(), mesh.vbuffer.count);
     }
 }
 
@@ -461,8 +461,8 @@ void WgStageBufferGeometry::appendBatch(const Array<WgShape*>& renderShapes, WgG
 
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
-    ARRAY_FOREACH(p, renderShapes) {
-        const auto& mesh = cover ? (*p)->bboxMesh : (*p)->shape.mesh;
+    for (auto& p : renderShapes) {
+        const auto& mesh = cover ? p->bboxMesh : p->shape.mesh;
         vertexCount += mesh.vbuffer.count;
         indexCount += mesh.ibuffer.count;
     }
@@ -483,8 +483,8 @@ void WgStageBufferGeometry::appendBatch(const Array<WgShape*>& renderShapes, WgG
     uint32_t baseVertex = 0;
     auto vertexDst = vbuffer.data + vbuffer.count;
     auto indexDst = ibuffer.data + ibuffer.count;
-    ARRAY_FOREACH(p, renderShapes) {
-        const auto& mesh = cover ? (*p)->bboxMesh : (*p)->shape.mesh;
+    for (auto& p : renderShapes) {
+        const auto& mesh = cover ? p->bboxMesh : p->shape.mesh;
         const uint32_t meshVertexBytes = mesh.vbuffer.count * sizeof(Point);
         memcpy(vertexDst, mesh.vbuffer.data, meshVertexBytes);
         vertexDst += meshVertexBytes;
@@ -513,8 +513,8 @@ void WgStageBufferGeometry::appendImageBatch(const Array<WgImage*>& renderImages
 
     uint32_t vertexCount = 0;
     uint32_t indexCount = 0;
-    ARRAY_FOREACH(p, renderImages) {
-        const auto& mesh = (*p)->mesh;
+    for (auto& p : renderImages) {
+        const auto& mesh = p->mesh;
         assert(mesh.vbuffer.count == mesh.tbuffer.count);
         vertexCount += mesh.vbuffer.count;
         indexCount += mesh.ibuffer.count;
@@ -538,8 +538,8 @@ void WgStageBufferGeometry::appendImageBatch(const Array<WgImage*>& renderImages
     auto vertexDst = vbuffer.data + range.vertexOffset;
     auto texCoordDst = vbuffer.data + range.texCoordOffset;
     auto indexDst = ibuffer.data + range.indexOffset;
-    ARRAY_FOREACH(p, renderImages) {
-        const auto& mesh = (*p)->mesh;
+    for (auto& p : renderImages) {
+        const auto& mesh = p->mesh;
         const uint32_t meshVertexBytes = mesh.vbuffer.count * sizeof(Point);
         memcpy(vertexDst, mesh.vbuffer.data, meshVertexBytes);
         memcpy(texCoordDst, mesh.tbuffer.data, meshVertexBytes);

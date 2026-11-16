@@ -162,8 +162,8 @@ GlStencilCoverTask::GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cove
 
 GlStencilCoverTask::~GlStencilCoverTask()
 {
-    ARRAY_FOREACH(p, stencilTasks) delete (*p);
-    ARRAY_FOREACH(p, coverTasks) delete (*p);
+    for (auto& p : stencilTasks) delete (p);
+    for (auto& p : coverTasks) delete (p);
     stencilTasks.clear();
     coverTasks.clear();
 }
@@ -184,7 +184,7 @@ void GlStencilCoverTask::run(GlStateCache& state)
     }
     state.colorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
-    ARRAY_FOREACH(p, stencilTasks) (*p)->run(state);
+    for (auto& p : stencilTasks) p->run(state);
 
     if (stencilMode == GlStencilMode::FillEvenOdd) {
         state.stencilFunc(GL_NOTEQUAL, 0x00, 0x01);
@@ -196,7 +196,7 @@ void GlStencilCoverTask::run(GlStateCache& state)
 
     state.colorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-    ARRAY_FOREACH(p, coverTasks) (*p)->run(state);
+    for (auto& p : coverTasks) p->run(state);
 
     state.disable(GL_STENCIL_TEST);
 }
@@ -204,8 +204,8 @@ void GlStencilCoverTask::run(GlStateCache& state)
 
 void GlStencilCoverTask::normalizeDrawDepth(int32_t maxDepth)
 {
-    ARRAY_FOREACH(p, coverTasks) (*p)->normalizeDrawDepth(maxDepth);
-    ARRAY_FOREACH(p, stencilTasks) (*p)->normalizeDrawDepth(maxDepth);
+    for (auto& p : coverTasks) p->normalizeDrawDepth(maxDepth);
+    for (auto& p : stencilTasks) p->normalizeDrawDepth(maxDepth);
 }
 
 
@@ -222,7 +222,7 @@ GlComposeTask::GlComposeTask(GlProgram* program, GLuint target, GlRenderTarget* 
 
 GlComposeTask::~GlComposeTask()
 {
-    ARRAY_FOREACH(p, tasks) delete (*p);
+    for (auto& p : tasks) delete (p);
     tasks.clear();
 }
 
@@ -243,7 +243,7 @@ void GlComposeTask::run(GlStateCache& state)
     state.viewport(0, 0, renderWidth, renderHeight);
     state.scissor(0, 0, renderWidth, renderHeight);
 
-    ARRAY_FOREACH(p, tasks) (*p)->run(state);
+    for (auto& p : tasks) p->run(state);
 
 #if defined(THORVG_GL_TARGET_GLES)
     // only OpenGLES has tiled base framebuffer and discard function

@@ -58,9 +58,9 @@ void WgPaintPool::recycle(WgImage* image)
 
 void WgPaintPool::release(WgContext& context)
 {
-    ARRAY_FOREACH(p, list) {
-        (*p)->release(context);
-        delete (*p);
+    for (auto& p : list) {
+        p->release(context);
+        delete (p);
     }
     shapes.clear();
     images.clear();
@@ -75,8 +75,8 @@ struct WgIntersector
 {
     bool intersect(const Array<WgPaint*>& clips, const Point& pt)
     {
-        ARRAY_FOREACH(c, clips) {
-            auto clip = static_cast<const WgShape*>(*c);
+        for (auto& c : clips) {
+            auto clip = static_cast<const WgShape*>(c);
             const auto& mesh = clip->shape.mesh;
             if (!clip->shape.bbox.inside(pt) || !gpuPointInFillMesh(pt, mesh.vbuffer.data, mesh.ibuffer.data, mesh.ibuffer.count, clip->fillRule)) return false;
         }
@@ -170,8 +170,8 @@ void WgRenderer::release()
 
 void WgRenderer::disposeObjects()
 {
-    ARRAY_FOREACH(p, mDisposedPaints) {
-        auto paint = (WgPaint*)(*p);
+    for (auto& p : mDisposedPaints) {
+        auto paint = (WgPaint*)(p);
         paint->clips.clear();
         if (paint->type() == Type::Shape) {
             static_cast<WgShape*>(paint)->reset();
@@ -398,9 +398,9 @@ bool WgRenderer::postRender()
     // clear the render tasks tree
     mSceneTaskStack.pop();
     mRenderTargetStack.pop();
-    ARRAY_FOREACH(p, mRenderTaskList) { delete (*p); };
+    for (auto& p : mRenderTaskList) delete (p);
     mRenderTaskList.clear();
-    ARRAY_FOREACH(p, mCompositorList) { delete (*p); };
+    for (auto& p : mCompositorList) delete (p);
     mCompositorList.clear();
     return true;
 }

@@ -123,15 +123,15 @@ struct TaskSchedulerImpl
 
     ~TaskSchedulerImpl()
     {
-        ARRAY_FOREACH(p, taskQueues) {
-            (*p)->complete();
+        for (auto& p : taskQueues) {
+            p->complete();
         }
-        ARRAY_FOREACH(p, threads) {
-            (*p)->join();
-            delete(*p);
+        for (auto& p : threads) {
+            p->join();
+            delete (p);
         }
-        ARRAY_FOREACH(p, taskQueues) {
-            delete(*p);
+        for (auto& p : taskQueues) {
+            delete (p);
         }
     }
 
@@ -139,8 +139,7 @@ struct TaskSchedulerImpl
     {
         lock_guard<mutex> lock(task->mtx);
 
-        ARRAY_FOREACH(p, task->nexts) {
-            auto waiter = *p;
+        for (auto waiter : task->nexts) {
             bool runnable;
             {
                 lock_guard<mutex> lock(waiter->mtx);
