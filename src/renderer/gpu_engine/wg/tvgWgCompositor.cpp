@@ -186,19 +186,40 @@ bool WgCompositor::copyBackdrop(WgContext& context, BlendMethod method)
     const WGPUTexelCopyTextureInfo texDst{.texture = targetTemp0.texture};
     const WGPUExtent3D copySize{.width = src->width, .height = src->height, .depthOrArrayLayers = 1};
     wgpuCommandEncoderCopyTextureToTexture(commandEncoder, &texSrc, &texDst, &copySize);
-    beginRenderPassMS(context, commandEncoder, *currentTargetState, false);
+    beginRenderPassMS(context, *currentTargetState, false);
     return true;
 }
 
-void WgCompositor::beginRenderPassMS(WgContext& context, WGPUCommandEncoder commandEncoder, const WgRenderTargetState& targetState, bool clearBuffer)
+void WgCompositor::beginCommands(WgContext& context)
+{
+    commandEncoder = context.createCommandEncoder();
+    renderPassCount = 0;
+}
+
+void WgCompositor::submitCommands(WgContext& context)
+{
+    context.submitCommandEncoder(commandEncoder);
+    context.releaseCommandEncoder(commandEncoder);
+}
+
+void WgCompositor::beginPass(WgContext& context, const WGPURenderPassDescriptor& desc)
+{
+    // Leave room in Metal's command buffer queue for copies between passes.
+    constexpr uint32_t maxPasses = 512;
+    if (renderPassCount == maxPasses) {
+        submitCommands(context);
+        beginCommands(context);
+    }
+    ++renderPassCount;
+    renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &desc);
+}
+
+void WgCompositor::beginRenderPassMS(WgContext& context, const WgRenderTargetState& targetState, bool clearBuffer)
 {
     auto target = targetState.target;
     if (renderPassEncoder && currentTargetState == &targetState && !clearBuffer) return;
-    // we must to end render pass first
     endRenderPass();
     currentTargetState = &targetState;
-    // start new render pass
-    this->commandEncoder = commandEncoder;
     const WGPURenderPassDepthStencilAttachment depthStencilAttachment{
         .view = getDepthStencilView(context, target->width, target->height, 4),
         .depthLoadOp = WGPULoadOp_Clear,
@@ -215,12 +236,12 @@ void WgCompositor::beginRenderPassMS(WgContext& context, WGPUCommandEncoder comm
         .storeOp = WGPUStoreOp_Store,
         .clearValue = {0.0, 0.0, 0.0, 0.0}};
     WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
-    renderPassEncoder = wgpuCommandEncoderBeginRenderPass(commandEncoder, &renderPassDesc);
+    beginPass(context, renderPassDesc);
     assert(renderPassEncoder);
     wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, stageBufferGeometry.vbuffer_gpu, targetState.transformOffset, 4 * sizeof(float));
 }
 
-void WgCompositor::beginRenderPass(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* target, bool clearBuffer)
+void WgCompositor::beginRenderPass(WgContext& context, WgRenderTarget* target, bool clearBuffer)
 {
     assert(!renderPassEncoder);
     currentTargetState = nullptr;
@@ -237,7 +258,7 @@ void WgCompositor::beginRenderPass(WgContext& context, WGPUCommandEncoder encode
         .storeOp = WGPUStoreOp_Store,
     };
     const WGPURenderPassDescriptor renderPassDesc{ .colorAttachmentCount = 1, .colorAttachments = &colorAttachment, .depthStencilAttachment = &depthStencilAttachment };
-    renderPassEncoder = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
+    beginPass(context, renderPassDesc);
     // Native backends require even the unused vertex slot to be bound.
     wgpuRenderPassEncoderSetVertexBuffer(renderPassEncoder, 0, stageBufferGeometry.vbuffer_gpu, 0, 4 * sizeof(float));
 }
@@ -311,7 +332,7 @@ void WgCompositor::requestScene(WgRenderTargetState& targetState, WgMesh& mesh, 
 void WgCompositor::copyEffectTexture(WgContext& context, WgRenderTarget* dst, const WgRenderTargetState& src, bool clear)
 {
     if (clear) {
-        beginRenderPass(context, commandEncoder, dst, true);
+        beginRenderPass(context, dst, true);
         endRenderPass();
     }
     const WGPUTexelCopyTextureInfo texSrc{.texture = src.target->texture};
@@ -952,7 +973,7 @@ bool WgCompositor::motionBlur(WgContext& context, const WgRenderTargetState& tar
     wgpuQueueWriteBuffer(context.queue, effect->bufferParams, 4 * sizeof(float), region, sizeof(region));
 
     copyEffectTexture(context, &targetTemp0, targetState);
-    beginRenderPass(context, commandEncoder, dst);
+    beginRenderPass(context, dst);
     {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.getBindGroupTextureLinear(context), 0, nullptr);
@@ -973,7 +994,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, const WgRenderTargetState& t
 
     copyEffectTexture(context, &targetTemp0, targetState, true);
     if (blur->direction == 0) {  // both
-        beginRenderPass(context, commandEncoder, &targetTemp1, true);
+        beginRenderPass(context, &targetTemp1, true);
         {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
@@ -982,7 +1003,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, const WgRenderTargetState& t
             drawMeshImage(context, &meshDataBlit);
         }
         endRenderPass();
-        beginRenderPass(context, commandEncoder, dst);
+        beginRenderPass(context, dst);
         {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp1.bgTexture, 0, nullptr);
@@ -992,7 +1013,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, const WgRenderTargetState& t
         }
         endRenderPass();
     } else if (blur->direction == 1) {  // horizontal
-        beginRenderPass(context, commandEncoder, dst);
+        beginRenderPass(context, dst);
         {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
@@ -1002,7 +1023,7 @@ bool WgCompositor::gaussianBlur(WgContext& context, const WgRenderTargetState& t
         }
         endRenderPass();
     } else if (blur->direction == 2) {  // vertical
-        beginRenderPass(context, commandEncoder, dst);
+        beginRenderPass(context, dst);
         {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
@@ -1025,7 +1046,7 @@ bool WgCompositor::dropShadow(WgContext& context, const WgRenderTargetState& tar
     copyEffectTexture(context, &targetTemp1, targetState, true);
     if (!tvg::zero(shadow->sigma)) {
         // horizontal
-        beginRenderPass(context, commandEncoder, &targetTemp0, true);
+        beginRenderPass(context, &targetTemp0, true);
         {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp1.bgTexture, 0, nullptr);
@@ -1035,7 +1056,7 @@ bool WgCompositor::dropShadow(WgContext& context, const WgRenderTargetState& tar
         }
         endRenderPass();
         // vertical
-        beginRenderPass(context, commandEncoder, &targetTemp1);
+        beginRenderPass(context, &targetTemp1);
         {
             wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, aabb.x(), aabb.y(), aabb.w(), aabb.h());
             wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
@@ -1047,7 +1068,7 @@ bool WgCompositor::dropShadow(WgContext& context, const WgRenderTargetState& tar
     }
     // drop shadow
     copyEffectTexture(context, &targetTemp0, targetState);
-    beginRenderPass(context, commandEncoder, dst);
+    beginRenderPass(context, dst);
     {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
@@ -1067,7 +1088,7 @@ bool WgCompositor::fillEffect(WgContext& context, const WgRenderTargetState& tar
     auto dst = targetState.target;
 
     copyEffectTexture(context, &targetTemp0, targetState);
-    beginRenderPass(context, commandEncoder, dst);
+    beginRenderPass(context, dst);
     {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
@@ -1087,7 +1108,7 @@ bool WgCompositor::tintEffect(WgContext& context, const WgRenderTargetState& tar
     auto dst = targetState.target;
 
     copyEffectTexture(context, &targetTemp0, targetState);
-    beginRenderPass(context, commandEncoder, dst);
+    beginRenderPass(context, dst);
     {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
@@ -1107,7 +1128,7 @@ bool WgCompositor::tritoneEffect(WgContext& context, const WgRenderTargetState& 
     auto dst = targetState.target;
 
     copyEffectTexture(context, &targetTemp0, targetState);
-    beginRenderPass(context, commandEncoder, dst);
+    beginRenderPass(context, dst);
     {
         wgpuRenderPassEncoderSetScissorRect(renderPassEncoder, 0, 0, aabb.w(), aabb.h());
         wgpuRenderPassEncoderSetBindGroup(renderPassEncoder, 0, targetTemp0.bgTexture, 0, nullptr);
