@@ -69,6 +69,7 @@ private:
     // current render pass handles
     WGPURenderPassEncoder renderPassEncoder{};
     WGPUCommandEncoder commandEncoder{};
+    uint32_t renderPassCount = 0;
     const WgRenderTargetState* currentTargetState{};
     // intermediate render targets
     WgRenderTarget targetTemp0;
@@ -80,6 +81,8 @@ private:
     uint32_t width{};
     uint32_t height{};
     
+    void beginPass(WgContext& context, const WGPURenderPassDescriptor& desc);
+
     // viewport utilities
     void setScissorRegion(const RenderRegion& region);
     WGPUTextureView getDepthStencilView(WgContext& context, uint32_t width, uint32_t height, uint32_t sampleCount);
@@ -124,8 +127,10 @@ public:
     void resize(WgContext& context, uint32_t width, uint32_t height);
 
     // render passes workflow
-    void beginRenderPassMS(WgContext& context, WGPUCommandEncoder encoder, const WgRenderTargetState& targetState, bool clearBuffer);
-    void beginRenderPass(WgContext& context, WGPUCommandEncoder encoder, WgRenderTarget* target, bool clearBuffer = false);
+    void beginCommands(WgContext& context);
+    void submitCommands(WgContext& context);
+    void beginRenderPassMS(WgContext& context, const WgRenderTargetState& targetState, bool clearBuffer);
+    void beginRenderPass(WgContext& context, WgRenderTarget* target, bool clearBuffer = false);
     void endRenderPass();
 
     // stage buffers operations

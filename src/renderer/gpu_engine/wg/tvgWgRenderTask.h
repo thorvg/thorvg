@@ -30,7 +30,7 @@ struct WgRenderTask
 {
     virtual ~WgRenderTask() {}
     virtual void stage(WgCompositor& compositor) = 0;
-    virtual void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) = 0;
+    virtual void run(WgContext& context, WgCompositor& compositor) = 0;
 };
 
 // task for single shape rendering
@@ -45,7 +45,7 @@ struct WgPaintTask : WgRenderTask
     // stage all resources used by this paint
     void stage(WgCompositor& compositor) override;
     // apply shape execution, including custom blending and clipping
-    void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
+    void run(WgContext& context, WgCompositor& compositor) override;
 };
 
 struct WgBatchTask : WgRenderTask
@@ -57,7 +57,7 @@ struct WgBatchTask : WgRenderTask
 
     WgBatchTask(WgShape* first, WgShape* second, bool stencilBatch);
     void stage(WgCompositor& compositor) override;
-    void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
+    void run(WgContext& context, WgCompositor& compositor) override;
 };
 
 struct WgImageBatchTask : WgRenderTask
@@ -67,7 +67,7 @@ struct WgImageBatchTask : WgRenderTask
 
     WgImageBatchTask(WgImage* first, WgImage* second);
     void stage(WgCompositor& compositor) override;
-    void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
+    void run(WgContext& context, WgCompositor& compositor) override;
 };
 
 // task for scene rendering with blending, composition and effect
@@ -87,8 +87,8 @@ struct WgSceneTask : WgRenderTask
     WgSceneTask(WgRenderTarget* renderTarget, WgCompose* compose, WgSceneTask* parent) :
         parent(parent), targetState{renderTarget, compose->aabb}, compose(compose) {}
     void stage(WgCompositor& compositor) override;
-    void run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder) override;
-    void runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder);
+    void run(WgContext& context, WgCompositor& compositor) override;
+    void runChildren(WgContext& context, WgCompositor& compositor);
     void runEffect(WgContext& context, WgCompositor& compositor, const RenderEffect* effect);
 };
 

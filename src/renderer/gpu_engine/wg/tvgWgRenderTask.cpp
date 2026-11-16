@@ -40,7 +40,7 @@ void WgBatchTask::stage(WgCompositor& compositor)
     else compositor.requestSolidBatch(shapes, solidRange);
 }
 
-void WgBatchTask::run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder)
+void WgBatchTask::run(WgContext&, WgCompositor& compositor)
 {
     if (stencilBatch) compositor.renderStencilBatch(shapes, stencilRange);
     else compositor.renderSolidBatch(solidRange);
@@ -61,7 +61,7 @@ void WgImageBatchTask::stage(WgCompositor& compositor)
     compositor.requestImageBatch(images, range);
 }
 
-void WgImageBatchTask::run(WgContext&, WgCompositor& compositor, WGPUCommandEncoder)
+void WgImageBatchTask::run(WgContext&, WgCompositor& compositor)
 {
     compositor.renderImageBatch(images[0], range);
 }
@@ -76,7 +76,7 @@ void WgPaintTask::stage(WgCompositor& compositor)
     if (renderPaint->type() == tvg::Type::Picture) compositor.requestImage((WgImage*)renderPaint);
 }
 
-void WgPaintTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
+void WgPaintTask::run(WgContext& context, WgCompositor& compositor)
 {
     if (renderPaint->type() == tvg::Type::Shape) compositor.renderShape(context, (WgShape*)renderPaint, blendMethod);
     if (renderPaint->type() == tvg::Type::Picture) compositor.renderImage(context, (WgImage*)renderPaint, blendMethod);
@@ -97,12 +97,12 @@ void WgSceneTask::stage(WgCompositor& compositor)
 }
 
 // run all, including all shapes drawing, blending, composition and effect
-void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
+void WgSceneTask::run(WgContext& context, WgCompositor& compositor)
 {
     if (targetState.bounds.invalid()) return;
     // Preserve the canvas contents when clearing is disabled; temporary scenes always clear.
-    compositor.beginRenderPassMS(context, encoder, targetState, clearBuffer);
-    runChildren(context, compositor, encoder);  // run all children (scenes and shapes)
+    compositor.beginRenderPassMS(context, targetState, clearBuffer);
+    runChildren(context, compositor);  // run all children (scenes and shapes)
     compositor.endRenderPass();
 
     // apply effect for current scene
@@ -114,23 +114,23 @@ void WgSceneTask::run(WgContext& context, WgCompositor& compositor, WGPUCommandE
 
     // scene blending
     if (compose->method == MaskMethod::None) {
-        compositor.beginRenderPassMS(context, encoder, dstScene->targetState, false);
+        compositor.beginRenderPassMS(context, dstScene->targetState, false);
         compositor.renderScene(context, targetState.target, compose, composeMesh);
         // scene composition (for scenes, that have a handle to mask)
     } else if (maskScene) {
-        compositor.beginRenderPassMS(context, encoder, dstScene->targetState, false);
+        compositor.beginRenderPassMS(context, dstScene->targetState, false);
         compositor.composeScene(context, targetState.target, maskScene->targetState.target, compose, composeMesh);
     }
 }
 
 
-void WgSceneTask::runChildren(WgContext& context, WgCompositor& compositor, WGPUCommandEncoder encoder)
+void WgSceneTask::runChildren(WgContext& context, WgCompositor& compositor)
 {
     for (auto renderTask : children) {
         // we need to restore current render pass without clear
-        compositor.beginRenderPassMS(context, encoder, targetState, false);
+        compositor.beginRenderPassMS(context, targetState, false);
         // run children (shape or scene)
-        renderTask->run(context, compositor, encoder);
+        renderTask->run(context, compositor);
     }
 }
 
