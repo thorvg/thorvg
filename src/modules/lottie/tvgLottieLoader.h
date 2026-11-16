@@ -59,6 +59,8 @@ struct LottieLoader : AnimLoader, Task
     Result open(const char* path, const LoaderOps& ops) override;
     Result open(const char* data, uint32_t size, const LoaderOps& ops) override;
     bool resize(Paint* paint, float w, float h) override;
+    bool sync() override;
+    bool cacheable() override { return false; }
     bool read() override;
     Paint* paint() override;
 
@@ -71,7 +73,6 @@ struct LottieLoader : AnimLoader, Task
     bool frame(float no) override;
     float curFrame() override;
     float duration() override;
-    bool sync() override;
 
     //Marker Supports
     uint32_t markersCnt();
