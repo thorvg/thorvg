@@ -384,16 +384,10 @@ bool WgRenderer::postRender()
     // flush stage data to gpu
     mCompositor.flush(mContext);
 
-    // create command encoder for drawing
-    WGPUCommandEncoder commandEncoder = mContext.createCommandEncoder();
-
-    // run rendering (all the fun is here)
+    mCompositor.beginCommands(mContext);
     sceneTaskRoot->clearBuffer = mClearBuffer;
-    sceneTaskRoot->run(mContext, mCompositor, commandEncoder);
-
-    // execute and release command encoder
-    mContext.submitCommandEncoder(commandEncoder);
-    mContext.releaseCommandEncoder(commandEncoder);
+    sceneTaskRoot->run(mContext, mCompositor);
+    mCompositor.submitCommands(mContext);
 
     // clear the render tasks tree
     mSceneTaskStack.pop();
