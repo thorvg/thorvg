@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <limits.h>
 #include <memory>
 #include "tvgCoverage.h"
 #include "tvgSwCommon.h"
@@ -96,6 +97,156 @@ CoverageStatus generateFillCoverage(const RenderShape& shape, const Matrix& tran
 CoverageStatus generateStrokeCoverage(const RenderShape& shape, const Matrix& transform, const RenderRegion& viewport, CoverageMap& map)
 {
     return _generate(shape, transform, viewport, true, map);
+}
+
+static void _appendEdge(Point a, Point b, const RenderRegion& bounds, Array<Point>& edges)
+{
+    if (a.y == b.y || std::max(a.y, b.y) <= bounds.yMin || std::min(a.y, b.y) >= bounds.yMax) return;
+    // Vertical clipping preserves the directed integral. Do not clamp x: an edge
+    // left of the viewport still contributes winding throughout the visible row.
+    auto d = b - a;
+    auto t0 = tvg::clamp((float(bounds.yMin) - a.y) / d.y, 0.0f, 1.0f);
+    auto t1 = tvg::clamp((float(bounds.yMax) - a.y) / d.y, 0.0f, 1.0f);
+    edges.push(a + d * std::min(t0, t1));
+    edges.push(a + d * std::max(t0, t1));
+}
+
+namespace
+{
+
+constexpr auto RLE_SUBPIXELS = 256;
+
+struct FixedPoint
+{
+    int64_t x, y;
+
+    Point toPoint() const
+    {
+        return {float(x) / RLE_SUBPIXELS, float(y) / RLE_SUBPIXELS};
+    }
+};
+
+struct FixedCubic
+{
+    FixedPoint start, ctrl1, ctrl2, end;
+};
+
+}
+
+static FixedPoint _midpoint(const FixedPoint& a, const FixedPoint& b)
+{
+    return {(a.x + b.x) >> 1, (a.y + b.y) >> 1};
+}
+
+// Match the chord-distance and acute-angle tests in the FreeType-derived
+// software rasterizer's _cubicTo() (tvgSwRle.cpp).
+static bool _cubicNeedsSplit(const FixedCubic& cubic)
+{
+    auto dx = cubic.start.x - cubic.end.x;
+    auto dy = cubic.start.y - cubic.end.y;
+    auto ax = std::abs(dx);
+    auto ay = std::abs(dy);
+    auto length = std::max(ax, ay) + ((3 * std::min(ax, ay)) >> 3);
+    if (length > SHRT_MAX) return true;
+
+    auto limit = length * (RLE_SUBPIXELS / 6);
+    auto needsSplit = [&](const FixedPoint& control) {
+        auto x = control.x - cubic.end.x;
+        auto y = control.y - cubic.end.y;
+        // An offset this large already fails the acute-angle test.
+        if (std::abs(x) > 2 * SHRT_MAX || std::abs(y) > 2 * SHRT_MAX) return true;
+        return std::abs(dy * x - dx * y) > limit || x * (x - dx) + y * (y - dy) > 0;
+    };
+    return needsSplit(cubic.ctrl2) || needsSplit(cubic.ctrl1);
+}
+
+static bool _curveEdges(const SwPoint& from, const SwPoint* points, const RenderRegion& bounds, Array<Point>& edges)
+{
+    auto upscale = [](const SwPoint& p) {
+        return FixedPoint{int64_t(p.x) * (RLE_SUBPIXELS / 64), int64_t(p.y) * (RLE_SUBPIXELS / 64)};
+    };
+    FixedCubic stack[32];
+    uint32_t pending = 1, segments = 0;
+    stack[0] = {upscale(from), upscale(points[0]), upscale(points[1]), upscale(points[2])};
+    while (pending) {
+        auto cubic = stack[--pending];
+        if (!_cubicNeedsSplit(cubic)) {
+            _appendEdge(cubic.start.toPoint(), cubic.end.toPoint(), bounds, edges);
+            ++segments;
+            continue;
+        }
+
+        if (pending + 2 > 32 || segments + pending + 2 > 16384) return false;
+        auto a = _midpoint(cubic.start, cubic.ctrl1);
+        auto b = _midpoint(cubic.ctrl1, cubic.ctrl2);
+        auto c = _midpoint(cubic.ctrl2, cubic.end);
+        auto d = _midpoint(a, b);
+        auto e = _midpoint(b, c);
+        auto mid = _midpoint(d, e);
+        // Push the right half first so the contour is emitted in order.
+        stack[pending++] = {mid, e, c, cubic.end};
+        stack[pending++] = {cubic.start, a, d, mid};
+    }
+    return true;
+}
+
+CoverageStatus generateCoverageEdges(const RenderShape& shape, const Matrix& transform, const RenderRegion& viewport, bool stroke, CoverageMap& map, Array<Point>& edges)
+{
+    map.reset();
+    edges.clear();
+    if (viewport.invalid() || (stroke && shape.strokeWidth() <= 0.0f)) return CoverageStatus::Empty;
+
+    // Reuse trim/dash/stroke construction and the SW 26.6 coordinate export,
+    // but allocate neither raster cells nor pixel spans.
+    SwMpool pool(0, false);
+    SwShape sw;
+    auto release = [](SwShape* value) { shapeFree(*value); };
+    std::unique_ptr<SwShape, decltype(release)> cleanup(&sw, release);
+    SwOutline* outline;
+    if (stroke) {
+        outline = shapeGenStrokeOutline(sw, &shape, transform, viewport, map.bounds, &pool, 0);
+    } else {
+        outline = shapeGenOutline(sw, &shape, transform, viewport, map.bounds, &pool, 0, true) ? sw.outline : nullptr;
+    }
+    if (!outline || map.bounds.invalid()) return CoverageStatus::Empty;
+
+    auto pts = outline->out.data;
+    SwPoint start{}, previous{};
+    bool open = false;
+    for (auto cmd : outline->path->cmds) {
+        switch (cmd) {
+            case PathCommand::MoveTo:
+                if (open) _appendEdge(previous.toPoint(), start.toPoint(), map.bounds, edges);
+                start = previous = *pts++;
+                open = true;
+                break;
+            case PathCommand::LineTo: {
+                auto next = *pts++;
+                _appendEdge(previous.toPoint(), next.toPoint(), map.bounds, edges);
+                previous = next;
+                open = true;
+                break;
+            }
+            case PathCommand::CubicTo: {
+                if (!_curveEdges(previous, pts, map.bounds, edges)) {
+                    edges.clear();
+                    map.reset();
+                    return CoverageStatus::Error;
+                }
+                previous = pts[2];
+                pts += 3;
+                open = true;
+                break;
+            }
+            case PathCommand::Close:
+                if (open) _appendEdge(previous.toPoint(), start.toPoint(), map.bounds, edges);
+                previous = start;
+                open = false;
+                break;
+        }
+    }
+    if (open) _appendEdge(previous.toPoint(), start.toPoint(), map.bounds, edges);
+    return edges.empty() ? CoverageStatus::Empty : CoverageStatus::Ready;
 }
 
 CoverageStatus clipCoverage(CoverageMap& map, const CoverageMap& clip)

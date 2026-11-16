@@ -50,6 +50,8 @@ struct CoverageMap
 // Internal renderer inputs follow SW contracts. Each call replaces map with cropped coverage, independent of paint.
 CoverageStatus generateFillCoverage(const RenderShape& shape, const Matrix& transform, const RenderRegion& viewport, CoverageMap& map);
 CoverageStatus generateStrokeCoverage(const RenderShape& shape, const Matrix& transform, const RenderRegion& viewport, CoverageMap& map);
+// Device-space endpoint pairs, before pixel coverage expansion. Stroke outlines use NonZero.
+CoverageStatus generateCoverageEdges(const RenderShape& shape, const Matrix& transform, const RenderRegion& viewport, bool stroke, CoverageMap& map, Array<Point>& edges);
 CoverageStatus clipCoverage(CoverageMap& map, const CoverageMap& clip);
 bool intersectsCoverage(const CoverageMap& map, const RenderRegion& region);
 

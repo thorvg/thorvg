@@ -27,7 +27,7 @@
 
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
 
-enum class GlCoverageFormat : uint8_t {Dense, Runs, Rect};
+enum class GlCoverageFormat : uint8_t {Dense, Runs, Rect, Edges, EdgesEvenOdd};
 
 struct GlCoverageData
 {

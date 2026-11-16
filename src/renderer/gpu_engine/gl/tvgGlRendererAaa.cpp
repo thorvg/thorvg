@@ -74,6 +74,8 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
     auto update = changed || (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Stroke | RenderUpdateFlag::Clip));
     auto updateFill = update || shape->geometry.fillRule != rshape.rule || shape->isClipper != clipper;
     shape->isClipper = clipper;
+    shape->gpuCoverage = !clipper && clips.empty() && coverageAtlas.gpuSupported() &&
+                         vport.w() <= coverageAtlas.maxTextureSize() && vport.h() <= coverageAtlas.maxTextureSize();
     // Keep stroke selection even when clipping removes its entire coverage.
     shape->clipStroke = rshape.stroke && !tvg::zero(rshape.stroke->width) && !tvg::zero(rshape.stroke->trim.begin - rshape.stroke->trim.end) &&
                         rshape.stroke->width * sqrtf(transform.e11 * transform.e11 + transform.e12 * transform.e12) > 0.0f;
@@ -97,14 +99,27 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
 void GlShape::run(TVG_UNUSED unsigned tid)
 {
     if (updateFill) {
-        if (fillCoverage.format == GlCoverageFormat::Rect) fillCoverage.format = GlCoverageFormat::Dense;
+        fillCoverage.format = GlCoverageFormat::Dense;
+        fillCoverage.edges.clear();
         if (isClipper || !clips.empty() || !_rectCoverage(*rshape, geometry.matrix, geometry.viewport, fillCoverage)) {
-            fillCoverage.status = generateFillCoverage(*rshape, geometry.matrix, geometry.viewport, fillCoverage.map);
+            fillCoverage.status = gpuCoverage ? generateCoverageEdges(*rshape, geometry.matrix, geometry.viewport, false, fillCoverage.map, fillCoverage.edges) : CoverageStatus::Error;
+            if (fillCoverage.status == CoverageStatus::Error) {
+                fillCoverage.status = generateFillCoverage(*rshape, geometry.matrix, geometry.viewport, fillCoverage.map);
+            } else if (fillCoverage.status == CoverageStatus::Ready) {
+                fillCoverage.format = rshape->rule == FillRule::EvenOdd ? GlCoverageFormat::EdgesEvenOdd : GlCoverageFormat::Edges;
+            }
             if (!clips.empty() && fillCoverage.status == CoverageStatus::Ready) fillCoverage.status = GlRenderer::clipCoverage(fillCoverage.map, clips);
         }
     }
     if (updateStroke) {
-        strokeCoverage.status = generateStrokeCoverage(*rshape, geometry.matrix, geometry.viewport, strokeCoverage.map);
+        strokeCoverage.format = GlCoverageFormat::Dense;
+        strokeCoverage.edges.clear();
+        strokeCoverage.status = gpuCoverage ? generateCoverageEdges(*rshape, geometry.matrix, geometry.viewport, true, strokeCoverage.map, strokeCoverage.edges) : CoverageStatus::Error;
+        if (strokeCoverage.status == CoverageStatus::Error) {
+            strokeCoverage.status = generateStrokeCoverage(*rshape, geometry.matrix, geometry.viewport, strokeCoverage.map);
+        } else if (strokeCoverage.status == CoverageStatus::Ready) {
+            strokeCoverage.format = GlCoverageFormat::Edges;
+        }
         if (!clips.empty() && strokeCoverage.status == CoverageStatus::Ready) strokeCoverage.status = GlRenderer::clipCoverage(strokeCoverage.map, clips);
     }
     geometry.fillBBox = fillCoverage.map.bounds;
@@ -266,6 +281,10 @@ bool GlRenderer::stageCoverage(GlCoverageMap& coverage)
         if (coverage.region.texture) coverageAtlas.retire(coverage.region);
         return true;
     }
+    if (coverage.format == GlCoverageFormat::Edges || coverage.format == GlCoverageFormat::EdgesEvenOdd) {
+        if (!mRenderPassStack.empty()) coverageAtlas.retire(coverage.region);
+        return coverageAtlas.updateEdges(coverage.edges, coverage.map.bounds, coverage.region);
+    }
     GlCoverageData packed;
     if (coverage.status != CoverageStatus::Ready || !packGlCoverage(coverage.map, coverageAtlas.maxTextureSize(), packed)) {
         coverageAtlas.retire(coverage.region);
@@ -296,7 +315,9 @@ void GlRenderer::bindCoverage(GlRenderTask* task, const GlCoverageMap& coverage)
     task->indexCnt = runs ? coverage.runCount * 6 : 6;
     task->addBindResource(GlBindingResource{4, GlShaderUniformBlock::CoverageInfo, mGpuBuffer.getBufferId(),
                                           mGpuBuffer.push(&info, sizeof(info), true), sizeof(info)});
-    task->addBindResource(GlBindingResource{1, coverage.region.texture, GlShaderUniform::CoverageTexture});
+    auto edges = coverage.format == GlCoverageFormat::Edges || coverage.format == GlCoverageFormat::EdgesEvenOdd;
+    task->addBindResource(GlBindingResource{1, edges ? 0u : coverage.region.texture, GlShaderUniform::CoverageTexture});
+    task->addBindResource(GlBindingResource{2, edges ? coverage.region.texture : 0u, GlShaderUniform::CoverageFloatTexture});
 }
 
 #include "tvgGlRendererPaint.h"

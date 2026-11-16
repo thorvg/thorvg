@@ -358,14 +358,14 @@ struct SwMpool
     SwStrokeBorder* rBorders;
     SwCellPool* cellPools;
 
-    SwMpool(uint32_t threads)
+    SwMpool(uint32_t threads, bool raster = true)
     {
         auto allocSize = threads + 1;
         outlines = new SwOutline[allocSize];
         paths = new RenderPath[allocSize];
         lBorders = new SwStrokeBorder[allocSize];
         rBorders = new SwStrokeBorder[allocSize];
-        cellPools = new SwCellPool[allocSize];
+        cellPools = raster ? new SwCellPool[allocSize] : nullptr;
     }
 
     ~SwMpool()
@@ -495,8 +495,10 @@ bool utilBBox(const BBox& bbox, const RenderRegion& clipBox, RenderRegion& rende
 
 void shapeReset(SwShape& shape);
 void shapeDelOutline(SwShape& shape);
+bool shapeGenOutline(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool composite);
 bool shapeGenRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool composite, bool antiAlias);
 void shapeResetStroke(SwShape& shape, const RenderShape* rshape, const Matrix& transform, SwMpool* mpool, unsigned tid);
+SwOutline* shapeGenStrokeOutline(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid);
 bool shapeGenStrokeRle(SwShape& shape, const RenderShape* rshape, const Matrix& transform, const RenderRegion& clipBox, RenderRegion& renderBox, SwMpool* mpool, unsigned tid, bool antiAlias);
 void shapeFree(SwShape& shape);
 void shapeDelStroke(SwShape& shape);

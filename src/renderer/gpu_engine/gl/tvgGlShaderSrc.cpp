@@ -103,6 +103,7 @@ void main()
     vec4 bounds = map.bounds;
     ivec4 atlas = map.atlas;
     int format = mapIndex >= 64 ? 2 : uCoverageInfo.format.x;
+    if (format == 3 && atlas.z < 0) format = 4;
     int index = gl_InstanceID - atlas.w;
     vColor = map.color;
 #else
@@ -143,6 +144,7 @@ void main()
 const char* COVERAGE_FRAG_HEADER = R"(
 #define COVERAGE
 uniform highp usampler2D uCoverageTexture;
+uniform highp sampler2D uCoverageFloatTexture;
 in vec2 vCoverageCoord;
 flat in vec4 vCoverageData;
 flat in int vCoverageFormat;
@@ -153,6 +155,10 @@ float coverage()
         return float(texelFetch(uCoverageTexture, ivec2(vCoverageData.xy) + ivec2(vCoverageCoord), 0).r) / 255.0;
     }
     if (vCoverageFormat == 1) return vCoverageData.x;
+    if (vCoverageFormat >= 3) {
+        float area = abs(texelFetch(uCoverageFloatTexture, ivec2(vCoverageData.xy) + ivec2(vCoverageCoord), 0).r);
+        return vCoverageFormat == 4 ? 1.0 - abs(mod(area, 2.0) - 1.0) : min(area, 1.0);
+    }
     vec2 pixel = floor(vCoverageCoord);
     vec2 overlap = max(min(pixel + 1.0, vCoverageData.zw) - max(pixel, vCoverageData.xy), 0.0);
     return overlap.x * overlap.y;

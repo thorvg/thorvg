@@ -171,6 +171,7 @@ struct GlCoverageMap
     GlCoverageFormat format = GlCoverageFormat::Dense;
     uint32_t runCount = 0;
     Point rect[2];
+    Array<Point> edges;
 
     bool drawable() const { return region.texture || format == GlCoverageFormat::Rect; }
 
@@ -206,6 +207,7 @@ struct GlShape : GlDrawable
     bool updateStroke = false;
     bool clipStroke = false;
     bool isClipper = false;
+    bool gpuCoverage = false;
 #else
     void destroy(GlRenderer& renderer) override {}
 #endif

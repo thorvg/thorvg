@@ -41,6 +41,7 @@ void GlSolidBatch::draw(GlRenderer& renderer, const GlCoverageMap& coverage, con
     auto program = renderer.mPrograms[GlRenderer::RT_Color];
     auto runs = coverage.format == GlCoverageFormat::Runs;
     auto rectangle = coverage.format == GlCoverageFormat::Rect;
+    auto edges = coverage.format == GlCoverageFormat::Edges || coverage.format == GlCoverageFormat::EdgesEvenOdd;
     auto texture = coverage.region.texture;
     if (!task || pass->lastTask() != task || task->program != program || task->blendMethod != renderer.mBlendMethod ||
         (texId && texture && texId != texture) || !(this->viewBounds == viewBounds) || coverageCount == 64) {
@@ -51,10 +52,11 @@ void GlSolidBatch::draw(GlRenderer& renderer, const GlCoverageMap& coverage, con
         task->setViewport(viewRegion);
 
         BatchInfo info = {};
-        info.format[0] = int32_t(runs);
+        info.format[0] = edges ? 3 : int32_t(runs);
         coverageOffset = renderer.mGpuBuffer.push(&info, sizeof(info), true);
         task->addBindResource(GlBindingResource{4, GlShaderUniformBlock::CoverageInfo, renderer.mGpuBuffer.getBufferId(), coverageOffset, sizeof(info)});
-        task->addBindResource(GlBindingResource{1, texture, GlShaderUniform::CoverageTexture});
+        task->addBindResource(GlBindingResource{1, edges ? 0u : texture, GlShaderUniform::CoverageTexture});
+        task->addBindResource(GlBindingResource{2, edges ? texture : 0u, GlShaderUniform::CoverageFloatTexture});
         pass->addRenderTask(task);
         this->viewBounds = viewBounds;
         texId = texture;
@@ -63,16 +65,15 @@ void GlSolidBatch::draw(GlRenderer& renderer, const GlCoverageMap& coverage, con
 
     // A batch started by rectangles can adopt the first atlas page it uses.
     if (!texId && texture) {
-        task->bindResources.last().resourceId = texture;
+        task->bindResources[1].resourceId = edges ? 0u : texture;
+        task->bindResources[2].resourceId = edges ? texture : 0u;
         texId = texture;
-        if (runs) {
-            int32_t format = 1;
-            renderer.mGpuBuffer.update(coverageOffset, &format, sizeof(format));
-        }
+        int32_t format = edges ? 3 : int32_t(runs);
+        renderer.mGpuBuffer.update(coverageOffset, &format, sizeof(format));
     }
     auto& rect = coverage.region.rect;
     MapInfo info = {{},
-                    {rect.sx(), rect.sy(), rect.sw(), int32_t(task->instanceCount)},
+                    {rect.sx(), rect.sy(), coverage.format == GlCoverageFormat::EdgesEvenOdd ? -rect.sw() : rect.sw(), int32_t(task->instanceCount)},
                     {color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f}};
     coverage.shaderBounds(info.bounds);
     renderer.mGpuBuffer.update(coverageOffset + sizeof(int32_t) * 4 + coverageCount * sizeof(MapInfo), &info, sizeof(info));
