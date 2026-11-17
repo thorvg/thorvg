@@ -262,22 +262,27 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     if (!data) flags = RenderUpdateFlag::All;
 
     // update geometry and opacities: made for every shape at once, in makeGeometries()
-    if (shape->geometry < mGeometries.count && mGeometries[shape->geometry].shape == shape) {
-        auto& pending = mGeometries[shape->geometry];
-        pending = {shape, &rshape, transform, RenderUpdateFlag(pending.flags | flags), opacity};
-    } else {
+    bool geometry = flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke);
+    bool pending = shape->geometry < mGeometries.count && mGeometries[shape->geometry].shape == shape;
+    if (pending) {
+        auto& item = mGeometries[shape->geometry];
+        item = {shape, &rshape, transform, RenderUpdateFlag(item.flags | flags), opacity};
+    } else if (geometry) {
         shape->geometry = mGeometries.count;
         mGeometries.push({shape, &rshape, transform, flags, opacity});
     }
 
     // (a new geometry comes without the clips: those of this update are assigned below)
-    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->clips.clear();
+    if (geometry) shape->clips.clear();
 
     // update transform
     if (flags & RenderUpdateFlag::Transform) shape->transform = transform;
 
     // update paint settings
     shape->update(rshape, vport, opacity);
+
+    // the geometry is kept (opacity or color only): its opacities are updated right away
+    if (!pending && !geometry) shape->update(mSurface.cs, opacity);
 
     // shape
     if (shape->shape.setting.valid) {
