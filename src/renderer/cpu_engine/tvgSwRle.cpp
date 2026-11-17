@@ -203,6 +203,12 @@ struct Band
     int32_t min, max;
 };
 
+struct CellRow
+{
+    int16_t head;
+    int16_t latest;
+};
+
 struct RleWorker
 {
     SwRle* rle;
@@ -213,7 +219,7 @@ struct RleWorker
     int32_t cellXCnt;
     int32_t cellYCnt;
 
-    long area;
+    int32_t area;
     int32_t cover;
 
     SwCell* cells;
@@ -237,7 +243,7 @@ struct RleWorker
     SwCell* buffer;
     uint32_t bufferSize;
 
-    SwCell** yCells;
+    CellRow* yCells;
     int32_t yCnt;
 
     bool invalid;
@@ -371,18 +377,20 @@ static void _sweep(RleWorker& rw)
 {
     if (rw.cellsCnt == 0) return;
 
+    auto cells = rw.cells;
     for (int y = 0; y < rw.yCnt; ++y) {
         auto cover = 0;
         auto x = 0;
-        auto cell = rw.yCells[y];
+        int32_t next = rw.yCells[y].head;
 
-        while (cell) {
+        while (next >= 0) {
+            auto cell = cells + next;
+            next = cell->next;
             if (cell->x > x && cover != 0) _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), cell->x - x);
             cover += cell->cover;
             auto area = cover * (ONE_PIXEL * 2) - cell->area;
             if (area != 0 && cell->x >= 0) _horizLine(rw, cell->x, y, area, 1);
             x = cell->x + 1;
-            cell = cell->next;
         }
 
         if (cover != 0) _horizLine(rw, x, y, cover * (ONE_PIXEL * 2), rw.cellXCnt - x);
@@ -395,25 +403,39 @@ static SwCell* _findCell(RleWorker& rw)
     auto x = rw.cellPos.x;
     if (x > rw.cellXCnt) x = rw.cellXCnt;
 
-    auto pcell = &rw.yCells[rw.cellPos.y];
-
-    while(true) {
-        auto cell = *pcell;
-        if (!cell || cell->x > x) break;
-        if (cell->x == x) return cell;
-        pcell = &cell->next;
+    // seek the gap (prev->x < x <= next->x) from the latest cell,
+    //  contours mostly revisit nearby cells
+    auto cells = rw.cells;
+    auto& row = rw.yCells[rw.cellPos.y];
+    int32_t prev = -1;
+    int32_t next = row.latest;
+    if (next >= 0) {
+        if (cells[next].x < x) {
+            do {
+                prev = next;
+                next = cells[next].next;
+            } while (next >= 0 && cells[next].x < x);
+        } else {
+            prev = cells[next].prev;
+            while (prev >= 0 && cells[prev].x >= x) {
+                next = prev;
+                prev = cells[prev].prev;
+            }
+        }
     }
 
-    if (rw.cellsCnt >= rw.maxCells) return nullptr;
-
-    auto cell = rw.cells + rw.cellsCnt++;
-    cell->x = x;
-    cell->area = 0;
-    cell->cover = 0;
-    cell->next = *pcell;
-    *pcell = cell;
-
-    return cell;
+    // not found, link a new cell between prev and next
+    if (next < 0 || cells[next].x != x) {
+        if (rw.cellsCnt >= rw.maxCells) return nullptr;
+        auto idx = int16_t(rw.cellsCnt++);
+        cells[idx] = {x, 0, 0, int16_t(prev), int16_t(next)};
+        if (prev >= 0) cells[prev].next = idx;
+        else row.head = idx;
+        if (next >= 0) cells[next].prev = idx;
+        next = idx;
+    }
+    row.latest = next;
+    return cells + next;
 }
 
 
@@ -759,7 +781,7 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
     //Init Cells
     rw.buffer = cellPool->buffer;
     rw.bufferSize = cellPool->size;
-    rw.yCells = reinterpret_cast<SwCell**>(cellPool->buffer);
+    rw.yCells = reinterpret_cast<CellRow*>(cellPool->buffer);
     rw.cells = nullptr;
     rw.maxCells = 0;
     rw.cellsCnt = 0;
@@ -803,10 +825,9 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
         band = bands;
 
         while (band >= bands) {
-            rw.yCells = reinterpret_cast<SwCell**>(rw.buffer);
             rw.yCnt = band->max - band->min;
 
-            int cellStart = sizeof(SwCell*) * (int)rw.yCnt;
+            int cellStart = sizeof(CellRow) * (int)rw.yCnt;
             int cellMod = cellStart % sizeof(SwCell);
 
             if (cellMod > 0) cellStart += sizeof(SwCell) - cellMod;
@@ -817,10 +838,11 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
             if (rw.cells >= cellsMax) goto reduce_bands;
 
             rw.maxCells = cellsMax - rw.cells;
+            // cell indices are int16_t
+            if (rw.maxCells > INT16_MAX) rw.maxCells = INT16_MAX;
             if (rw.maxCells < 2) goto reduce_bands;
 
-            for (int y = 0; y < rw.yCnt; ++y)
-                rw.yCells[y] = nullptr;
+            memset(rw.yCells, 0xff, sizeof(CellRow) * rw.yCnt);  //-1: no cell
 
             rw.cellsCnt = 0;
             rw.invalid = true;
