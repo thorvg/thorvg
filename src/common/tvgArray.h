@@ -150,7 +150,7 @@ struct Array
 
     T& next()
     {
-        if (full()) grow(count + 1);
+        if (full()) data = static_cast<T*>(arrayGrow(data, count, reserved, sizeof(T)));
         return data[count++];
     }
 
