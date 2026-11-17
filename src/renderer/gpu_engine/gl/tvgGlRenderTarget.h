@@ -31,13 +31,15 @@ struct GlRenderTarget
     GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId);
+    void init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId, bool external = false);
     void reset();
-    bool invalid() const { return fbo == 0; }
+    bool invalid() const { return !valid; }
 
     RenderRegion viewport{};
     uint32_t width = 0, height = 0;
     GLuint resolvedFbo = 0, fbo = 0, colorTex = 0;
+    bool valid = false;
+    bool external = false;
 
 private:
     GlStateCache* state = nullptr;
