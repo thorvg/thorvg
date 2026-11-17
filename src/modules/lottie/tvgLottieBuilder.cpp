@@ -409,6 +409,7 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
     Array<Shape*> shapes;
 
     ARRAY_REVERSE_FOREACH(repeater, ctx->repeaters) {
+        auto last = (repeater == ctx->repeaters.begin());
         shapes.reserve(repeater->cnt);
 
         for (int i = 0; i < repeater->cnt; ++i) {
@@ -434,21 +435,27 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
             }
         }
 
+        //release the previous stage's copies, the templates of this stage
+        if (repeater != ctx->repeaters.end() - 1) {
+            for (auto& p : propagators) p->unref();
+        }
         propagators.clear();
         propagators.reserve(shapes.count);
 
-        //push repeat shapes in order.
+        //push repeat shapes in order. only the last stage draws them, the others repeat them again.
         if (repeater->inorder) {
             for (auto& p : shapes) {
-                parent->scene->add(p);
-                p->unref();
-                propagators.push(p);
+                if (last) {
+                    parent->scene->add(p);
+                    p->unref();
+                } else propagators.push(p);
             }
         } else if (!shapes.empty()) {
             ARRAY_REVERSE_FOREACH(p, shapes) {
-                parent->scene->add(*p);
-                (*p)->unref();
-                propagators.push(*p);
+                if (last) {
+                    parent->scene->add(*p);
+                    (*p)->unref();
+                } else propagators.push(*p);
             }
         }
         shapes.clear();
