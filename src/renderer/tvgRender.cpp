@@ -579,9 +579,9 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
     auto _length = [&]() -> float {
         switch (*cmds) {
             case PathCommand::MoveTo: return 0.0f;
-            case PathCommand::LineTo: return tvg::length(*(pts - 1), *pts);
+            case PathCommand::LineTo: return Line{*(pts - 1), *pts}.length();
             case PathCommand::CubicTo: return Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
-            case PathCommand::Close: return tvg::length(*(pts - 1), moveTo);
+            case PathCommand::Close: return Line{*(pts - 1), moveTo}.length();
         }
         return 0.0f;
     };
@@ -636,10 +636,39 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
     }
 }
 
+// The path's length measured as the trim cuts it: exactly, as Line::split() does.
+// tvg::length() approximates a line's length, which would put the cuts off the path.
+static float _length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt)
+{
+    if (ptsCnt < 2) return 0.0f;
+
+    auto start = pts;
+    auto length = 0.0f;
+
+    while (cmdsCnt-- > 0) {
+        switch (*cmds) {
+            case PathCommand::Close: length += Line{*(pts - 1), *start}.length(); break;
+            case PathCommand::MoveTo:
+                start = pts;
+                ++pts;
+                break;
+            case PathCommand::LineTo:
+                length += Line{*(pts - 1), *pts}.length();
+                ++pts;
+                break;
+            case PathCommand::CubicTo:
+                length += Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
+                pts += 3;
+                break;
+        }
+        ++cmds;
+    }
+    return length;
+}
 
 static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, float begin, float end, bool connect, RenderPath& out)
 {
-    auto totalLength = tvg::length(inCmds, inCmdsCnt, inPts, inPtsCnt);
+    auto totalLength = _length(inCmds, inCmdsCnt, inPts, inPtsCnt);
     auto trimStart = begin * totalLength;
     auto trimEnd = end * totalLength;
 
