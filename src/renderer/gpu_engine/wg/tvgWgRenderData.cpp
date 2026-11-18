@@ -34,18 +34,21 @@
 // WgGradientTexture
 //***********************************************************************
 
-bool WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread& currentSpread)
+void WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread& currentSpread, bool& opaque, bool updateColorRamp)
 {
-    // compute gradient data
-    WgShaderTypeGradientData gradientData;
-    auto opaque = gradientData.update(fill);
-    // allocate new texture handle
-    auto bytesPerRow = WG_TEXTURE_GRADIENT_SIZE * sizeof(uint32_t);
-    bool texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data, bytesPerRow, bytesPerRow);
-    // update texture view if texture handle was changed
-    if (texHandleChanged) {
-        context.releaseTextureView(textureView);
-        textureView = context.createTextureView(texture);
+    bool texHandleChanged = false;
+    if (updateColorRamp) {
+        // compute gradient data
+        WgShaderTypeGradientData gradientData;
+        opaque = gradientData.update(fill);
+        // allocate new texture handle
+        auto bytesPerRow = WG_TEXTURE_GRADIENT_SIZE * sizeof(uint32_t);
+        texHandleChanged = context.allocateTexture(texture, WG_TEXTURE_GRADIENT_SIZE, 1, WGPUTextureFormat_RGBA8Unorm, gradientData.data, bytesPerRow, bytesPerRow);
+        // update texture view if texture handle was changed
+        if (texHandleChanged) {
+            context.releaseTextureView(textureView);
+            textureView = context.createTextureView(texture);
+        }
     }
     // get sampler by spread type. Conic gradients always use repeat to filter
     // across the first/last ramp texels at their seam.
@@ -59,7 +62,6 @@ bool WgGradientTexture::update(WgContext& context, const Fill* fill, FillSpread&
         bindGroup = context.layouts.createBindGroupTexSampled(sampler, textureView);
         currentSpread = spread;
     }
-    return opaque;
 };
 
 void WgGradientTexture::release(WgContext& context)
@@ -83,7 +85,7 @@ uint8_t WgRenderSettings::update(tvg::ColorSpace cs, uint8_t opacity)
 void WgRenderSettings::update(WgContext& context, const Fill* fill, const Matrix* transform, bool updateColorRamp)
 {
     settings.gradient.update(fill, transform);
-    if (updateColorRamp) opaque = gradientData.update(context, fill, spread);
+    gradientData.update(context, fill, spread, opaque, updateColorRamp);
     if (fill->type() == Type::LinearGradient)
         fillType = WgRenderSettingsType::Linear;
     else if (fill->type() == Type::RadialGradient)

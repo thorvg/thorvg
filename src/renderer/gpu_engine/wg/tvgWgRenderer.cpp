@@ -272,7 +272,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     // shape
     if (shape->shape.setting.valid) {
         if (rshape.fill && (flags & (RenderUpdateFlag::Gradient | RenderUpdateFlag::Transform))) {
-            shape->shape.setting.update(mContext, rshape.fill, &transform, (flags & RenderUpdateFlag::Gradient));
+            shape->shape.setting.update(mContext, rshape.fill, &transform, (flags & RenderUpdateFlag::GradientStops));
         } else if (flags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient)) {
             shape->shape.solid.color = rshape.color;
             shape->shape.setting.fillType = WgRenderSettingsType::Solid;
@@ -281,7 +281,7 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     // stroke
     if (shape->stroke.setting.valid) {
         if (rshape.stroke->fill && flags & (RenderUpdateFlag::GradientStroke | RenderUpdateFlag::Transform)) {
-            shape->stroke.setting.update(mContext, rshape.stroke->fill, nullptr, (flags & RenderUpdateFlag::GradientStroke));
+            shape->stroke.setting.update(mContext, rshape.stroke->fill, nullptr, (flags & RenderUpdateFlag::GradientStrokeStops));
         } else if (flags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) {
             shape->stroke.solid.color = rshape.stroke->color;
             shape->stroke.setting.fillType = WgRenderSettingsType::Solid;
