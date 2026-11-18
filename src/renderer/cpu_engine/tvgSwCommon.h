@@ -171,8 +171,8 @@ struct SwCell
 {
     int32_t x;
     int32_t cover;
-    long area;
-    SwCell *next;
+    int32_t area;
+    int16_t prev, next;  // none: -1
 };
 
 struct SwFill
