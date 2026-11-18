@@ -6,6 +6,7 @@ source_file = [
    'tvgGlTextureMgr.h',
    'tvgGlProgram.h',
    'tvgGlRenderer.h',
+   'tvgGlRendererPaint.h',
    'tvgGlRenderPass.h',
    'tvgGlRenderTarget.h',
    'tvgGlRenderTask.h',
@@ -13,7 +14,6 @@ source_file = [
    'tvgGlShaderSrc.h',
    'tvgGlSolidBatch.h',
    'tvgGlStateCache.h',
-   'tvgGlStencilCoverBatch.h',
    'tvgGl.cpp',
    'tvgGlEffect.cpp',
    'tvgGlGeometry.cpp',
@@ -28,10 +28,21 @@ source_file = [
    'tvgGlShader.cpp',
    'tvgGlShaderSrc.cpp',
    'tvgGlStateCache.cpp',
-   'tvgGlStencilCoverBatch.cpp',
-   'tvgGlTessellator.cpp',
-   'tvgGlTessellator.h',
 ]
+
+if get_option('analytic_aa')
+    source_file += ['tvgGlRendererAaa.cpp', 'tvgGlCoverage.cpp', 'tvgGlCoverage.h',
+                    'tvgGlCoverageAtlas.cpp', 'tvgGlCoverageAtlas.h',
+                    'coverage/tvgCoverage.h', 'coverage/tvgCoverage.cpp']
+    # CPU builds already provide these unchanged geometry entry points.
+    if not cpu_engine
+        source_file += ['../../cpu_engine/tvgSwShape.cpp', '../../cpu_engine/tvgSwStroke.cpp',
+                        '../../cpu_engine/tvgSwRle.cpp', '../../cpu_engine/tvgSwUtil.cpp']
+    endif
+else
+    source_file += ['tvgGlRendererMsaa.cpp', 'tvgGlTessellator.cpp', 'tvgGlTessellator.h',
+                    'tvgGlStencilCoverBatch.cpp', 'tvgGlStencilCoverBatch.h']
+endif
 
 #force to use gles
 if cc.get_id() == 'emscripten'
@@ -45,6 +56,6 @@ else
 endif
 
 engine_dep += [declare_dependency(
-    include_directories : include_directories('.'),
+    include_directories : include_directories('.', 'coverage', '../../cpu_engine'),
     sources             : source_file,
 )]

@@ -38,6 +38,9 @@ struct GlVertexLayout
     GLboolean normalized = GL_FALSE;
     // VBO supplying this attribute. ThorVG layouts must always provide it.
     GLuint arrayBufferId = 0;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    uint32_t divisor = 0;
+#endif
 };
 
 enum struct GlBindingType
@@ -100,6 +103,9 @@ struct GlRenderTask
     Array<GlBindingResource> bindResources;
     uint32_t arrayOffset = 0;
     GLenum arrayMode = GL_TRIANGLES;
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    uint32_t instanceCount = 0;
+#endif
     Matrix viewMatrix = {};
     float vertexColor[4] = {0.f, 0.f, 0.f, 0.f};
     bool useViewMatrix = false;
@@ -108,6 +114,7 @@ struct GlRenderTask
     BlendMethod blendMethod = BlendMethod::Normal;
 };
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 struct GlStencilCoverTask : GlRenderTask
 {
     GlStencilCoverTask(GlRenderTask* stencil, GlRenderTask* cover, GlStencilMode mode);
@@ -120,6 +127,7 @@ struct GlStencilCoverTask : GlRenderTask
     Array<GlRenderTask*> coverTasks;
     GlStencilMode stencilMode;
 };
+#endif
 
 struct GlComposeTask : GlRenderTask
 {
@@ -127,14 +135,12 @@ struct GlComposeTask : GlRenderTask
     ~GlComposeTask();
 
     void run(GlStateCache& state) override;
-    void onResolve(GlStateCache& state);
     void setRenderSize(uint32_t width, uint32_t height)
     {
         renderWidth = width;
         renderHeight = height;
     }
     GLuint getSelfFbo() { return fbo->fbo; }
-    GLuint getResolveFboId() { return fbo->resolvedFbo; }
 
     GLuint targetFbo;
     GlRenderTarget* fbo;
@@ -188,12 +194,12 @@ struct GlSceneBlendTask : GlComposeTask
 
     void run(GlStateCache& state) override;
 
-    GlRenderTarget* srcFbo = nullptr;
     GlRenderTarget* dstCopyFbo = nullptr;
     uint32_t parentWidth = 0;
     uint32_t parentHeight = 0;
 };
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 struct GlClipTask : GlRenderTask
 {
     GlClipTask(GlRenderTask* clip, GlRenderTask* mask) :
@@ -210,6 +216,8 @@ struct GlClipTask : GlRenderTask
     GlRenderTask* clipTask;
     GlRenderTask* maskTask;
 };
+
+#endif
 
 struct GlDirectBlendTask : GlRenderTask
 {
