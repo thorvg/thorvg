@@ -2,7 +2,7 @@ submodule_dep = []
 
 subdir('raw')
 
-if svg_loader
+if svg_loader or svg_saver
     subdir('svg')
 endif
 
