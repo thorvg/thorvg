@@ -406,7 +406,7 @@ typedef struct
  *
  * The advance value represents the distance the pen position moves along the
  * baseline (inline direction), regardless of whether the text is laid out
- * horizontally or vertically.
+ * horizontally or vertically. Any kerning with the next glyph is included.
  *
  * The bounding box is defined in the glyph’s local coordinate space and is
  * independent of any layout direction or transformation.
