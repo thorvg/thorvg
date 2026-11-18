@@ -174,6 +174,7 @@ PFNGLFRONTFACEPROC              glFrontFace;
 PFNGLSCISSORPROC                glScissor;
 PFNGLTEXPARAMETERIPROC          glTexParameteri;
 PFNGLTEXIMAGE2DPROC             glTexImage2D;
+PFNGLPIXELSTOREIPROC            glPixelStorei;
 PFNGLDRAWBUFFERPROC             glDrawBuffer;
 PFNGLCLEARPROC                  glClear;
 PFNGLCLEARCOLORPROC             glClearColor;
@@ -289,6 +290,7 @@ bool glInit()
     GL_FUNCTION_FETCH(glScissor, PFNGLSCISSORPROC);
     GL_FUNCTION_FETCH(glTexParameteri, PFNGLTEXPARAMETERIPROC);
     GL_FUNCTION_FETCH(glTexImage2D, PFNGLTEXIMAGE2DPROC);
+    GL_FUNCTION_FETCH(glPixelStorei, PFNGLPIXELSTOREIPROC);
 #if !defined(THORVG_GL_TARGET_GLES)
     GL_FUNCTION_FETCH(glDrawBuffer, PFNGLDRAWBUFFERPROC);
 #endif

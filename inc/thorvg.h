@@ -1848,9 +1848,26 @@ struct TVG_API Picture : Paint
      * @note If the memory data pointed to by @p data is modified, calling this API will re-upload the updated content to the canvas.
      * @note @c ColorSpace::XBGR8888 and @c ColorSpace::XRGB8888 overwrite fully covered pixels without alpha blending.
      *
+     * @deprecated Use Picture::load(const uint32_t*, uint32_t, uint32_t, uint32_t, ColorSpace, bool)
      * @since 0.9
      */
-    Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy = false) noexcept;
+    TVG_DEPRECATED Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy = false) noexcept;
+
+    /**
+     * @brief Loads raw image data from memory.
+     *
+     * @param[in] data A pointer to the raw image data.
+     * @param[in] stride The number of pixels between the starts of consecutive rows, including padding. Must be at least @p w.
+     * @param[in] w The width of the image in pixels.
+     * @param[in] h The height of the image in pixels.
+     * @param[in] cs Specifies how the 32-bit color values should be interpreted.
+     * @param[in] userOwned If @c false, ownership of @p data is transferred to ThorVG, which releases the memory when it is no longer needed.
+     *                      If @c true, the caller retains ownership and must keep the memory valid while ThorVG uses it. The default is @c false.
+     *
+     * @warning Transferred memory must be allocated with malloc() or a compatible allocator.
+     * @since 1.2
+     */
+    Result load(const uint32_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs, bool userOwned = false) noexcept;
 
     /**
      * @brief Sets the asset resolver callback for external images and fonts.
