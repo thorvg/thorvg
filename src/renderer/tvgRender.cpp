@@ -579,9 +579,9 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
     auto _length = [&]() -> float {
         switch (*cmds) {
             case PathCommand::MoveTo: return 0.0f;
-            case PathCommand::LineTo: return tvg::length(*(pts - 1), *pts);
+            case PathCommand::LineTo: return tvg::length(*pts - *(pts - 1));
             case PathCommand::CubicTo: return Bezier{*(pts - 1), *pts, *(pts + 1), *(pts + 2)}.length();
-            case PathCommand::Close: return tvg::length(*(pts - 1), moveTo);
+            case PathCommand::Close: return tvg::length(moveTo - *(pts - 1));
         }
         return 0.0f;
     };
@@ -636,10 +636,9 @@ static void _trimPath(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point
     }
 }
 
-
 static void _trim(const PathCommand* inCmds, uint32_t inCmdsCnt, const Point* inPts, uint32_t inPtsCnt, float begin, float end, bool connect, RenderPath& out)
 {
-    auto totalLength = tvg::length(inCmds, inCmdsCnt, inPts, inPtsCnt);
+    auto totalLength = tvg::length(inCmds, inCmdsCnt, inPts, inPtsCnt, true);
     auto trimStart = begin * totalLength;
     auto trimEnd = end * totalLength;
 
