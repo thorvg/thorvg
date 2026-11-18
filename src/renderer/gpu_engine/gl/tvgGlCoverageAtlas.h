@@ -36,6 +36,7 @@ struct GlCoverageRegion
 {
     GLuint texture = 0;
     tvg::RenderRegion rect{};
+    uint64_t pendingGeneration = 0;
 };
 
 // Coverage maps share pages of the same format; image textures use TextureMgr.
@@ -43,6 +44,7 @@ struct GlCoverageAtlas
 {
     uint32_t maxTextureSize();
     bool gpuSupported();
+    // Borrows immutable endpoints until flush(); postUpdate joins their tasks and flushes before returning.
     bool updateEdges(const tvg::Array<tvg::Point>& edges, const tvg::RenderRegion& bounds, GlCoverageRegion& region);
     // Copies packed bytes into CPU page storage; flush() uploads them to GL.
     bool update(const GlCoverageData& data, GlCoverageRegion& region);
@@ -52,11 +54,18 @@ struct GlCoverageAtlas
     void clear(GlStateCache& state);
 
 private:
+    struct Edge
+    {
+        tvg::Point a, b;
+        float bounds[4];
+    };
     struct Page;
     Page* find(GLuint texture);
     void flushEdges(GlStateCache& state);
     tvg::Array<Page*> pages;
     tvg::Array<GlCoverageRegion> retired;
+    tvg::Array<Edge> edgeInstances;
+    uint64_t edgeGeneration = 1;
     uint32_t maxSize = 0;
     int8_t gpuSupport = -1;
     GlProgram* edgeProgram = nullptr;

@@ -1076,6 +1076,7 @@ bool GlRenderer::postUpdate()
 {
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
     // Join all readers before staging can change a shared clip's status.
+    // The atlas borrows endpoint arrays until the flush below, before any further preparation.
     doneCoverage();
     INLIST_FOREACH(coverageShapes, shape) {
         if (shape->updateFill || !shape->fillCoverage.region.texture) {
