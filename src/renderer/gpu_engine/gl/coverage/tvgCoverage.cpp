@@ -21,14 +21,41 @@
  */
 
 #include <limits.h>
-#include <memory>
 #include "tvgCoverage.h"
 #include "tvgSwCommon.h"
 
 #ifdef THORVG_ANALYTIC_AA_SUPPORT
 
+#include "tvgGlRenderer.h"
+
 namespace tvg
 {
+
+namespace
+{
+
+struct CoverageScratch
+{
+    SwMpool pool;
+    SwShape shape;
+
+    explicit CoverageScratch(bool raster) : pool(0, raster) {}
+    ~CoverageScratch() { shapeFree(shape); }
+
+    void reset()
+    {
+        shapeReset(shape);
+        rleReset(shape.strokeRle);
+    }
+};
+
+CoverageScratch& _outlineScratch()
+{
+    static thread_local CoverageScratch scratch(false);
+    return scratch;
+}
+
+}
 
 void CoverageMap::reset()
 {
@@ -59,11 +86,11 @@ static CoverageStatus _generate(const RenderShape& shape, const Matrix& transfor
     map.reset();
     if (viewport.invalid() || (stroke && shape.strokeWidth() <= 0.0f)) return CoverageStatus::Empty;
 
-    SwMpool pool(0);
+    static thread_local CoverageScratch scratch(true);
+    scratch.reset();
+    auto& pool = scratch.pool;
+    auto& sw = scratch.shape;
     if (!pool.cell(0)->buffer) return CoverageStatus::Error;
-    SwShape sw;
-    auto release = [](SwShape* shape) { shapeFree(*shape); };
-    std::unique_ptr<SwShape, decltype(release)> cleanup(&sw, release);
     RenderRegion renderBox{};
     // composite=true bypasses the rectangle shortcut; antiAlias=true preserves edge coverage.
     auto ready = stroke ? shapeGenStrokeRle(sw, &shape, transform, viewport, renderBox, &pool, 0, true) :
@@ -198,10 +225,10 @@ CoverageStatus generateCoverageEdges(const RenderShape& shape, const Matrix& tra
 
     // Reuse trim/dash/stroke construction and the SW 26.6 coordinate export,
     // but allocate neither raster cells nor pixel spans.
-    SwMpool pool(0, false);
-    SwShape sw;
-    auto release = [](SwShape* value) { shapeFree(*value); };
-    std::unique_ptr<SwShape, decltype(release)> cleanup(&sw, release);
+    auto& scratch = _outlineScratch();
+    scratch.reset();
+    auto& pool = scratch.pool;
+    auto& sw = scratch.shape;
     SwOutline* outline;
     if (stroke) {
         outline = shapeGenStrokeOutline(sw, &shape, transform, viewport, map.bounds, &pool, 0);
@@ -280,6 +307,16 @@ bool intersectsCoverage(const CoverageMap& map, const RenderRegion& region)
     return !bounds.invalid() && rleIntersect(map.rle, bounds);
 }
 
+}
+
+bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
+{
+    if (!data) return false;
+
+    auto shape = static_cast<const GlShape*>(data);
+    auto& scratch = tvg::_outlineScratch();
+    return shapeStrokeBBox(scratch.shape, shape->rshape, pt4, m, &scratch.pool) &&
+           pt4[0].x <= pt4[2].x && pt4[0].y <= pt4[2].y;
 }
 
 #endif //THORVG_ANALYTIC_AA_SUPPORT

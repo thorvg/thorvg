@@ -215,14 +215,6 @@ inline void GlRenderer::submitGradient(GlRenderTask* task, TVG_UNUSED GlShape& s
     currentPass()->addRenderTask(task);
 }
 
-bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
-{
-    if (!data) return false;
-
-    auto shape = static_cast<GlShape*>(data);
-    return false;  // Coverage has no stroke mesh; use the shape bounds fallback.
-}
-
 bool GlRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 {
     auto shape = static_cast<GlShape*>(data);
