@@ -66,6 +66,11 @@ struct RGB32
     int32_t r, g, b;
 };
 
+struct AudioLevel
+{
+    float v[2];
+};
+
 struct ColorStop
 {
     Fill::ColorStop* data = nullptr;
@@ -133,6 +138,11 @@ struct AssetSrc
         size = 0;
     }
 };
+
+static inline AudioLevel lerp(const AudioLevel& s, const AudioLevel& e, float t)
+{
+    return {s.v[0] + (e.v[0] - s.v[0]) * t, s.v[1] + (e.v[1] - s.v[1]) * t};
+}
 
 static inline RGB32 lerp(const RGB32& s, const RGB32& e, float t)
 {
