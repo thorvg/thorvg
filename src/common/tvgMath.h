@@ -43,7 +43,7 @@ namespace tvg
 /************************************************************************/
 
 float atan2(float y, float x);
-float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt);
+float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt, bool accuracy = false);
 
 static inline float atan(const Point& pt)
 {
