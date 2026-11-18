@@ -68,6 +68,12 @@ enum class GlStencilMode
     Stroke,
 };
 
+struct GlStageOffsets
+{
+    uint32_t vertex = 0;
+    uint32_t index = UINT32_MAX;
+};
+
 struct GlGeometryBuffer
 {
     Array<float> vertex;
@@ -108,7 +114,7 @@ struct GlGeometry
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinFill(const RenderPath& path);
     void tesselateImage(const RenderSurface* image);
-    void draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const;
+    GlStageOffsets draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, GlStageOffsets cached = {}) const;
     GlStencilMode stencilMode(RenderUpdateFlag flag) const;
     RenderRegion bounds() const;
 
@@ -148,6 +154,7 @@ struct GlShape : GlDrawable
 
     const RenderShape* rshape;
     float multiplier = 1.0f;
+    uint32_t clipIndex = 0;
     struct {
         bool fill = false;
         bool stroke = false;

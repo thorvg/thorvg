@@ -80,6 +80,7 @@ private:
     // render target dimensions
     uint32_t width{};
     uint32_t height{};
+    uint64_t stageStamp{};
     
     void beginPass(WgContext& context, const WGPURenderPassDescriptor& desc);
 

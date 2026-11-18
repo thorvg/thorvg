@@ -280,6 +280,7 @@ void WgCompositor::reset(WgContext& context)
     stageBufferSolidColor.clear();
     stageBufferPaint.clear();
     stageBufferViewMat.clear();
+    ++stageStamp;
 }
 
 
@@ -343,6 +344,8 @@ void WgCompositor::copyEffectTexture(WgContext& context, WgRenderTarget* dst, co
 
 void WgCompositor::requestShape(WgShape* shape)
 {
+    if (shape->stageStamp == stageStamp) return;
+    shape->stageStamp = stageStamp;
     stageBufferGeometry.append(shape);
 
     auto& shapeSettings = shape->shape.setting;

@@ -535,11 +535,16 @@ void GlRenderer::drawClip(Array<RenderData>& clips, const RenderRegion& viewBoun
     for (uint32_t i = 0; i < clips.count; ++i) {
         auto shape = static_cast<GlShape*>(clips[i]);
         auto flag = (shape->geometry.stroke.vertex.count > 0) ? RenderUpdateFlag::Stroke : RenderUpdateFlag::Path;
+        if (shape->clipIndex >= mClipCache.count || mClipCache[shape->clipIndex].shape != shape) {
+            shape->clipIndex = mClipCache.count;
+            mClipCache.push({shape, {}});
+        }
 
         auto clipTask = new GlRenderTask(mPrograms[RT_Stencil]);
         clipTask->setDrawDepth(clipDepths[i]);
         clipTask->setViewMatrix(_viewMatrix(shape->geometry, viewMatrix, flag));
-        shape->geometry.draw(clipTask, &mGpuBuffer, flag);
+        auto& cached = mClipCache[shape->clipIndex].offsets;
+        cached = shape->geometry.draw(clipTask, &mGpuBuffer, flag, cached);
 
         auto clipBounds = shape->geometry.bounds();
         clipBounds.intersect(viewBounds);
@@ -1059,6 +1064,7 @@ bool GlRenderer::preRender()
     currentContext();
     if (!textures.flushPreprocess(mStateCache, mTargetFboId)) return false;
     if (mPrograms.empty()) initShaders();
+    mClipCache.clear();
     mRenderPassStack.push(new GlRenderPass(&mRootTarget));
 
     return true;

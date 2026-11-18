@@ -225,6 +225,7 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
 
 void WgShape::reset()
 {
+    stageStamp = 0;
     clips.clear();
     stroke.mesh.clear();
     stroke.bboxMesh.clear();
@@ -565,13 +566,6 @@ void WgStageBufferGeometry::release(WgContext& context)
 }
 
 
-void WgStageBufferGeometry::clear()
-{
-    vbuffer.clear();
-    ibuffer.clear();
-}
-
-
 void WgStageBufferGeometry::flush(WgContext& context) 
 {
     context.allocateBufferVertex(vbuffer_gpu, vbuffer.data, vbuffer.count);
@@ -585,11 +579,6 @@ void WgStageBufferGeometry::flush(WgContext& context)
 void WgStageBufferSolidColor::release(WgContext& context)
 {
     context.releaseBuffer(vbuffer_gpu);
-}
-
-void WgStageBufferSolidColor::clear()
-{
-    vbuffer.clear();
 }
 
 void WgStageBufferSolidColor::appendRepeated(const RenderColor& value, uint32_t count)
