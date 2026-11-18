@@ -139,7 +139,9 @@ void TextureMgr::upload(GlStateCache& state, GLuint texId, const RenderSurface* 
     }
 
     state.bindTexture2D(TVG_GL_TEXTURE_SETUP_UNIT, texId);
+    if (surface->stride != surface->w) GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->stride));
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->data));
+    if (surface->stride != surface->w) GL_CHECK(glPixelStorei(GL_UNPACK_ROW_LENGTH, 0));
     if (initialize) {
         GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
         GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));

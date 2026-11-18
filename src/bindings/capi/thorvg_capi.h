@@ -2140,6 +2140,25 @@ TVG_API Tvg_Result tvg_picture_load(Tvg_Paint picture, const char* path);
 TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool copy);
 
 /**
+ * @brief Loads raw image data from memory.
+ *
+ * @param[in] picture The picture object.
+ * @param[in] data A pointer to the raw image data.
+ * @param[in] stride The number of pixels between the starts of consecutive rows, including padding. Must be at least @p w.
+ * @param[in] w The width of the image in pixels.
+ * @param[in] h The height of the image in pixels.
+ * @param[in] cs Specifies how the 32-bit color values should be interpreted.
+ * @param[in] user_owned If @c false, ownership of @p data is transferred to ThorVG, which releases the memory when it is no longer needed.
+ *                       If @c true, the caller retains ownership and must keep the memory valid while ThorVG uses it.
+ *
+ * @retval TVG_RESULT_INVALID_ARGUMENT data pointer is null, width or height is zero, stride is less than width, or colorspace is unknown.
+ *
+ * @warning Transferred memory must be allocated with malloc() or a compatible allocator.
+ * @since 1.2
+ */
+TVG_API Tvg_Result tvg_picture_load_pixels(Tvg_Paint picture, const uint32_t* data, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool user_owned);
+
+/**
  * @brief Loads a picture data from a memory block of a given size.
  *
  * ThorVG efficiently caches the loaded data using the specified @p data address as a key

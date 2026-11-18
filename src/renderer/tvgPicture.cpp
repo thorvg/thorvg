@@ -50,10 +50,14 @@ Result Picture::load(const char* data, uint32_t size, const char* mimeType, cons
     return to<PictureImpl>(this)->load(data, size, mimeType, rpath, copy ? Ownership::Copy : Ownership::Borrow);
 }
 
-
 Result Picture::load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, bool copy) noexcept
 {
-    return to<PictureImpl>(this)->load(data, w, h, cs, copy ? Ownership::Copy : Ownership::Borrow);
+    return to<PictureImpl>(this)->load(data, w, w, h, cs, copy ? Ownership::Copy : Ownership::Borrow);
+}
+
+Result Picture::load(const uint32_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs, bool userOwned) noexcept
+{
+    return to<PictureImpl>(this)->load(data, stride, w, h, cs, userOwned ? Ownership::Borrow : Ownership::Transfer);
 }
 
 Result Picture::resolver(std::function<bool(Paint* paint, const char* src, void* data)> func, void* data, bool fallback) noexcept

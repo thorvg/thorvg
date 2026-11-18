@@ -272,6 +272,7 @@
         typedef void (*PFNGLGETINTEGERVPROC)(GLenum pname, GLint *data);
         typedef const GLubyte *(*PFNGLGETSTRINGPROC) (GLenum name);
         typedef void (*PFNGLVIEWPORTPROC) (GLint x, GLint y, GLsizei width, GLsizei height);
+        typedef void (*PFNGLPIXELSTOREIPROC)(GLenum pname, GLint param);
     #endif /* GL_VERSION_1_0 */
 
     #ifndef GL_VERSION_1_1
@@ -986,6 +987,7 @@
     extern PFNGLGETINTEGERVPROC            glGetIntegerv;
     extern PFNGLGETSTRINGPROC              glGetString;
     extern PFNGLVIEWPORTPROC               glViewport;
+    extern PFNGLPIXELSTOREIPROC            glPixelStorei;
 
     //GL_VERSION_1_1
     extern PFNGLDRAWELEMENTSPROC      glDrawElements;

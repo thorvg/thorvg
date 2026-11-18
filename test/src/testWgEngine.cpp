@@ -199,7 +199,7 @@ TEST_CASE("WG Image Draw", "[tvgWgEngine]")
             for (auto maskOp : masks) {
                 // Non-transformed images
                 auto picture = Picture::gen();
-                REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+                REQUIRE(picture->load(data, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
                 REQUIRE(picture->blend(method) == Result::Success);
                 if (maskOp != MaskMethod::None) REQUIRE(picture->mask(mask(), maskOp) == Result::Success);
                 REQUIRE(canvas->add(picture) == Result::Success);
@@ -226,7 +226,7 @@ TEST_CASE("WG Image Draw", "[tvgWgEngine]")
 
                 // Direct Clipped image
                 auto picture6 = Picture::gen();
-                REQUIRE(picture6->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+                REQUIRE(picture6->load(data, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
                 REQUIRE(picture6->clip(mask()) == Result::Success);
                 REQUIRE(picture6->blend(method) == Result::Success);
                 REQUIRE(canvas->add(picture6) == Result::Success);
@@ -359,7 +359,7 @@ TEST_CASE("WG Image Rotation", "[tvgWgEngine]")
         file.read(reinterpret_cast<char*>(data), sizeof(uint32_t) * 250 * 375);
         file.close();
 
-        REQUIRE(picture->load(data, 250, 375, ColorSpace::ARGB8888, false) == Result::Success);
+        REQUIRE(picture->load(data, 250, 250, 375, ColorSpace::ARGB8888, true) == Result::Success);
 
         REQUIRE(picture->size(240, 240) == Result::Success);
         REQUIRE(picture->transform({0.572866f, -4.431353f, 336.605835f, 5.198910f, -0.386219f, 30.710693f, 0.0f, 0.0f, 1.0f}) == Result::Success);
