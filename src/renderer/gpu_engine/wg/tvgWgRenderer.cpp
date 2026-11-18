@@ -261,28 +261,26 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     auto shape = data ? (WgShape*)data : mPaintPool.shape();
     if (!data) flags = RenderUpdateFlag::All;
 
-    // update geometry and opacities: made for every shape at once, in makeGeometries()
-    bool geometry = flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke);
-    bool pending = shape->geometry < mGeometries.count && mGeometries[shape->geometry].shape == shape;
-    if (pending) {
-        auto& item = mGeometries[shape->geometry];
-        item = {shape, &rshape, transform, RenderUpdateFlag(item.flags | flags), opacity};
-    } else if (geometry) {
+    // a new geometry and its opacities are made for every shape at once, in makeGeometries()
+    bool newGeometry = flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke);
+    if (shape->geometry < mGeometries.count && mGeometries[shape->geometry].shape == shape) {
+        auto& pending = mGeometries[shape->geometry];
+        pending = {shape, &rshape, transform, RenderUpdateFlag(pending.flags | flags), opacity};
+    } else if (newGeometry) {
         shape->geometry = mGeometries.count;
         mGeometries.push({shape, &rshape, transform, flags, opacity});
+    } else {
+        shape->update(mSurface.cs, opacity);  // the geometry is kept: only its opacities change
     }
 
     // (a new geometry comes without the clips: those of this update are assigned below)
-    if (geometry) shape->clips.clear();
+    if (newGeometry) shape->clips.clear();
 
     // update transform
     if (flags & RenderUpdateFlag::Transform) shape->transform = transform;
 
     // update paint settings
     shape->update(rshape, vport, opacity);
-
-    // the geometry is kept (opacity or color only): its opacities are updated right away
-    if (!pending && !geometry) shape->update(mSurface.cs, opacity);
 
     // shape
     if (shape->shape.setting.valid) {
@@ -753,7 +751,7 @@ void WgGeometryTask::run(TVG_UNUSED unsigned tid)
     for (auto item = items; item < items + count; ++item) {
         auto shape = item->shape;
         if (!shape) continue;  // disposed meanwhile
-        if (item->flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->update(*item->rshape, item->transform, item->flags);
+        shape->update(*item->rshape, item->transform, item->flags);
         shape->update(cs, item->opacity);
     }
 }

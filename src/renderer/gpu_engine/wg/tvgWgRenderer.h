@@ -116,7 +116,7 @@ private:
     void surfaceConfigure(RenderSurface& rsurface, WGPUSurface wsurface, WgContext& context);
     void makeGeometries();
 
-    // the shapes prepared since the last makeGeometries(), and the tasks that make them
+    // the shapes with a new geometry since the last makeGeometries(), and the tasks that make them
     Array<WgGeometry> mGeometries;
     Array<WgGeometryTask*> mGeometryTasks;
 
