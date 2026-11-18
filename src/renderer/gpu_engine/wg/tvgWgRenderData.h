@@ -105,6 +105,7 @@ struct WgShape : WgPaint
 
     WgMesh bboxMesh;
     BBox bbox;
+    uint64_t stageStamp = 0;
     uint32_t strokeViewMatIdx;
     FillRule fillRule;
     bool convex;
@@ -224,7 +225,12 @@ struct WgStageBufferGeometry
     void appendStencilBatch(const Array<WgShape*>& renderShapes, WgStencilBatchRange& range);
     void initialize(WgContext& context){};
     void release(WgContext& context);
-    void clear();
+    void clear()
+    {
+        vbuffer.clear();
+        ibuffer.clear();
+    }
+
     void flush(WgContext& context);
 };
 
@@ -241,7 +247,11 @@ struct WgStageBufferSolidColor
 
     void appendRepeated(const RenderColor& value, uint32_t count);
     void release(WgContext& context);
-    void clear();
+    void clear()
+    {
+        vbuffer.clear();
+    }
+
     void flush(WgContext& context);
 };
 
