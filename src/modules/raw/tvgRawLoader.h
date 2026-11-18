@@ -29,7 +29,7 @@ struct RawLoader : BitmapLoader
     ~RawLoader();
 
     using Loader::open;
-    bool open(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner);
+    bool open(const uint32_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner);
     bool read() override;
 };
 

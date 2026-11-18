@@ -671,6 +671,11 @@ TVG_API Tvg_Result tvg_picture_load_raw(Tvg_Paint picture, const uint32_t *data,
     return TVG_RESULT_INVALID_ARGUMENT;
 }
 
+TVG_API Tvg_Result tvg_picture_load_pixels(Tvg_Paint picture, const uint32_t* data, uint32_t stride, uint32_t w, uint32_t h, Tvg_Colorspace cs, bool user_owned)
+{
+    if (picture) return (Tvg_Result) reinterpret_cast<Picture*>(picture)->load(data, stride, w, h, static_cast<ColorSpace>(cs), user_owned);
+    return TVG_RESULT_INVALID_ARGUMENT;
+}
 
 TVG_API Tvg_Result tvg_picture_load_data(Tvg_Paint picture, const char *data, uint32_t size, const char *mimetype, const char* rpath, bool copy)
 {

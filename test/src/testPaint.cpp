@@ -235,9 +235,9 @@ TEST_CASE("Bounding Box", "[tvgPaint]")
         REQUIRE(pts[3].y == Approx(16.0f).margin(0.000001));
 
         //Picture
-        auto data = unique_ptr<uint32_t[]>(new uint32_t[200*300]());
+        auto data = (uint32_t*)calloc(200 * 300, sizeof(uint32_t));
         auto picture = Picture::gen();
-        REQUIRE(picture->load(data.get(), 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
+        REQUIRE(picture->load(data, 200, 200, 300, ColorSpace::ARGB8888) == Result::Success);
         REQUIRE(picture->origin(0.5f, 0.5f) == Result::Success);
         REQUIRE(picture->translate(100.0f, 100.0f) == Result::Success);
         REQUIRE(canvas->add(picture) == Result::Success);

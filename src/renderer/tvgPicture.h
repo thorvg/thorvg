@@ -156,11 +156,11 @@ struct PictureImpl : Picture
         return loader ? load(loader) : ret;
     }
 
-    Result load(const uint32_t* data, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner)
+    Result load(const uint32_t* data, uint32_t stride, uint32_t w, uint32_t h, ColorSpace cs, Ownership owner)
     {
-        if (!data || w <= 0 || h <= 0 || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
+        if (!data || w <= 0 || h <= 0 || stride < w || cs == ColorSpace::Unknown)  return Result::InvalidArguments;
         if (vector) return Result::InsufficientCondition;
-        auto loader = LoaderMgr::loader(data, w, h, cs, owner);
+        auto loader = LoaderMgr::loader(data, stride, w, h, cs, owner);
         return loader ? load(loader) : Result::NonSupport;
     }
 

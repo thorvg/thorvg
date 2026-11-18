@@ -52,14 +52,16 @@ TEST_CASE("Load RAW Data", "[tvgPicture]")
     file.close();
 
     //Negative cases
-    REQUIRE(picture->load(nullptr, 200, 300, ColorSpace::ARGB8888, false) == Result::InvalidArguments);
-    REQUIRE(picture->load(data, 0, 0, ColorSpace::ARGB8888, false) == Result::InvalidArguments);
-    REQUIRE(picture->load(data, 200, 0, ColorSpace::ARGB8888, false) == Result::InvalidArguments);
-    REQUIRE(picture->load(data, 0, 300, ColorSpace::ARGB8888, false) == Result::InvalidArguments);
+    REQUIRE(picture->load(nullptr, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 0, 0, 0, ColorSpace::ARGB8888, true) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 200, 200, 0, ColorSpace::ARGB8888, true) == Result::InvalidArguments);
+    REQUIRE(picture->load(data, 0, 0, 300, ColorSpace::ARGB8888, true) == Result::InvalidArguments);
 
     //Positive cases
-    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
-    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
+    REQUIRE(picture->load(data, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
+    auto transfer = (uint32_t*)malloc(sizeof(uint32_t) * 200 * 300);
+    memcpy(transfer, data, sizeof(uint32_t) * 200 * 300);
+    REQUIRE(picture->load(transfer, 200, 200, 300, ColorSpace::ARGB8888) == Result::Success);
 
     float w, h;
     REQUIRE(picture->size(&w, &h) == Result::Success);
@@ -87,7 +89,7 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
-    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
 
     REQUIRE(picture->size(nullptr, nullptr) == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
@@ -104,7 +106,7 @@ TEST_CASE("Picture Size", "[tvgPicture]")
     file2.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 250 * 375);
     file2.close();
 
-    REQUIRE(picture->load(data, 250, 375, ColorSpace::ARGB8888, false) == Result::Success);
+    REQUIRE(picture->load(data, 250, 250, 375, ColorSpace::ARGB8888, true) == Result::Success);
 
     REQUIRE(picture->size(&w, &h) == Result::Success);
     REQUIRE(picture->size(w, h) == Result::Success);
@@ -129,7 +131,7 @@ TEST_CASE("Picture Origin", "[tvgPicture]")
     file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
-    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
     REQUIRE(picture->origin(0.0f, 0.0f) == Result::Success);
     REQUIRE(picture->origin(0.5f, 0.5f) == Result::Success);
     REQUIRE(picture->origin(1.0f, 1.0f) == Result::Success);
@@ -162,7 +164,7 @@ TEST_CASE("Picture Resolver", "[tvgPicture]")
 
     REQUIRE(picture->resolver(resolver, nullptr) == Result::Success);
 
-    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
 
     free(data);
 
@@ -181,7 +183,7 @@ TEST_CASE("Picture Duplication", "[tvgPicture]")
     file.read(reinterpret_cast<char *>(data), sizeof (uint32_t) * 200 * 300);
     file.close();
 
-    REQUIRE(picture->load(data, 200, 300, ColorSpace::ARGB8888, false) == Result::Success);
+    REQUIRE(picture->load(data, 200, 200, 300, ColorSpace::ARGB8888, true) == Result::Success);
     REQUIRE(picture->size(100, 100) == Result::Success);
 
     auto dup = (Picture*)picture->duplicate();
