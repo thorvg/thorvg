@@ -83,6 +83,7 @@ struct WgPipelines
     WGPURenderPipeline imageBlend(WgContext& context, BlendMethod method);
     WGPURenderPipeline sceneBlend(WgContext& context, BlendMethod method);
     void initialize(WgContext& context);
+    void initializeBlit(WgContext& context);
     void release(WgContext& context);
 
 private:
