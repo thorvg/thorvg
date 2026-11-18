@@ -93,7 +93,7 @@ float _bezAt(const Bezier& bz, float at, float length, LengthFunc lineLengthFunc
 
 namespace tvg {
 
-float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt)
+float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt, bool accuracy)
 {
     if (ptsCnt < 2) return 0.0f;
 
@@ -103,7 +103,7 @@ float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32
     while (cmdsCnt-- > 0) {
         switch (*cmds) {
             case PathCommand::Close: {
-                length += tvg::length(*(pts - 1), *start);
+                length += accuracy ? _length(*(pts - 1), *start) : tvg::length(*(pts - 1), *start);
                 break;
             }
             case PathCommand::MoveTo: {
@@ -112,7 +112,7 @@ float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32
                 break;
             }
             case PathCommand::LineTo: {
-                length += tvg::length(*(pts - 1), *pts);
+                length += accuracy ? _length(*(pts - 1), *pts) : tvg::length(*(pts - 1), *pts);
                 ++pts;
                 break;
             }
