@@ -412,25 +412,26 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
         auto last = (repeater == ctx->repeaters.begin());
         shapes.reserve(repeater->cnt);
 
+        Matrix inv;
+        inverse(&repeater->transform, &inv);
         for (int i = 0; i < repeater->cnt; ++i) {
             auto multiplier = repeater->offset + static_cast<float>(i);
+            auto opacity = tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt);
+
+            auto m = tvg::identity();
+            translate(&m, repeater->position * multiplier + repeater->anchor);
+            scale(&m, {powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier)});
+            rotate(&m, repeater->rotation * multiplier);
+            translateR(&m, -repeater->anchor);
+            auto transform = repeater->transform * m;
+
             for (auto& p : propagators) {
                 auto shape = pooler->pooling();
                 shape->ref();   //prevent pooler returns the same shape
                 PAINT(p)->duplicate(shape);
                 to<ShapeImpl>(shape)->rs.path = to<ShapeImpl>(path)->rs.path;
-                auto opacity = tvg::lerp<uint8_t>(repeater->startOpacity, repeater->endOpacity, static_cast<float>(i + 1) / repeater->cnt);
                 shape->opacity(MULTIPLY(shape->opacity(), opacity));
-
-                auto m = tvg::identity();
-                translate(&m, repeater->position * multiplier + repeater->anchor);
-                scale(&m, {powf(repeater->scale.x * 0.01f, multiplier), powf(repeater->scale.y * 0.01f, multiplier)});
-                rotate(&m, repeater->rotation * multiplier);
-                translateR(&m, -repeater->anchor);
-
-                Matrix inv;
-                inverse(&repeater->transform, &inv);
-                shape->transform((repeater->transform * m) * (inv * shape->transform()));
+                shape->transform(transform * (inv * shape->transform()));
                 shapes.push(shape);
             }
         }
@@ -440,23 +441,15 @@ static void _repeat(LottieGroup* parent, Shape* path, LottieRenderPooler<Shape>*
             for (auto& p : propagators) p->unref();
         }
         propagators.clear();
-        propagators.reserve(shapes.count);
+        if (!last) propagators.reserve(shapes.count);
 
-        //push repeat shapes in order. only the last stage draws them, the others repeat them again.
-        if (repeater->inorder) {
-            for (auto& p : shapes) {
-                if (last) {
-                    parent->scene->add(p);
-                    p->unref();
-                } else propagators.push(p);
-            }
-        } else if (!shapes.empty()) {
-            ARRAY_REVERSE_FOREACH(p, shapes) {
-                if (last) {
-                    parent->scene->add(*p);
-                    (*p)->unref();
-                } else propagators.push(*p);
-            }
+        //only the last stage draws the copies
+        for (uint32_t i = 0; i < shapes.count; ++i) {
+            auto p = shapes[repeater->inorder ? i : shapes.count - 1 - i];
+            if (last) {
+                parent->scene->add(p);
+                p->unref();
+            } else propagators.push(p);
         }
         shapes.clear();
     }
