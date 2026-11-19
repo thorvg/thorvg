@@ -982,7 +982,7 @@ void LottieBuilder::updateImage(LottieLayer* layer, float frameNo)
 
     layer->scene->add(picture->refCnt() == 1 ? picture : picture->duplicate());
     image->volume(volume);
-    image->play((frameNo - layer->inPoint) / (layer->outPoint - layer->inPoint));
+    if (playVideos) image->play((frameNo - layer->inPoint) / (layer->outPoint - layer->inPoint));
 }
 
 

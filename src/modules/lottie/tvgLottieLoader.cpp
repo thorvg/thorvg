@@ -63,7 +63,10 @@ bool LottieLoader::prepare()
 void LottieLoader::run(unsigned tid)
 {
     if (comp) builder.update(comp, frameNo);      // update frame
-    else if (prepare()) builder.update(comp, 0);  // initial loading
+    else if (prepare()) {
+        builder.update(comp, 0);  // initial loading
+        builder.playVideos = true;
+    }
     build = false;
 }
 
@@ -106,6 +109,7 @@ Result LottieLoader::header()
     if (TaskScheduler::threads() == 0) {
         Loader::read();
         if (prepare()) {
+            builder.playVideos = true;
             w = static_cast<float>(comp->w);
             h = static_cast<float>(comp->h);
             segmentEnd = frameCnt = comp->frameCnt();

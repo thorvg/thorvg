@@ -181,6 +181,7 @@ struct LottieBuilder
     AudioResolver audioResolver;
     LottieTween tween;
     float volume = 1.0f;
+    bool playVideos = false;
 
 private:
     void updateAudio(LottieComposition* comp, LottieLayer* layer, float frameNo, bool active);
