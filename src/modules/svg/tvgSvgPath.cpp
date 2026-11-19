@@ -132,6 +132,11 @@ void _pathAppendArcTo(RenderPath& out, Point& cur, Point& curCtl, const Point& n
         if (deltaTheta > 0.0f) deltaTheta -= 2.0f * MATH_PI;
     }
 
+    if (!largeArc && deltaTheta == 0.0f) {
+        out.lineTo(next);
+        return;
+    }
+
     //Add several cubic bezier to approximate the arc
     //(smaller than 90 degrees)
     //We add one extra segment because we want something
