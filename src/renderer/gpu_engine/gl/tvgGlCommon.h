@@ -138,11 +138,11 @@ struct GlDrawable
     RenderUpdateFlag flags = RenderUpdateFlag::None;  // a backup flag for deferred update
 };
 
-struct GlShape : GlDrawable
+struct GlShape final : GlDrawable, GpuShapeTask
 {
     void destroy(GlRenderer& renderer) override {}
+    void run(unsigned tid) override;
 
-    const RenderShape* rshape;
     float multiplier = 1.0f;
     struct {
         bool fill = false;

@@ -119,37 +119,31 @@ void WgShape::expand(const BBox& bbox)
     this->bbox.max = tvg::max(this->bbox.max, bbox.max);
 }
 
-void WgShape::update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity)
+void WgShape::updateOpacity()
 {
-    shape.setting.valid = rshape.fill || (rshape.color.a * opacity > 0);
-    stroke.setting.valid = rshape.stroke && (rshape.stroke->fill || (rshape.stroke->color.a * opacity > 0));
-
-    shape.solid.opacity = shapeOpacity;
-    stroke.solid.opacity = strokeOpacity;
-
-    fillRule = rshape.rule;
-    viewport = vport;
+    shape.solid.opacity = shape.setting.update(colorSpace, opacity);
+    stroke.solid.opacity = stroke.setting.update(colorSpace, opacity);
 }
 
-void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag)
+void WgShape::run(TVG_UNUSED unsigned tid)
 {
-    reset();  // Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
+    resetGeometry();  // Optimize: bad idea to reset meshes always. it could re-use the meshes if there haven't been any path changes.
 
     convex = false;
-    strokeFirst = rshape.strokeFirst();
+    strokeFirst = rshape->strokeFirst();
     shape.setting.opacityMultiplier = 1.0f;
     stroke.setting.opacityMultiplier = 1.0f;
 
     // optimize path
     auto& optPath = RenderPath::scratch();
     RenderPath optStrokePath;
-    auto optimized = gpuOptimize(rshape, transform, optPath, optStrokePath);
-    auto strokeWidth = rshape.strokeWidth();
+    auto optimized = gpuOptimize(*rshape, transform, optPath, optStrokePath);
+    auto strokeWidth = rshape->strokeWidth();
 
-    auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
+    auto updatePath = geometryFlags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
 
     // update fill shapes
-    if (updatePath || (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {
+    if (updatePath || (geometryFlags & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {
         if (optimized == GpuOptimizeResult::SkipFill) {
             // Too-thin fills are suppressed instead of going through thin fallback.
             shape.mesh.clear();
@@ -175,7 +169,7 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
         }
     }
     // update strokes shapes
-    if (rshape.stroke && (updatePath || (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)))) {
+    if (rshape->stroke && (updatePath || (geometryFlags & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)))) {
         auto qualityScale = scaling(transform);
         auto strokeWidthWorld = strokeWidth * qualityScale;
         if (!std::isfinite(strokeWidthWorld)) strokeWidthWorld = strokeWidth;
@@ -184,9 +178,9 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
 
         //run stroking only if it's valid
         if (!tvg::zero(strokeWidthWorld)) {
-            WgStroker stroker(&stroke.mesh, strokeWidth, rshape.strokeCap(), rshape.strokeJoin(), rshape.strokeMiterlimit(), qualityScale);
+            WgStroker stroker(&stroke.mesh, strokeWidth, rshape->strokeCap(), rshape->strokeJoin(), rshape->strokeMiterlimit(), qualityScale);
             auto& dashed = RenderPath::scratch();
-            if (gpuStrokeDash(rshape, dashed, nullptr)) stroker.run(dashed);
+            if (gpuStrokeDash(*rshape, dashed, nullptr)) stroker.run(dashed);
             else stroker.run(optStrokePath);
             strokeOverlapFree = stroker.overlapFree;
             stroke.setting.opacityMultiplier = 1.0f;
@@ -204,11 +198,11 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
     // update shapes bbox (with empty path handling)
     if (shape.mesh.vbuffer.empty() && stroke.mesh.vbuffer.empty()) bbox = {{0, 0}, {0, 0}};
     bboxMesh.bbox(bbox.min, bbox.max);
+    updateOpacity();
 }
 
-void WgShape::reset()
+void WgShape::resetGeometry()
 {
-    clips.clear();
     stroke.mesh.clear();
     stroke.bboxMesh.clear();
     stroke.bbox.init();
@@ -220,7 +214,7 @@ void WgShape::reset()
 
 void WgShape::release(WgContext& context)
 {
-    reset();
+    resetGeometry();
     stroke.setting.release(context);
     shape.setting.release(context);
 };

@@ -84,7 +84,7 @@ struct WgPaint
     void assign(const Array<RenderData>& clips);
 };
 
-struct WgShape : WgPaint
+struct WgShape final : WgPaint, GpuShapeTask
 {
     struct
     {
@@ -107,14 +107,16 @@ struct WgShape : WgPaint
     BBox bbox;
     uint32_t strokeViewMatIdx;
     FillRule fillRule;
+    ColorSpace colorSpace;
+    uint8_t opacity;
     bool convex;
     bool strokeFirst;
     bool strokeOverlapFree;
 
     void expand(const BBox& bb);
-    void update(const RenderShape& rshape, const RenderRegion& vport, uint8_t shapeOpacity, uint8_t strokeOpacity, uint8_t opacity);
-    void update(const RenderShape& rshape, const Matrix& transform, RenderUpdateFlag flag);
-    void reset();
+    void updateOpacity();
+    void run(unsigned tid) override;
+    void resetGeometry();
     void release(WgContext& context) override;
 
     RenderRegion region() override

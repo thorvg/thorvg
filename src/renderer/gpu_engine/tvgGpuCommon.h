@@ -25,9 +25,43 @@
 
 #include "tvgMath.h"
 #include "tvgRender.h"
+#include "tvgTaskScheduler.h"
 
 namespace tvg
 {
+
+struct GpuShapeTask : Task
+{
+    const RenderShape* rshape = nullptr;
+    RenderUpdateFlag geometryFlags = RenderUpdateFlag::None;
+};
+
+// Shape tasks borrow the paint's path and stroke until the end of the update.
+struct GpuShapeTasks
+{
+    explicit GpuShapeTasks(uint32_t threads) :
+        threaded(threads > 0)
+    {
+    }
+
+    template<typename Shape>
+    bool request(Shape* task, const RenderShape& rshape, RenderUpdateFlag flags)
+    {
+        if (!(flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform | RenderUpdateFlag::Stroke))) return false;
+
+        task->rshape = &rshape;
+        task->geometryFlags = flags;
+        if (!threaded || !tryEnqueue(task)) task->run(0);
+        return true;
+    }
+
+    void done();
+
+private:
+    bool tryEnqueue(GpuShapeTask* task);
+    bool threaded;
+    Array<GpuShapeTask*> pending;
+};
 
 enum class GpuOptimizeResult : uint8_t
 {
