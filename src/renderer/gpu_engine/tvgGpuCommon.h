@@ -29,15 +29,14 @@
 namespace tvg
 {
 
-struct GpuOptimizeResult
+enum class GpuOptimizeResult : uint8_t
 {
-    RenderPath* transformed = nullptr;
-    RenderPath* local = nullptr;
-    bool thin = false;
-    bool skipFill = false;
+    Normal,
+    Thin,
+    SkipFill
 };
 
-void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& matrix);
+GpuOptimizeResult gpuOptimize(const RenderShape& shape, const Matrix& matrix, RenderPath& fill, RenderPath& stroke);
 RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix);
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3);
 bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform);
@@ -45,8 +44,8 @@ uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius);
 Matrix gpuConicTransform(const Point& center, float angle);
 
 bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c);
-bool gpuPointInAnyMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count);
-bool gpuPointInFillMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count, FillRule rule);
+bool gpuPointInAnyMesh(const Point& p, const Point* vertices, const uint32_t* indices, uint32_t count);
+bool gpuPointInFillMesh(const Point& p, const Point* vertices, const uint32_t* indices, uint32_t count, FillRule rule);
 bool gpuPointInQuad(const Point& p, const Point (&triangle)[6]);
 
 // Conservative triangle-fan safety check

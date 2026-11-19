@@ -70,7 +70,7 @@ enum class GlStencilMode
 
 struct GlGeometryBuffer
 {
-    Array<float> vertex;
+    Array<Point> vertex;
     Array<uint32_t> index;
 
     void clear()
@@ -103,7 +103,6 @@ struct GlGeometry
         return !buffer.index.empty();
     }
 
-    void prepare(const RenderShape& rshape);
     bool tesselateShape(const RenderShape& rshape, float& multiplier);
     bool tesselateStroke(const RenderShape& rshape);
     bool tesselateThinFill(const RenderPath& path);
@@ -116,15 +115,12 @@ struct GlGeometry
     Matrix matrix;
     RenderRegion viewport;
     RenderRegion fillBBox, strokeBBox;
-    RenderPath optPath;        // optimal transformed path
-    RenderPath optStrokePath;  // matching local path using transformed-space tolerance
+    RenderPath optStrokePath;  // cached for stroke-only updates
     float strokeRenderWidth;
     mutable Matrix imatrix;      // inverse matrix
     mutable bool mDirty = true;  // matrix dirty
     FillRule fillRule;
     bool fillWorld : 1;
-    bool optPathThin : 1;
-    bool optPathSkipFill : 1;
     bool convex : 1;
     bool strokeDirect;
 };

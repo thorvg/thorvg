@@ -26,6 +26,8 @@
 namespace tvg
 {
 
+static_assert(sizeof(Point) == 2 * sizeof(float), "vertices must be packed x/y floats.");
+
 /************************************************************************/
 /* Utility Functions Implementation                                     */
 /************************************************************************/
@@ -218,19 +220,22 @@ struct ThinPathTracker
 
 // Simplify in transformed space and optionally mirror the same decisions into a
 // local-coordinate path for stroke tessellation.
-void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& matrix)
+GpuOptimizeResult gpuOptimize(const RenderShape& shape, const Matrix& matrix, RenderPath& out, RenderPath& stroke)
 {
-    result.thin = false;
-    result.skipFill = false;
-    if (!result.transformed) return;
-
-    auto& out = *result.transformed;
     out.clear();
+    stroke.clear();
 
-    auto localOut = result.local;
-    if (localOut) localOut->clear();
+    auto path = &shape.path;
+    if (shape.trimpath()) {
+        auto& trimmed = RenderPath::scratch();
+        if (!shape.stroke->trim.trim(*path, trimmed)) return GpuOptimizeResult::Normal;
+        path = &trimmed;
+    }
+    const auto& in = *path;
+    if (in.empty()) return GpuOptimizeResult::Normal;
 
-    if (in.empty()) return;
+    auto width = shape.strokeWidth();
+    auto localOut = (std::isfinite(width) && !zero(width)) ? &stroke : nullptr;
 
     out.cmds.reserve(in.cmds.count);
     out.pts.reserve(in.pts.count);
@@ -382,13 +387,10 @@ void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& 
         }
     }
     finalizeSubpath();
-    // thin means "use thin fill fallback", not just "the geometry is narrow".
-    result.thin = thinTracker.candidate && thinTracker.ready && (drawableSubpathCnt == 1);
-    if (result.thin && thinTracker.tooThin()) {
-        // Too thin for fallback: keep the path for strokes, but skip the fill.
-        result.thin = false;
-        result.skipFill = true;
+    if (thinTracker.candidate && thinTracker.ready && drawableSubpathCnt == 1) {
+        return thinTracker.tooThin() ? GpuOptimizeResult::SkipFill : GpuOptimizeResult::Thin;
     }
+    return GpuOptimizeResult::Normal;
 }
 
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3)
@@ -848,12 +850,6 @@ bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transfo
 /* Intersector Functions Implementation                                 */
 /************************************************************************/
 
-static inline void _point(const void* vertices, uint32_t index, Point& point)
-{
-    static_assert(sizeof(Point) == 2 * sizeof(float), "vertices must be packed x/y floats.");
-    memcpy(&point, static_cast<const unsigned char*>(vertices) + size_t(index) * sizeof(Point), sizeof(Point));
-}
-
 bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c)
 {
     auto d1 = tvg::cross(p - a, p - b);
@@ -867,16 +863,10 @@ bool gpuPointInQuad(const Point& p, const Point (&triangle)[6])
     return gpuPointInTriangle(p, triangle[0], triangle[1], triangle[2]) || gpuPointInTriangle(p, triangle[3], triangle[4], triangle[5]);
 }
 
-// @p vertices are packed x/y float pairs (Point[] or float[]), @p count is the number of indices in the triangle list.
-// GL and WG vertices share the same packed (x, y) float layout as Point.
-bool gpuPointInAnyMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count)
+bool gpuPointInAnyMesh(const Point& p, const Point* vertices, const uint32_t* indices, uint32_t count)
 {
-    Point p0, p1, p2;
     for (uint32_t i = 0; i < count; i += 3) {
-        _point(vertices, indices[i], p0);
-        _point(vertices, indices[i + 1], p1);
-        _point(vertices, indices[i + 2], p2);
-        if (gpuPointInTriangle(p, p0, p1, p2)) return true;
+        if (gpuPointInTriangle(p, vertices[indices[i]], vertices[indices[i + 1]], vertices[indices[i + 2]])) return true;
     }
     return false;
 }
@@ -885,7 +875,7 @@ bool gpuPointInAnyMesh(const Point& p, const void* vertices, const uint32_t* ind
 // orientation (NonZero) or flips per triangle (EvenOdd). Summing the signed edge crossings of every triangle gives
 // the same winding, because the fan's inner edges are crossed once in each direction and cancel out. Each crossing
 // changes the winding by one, so its parity is the even-odd result.
-bool gpuPointInFillMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count, FillRule rule)
+bool gpuPointInFillMesh(const Point& p, const Point* vertices, const uint32_t* indices, uint32_t count, FillRule rule)
 {
     int32_t winding = 0;
 
@@ -895,11 +885,10 @@ bool gpuPointInFillMesh(const Point& p, const void* vertices, const uint32_t* in
         if (intersectionX > p.x) winding += (p2.y > p1.y) ? 1 : -1;
     };
 
-    Point p0, p1, p2;
     for (uint32_t i = 0; i < count; i += 3) {
-        _point(vertices, indices[i], p0);
-        _point(vertices, indices[i + 1], p1);
-        _point(vertices, indices[i + 2], p2);
+        const auto& p0 = vertices[indices[i]];
+        const auto& p1 = vertices[indices[i + 1]];
+        const auto& p2 = vertices[indices[i + 2]];
         intersects(p0, p1);
         intersects(p1, p2);
         intersects(p2, p0);

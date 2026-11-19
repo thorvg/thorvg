@@ -1031,9 +1031,7 @@ bool GlRenderer::bounds(RenderData data, Point* pt4, const Matrix& m)
 
     tvg::BBox bbox;
     bbox.init();
-    auto& vertexes = shape->geometry.stroke.vertex;
-    for (uint32_t i = 0; i < vertexes.count / 2; i++) {
-        Point vert = {vertexes[i * 2 + 0], vertexes[i * 2 + 1]};
+    for (auto vert : shape->geometry.stroke.vertex) {
         vert *= m;
         bbox = {min(bbox.min, vert), max(bbox.max, vert)};
     }
@@ -1344,7 +1342,6 @@ RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const
         ((flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && shape->geometry.optStrokePath.empty());
 
     if (update) {
-        shape->geometry.prepare(rshape);
         shape->valid.fill = shape->geometry.tesselateShape(rshape, shape->multiplier);
     }
     if (update || (flags & RenderUpdateFlag::Stroke)) {
