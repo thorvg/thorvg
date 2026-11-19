@@ -65,13 +65,50 @@ static bool _parseFlag(char** content, int* number)
 }
 
 
+static bool _appendShortArc(RenderPath& out, const Point& start, const Point& end, const Point& radius, double cosPhi, double sinPhi, bool sweep)
+{
+    auto dx = (double(end.x) - double(start.x)) * 0.5;
+    auto dy = (double(end.y) - double(start.y)) * 0.5;
+    auto rx = double(radius.x);
+    auto ry = double(radius.y);
+    auto normalizedX = (cosPhi * dx + sinPhi * dy) / rx;
+    auto normalizedY = (cosPhi * dy - sinPhi * dx) / ry;
+    auto sinHalfSquared = normalizedX * normalizedX + normalizedY * normalizedY;
+    if (sinHalfSquared >= 0.5) return false;
+
+    auto cosHalf = sqrt(1.0 - sinHalfSquared);
+    auto handle = 4.0 / (3.0 * (1.0 + cosHalf));
+    auto along = handle * cosHalf;
+    auto bend = (sweep ? handle : -handle) * sqrt(sinHalfSquared);
+    auto bendX = bend * (cosPhi * rx * normalizedY + sinPhi * ry * normalizedX);
+    auto bendY = bend * (sinPhi * rx * normalizedY - cosPhi * ry * normalizedX);
+
+    auto x1 = double(start.x) + along * dx;
+    auto y1 = double(start.y) + along * dy;
+    auto x2 = double(end.x) - along * dx;
+    auto y2 = double(end.y) - along * dy;
+    Point c1 = {float(x1 + bendX), float(y1 + bendY)};
+    Point c2 = {float(x2 + bendX), float(y2 + bendY)};
+    if (c1.x == float(x1) && c1.y == float(y1) && c2.x == float(x2) && c2.y == float(y2)) {
+        out.lineTo(end);
+    } else {
+        out.cubicTo(c1, c2, end);
+    }
+    return true;
+}
+
+
 //Some helpful stuff is available here:
 //http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
 void _pathAppendArcTo(RenderPath& out, Point& cur, Point& curCtl, const Point& next, Point radius, float angle, bool largeArc, bool sweep)
 {
     auto start = cur;
-    auto cosPhi = cosf(angle);
-    auto sinPhi = sinf(angle);
+    auto cosRotation = cos(double(angle));
+    auto sinRotation = sin(double(angle));
+    if (!largeArc && _appendShortArc(out, start, next, radius, cosRotation, sinRotation, sweep)) return;
+
+    auto cosPhi = float(cosRotation);
+    auto sinPhi = float(sinRotation);
     auto d2 = (start - next) * 0.5f;
     auto x1p = cosPhi * d2.x + sinPhi * d2.y;
     auto y1p = cosPhi * d2.y - sinPhi * d2.x;
