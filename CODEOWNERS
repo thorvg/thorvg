@@ -8,6 +8,7 @@
 /src/modules/svg @JSUYA
 /src/modules/png @Nor-s
 /src/modules/webp @Nor-s
+/src/modules/media/windows @Nor-s
 /src/modules/media/android @Nor-s
 /src/modules/media/apple @Nor-s
 /src/modules/media/web @tinyjin
