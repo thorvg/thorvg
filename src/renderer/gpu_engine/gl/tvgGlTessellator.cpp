@@ -25,13 +25,11 @@
 namespace tvg
 {
 
-static uint32_t _pushVertex(Array<float>& array, float x, float y)
+static uint32_t _pushVertex(Array<Point>& array, const Point& point)
 {
-    auto index = array.count / 2;
-    array.grow(2);
-    array.data[array.count++] = x;
-    array.data[array.count++] = y;
-    return index;
+    array.grow(1);
+    array.data[array.count] = point;
+    return array.count++;
 }
 
 static void _pushTriangle(Array<uint32_t>& array, uint32_t a, uint32_t b, uint32_t c)
@@ -59,7 +57,7 @@ void Stroker::run(const RenderPath& path, bool thinFill)
     overlapFree = !thinFill;
     mProbe = {};
     mDirections = 0;
-    mBuffer->vertex.reserve(path.pts.count * 8 + 16);
+    mBuffer->vertex.reserve(path.pts.count * 4 + 8);
     mBuffer->index.reserve(path.pts.count * 6);
 
     auto validStrokeCap = false;
@@ -143,10 +141,10 @@ void Stroker::lineTo(const Point& curr)
     auto c = curr + normal * radius();
     auto d = curr - normal * radius();
 
-    auto ia = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto ib = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ic = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto id = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ia = _pushVertex(mBuffer->vertex, a);
+    auto ib = _pushVertex(mBuffer->vertex, b);
+    auto ic = _pushVertex(mBuffer->vertex, c);
+    auto id = _pushVertex(mBuffer->vertex, d);
 
     /**
      *   a --------- c
@@ -188,13 +186,13 @@ void Stroker::cubicTo(const Point& cnt1, const Point& cnt2, const Point& end)
     // Each segment emits a quad (8 floats, 6 indices). Reserve the fixed join
     // costs as well; round joins stay dynamic because their arc count varies.
     auto joinCount = count - ((mState.firstLength == 0.0f) ? 1u : 0u);
-    auto vertexCount = count * 8u;
+    auto vertexCount = count * 4u;
     auto indexCount = count * 6u;
     if (mJoin == StrokeJoin::Bevel) {
-        vertexCount += joinCount * 6u;
+        vertexCount += joinCount * 3u;
         indexCount += joinCount * 3u;
     } else if (mJoin == StrokeJoin::Miter) {
-        vertexCount += joinCount * 8u;
+        vertexCount += joinCount * 4u;
         indexCount += joinCount * 6u;
     }
     mBuffer->vertex.grow(vertexCount);
@@ -258,10 +256,7 @@ void Stroker::join(const Point& dir, float len, uint32_t index)
                 auto inner = apex - mState.prevPtDir * setback - prevNormal * offset;
                 auto side = turn < 0.0f ? 1u : 0u;
                 auto vertices = mBuffer->vertex.data;
-                auto prev = (mState.prevIndex + 2 + side) * 2;
-                auto curr = (index + side) * 2;
-                vertices[prev] = vertices[curr] = inner.x;
-                vertices[prev + 1] = vertices[curr + 1] = inner.y;
+                vertices[mState.prevIndex + 2 + side] = vertices[index + side] = inner;
                 apex = inner;
                 trimmed = true;
             }
@@ -297,15 +292,15 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center, c
     auto arcAngle = endAngle - startAngle;
     auto count = std::max(2u, gpuArcSegmentsCnt(arcAngle, radius() * mQualityScale));
 
-    auto c = _pushVertex(mBuffer->vertex, apex.x, apex.y);
-    auto pi = _pushVertex(mBuffer->vertex, prev.x, prev.y);
+    auto c = _pushVertex(mBuffer->vertex, apex);
+    auto pi = _pushVertex(mBuffer->vertex, prev);
     auto step = (endAngle - startAngle) / (count - 1);
 
     for (uint32_t i = 1; i < count; i++) {
         auto angle = startAngle + step * i;
         // Keep the shared edge exact so adjacent arcs and segments do not overlap.
         Point out = (i + 1 == count) ? curr : Point{center.x + cos(angle) * radius(), center.y + sin(angle) * radius()};
-        auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
+        auto oi = _pushVertex(mBuffer->vertex, out);
 
         _pushTriangle(mBuffer->index, c, pi, oi);
 
@@ -322,14 +317,14 @@ void Stroker::round(const Point &prev, const Point& curr, const Point& center, c
 void Stroker::roundPoint(const Point &p)
 {
     auto count = gpuArcSegmentsCnt(2.0f * MATH_PI, radius() * mQualityScale);
-    auto c = _pushVertex(mBuffer->vertex, p.x, p.y);
+    auto c = _pushVertex(mBuffer->vertex, p);
     auto step = 2.0f * MATH_PI / (count - 1);
 
     for (uint32_t i = 1; i <= static_cast<uint32_t>(count); i++) {
         float angle = i * step;
         Point dir = {cos(angle), sin(angle)};
         Point out = p + dir * radius();
-        auto oi = _pushVertex(mBuffer->vertex, out.x, out.y);
+        auto oi = _pushVertex(mBuffer->vertex, out);
 
         if (oi > 1) {
             _pushTriangle(mBuffer->index, c, oi, oi - 1);
@@ -359,10 +354,10 @@ void Stroker::miter(const Point& prev, const Point& curr, const Point& center, c
     }
 
     auto join = center + pe;
-    auto c = _pushVertex(mBuffer->vertex, apex.x, apex.y);
-    auto cp1 = _pushVertex(mBuffer->vertex, prev.x, prev.y);
-    auto cp2 = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    auto e = _pushVertex(mBuffer->vertex, join.x, join.y);
+    auto c = _pushVertex(mBuffer->vertex, apex);
+    auto cp1 = _pushVertex(mBuffer->vertex, prev);
+    auto cp2 = _pushVertex(mBuffer->vertex, curr);
+    auto e = _pushVertex(mBuffer->vertex, join);
 
     _pushTriangle(mBuffer->index, c, cp1, e);
     _pushTriangle(mBuffer->index, e, cp2, c);
@@ -377,9 +372,9 @@ void Stroker::miter(const Point& prev, const Point& curr, const Point& center, c
 
 void Stroker::bevel(const Point& prev, const Point& curr, const Point& apex)
 {
-    auto a = _pushVertex(mBuffer->vertex, prev.x, prev.y);
-    auto b = _pushVertex(mBuffer->vertex, curr.x, curr.y);
-    auto c = _pushVertex(mBuffer->vertex, apex.x, apex.y);
+    auto a = _pushVertex(mBuffer->vertex, prev);
+    auto b = _pushVertex(mBuffer->vertex, curr);
+    auto c = _pushVertex(mBuffer->vertex, apex);
 
     _pushTriangle(mBuffer->index, a, b, c);
 }
@@ -394,10 +389,10 @@ void Stroker::square(const Point& p, const Point& outDir)
     auto c = a + outDir * radius();
     auto d = b + outDir * radius();
 
-    auto ai = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto bi = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ci = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto di = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ai = _pushVertex(mBuffer->vertex, a);
+    auto bi = _pushVertex(mBuffer->vertex, b);
+    auto ci = _pushVertex(mBuffer->vertex, c);
+    auto di = _pushVertex(mBuffer->vertex, d);
 
     _pushTriangle(mBuffer->index, ai, bi, ci);
     _pushTriangle(mBuffer->index, ci, bi, di);
@@ -419,10 +414,10 @@ void Stroker::squarePoint(const Point& p)
     auto c = p - offsetX - offsetY;
     auto d = p + offsetX - offsetY;
 
-    auto ai = _pushVertex(mBuffer->vertex, a.x, a.y);
-    auto bi = _pushVertex(mBuffer->vertex, b.x, b.y);
-    auto ci = _pushVertex(mBuffer->vertex, c.x, c.y);
-    auto di = _pushVertex(mBuffer->vertex, d.x, d.y);
+    auto ai = _pushVertex(mBuffer->vertex, a);
+    auto bi = _pushVertex(mBuffer->vertex, b);
+    auto ci = _pushVertex(mBuffer->vertex, c);
+    auto di = _pushVertex(mBuffer->vertex, d);
 
     _pushTriangle(mBuffer->index, ai, bi, ci);
     _pushTriangle(mBuffer->index, ci, di, ai);
@@ -443,119 +438,6 @@ void Stroker::round(const Point& p, const Point& outDir)
 
     round(a, c, p, p);
     round(c, b, p, p);
-}
-
-
-BWTessellator::BWTessellator(GlGeometryBuffer* buffer): mBuffer(buffer)
-{
-}
-
-void BWTessellator::tessellate(const RenderPath& path)
-{
-    auto cmds = path.cmds.data;
-    auto cmdCnt = path.cmds.count;
-    auto pts = path.pts.data;
-    auto ptsCnt = path.pts.count;
-
-    if (ptsCnt <= 2) return;
-
-    uint32_t firstIndex = 0;
-    uint32_t prevIndex = 0;
-    Point firstPt = {};
-    Point prevPt = {};
-    GpuConvexProbe probe;
-    bool contourClosed = false;
-
-    mBuffer->vertex.reserve(ptsCnt * 2);
-    mBuffer->index.reserve((ptsCnt - 2) * 3);
-
-    auto finishContour = [&]() {
-        if (prevIndex == 0 || contourClosed) return;
-        probe.addContourClose(firstPt - prevPt);
-        contourClosed = true;
-    };
-
-    for (uint32_t i = 0; i < cmdCnt; i++) {
-        switch(cmds[i]) {
-            case PathCommand::MoveTo: {
-                finishContour();
-                probe.nextContour();
-                firstIndex = pushVertex(pts->x, pts->y);
-                firstPt = prevPt = *pts;
-                prevIndex = 0;
-                contourClosed = false;
-                pts++;
-            } break;
-            case PathCommand::LineTo: {
-                auto edge = *pts - prevPt;
-                if (prevIndex == 0) {
-                    prevIndex = pushVertex(pts->x, pts->y);
-                    probe.addEdge(edge);
-                    prevPt = *pts++;
-                } else {
-                    probe.addEdge(edge);
-                    auto currIndex = pushVertex(pts->x, pts->y);
-                    pushTriangle(firstIndex, prevIndex, currIndex);
-                    prevIndex = currIndex;
-                    prevPt = *pts++;
-                }
-            } break;
-            case PathCommand::CubicTo: {
-                Bezier curve{pts[-1], pts[0], pts[1], pts[2]};
-                if (probe.convex && gpuEdgesCross(curve.start, curve.ctrl1, curve.ctrl2, curve.end)) probe.convex = false;
-
-                auto stepCount = curve.segments();
-                if (stepCount <= 1) stepCount = 2;
-                auto subdivisionCount = static_cast<uint32_t>(stepCount);
-                // Each subdivision adds one 2D vertex and at most one triangle.
-                mBuffer->vertex.grow(subdivisionCount * 2u);
-                mBuffer->index.grow(subdivisionCount * 3u);
-                float step = 1.f / stepCount;
-                auto curvePrevPt = prevPt;
-
-                for (uint32_t s = 1; s <= subdivisionCount; ++s) {
-                    auto pt = curve.at(step * s);
-                    probe.addEdge(pt - curvePrevPt);
-                    auto currIndex = pushVertex(pt.x, pt.y);
-                    curvePrevPt = pt;
-                    if (prevIndex == 0) { prevIndex = currIndex; continue; }
-                    pushTriangle(firstIndex, prevIndex, currIndex);
-                    prevIndex = currIndex;
-                }
-                prevPt = curve.end;
-                pts += 3;
-            } break;
-            case PathCommand::Close: {
-                finishContour();
-            } break;
-            default:
-                break;
-        }
-    }
-
-    finishContour();
-    convex = probe.convex;
-}
-
-
-RenderRegion BWTessellator::bounds() const
-{
-    return {int32_t(floor(bbox.min.x)), int32_t(floor(bbox.min.y)), int32_t(ceil(bbox.max.x)), int32_t(ceil(bbox.max.y))};
-}
-
-
-uint32_t BWTessellator::pushVertex(float x, float y)
-{
-    auto index = _pushVertex(mBuffer->vertex, x, y);
-    if (index == 0) bbox.max = bbox.min = {x, y};
-    else bbox = {{std::min(bbox.min.x, x), std::min(bbox.min.y, y)}, {std::max(bbox.max.x, x), std::max(bbox.max.y, y)}};
-    return index;
-}
-
-
-void BWTessellator::pushTriangle(uint32_t a, uint32_t b, uint32_t c)
-{
-    _pushTriangle(mBuffer->index, a, b, c);
 }
 
 }  // namespace tvg

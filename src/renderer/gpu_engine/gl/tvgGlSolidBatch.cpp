@@ -25,7 +25,7 @@
 void GlSolidBatch::draw(GlRenderer& renderer, GlShape& shape, const RenderColor& color, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds)
 {
     auto buffer = &shape.geometry.fill;
-    auto vertexCount = buffer->vertex.count / 2;
+    auto vertexCount = buffer->vertex.count;
     auto indexCount = buffer->index.count;
     if (vertexCount == 0 || indexCount == 0) return;
 
@@ -38,7 +38,6 @@ void GlSolidBatch::draw(GlRenderer& renderer, GlShape& shape, const RenderColor&
         batchColor,
         0,
         0,
-        2,
     };
     draw(renderer, data, depth, viewRegion, viewBounds);
 }
@@ -52,7 +51,6 @@ void GlSolidBatch::draw(GlRenderer& renderer, GlImage& image, int32_t depth, con
         {},
         image.texId,
         image.opacity,
-        4,
     };
     draw(renderer, data, depth, viewRegion, viewBounds);
 }
@@ -61,7 +59,7 @@ void GlSolidBatch::draw(GlRenderer& renderer, const DrawData& data, int32_t dept
 {
     auto pass = renderer.currentPass();
     auto buffer = &data.geometry->fill;
-    auto vertexCount = buffer->vertex.count / data.vertexSize;
+    auto vertexCount = (data.flag == RenderUpdateFlag::Image) ? buffer->vertex.count / 2 : buffer->vertex.count;
     auto indexCount = buffer->index.count;
 
     if (!appendable(pass, data, viewBounds) || task->blendMethod != renderer.mBlendMethod) {
@@ -126,11 +124,10 @@ void GlSolidBatch::emit(GlRenderer& renderer, GlRenderPass* pass, const DrawData
 void GlSolidBatch::appendGeometry(GlRenderer& renderer, const DrawData& data)
 {
     auto buffer = &data.geometry->fill;
-    float* vertices = nullptr;
+    renderer.mGpuBuffer.push(buffer->vertex.data, buffer->vertex.count * sizeof(Point));
+
     uint32_t* indices = nullptr;
-    renderer.mGpuBuffer.reserve(buffer->vertex.count * sizeof(float), reinterpret_cast<void**>(&vertices));
     renderer.mGpuBuffer.reserveIndex(buffer->index.count * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
-    memcpy(vertices, buffer->vertex.data, buffer->vertex.count * sizeof(float));
     buildIndices(indices, buffer, this->vertexCount);
 }
 

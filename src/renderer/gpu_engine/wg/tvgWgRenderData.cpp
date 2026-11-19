@@ -26,6 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgMath.h"
 #include "tvgWgTessellator.h"
+#include "tvgGpuTessellator.h"
 #include "tvgWgTextureMgr.h"
 #include "tvgWgShaderTypes.h"
 #include "tvgWgRenderData.h"
@@ -142,46 +143,28 @@ void WgShape::update(const RenderShape& rshape, const Matrix& transform, RenderU
     // optimize path
     auto& optPath = RenderPath::scratch();
     RenderPath optStrokePath;
-    bool optPathThin = false;
-    bool optPathSkipFill = false;
+    auto optimized = gpuOptimize(rshape, transform, optPath, optStrokePath);
     auto strokeWidth = rshape.strokeWidth();
-    auto localOut = (std::isfinite(strokeWidth) && !tvg::zero(strokeWidth)) ? &optStrokePath : nullptr;
-    if (rshape.trimpath()) {
-        auto& trimmed = RenderPath::scratch();
-        if (rshape.stroke->trim.trim(rshape.path, trimmed)) {
-            GpuOptimizeResult result{&optPath, localOut};
-            gpuOptimize(trimmed, result, transform);
-            optPathThin = result.thin;
-            optPathSkipFill = result.skipFill;
-        }
-        else optPath.clear();
-    } else {
-        GpuOptimizeResult result{&optPath, localOut};
-        gpuOptimize(rshape.path, result, transform);
-        optPathThin = result.thin;
-        optPathSkipFill = result.skipFill;
-    }
 
     auto updatePath = flag & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path);
 
     // update fill shapes
     if (updatePath || (flag & (RenderUpdateFlag::Color | RenderUpdateFlag::Gradient))) {
-        if (optPathSkipFill) {
+        if (optimized == GpuOptimizeResult::SkipFill) {
             // Too-thin fills are suppressed instead of going through thin fallback.
             shape.mesh.clear();
         } else {
             BBox bbox;
             // Drawable thin fills are tessellated as a minimal-width stroke.
-            if (optPathThin && tvg::zero(rshape.strokeWidth())) {
+            if (optimized == GpuOptimizeResult::Thin && tvg::zero(strokeWidth)) {
                 WgStroker stroker(&shape.mesh, MIN_WG_STROKE_WIDTH, StrokeCap::Butt, StrokeJoin::Bevel);
                 stroker.run(optPath, true);
                 bbox = stroker.getBBox();
                 shape.setting.opacityMultiplier = MIN_WG_STROKE_ALPHA;
             } else {
-                WgBWTessellator bwTess{&shape.mesh};
-                bwTess.tessellate(optPath);
-                convex = bwTess.convex;
-                bbox = bwTess.getBBox();
+                auto result = gpuTessellateFill(optPath, shape.mesh.vbuffer, shape.mesh.ibuffer);
+                convex = result.convex;
+                bbox = result.bbox;
             }
             if (shape.mesh.ibuffer.empty()) {
                 shape.mesh.clear();
