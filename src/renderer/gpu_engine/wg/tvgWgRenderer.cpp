@@ -21,7 +21,6 @@
  */
 
 #include <cassert>
-#include "tvgTaskScheduler.h"
 #include "tvgWgRenderer.h"
 
 /************************************************************************/
@@ -174,7 +173,7 @@ void WgRenderer::disposeObjects()
         auto paint = (WgPaint*)(p);
         paint->clips.clear();
         if (paint->type() == Type::Shape) {
-            static_cast<WgShape*>(paint)->reset();
+            static_cast<WgShape*>(paint)->resetGeometry();
             mPaintPool.recycle(static_cast<WgShape*>(paint));
         } else {
             static_cast<WgImage*>(paint)->release(mTextures, mContext);
@@ -258,16 +257,17 @@ void WgRenderer::surfaceConfigure(RenderSurface& rsurface, WGPUSurface wsurface,
 RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     auto shape = data ? (WgShape*)data : mPaintPool.shape();
-    if (!data) flags = RenderUpdateFlag::All;
-
-    // update geometry
-    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) shape->update(rshape, transform, flags);
-
-    // update transform
-    if (flags & RenderUpdateFlag::Transform) shape->transform = transform;
+    if (data) shape->done();
+    else flags = RenderUpdateFlag::All;
 
     // update paint settings
-    shape->update(rshape, vport, shape->shape.setting.update(mSurface.cs, opacity), shape->stroke.setting.update(mSurface.cs, opacity), opacity);
+    shape->transform = transform;
+    shape->viewport = vport;
+    shape->fillRule = rshape.rule;
+    shape->colorSpace = mSurface.cs;
+    shape->opacity = opacity;
+    shape->shape.setting.valid = rshape.fill || (rshape.color.a * opacity > 0);
+    shape->stroke.setting.valid = rshape.stroke && (rshape.stroke->fill || (rshape.stroke->color.a * opacity > 0));
 
     // shape
     if (shape->shape.setting.valid) {
@@ -289,6 +289,10 @@ RenderData WgRenderer::prepare(const RenderShape& rshape, RenderData data, const
     }
 
     if (flags & RenderUpdateFlag::Clip) shape->assign(clips);
+
+    if (flags & (RenderUpdateFlag::Transform | RenderUpdateFlag::Path | RenderUpdateFlag::Stroke)) {
+        mShapeTasks.request(shape, rshape, flags);
+    } else shape->updateOpacity();
 
     return shape;
 }
@@ -718,8 +722,9 @@ bool WgRenderer::preUpdate()
 
 bool WgRenderer::postUpdate()
 {
-    if (mContext.invalid()) return false;
-    return mTextures.flushPreprocess(mContext);
+    auto success = !mContext.invalid() && mTextures.flushPreprocess(mContext);
+    mShapeTasks.done();
+    return success;
 }
 
 
@@ -787,7 +792,7 @@ bool WgRenderer::term()
     return true;
 }
 
-WgRenderer::WgRenderer(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption op)
+WgRenderer::WgRenderer(uint32_t threads, TVG_UNUSED EngineOption op) : mShapeTasks(threads)
 {
     _rendererMtx.lock();
     if (_rendererCnt == -1) {

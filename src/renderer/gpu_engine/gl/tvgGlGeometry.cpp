@@ -102,6 +102,22 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 }
 
 /************************************************************************/
+/* GlShape                                                              */
+/************************************************************************/
+
+void GlShape::run(TVG_UNUSED unsigned tid)
+{
+    // A newly enabled stroke needs a local path even if the transform and fill are cached.
+    auto width = rshape->strokeWidth();
+    if ((geometryFlags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) ||
+        (geometry.optStrokePath.empty() && std::isfinite(width) && !tvg::zero(width))) {
+        valid.fill = geometry.tesselateShape(*rshape, multiplier);
+    }
+    valid.stroke = geometry.tesselateStroke(*rshape);
+    opacity *= multiplier;
+}
+
+/************************************************************************/
 /* GlGeometry                                                           */
 /************************************************************************/
 

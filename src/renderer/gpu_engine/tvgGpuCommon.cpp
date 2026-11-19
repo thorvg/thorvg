@@ -28,6 +28,34 @@ namespace tvg
 
 static_assert(sizeof(Point) == 2 * sizeof(float), "vertices must be packed x/y floats.");
 
+static bool _smallShape(const RenderShape& shape)
+{
+    auto& path = shape.path;
+    if (path.pts.count > 8 || path.cmds.count > 9) return false;
+    if (shape.stroke) {
+        return path.pts.count <= 2 && path.cmds.count <= 3 && !shape.stroke->dash.count &&
+               !shape.trimpath() && shape.stroke->cap != StrokeCap::Round;
+    }
+    for (auto cmd : path.cmds) {
+        if (cmd == PathCommand::CubicTo) return false;
+    }
+    return true;
+}
+
+bool GpuShapeTasks::tryEnqueue(GpuShapeTask* task)
+{
+    if (_smallShape(*task->rshape)) return false;
+    pending.push(task);
+    TaskScheduler::request(task);
+    return true;
+}
+
+void GpuShapeTasks::done()
+{
+    for (auto task : pending) task->done();
+    pending.clear();
+}
+
 /************************************************************************/
 /* Utility Functions Implementation                                     */
 /************************************************************************/
