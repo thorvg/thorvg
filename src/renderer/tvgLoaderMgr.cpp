@@ -199,6 +199,11 @@ static tvg::Loader* _findFromCache(const char* data, const char* mimeType)
     return nullptr;
 }
 
+static bool _shareable(const LoaderOps& ops)
+{
+    return ops.caller != Type::Picture || !static_cast<const PictureOps&>(ops).resolver;
+}
+
 /************************************************************************/
 /* External Class Implementation                                        */
 /************************************************************************/
@@ -235,7 +240,9 @@ tvg::Loader* LoaderMgr::loader(const char* filename, LoaderOps& ops, Result& ret
 #ifdef THORVG_FILE_IO_SUPPORT
     if (!filename) return nullptr;
 
-    if (auto loader = _findFromCache(filename)) return loader;
+    if (_shareable(ops)) {
+        if (auto loader = _findFromCache(filename)) return loader;
+    }
 
     ret = Result::InvalidArguments;
 
@@ -283,7 +290,7 @@ tvg::Loader* LoaderMgr::loader(const char* data, uint32_t size, const char* mime
 {
     // Note that users could use the same data pointer with the different content.
     // Thus caching is only valid for shareable.
-    if (ops.owner == Ownership::Borrow) {
+    if (ops.owner == Ownership::Borrow && _shareable(ops)) {
         if (auto loader = _findFromCache(data, mimeType)) return loader;
     }
 
