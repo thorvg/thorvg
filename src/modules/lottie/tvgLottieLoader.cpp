@@ -367,6 +367,7 @@ bool LottieLoader::frame(float no)
 
     this->frameNo = no;
 
+    builder.playVideos = true;
     builder.tween.off();
 
     if (comp) comp->clear();     //clear synchronously
@@ -479,6 +480,7 @@ bool LottieLoader::tween(float progress)
 
     if (tvg::equal(progress, 1.0f)) frameNo = builder.tween.to;
     builder.tween.progress = progress;
+    builder.playVideos = true;
     if (comp) comp->clear();  // clear synchronously
 
     TaskScheduler::request(this);
@@ -498,6 +500,7 @@ bool LottieLoader::tween(float from, float to, float progress)
 
     progress = shorten(progress);
     frameNo = shorten(from);
+    builder.playVideos = true;
     builder.tween.on(shorten(to), progress);
     if (comp) comp->clear();     //clear synchronously
 
