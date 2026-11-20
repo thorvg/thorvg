@@ -80,14 +80,6 @@ GlStageBuffer::~GlStageBuffer()
 }
 
 
-uint32_t GlStageBuffer::push(void *data, uint32_t size, bool alignGpuOffset)
-{
-    void* dst = nullptr;
-    auto offset = reserve(size, &dst, alignGpuOffset);
-    if (size > 0) memcpy(dst, data, size);
-    return offset;
-}
-
 uint32_t GlStageBuffer::pushAux(void* data, uint32_t size)
 {
     void* dst = nullptr;
@@ -111,47 +103,6 @@ uint32_t GlStageBuffer::getImageOpacityOffset(uint8_t opacity)
         GlImageOpacityBlock block = {opacity, 0, 0, 0};
         offset = push(block, sizeof(block), true);
     }
-    return offset;
-}
-
-uint32_t GlStageBuffer::reserve(uint32_t size, void** dst, bool alignGpuOffset)
-{
-    if (alignGpuOffset) alignOffset(size);
-
-    auto offset = mStageBuffer.count;
-    if (this->mStageBuffer.reserved - this->mStageBuffer.count < size) {
-        this->mStageBuffer.grow(max(size, this->mStageBuffer.reserved));
-    }
-
-    *dst = this->mStageBuffer.data + offset;
-    this->mStageBuffer.count += size;
-
-    return offset;
-}
-
-uint32_t GlStageBuffer::reserveAux(uint32_t size, void** dst)
-{
-    auto offset = mAuxBuffer.count;
-    if (this->mAuxBuffer.reserved - this->mAuxBuffer.count < size) {
-        this->mAuxBuffer.grow(max(size, this->mAuxBuffer.reserved));
-    }
-
-    *dst = this->mAuxBuffer.data + offset;
-    this->mAuxBuffer.count += size;
-
-    return offset;
-}
-
-uint32_t GlStageBuffer::reserveIndex(uint32_t size, void** dst)
-{
-    auto offset = mIndexBuffer.count;
-    if (this->mIndexBuffer.reserved - this->mIndexBuffer.count < size) {
-        this->mIndexBuffer.grow(max(size, this->mIndexBuffer.reserved));
-    }
-
-    *dst = this->mIndexBuffer.data + offset;
-    this->mIndexBuffer.count += size;
-
     return offset;
 }
 

@@ -83,20 +83,4 @@ private:
     Point mRightBottom = {0.0f, 0.0f};
 };
 
-class WgBWTessellator
-{
-public:
-    WgBWTessellator(WgMesh* buffer);
-    void tessellate(const RenderPath& path);
-    RenderRegion bounds() const;
-    BBox getBBox() const;
-    bool convex = true;
-private:
-    uint32_t pushVertex(float x, float y);
-    void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
-
-    WgMesh* mBuffer;
-    BBox bbox = {};
-};
-
 #endif /* _TVG_WG_TESSELLATOR_H_ */

@@ -104,6 +104,7 @@ private:
     WgStencilBatch mStencilBatch;
     WgRenderTargetPool mRenderTargetPool;
     WgPaintPool mPaintPool;
+    GpuShapeTasks mShapeTasks;
     WgRenderEffectPool mEffectPool;
     WgTextureMgr mTextures;
     WgContext mContext;

@@ -47,13 +47,34 @@ struct GlStageBuffer
     GlStageBuffer();
     ~GlStageBuffer();
 
-    uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false);
+    uint32_t push(void* data, uint32_t size, bool alignGpuOffset = false)
+    {
+        void* dst = nullptr;
+        auto offset = reserve(size, &dst, alignGpuOffset);
+        if (size > 0) memcpy(dst, data, size);
+        return offset;
+    }
+
     uint32_t pushAux(void* data, uint32_t size);
     uint32_t pushIndex(void* data, uint32_t size);
     uint32_t getImageOpacityOffset(uint8_t opacity);
-    uint32_t reserve(uint32_t size, void** dst, bool alignGpuOffset = false);
-    uint32_t reserveAux(uint32_t size, void** dst);
-    uint32_t reserveIndex(uint32_t size, void** dst);
+
+    uint32_t reserve(uint32_t size, void** dst, bool alignGpuOffset = false)
+    {
+        if (alignGpuOffset) alignOffset(size);
+        return reserve(mStageBuffer, size, dst);
+    }
+
+    uint32_t reserveAux(uint32_t size, void** dst)
+    {
+        return reserve(mAuxBuffer, size, dst);
+    }
+
+    uint32_t reserveIndex(uint32_t size, void** dst)
+    {
+        return reserve(mIndexBuffer, size, dst);
+    }
+
     bool flushToGPU(GlStateCache& state);
     void bind(GlStateCache& state);
     void unbind(GlStateCache& state);
@@ -61,6 +82,15 @@ struct GlStageBuffer
     GLuint getAuxBufferId();
 
 private:
+    static uint32_t reserve(Array<uint8_t>& buffer, uint32_t size, void** dst)
+    {
+        auto offset = buffer.count;
+        if (buffer.reserved - offset < size) buffer.grow(max(size, buffer.reserved));
+        *dst = buffer.data + offset;
+        buffer.count += size;
+        return offset;
+    }
+
     void alignOffset(uint32_t size);
 
     GLuint mVao = 0;

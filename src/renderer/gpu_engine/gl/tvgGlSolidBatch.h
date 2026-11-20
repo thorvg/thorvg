@@ -43,7 +43,6 @@ struct GlSolidBatch
         RenderColor color;
         GLuint texId;
         uint32_t opacity;
-        uint32_t vertexSize;
     };
 
     void draw(GlRenderer& renderer, const DrawData& data, int32_t depth, const RenderRegion& viewRegion, const RenderRegion& viewBounds);

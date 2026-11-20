@@ -125,7 +125,7 @@ struct GlRenderer : RenderMethod
 
     TextureMgr textures;
 
-    GlRenderer(); 
+    explicit GlRenderer(uint32_t threads);
     ~GlRenderer();
 
     void initShaders();
@@ -159,6 +159,7 @@ struct GlRenderer : RenderMethod
     GlStageBuffer mGpuBuffer;
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
+    GpuShapeTasks mShapeTasks;
     Array<GlProgram*> mPrograms;
 
     Array<GlRenderTargetPool*> mComposePool;

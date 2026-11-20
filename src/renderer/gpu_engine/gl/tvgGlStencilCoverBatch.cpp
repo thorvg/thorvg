@@ -73,7 +73,7 @@ static void addStencilCoverSolidLayout(GlRenderTask* task, GlStageBuffer* gpuBuf
 
 static uint32_t* drawStencilGeometry(GlRenderTask* task, GlStageBuffer* gpuBuffer, const GlGeometryBuffer* buffer)
 {
-    auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
+    auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(Point));
 
     uint32_t* indices = nullptr;
     auto indexOffset = gpuBuffer->reserveIndex(buffer->index.count * sizeof(uint32_t), reinterpret_cast<void**>(&indices));
@@ -202,7 +202,7 @@ bool GlStencilCoverBatch::mergeable(const GlRenderPass* pass, GlStencilMode mode
     if (this->clipped != clipped) return false;
     if (bounds.invalid()) return false;
     if (this->bounds.count >= BATCH_REGION_MAX_COUNT) return false;
-    auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
+    auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count : 0;
     auto incomingIndexCount = stencilBuffer ? stencilBuffer->index.count : 0;
     if (incomingVertexCount > BATCH_VERTEX_MAX_COUNT || vertexCount > BATCH_VERTEX_MAX_COUNT - incomingVertexCount) return false;
     if (incomingIndexCount > BATCH_INDEX_MAX_COUNT || indexCount > BATCH_INDEX_MAX_COUNT - incomingIndexCount) return false;
@@ -255,14 +255,14 @@ void GlStencilCoverBatch::setStencilMergeTarget(GlRenderTask* stencil, const Ren
 {
     stencilTask = stencil;
     stencilViewBounds = viewBounds;
-    vertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
+    vertexCount = stencilBuffer ? stencilBuffer->vertex.count : 0;
     indexOffset = stencil->indexOffset;
     indexCount = stencil->indexCnt;
 }
 
 bool GlStencilCoverBatch::merge(GlRenderTask* stencil, const RenderRegion& viewBounds, const GlGeometryBuffer* stencilBuffer, uint32_t* stencilIndices)
 {
-    auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count / 2 : 0;
+    auto incomingVertexCount = stencilBuffer ? stencilBuffer->vertex.count : 0;
     if (!stencilTask || vertexCount == 0 || incomingVertexCount == 0) return false;
     if (!(stencilViewBounds == viewBounds)) return false;
     if (!stencilIndices) return false;

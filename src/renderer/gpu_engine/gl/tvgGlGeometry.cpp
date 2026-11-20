@@ -24,6 +24,7 @@
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderTask.h"
 #include "tvgGlTessellator.h"
+#include "tvgGpuTessellator.h"
 
 /************************************************************************/
 /* GlIntersector                                                        */
@@ -85,8 +86,7 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
     Point triangle[6];
 
     for (uint32_t i = 0; i < 6; ++i) {
-        auto idx = mesh.index[i] * 4;
-        triangle[i] = Point{mesh.vertex[idx], mesh.vertex[idx + 1]};
+        triangle[i] = mesh.vertex[mesh.index[i] * 2];
     }
 
     auto sizeX = region.sw();
@@ -102,35 +102,24 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 }
 
 /************************************************************************/
-/* GlGeometry                                                           */
+/* GlShape                                                              */
 /************************************************************************/
 
-void GlGeometry::prepare(const RenderShape& rshape)
+void GlShape::run(TVG_UNUSED unsigned tid)
 {
-    optPathThin = false;
-    optPathSkipFill = false;
-    optStrokePath.clear();
-
-    auto strokeWidth = rshape.strokeWidth();
-    auto localOut = (std::isfinite(strokeWidth) && !tvg::zero(strokeWidth)) ? &optStrokePath : nullptr;
-    auto path = &rshape.path;
-
-    if (rshape.trimpath()) {
-        auto& trimmedPath = RenderPath::scratch();
-        if (rshape.stroke->trim.trim(rshape.path, trimmedPath)) {
-            path = &trimmedPath;
-        } else {
-            optPath.clear();
-            return;
-        }
+    // A newly enabled stroke needs a local path even if the transform and fill are cached.
+    auto width = rshape->strokeWidth();
+    if ((geometryFlags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) ||
+        (geometry.optStrokePath.empty() && std::isfinite(width) && !tvg::zero(width))) {
+        valid.fill = geometry.tesselateShape(*rshape, multiplier);
     }
-
-    GpuOptimizeResult result{&optPath, localOut};
-    gpuOptimize(*path, result, matrix);
-    optPathThin = result.thin;
-    optPathSkipFill = result.skipFill;
+    valid.stroke = geometry.tesselateStroke(*rshape);
+    opacity *= multiplier;
 }
 
+/************************************************************************/
+/* GlGeometry                                                           */
+/************************************************************************/
 
 bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
 {
@@ -140,14 +129,15 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
     convex = false;
     multiplier = 1.0f;
 
-    // `skipFill` means the path stayed thin enough that even thin fallback should not draw a fill.
-    if (optPathSkipFill) return false;
+    auto& optPath = RenderPath::scratch();
+    auto optimized = gpuOptimize(rshape, matrix, optPath, optStrokePath);
+    if (optimized == GpuOptimizeResult::SkipFill) return false;
 
     // When the CTM scales a filled path so small that its device-space
     // World:  [========]     // normal-sized filled path
     // After CTM:  [.]        // thinner than 1 px in device space
     // Visible thin fills use stroke tessellation; sub-quantum fills are skipped earlier.
-    if (optPathThin && tvg::zero(rshape.strokeWidth())) {
+    if (optimized == GpuOptimizeResult::Thin && tvg::zero(rshape.strokeWidth())) {
         if (tesselateThinFill(optPath)) {
             multiplier = MIN_GL_STROKE_ALPHA;
             fillRule = rshape.rule;
@@ -157,11 +147,10 @@ bool GlGeometry::tesselateShape(const RenderShape& rshape, float& multiplier)
     }
 
     // Handle normal shapes with more than 2 points
-    BWTessellator bwTess{&fill};
-    bwTess.tessellate(optPath);
+    auto result = gpuTessellateFill(optPath, fill.vertex, fill.index);
     fillRule = rshape.rule;
-    fillBBox = bwTess.bounds();
-    convex = bwTess.convex;
+    fillBBox = result.bounds();
+    convex = result.convex;
 
     return true;
 }
@@ -217,7 +206,7 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
     fill.clear();
     fillWorld = true;
     strokeRenderWidth = 0.0f;
-    fill.vertex.reserve(5 * 4);
+    fill.vertex.reserve(4 * 2);
     fill.index.reserve(6);
 
     auto leftTop = Point{0.f, 0.f} * matrix;
@@ -226,10 +215,8 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
     auto rightBottom = Point{float(image->w), float(image->h)} * matrix;
 
     auto appendVertex = [&](const Point& pt, float u, float v) {
-        fill.vertex.push(pt.x);
-        fill.vertex.push(pt.y);
-        fill.vertex.push(u);
-        fill.vertex.push(v);
+        fill.vertex.push(pt);
+        fill.vertex.push({u, v});
     };
 
     appendVertex(leftTop, 0.f, 0.f);
@@ -251,16 +238,16 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
 void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const
 {
     auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
-    auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
+    auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(Point));
     auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
     auto vertexBuffer = gpuBuffer->getBufferId();
 
     if (flag & RenderUpdateFlag::Image) {
         // image has two attribute: [pos, uv]
-        task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
-        task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, vertexBuffer});
+        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(Point), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
+        task->addVertexLayout(GlVertexLayout{1, 2, 2 * sizeof(Point), vertexOffset + sizeof(Point), GL_FLOAT, GL_FALSE, vertexBuffer});
     } else {
-        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
+        task->addVertexLayout(GlVertexLayout{0, 2, sizeof(Point), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
     }
     task->setDrawRange(indexOffset, buffer->index.count);
 }

@@ -76,22 +76,6 @@ private:
     Point mRightBottom = {0.0f, 0.0f};
 };
 
-struct BWTessellator
-{
-    BWTessellator(GlGeometryBuffer* buffer);
-
-    void tessellate(const RenderPath& path);
-    RenderRegion bounds() const;
-    uint32_t pushVertex(float x, float y);
-    void pushTriangle(uint32_t a, uint32_t b, uint32_t c);
-
-    bool convex = true;
-
-private:
-    GlGeometryBuffer* mBuffer;
-    BBox bbox = {};
-};
-
 }  // namespace tvg
 
 #endif /* _TVG_GL_TESSELLATOR_H_ */

@@ -25,19 +25,49 @@
 
 #include "tvgMath.h"
 #include "tvgRender.h"
+#include "tvgTaskScheduler.h"
 
 namespace tvg
 {
 
-struct GpuOptimizeResult
+struct GpuShapeTask : Task
 {
-    RenderPath* transformed = nullptr;
-    RenderPath* local = nullptr;
-    bool thin = false;
-    bool skipFill = false;
+    const RenderShape* rshape = nullptr;
+    RenderUpdateFlag geometryFlags = RenderUpdateFlag::None;
 };
 
-void gpuOptimize(const RenderPath& in, GpuOptimizeResult& result, const Matrix& matrix);
+// Shape tasks borrow the paint's path and stroke until the end of the update.
+struct GpuShapeTasks
+{
+    explicit GpuShapeTasks(uint32_t threads) : threaded(threads > 0)
+    {
+    }
+
+    template<typename Shape>
+    void request(Shape* task, const RenderShape& rshape, RenderUpdateFlag flags)
+    {
+        task->rshape = &rshape;
+        task->geometryFlags = flags;
+        if (threaded && tryEnqueue(task)) return;
+        task->run(0);
+    }
+
+    void done();
+
+private:
+    bool tryEnqueue(GpuShapeTask* task);
+    bool threaded;
+    Array<GpuShapeTask*> pending;
+};
+
+enum class GpuOptimizeResult : uint8_t
+{
+    Normal,
+    Thin,
+    SkipFill
+};
+
+GpuOptimizeResult gpuOptimize(const RenderShape& shape, const Matrix& matrix, RenderPath& fill, RenderPath& stroke);
 RenderRegion gpuTransformBounds(const RenderRegion& bounds, const Matrix& matrix);
 bool gpuEdgesCross(const Point& p0, const Point& p1, const Point& p2, const Point& p3);
 bool gpuStrokeDash(const RenderShape& rs, RenderPath& out, const Matrix* transform);
@@ -45,8 +75,8 @@ uint32_t gpuArcSegmentsCnt(float arcAngle, float pixelRadius);
 Matrix gpuConicTransform(const Point& center, float angle);
 
 bool gpuPointInTriangle(const Point& p, const Point& a, const Point& b, const Point& c);
-bool gpuPointInAnyMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count);
-bool gpuPointInFillMesh(const Point& p, const void* vertices, const uint32_t* indices, uint32_t count, FillRule rule);
+bool gpuPointInAnyMesh(const Point& p, const Point* vertices, const uint32_t* indices, uint32_t count);
+bool gpuPointInFillMesh(const Point& p, const Point* vertices, const uint32_t* indices, uint32_t count, FillRule rule);
 bool gpuPointInQuad(const Point& p, const Point (&triangle)[6]);
 
 // Conservative triangle-fan safety check
