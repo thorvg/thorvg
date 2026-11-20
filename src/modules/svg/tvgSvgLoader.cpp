@@ -4231,7 +4231,10 @@ Result SvgLoader::open(const char* data, uint32_t size, const LoaderOps& ops)
     ctx.accessible = static_cast<const PictureOps*>(&ops)->accessible;
     ctx.resolver = static_cast<const PictureOps*>(&ops)->resolver;
     auto rpath = static_cast<const PictureOps*>(&ops)->rpath;
-    if (rpath && rpath[0]) svgPath = string(rpath) + "/";
+    if (rpath && rpath[0]) {
+        svgPath = rpath;
+        if (svgPath.back() != '/') svgPath += '/';
+    }
 
     return header();
 }

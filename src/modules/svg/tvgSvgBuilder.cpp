@@ -813,7 +813,7 @@ static Paint* _imageBuildHelper(SvgParserContext& ctx, SvgNode* node, const Box&
         const char *dot = strrchr(href, '.');
         auto svg = dot && STR_AS(dot, ".svg");
         string imagePath = href;
-        auto url = !strncmp(href, "https://", 8) || !strncmp(href, "http://", 7);
+        auto url = !strncasecmp(href, "https://", 8) || !strncasecmp(href, "http://", 7);
         if (!url && strncmp(href, "/", 1)) {
             auto last = svgPath.find_last_of("/");
             imagePath = svgPath.substr(0, (last == string::npos ? 0 : last + 1)) + imagePath;

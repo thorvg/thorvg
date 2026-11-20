@@ -266,21 +266,23 @@ TEST_CASE("SVG Asset Resolver", "[tvgPicture]")
         auto picture = Picture::gen();
         REQUIRE(picture->resolver(resolver, &resolved) == Result::Success);
         REQUIRE(picture->load(TEST_DIR "/test6.svg") == Result::Success);
-#ifdef THORVG_PNG_LOADER_SUPPORT
-        REQUIRE(resolved == vector<string>{TEST_DIR "/image/logo.png", "https://example.invalid/missing.png", TEST_DIR "/nested.svg"});
+        vector<string> fallbackPaths = {TEST_DIR "/image/logo.png", "HTTPS://example.invalid/missing.png", TEST_DIR "/nested.svg"};
+#ifndef THORVG_PNG_LOADER_SUPPORT
+        fallbackPaths.insert(fallbackPaths.begin(), TEST_DIR "/test.png");
 #endif
+        REQUIRE(resolved == fallbackPaths);
 
         resolved.clear();
         auto picture2 = Picture::gen();
         REQUIRE(picture2->resolver(resolver, &resolved, false) == Result::Success);
         REQUIRE(picture2->load(TEST_DIR "/test6.svg") == Result::Success);
-        REQUIRE(resolved == vector<string>{TEST_DIR "/test.png", TEST_DIR "/image/logo.png", "https://example.invalid/missing.png", TEST_DIR "/nested.svg"});
+        REQUIRE(resolved == vector<string>{TEST_DIR "/test.png", TEST_DIR "/image/logo.png", "HTTPS://example.invalid/missing.png", TEST_DIR "/nested.svg"});
 
         resolved.clear();
         auto svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\"><image width=\"10\" height=\"10\" href=\"test.png\"/></svg>";
         auto picture3 = Picture::gen();
         REQUIRE(picture3->resolver(resolver, &resolved, false) == Result::Success);
-        REQUIRE(picture3->load(svg, strlen(svg), "svg", TEST_DIR) == Result::Success);
+        REQUIRE(picture3->load(svg, strlen(svg), "svg", TEST_DIR "/") == Result::Success);
         REQUIRE(resolved == vector<string>{TEST_DIR "/test.png"});
 
         Paint::rel(picture);
