@@ -286,6 +286,27 @@ TEST_CASE("SVG Asset Resolver", "[tvgPicture]")
         Paint::rel(picture);
         Paint::rel(picture2);
         Paint::rel(picture3);
+
+        auto plain = Picture::gen();
+        REQUIRE(plain->load(TEST_DIR "/test6.svg") == Result::Success);
+        resolved.clear();
+        auto picture4 = Picture::gen();
+        REQUIRE(picture4->resolver(resolver, &resolved, false) == Result::Success);
+        REQUIRE(picture4->load(TEST_DIR "/test6.svg") == Result::Success);
+        REQUIRE(resolved.size() == 4);
+
+        auto plain2 = Picture::gen();
+        REQUIRE(plain2->load(svg, strlen(svg), "svg", TEST_DIR) == Result::Success);
+        resolved.clear();
+        auto picture5 = Picture::gen();
+        REQUIRE(picture5->resolver(resolver, &resolved, false) == Result::Success);
+        REQUIRE(picture5->load(svg, strlen(svg), "svg", TEST_DIR) == Result::Success);
+        REQUIRE(resolved == vector<string>{TEST_DIR "/test.png"});
+
+        Paint::rel(plain);
+        Paint::rel(picture4);
+        Paint::rel(plain2);
+        Paint::rel(picture5);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
