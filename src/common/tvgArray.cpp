@@ -44,4 +44,12 @@ void* arrayCompact(void* data, uint32_t count, uint32_t& reserved, size_t size)
     return data;
 }
 
+void* arrayMove(void* data, uint32_t& count, uint32_t& reserved, size_t size, uint32_t& moved)
+{
+    data = arrayCompact(data, count, reserved, size);
+    moved = count;
+    count = reserved = 0;
+    return data;
+}
+
 }

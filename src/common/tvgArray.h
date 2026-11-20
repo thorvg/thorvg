@@ -34,6 +34,7 @@ namespace tvg
 // You aren't supposed to call them directly.
 void* arrayCompact(void* data, uint32_t count, uint32_t& reserved, size_t size);
 void* arrayGrow(void* data, uint32_t count, uint32_t& reserved, size_t size);
+void* arrayMove(void* data, uint32_t& count, uint32_t& reserved, size_t size, uint32_t& moved);
 
 template<class T>
 struct Array
@@ -111,6 +112,14 @@ struct Array
 
         data = nullptr;
         count = reserved = 0;
+    }
+
+    uint32_t move(T*& to)
+    {
+        uint32_t moved;
+        to = static_cast<T*>(arrayMove(data, count, reserved, sizeof(T), moved));
+        data = nullptr;
+        return moved;
     }
 
     const T* begin() const

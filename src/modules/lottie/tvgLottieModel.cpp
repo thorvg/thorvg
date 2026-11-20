@@ -442,14 +442,11 @@ uint32_t LottieGradient::populate(ColorStop& color, size_t count)
         aidx += 2;
     }
 
-    color.data = output.data;
-    output.data = nullptr;
-
     color.input->reset();
     delete(color.input);
     color.input = nullptr;
 
-    return output.count;
+    return output.move(color.data);
 }
 
 Fill* LottieGradient::fill(float frameNo, uint8_t opacity, LottieTween& tween, LottieExpressions* exps)

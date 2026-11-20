@@ -196,12 +196,8 @@ bool LottieParser::getValue(PathSet& path)
         swap.close();
     }
 
-    path.pts = swap.pts.data;
-    path.cmds = swap.cmds.data;
-    path.ptsCnt = swap.pts.count;
-    path.cmdsCnt = swap.cmds.count;
-
-    swap.dismiss();
+    path.ptsCnt = swap.pts.move(path.pts);
+    path.cmdsCnt = swap.cmds.move(path.cmds);
 
     return false;
 }
