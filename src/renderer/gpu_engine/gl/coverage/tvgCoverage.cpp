@@ -21,6 +21,7 @@
  */
 
 #include <limits.h>
+#include <limits>
 #include "tvgCoverage.h"
 #include "tvgSwCommon.h"
 
@@ -266,6 +267,52 @@ CoverageStatus generateCoverageEdges(const RenderShape& shape, const Matrix& tra
     }
     if (open) _appendEdge(previous.toPoint(), start.toPoint(), map.bounds, edges);
     return edges.empty() ? CoverageStatus::Empty : CoverageStatus::Ready;
+}
+
+static double _edgePixelArea(const Point& from, const Point& to, int32_t x, int32_t y, int32_t& nextX)
+{
+    const auto& top = from.y < to.y ? from : to;
+    const auto& bottom = from.y < to.y ? to : from;
+    auto y0 = std::max(double(y), double(top.y));
+    auto y1 = std::min(double(y + 1), double(bottom.y));
+    if (y0 >= y1) return 0.0;
+
+    auto height = from.y < to.y ? y1 - y0 : y0 - y1;
+    auto slope = (double(bottom.x) - top.x) / (double(bottom.y) - top.y);
+    auto x0 = (double(top.x) - x) + (y0 - top.y) * slope;
+    auto x1 = (double(top.x) - x) + (y1 - top.y) * slope;
+    auto lo = std::min(x0, x1);
+    auto hi = std::max(x0, x1);
+    if (hi <= 0.0) return height;
+    if (lo >= 1.0) {
+        if (lo < double(nextX) - x) nextX = x + int32_t(lo);
+        return 0.0;
+    }
+
+    nextX = x + 1;
+    if (hi == lo) return height * (1.0 - lo);
+    auto left = std::max(lo, 0.0);
+    auto right = std::min(hi, 1.0);
+    auto area = std::max(-lo, 0.0) + (right - left) * (1.0 - (left + right) * 0.5);
+    return height * area / (hi - lo);
+}
+
+bool intersectsCoverageEdges(const Array<Point>& edges, const RenderRegion& bounds, FillRule rule)
+{
+    auto tolerance = edges.count * std::numeric_limits<double>::epsilon();
+    for (auto y = bounds.yMin; y < bounds.yMax; ++y) {
+        for (auto x = bounds.xMin; x < bounds.xMax;) {
+            auto nextX = bounds.xMax;
+            double area = 0.0;
+            for (uint32_t i = 0; i < edges.count; i += 2) {
+                area += _edgePixelArea(edges[i], edges[i + 1], x, y, nextX);
+            }
+            if (rule == FillRule::EvenOdd) area = std::remainder(area, 2.0);
+            if (std::abs(area) > tolerance) return true;
+            x = nextX;
+        }
+    }
+    return false;
 }
 
 CoverageStatus clipCoverage(CoverageMap& map, const CoverageMap& clip)
