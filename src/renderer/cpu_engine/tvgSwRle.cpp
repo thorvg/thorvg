@@ -401,7 +401,6 @@ static void _sweep(RleWorker& rw)
 static SwCell* _findCell(RleWorker& rw)
 {
     auto x = rw.cellPos.x;
-    if (x > rw.cellXCnt) x = rw.cellXCnt;
 
     // seek the gap (prev->x < x <= next->x) from the latest cell,
     //  contours mostly revisit nearby cells
@@ -827,20 +826,11 @@ SwRle* rleRender(SwRle* rle, const SwOutline* outline, const RenderRegion& bbox,
         while (band >= bands) {
             rw.yCnt = band->max - band->min;
 
-            int cellStart = sizeof(CellRow) * (int)rw.yCnt;
-            int cellMod = cellStart % sizeof(SwCell);
-
-            if (cellMod > 0) cellStart += sizeof(SwCell) - cellMod;
-
-            auto cellsMax = reinterpret_cast<SwCell*>((char*)rw.buffer + rw.bufferSize);
-            rw.cells = reinterpret_cast<SwCell*>((char*)rw.buffer + cellStart);
-
-            if (rw.cells >= cellsMax) goto reduce_bands;
-
-            rw.maxCells = cellsMax - rw.cells;
-            // cell indices are int16_t
-            if (rw.maxCells > INT16_MAX) rw.maxCells = INT16_MAX;
-            if (rw.maxCells < 2) goto reduce_bands;
+            auto cellStart = (sizeof(CellRow) * rw.yCnt + sizeof(SwCell) - 1) / sizeof(SwCell);
+            auto cellCount = rw.bufferSize / sizeof(SwCell);
+            if (cellStart + 2 > cellCount) goto reduce_bands;
+            rw.cells = rw.buffer + cellStart;
+            rw.maxCells = std::min<size_t>(cellCount - cellStart, INT16_MAX);
 
             memset(rw.yCells, 0xff, sizeof(CellRow) * rw.yCnt);  //-1: no cell
 
