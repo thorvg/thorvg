@@ -599,6 +599,38 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
     REQUIRE(Initializer::term() == Result::Success);
 }
 
+TEST_CASE("GL Coverage Intersection Regions", "[tvgGlEngine]")
+{
+    TestGLEngine engine;
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
+        REQUIRE(canvas);
+        engine.target(canvas.get());
+
+        auto shape = Shape::gen();
+        REQUIRE(shape->moveTo(70.75f, 10) == Result::Success);
+        REQUIRE(shape->lineTo(70.75f, 70.75f) == Result::Success);
+        REQUIRE(shape->lineTo(10, 70.75f) == Result::Success);
+        REQUIRE(shape->close() == Result::Success);
+        REQUIRE(shape->appendRect(42, 42, 18, 18) == Result::Success);
+        REQUIRE(shape->fillRule(FillRule::EvenOdd) == Result::Success);
+        REQUIRE(shape->fill(255, 255, 255) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        REQUIRE(shape->intersects(41, 38));
+#endif
+        REQUIRE_FALSE(shape->intersects(40, 38));
+        REQUIRE_FALSE(shape->intersects(44, 46, 15, 5));
+        REQUIRE(shape->intersects(44, 46, 18, 3));
+
+        REQUIRE(canvas->sync() == Result::Success);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
 TEST_CASE("GL Stroke Update", "[tvgGlEngine]")
 {
     TestGLEngine engine;

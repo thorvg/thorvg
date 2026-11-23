@@ -215,6 +215,18 @@ inline void GlRenderer::submitGradient(GlRenderTask* task, TVG_UNUSED GlShape& s
     currentPass()->addRenderTask(task);
 }
 
+static bool _intersects(const GlCoverageMap& coverage, const RenderRegion& region)
+{
+    auto bounds = RenderRegion::intersect(coverage.map.bounds, region);
+    if (bounds.invalid()) return false;
+    switch (coverage.format) {
+        case GlCoverageFormat::Rect: return true;
+        case GlCoverageFormat::Edges: return intersectsCoverageEdges(coverage.edges, bounds, FillRule::NonZero);
+        case GlCoverageFormat::EdgesEvenOdd: return intersectsCoverageEdges(coverage.edges, bounds, FillRule::EvenOdd);
+        default: return intersectsCoverage(coverage.map, bounds);
+    }
+}
+
 bool GlRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 {
     auto shape = static_cast<GlShape*>(data);
@@ -223,12 +235,8 @@ bool GlRenderer::intersectsShape(RenderData data, const RenderRegion& region)
 
     // Maps already include transforms and clipping, but are generated independently of paint.
     auto& rshape = *shape->rshape;
-    const auto& fill = shape->fillCoverage;
-    if (shape->valid.fill && (rshape.fill || rshape.color.a > 0)) {
-        if (fill.format == GlCoverageFormat::Rect ? RenderRegion::intersect(fill.map.bounds, region).valid() :
-                                                  intersectsCoverage(fill.map, region)) return true;
-    }
-    return shape->valid.stroke && (rshape.stroke->fill || rshape.stroke->color.a > 0) && intersectsCoverage(shape->strokeCoverage.map, region);
+    if (shape->valid.fill && (rshape.fill || rshape.color.a > 0) && _intersects(shape->fillCoverage, region)) return true;
+    return shape->valid.stroke && (rshape.stroke->fill || rshape.stroke->color.a > 0) && _intersects(shape->strokeCoverage, region);
 }
 
 static const GlCoverageMap& _clipMap(RenderData data)
