@@ -454,13 +454,6 @@ $meson setup builddir -Dloaders="lottie, ..." -Dextra="lottie_exp, ..."
   <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_lvgl.png">
 </p>
 
-### SEGGER
-[SEGGER](https://www.segger.com/) uses ThorVG as a GPU driver for high-performance vector rendering in embedded GUIs.
-
-<p align="center">
-  <img width="700" height="auto" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_segger.png">
-</p>
-
 ### Tizen
 [Tizen](https://www.tizen.org), an open-source platform integrating ThorVG as its vector graphics backend for rendering primitives, SVG, and Lottie animations.
 
@@ -480,6 +473,13 @@ Discover more projects in our [Showcase](https://www.thorvg.org/showcase). Using
   <img width="700" height="auto" src="https://github.com/user-attachments/assets/8a4bd16a-bb72-4b41-b007-eadc2220d1eb"/>
 </p>
 
+### Thor Note
+[Thor Note](https://github.com/thorvg/thorvg.note) is is a native text editor powered by ThorVG. It puts ThorVG’s text rendering to work in an everyday editing workflow, keeping text crisp and readable as you type. See it in action with live Markdown styling, animated emoji, and instant layout and theme switching. [Give it a try!](https://thorvg.github.io/thorvg.note/)
+
+<p align="center">
+  <img width="700" height="auto" alt="thorvg-demo-smooth" src="https://github.com/thorvg/thorvg.site/blob/main/readme/example_thornote.gif" />
+</p>
+
 ### Thor Pirates
 Check out [Thor Pirates](https://github.com/thorvg/thorvg.demo.pirates). Every visual is rendered as real-time vector graphics, featuring physics-based cannon battles, dynamic water, ship debris, and interactive environmental effects. The entire game was built with AI-generated code using [Codex](https://chatgpt.com/codex/?utm_source=google&utm_medium=paid_search&c_id=24184441561&c_agid=203310201807&c_crid=822144559839&c_kwid=kwd-111182835&c_ims=&c_pms=9197166&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=24184441561&gbraid=0AAAAA-I0E5f01DRDjTP8rQ_p9rY5vklen&gclid=Cj0KCQjw5bjVBhCiARIsAJzMVnQf5XBIme-UebEIZUoYXOpv0NfPBbLdpAymExeO3H3gMSpog_nohNYaAl4sEALw_wcB), showcasing how naturally ThorVG’s retained structural APIs work with AI. [Give it a try!](https://thorvg-pirates.vercel.app/)
 
@@ -491,7 +491,7 @@ Check out [Thor Pirates](https://github.com/thorvg/thorvg.demo.pirates). Every v
 A lightweight UI toolkit tech demo powered entirely by ThorVG, featuring scalable UI components, GPU-accelerated rendering, and smooth animations. Thor UI demonstrates responsive, high-performance interfaces for embedded, desktop, and web applications with minimal overhead. [Give it a try!](https://thorvg.github.io/thorvg.demo.ui/)
 
 <p align="center">
-  <img width="700" height="452" alt="thorvg-demo-smooth" src="https://github.com/user-attachments/assets/f2fdc242-4c4b-4301-a3bc-3157a51cafc8" />
+  <img width="700" height="auto" alt="thorvg-demo-smooth" src="https://github.com/user-attachments/assets/f2fdc242-4c4b-4301-a3bc-3157a51cafc8" />
 </p>
 
 <br />
