@@ -111,14 +111,18 @@ struct SceneImpl : Scene
         }
 
         //this viewport update is more performant than in bounds(). No idea.
-        vport = renderer->viewport();
+        auto vport = renderer->viewport();
 
         if (fixed) {
             auto pt = fsize * transform;
             vport.intersect({int32_t(round(transform.e13)), int32_t(round(transform.e23)), int32_t(round(pt.x)), int32_t(round(pt.y))});
+            // invalidate the old viewport because child damage tracking is disabled.
+            if (!vport.contained(this->vport)) impl.damage(this->vport);
         } else {
             vdirty = true;
         }
+
+        this->vport = vport;
 
         //bounds(renderer) here hinders parallelization
         //TODO: we can bring the precise effects region here
