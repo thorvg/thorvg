@@ -441,6 +441,12 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
     Array<float> values(40);  // values stack for path coordinates
     auto nStems = 0;          // running hint count, needed to size the hintmask/cntrmask operands
 
+    auto moveTo = [&]() -> void {
+        // a moveto implicitly closes the contour in progress
+        if (path.cmds.count > 0 && path.cmds.last() != PathCommand::MoveTo) path.close();
+        path.moveTo(pos);
+    };
+
     while (p < end) {
         auto b = u8(p);
         switch (b) {
@@ -451,7 +457,7 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
             }
             case 4: {  // vmoveto
                 pos.y -= values.pick();
-                path.moveTo(pos);
+                moveTo();
                 break;
             }
             case 5: {  // rlineto
@@ -517,12 +523,12 @@ bool OtfReader::charStrings(RenderPath& path, uint32_t glyph)
             case 21: {  // rmoveto
                 pos.y -= values.pick();
                 pos.x += values.pick();
-                path.moveTo(pos);
+                moveTo();
                 break;
             }
             case 22: {  // hmoveto
                 pos.x += values.pick();
-                path.moveTo(pos);
+                moveTo();
                 break;
             }
             case 23: {  // TODO: vstemhm
