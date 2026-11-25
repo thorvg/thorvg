@@ -1281,7 +1281,7 @@ struct LottieComposition
     float w, h;
     float frameRate;
     Array<LottieObject*> assets;
-    Array<LottieInterpolator*> interpolators;
+    Array<Interpolator*> interpolators;
     Array<LottieFont*> fonts;
     Array<LottieSlot*> slots;
     Array<LottieMarker*> markers;

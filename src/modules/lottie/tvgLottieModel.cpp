@@ -285,7 +285,7 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         if (minEase > 0.0f) out.x = minEase * 0.01f;
         else out.y = -minEase * 0.01f;
 
-        LottieInterpolator interpolator;
+        Interpolator interpolator;
         interpolator.set(nullptr, in, out);
         f = interpolator.progress(f);
     }

@@ -54,7 +54,7 @@ private:
     RGB32 getColor(const char *str);
     FillRule getFillRule();
     MaskMethod getMaskMethod(bool inversed);
-    LottieInterpolator* getInterpolator(const char* key, Point& in, Point& out);
+    Interpolator* getInterpolator(const char* key, Point& in, Point& out);
     LottieEffect* getEffect(int type);
 
     void getExpression(char* code, LottieComposition* comp, LottieLayer* layer, LottieObject* object, LottieProperty* property);
