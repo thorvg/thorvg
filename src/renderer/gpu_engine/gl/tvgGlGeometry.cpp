@@ -23,7 +23,9 @@
 #include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderTask.h"
-#ifndef THORVG_ANALYTIC_AA_SUPPORT
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+#include "tvgSwCommon.h"
+#else
 #include "tvgGlTessellator.h"
 #endif
 
@@ -83,6 +85,27 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
 bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 {
     if (image->geometry.fill.index.count < 6) return false;
+
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (!image->clips.empty()) {
+        const auto& clip = image->clipCoverage;
+        if (clip.status != CoverageStatus::Ready || !clip.map.rle) return false;
+        auto bounds = RenderRegion::intersect(region, clip.map.bounds);
+        Matrix inv;
+        if (bounds.invalid() || !inverse(&image->geometry.matrix, &inv)) return false;
+        const SwSpan* end;
+        for (auto span = clip.map.rle->fetch(bounds, &end); span < end; ++span) {
+            int32_t x, len;
+            if (!span->fetch(bounds, x, len)) continue;
+            auto center = Point{float(x) + 0.5f * len, float(span->y) + 0.5f} * inv;
+            auto halfWidth = 0.5f * (fabsf(inv.e11) * len + fabsf(inv.e12));
+            auto halfHeight = 0.5f * (fabsf(inv.e21) * len + fabsf(inv.e22));
+            if (center.x + halfWidth > 0 && center.x - halfWidth < image->surface->w &&
+                center.y + halfHeight > 0 && center.y - halfHeight < image->surface->h) return true;
+        }
+        return false;
+    }
+#endif
 
     const auto& geometry = image->geometry;
     const auto& mesh = geometry.fill;
