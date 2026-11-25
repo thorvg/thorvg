@@ -21,7 +21,6 @@
  */
 
 #include <limits.h>
-#include <limits>
 #include "tvgCoverage.h"
 #include "tvgSwCommon.h"
 
@@ -269,48 +268,91 @@ CoverageStatus generateCoverageEdges(const RenderShape& shape, const Matrix& tra
     return edges.empty() ? CoverageStatus::Empty : CoverageStatus::Ready;
 }
 
-static double _edgePixelArea(const Point& from, const Point& to, int32_t x, int32_t y, int32_t& nextX)
+static bool _windingFilled(int winding, FillRule rule)
 {
-    const auto& top = from.y < to.y ? from : to;
-    const auto& bottom = from.y < to.y ? to : from;
-    auto y0 = std::max(double(y), double(top.y));
-    auto y1 = std::min(double(y + 1), double(bottom.y));
-    if (y0 >= y1) return 0.0;
-
-    auto height = from.y < to.y ? y1 - y0 : y0 - y1;
-    auto slope = (double(bottom.x) - top.x) / (double(bottom.y) - top.y);
-    auto x0 = (double(top.x) - x) + (y0 - top.y) * slope;
-    auto x1 = (double(top.x) - x) + (y1 - top.y) * slope;
-    auto lo = std::min(x0, x1);
-    auto hi = std::max(x0, x1);
-    if (hi <= 0.0) return height;
-    if (lo >= 1.0) {
-        if (lo < double(nextX) - x) nextX = x + int32_t(lo);
-        return 0.0;
-    }
-
-    nextX = x + 1;
-    if (hi == lo) return height * (1.0 - lo);
-    auto left = std::max(lo, 0.0);
-    auto right = std::min(hi, 1.0);
-    auto area = std::max(-lo, 0.0) + (right - left) * (1.0 - (left + right) * 0.5);
-    return height * area / (hi - lo);
+    return rule == FillRule::EvenOdd ? winding % 2 != 0 : winding != 0;
 }
 
-bool intersectsCoverageEdges(const Array<Point>& edges, const RenderRegion& bounds, FillRule rule)
+static bool _horizontalEndpoint(const Point& p, const Point& adjacent, const RenderRegion& b, double cx)
 {
-    auto tolerance = edges.count * std::numeric_limits<double>::epsilon();
-    for (auto y = bounds.yMin; y < bounds.yMax; ++y) {
-        for (auto x = bounds.xMin; x < bounds.xMax;) {
-            auto nextX = bounds.xMax;
-            double area = 0.0;
-            for (uint32_t i = 0; i < edges.count; i += 2) {
-                area += _edgePixelArea(edges[i], edges[i + 1], x, y, nextX);
-            }
-            if (rule == FillRule::EvenOdd) area = std::remainder(area, 2.0);
-            if (std::abs(area) > tolerance) return true;
-            x = nextX;
+    return p.y > b.yMin && p.y < b.yMax && p.x <= cx && (p.y != adjacent.y || adjacent.x > cx);
+}
+
+static int _horizontalWindingChange(const Array<Point>& edges, float y, double cx)
+{
+    int change = 0;
+    for (uint32_t i = 0; i < edges.count; i += 2) {
+        const auto& a = edges[i];
+        const auto& b = edges[i + 1];
+        change += (a.y == y && a.x <= cx) - (b.y == y && b.x <= cx);
+    }
+    return change;
+}
+
+static bool _crossesFillBoundary(const Array<Point>& edges, const Point& a, const Point& b,
+                               const RenderRegion& box, FillRule rule)
+{
+    auto lo = std::max(double(box.yMin), double(std::min(a.y, b.y)));
+    auto hi = std::min(double(box.yMax), double(std::max(a.y, b.y)));
+    if (lo >= hi || std::max(a.x, b.x) <= box.xMin || std::min(a.x, b.x) >= box.xMax) return false;
+    auto dx = double(b.x) - a.x;
+    auto dy = double(b.y) - a.y;
+    if (dx != 0) {
+        auto y0 = a.y + dy * (double(box.xMin) - a.x) / dx;
+        auto y1 = a.y + dy * (double(box.xMax) - a.x) / dx;
+        lo = std::max(lo, std::min(y0, y1));
+        hi = std::min(hi, std::max(y0, y1));
+        if (lo >= hi) return false;
+    }
+    auto middle = lo + (hi - lo) * 0.5;
+    int jump = 0, startChange = 0, endChange = 0;
+    for (uint32_t i = 0; i < edges.count; i += 2) {
+        const auto& c = edges[i];
+        const auto& d = edges[i + 1];
+        if (dx * (double(c.y) - a.y) != dy * (double(c.x) - a.x) ||
+            dx * (double(d.y) - a.y) != dy * (double(d.x) - a.x)) continue;
+        jump += (c.y <= middle && middle < d.y) - (d.y <= middle && middle < c.y);
+        startChange += (c.y == a.y) - (d.y == a.y);
+        endChange += (c.y == b.y) - (d.y == b.y);
+    }
+    auto interior = [&](const Point& p) {
+        return p.x > box.xMin && p.x < box.xMax && p.y > box.yMin && p.y < box.yMax;
+    };
+    return _windingFilled(jump, rule) || (interior(a) && _windingFilled(startChange, rule)) ||
+           (interior(b) && _windingFilled(endChange, rule));
+}
+
+bool intersectsCoverageEdges(const Array<Point>& edges, const RenderRegion& box, FillRule rule)
+{
+    auto cx = (double(box.xMin) + box.xMax) * 0.5;
+    auto cy = (double(box.yMin) + box.yMax) * 0.5;
+    int winding = 0;
+    bool boundary = false;
+    for (uint32_t i = 0; i < edges.count; i += 2) {
+        const auto& a = edges[i];
+        const auto& b = edges[i + 1];
+        auto top = std::min(a.y, b.y), bottom = std::max(a.y, b.y);
+        if (bottom <= box.yMin || top >= box.yMax || std::min(a.x, b.x) >= box.xMax) continue;
+        if (top <= cy && cy < bottom) {
+            auto side = (double(b.x) - a.x) * (cy - a.y) - (double(b.y) - a.y) * (cx - a.x);
+            if (b.y > a.y ? side <= 0 : side >= 0) winding += b.y > a.y ? 1 : -1;
         }
+        if (!boundary) {
+            boundary = std::max(a.x, b.x) > box.xMin ||
+                _horizontalEndpoint(a, edges[i ? i - 1 : edges.count - 1], box, cx) ||
+                _horizontalEndpoint(b, edges[i + 2 < edges.count ? i + 2 : 0], box, cx);
+        }
+    }
+    if (_windingFilled(winding, rule)) return true;
+    if (!boundary) return false;
+    for (uint32_t i = 0; i < edges.count; i += 2) {
+        const auto& a = edges[i];
+        const auto& b = edges[i + 1];
+        if (_crossesFillBoundary(edges, a, b, box, rule)) return true;
+        if (_horizontalEndpoint(a, edges[i ? i - 1 : edges.count - 1], box, cx) &&
+            _windingFilled(_horizontalWindingChange(edges, a.y, cx), rule)) return true;
+        if (_horizontalEndpoint(b, edges[i + 2 < edges.count ? i + 2 : 0], box, cx) &&
+            _windingFilled(_horizontalWindingChange(edges, b.y, cx), rule)) return true;
     }
     return false;
 }
