@@ -38,6 +38,11 @@ namespace tvg
         uint8_t r, g, b, a;
     };
 
+    struct RGB32
+    {
+        int32_t r, g, b;
+    };
+
     struct HSL
     {
         float h, s, l;
