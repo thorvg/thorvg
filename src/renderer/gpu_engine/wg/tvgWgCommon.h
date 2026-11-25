@@ -41,7 +41,7 @@ struct WgContext
     WGPUSampler samplerLinearClamp;
     WgBindGroupLayouts layouts;
 
-    void initialize(const WgCanvas::Context& ctx);
+    void initialize(const WgCanvas::Context& ctx, bool initializeLayouts = true);
     void release();
     
     // create common objects

@@ -120,7 +120,7 @@ private:
     void clearClipPath(WgContext& context, WgPaint* paint);
     void updateViewMat(WgContext& context, uint32_t width, uint32_t height);
 public:
-    void initialize(WgContext& context, uint32_t width, uint32_t height);
+    void initialize(WgContext& context, uint32_t width, uint32_t height, WgPipelines* prepared = nullptr);
     void initPools(WgContext& context);
     void release(WgContext& context);
     void releasePools(WgContext& context);

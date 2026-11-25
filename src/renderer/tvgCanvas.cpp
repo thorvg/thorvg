@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <new>
 #include "tvgCanvas.h"
 #include "tvgTaskScheduler.h"
 #include "tvgLoader.h"
@@ -240,10 +241,15 @@ Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, 
 
 Result WgCanvas::target(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
 {
+    return targetPrepared(context, target, w, h, cs, type, nullptr);
+}
+
+Result WgCanvas::targetPrepared(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type, void* prepared) noexcept
+{
 #ifdef THORVG_WG_ENGINE_SUPPORT
     if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
 
-    auto ret = static_cast<WgRenderer*>(pImpl->renderer)->target(context, target, w, h, cs, type);
+    auto ret = static_cast<WgRenderer*>(pImpl->renderer)->target(context, target, w, h, cs, type, static_cast<WgPreparedPipelines*>(prepared));
     if (ret != Result::Success) return ret;
 
     pImpl->vport = {0, 0, (int32_t)w, (int32_t)h};
@@ -257,6 +263,42 @@ Result WgCanvas::target(const Context& context, void* target, uint32_t w, uint32
 #endif
     return Result::NonSupport;
 }
+
+#if defined(THORVG_WG_ENGINE_SUPPORT) && defined(__APPLE__)
+extern "C" void* tvg_wg_prepare_pipelines(void* device, void (*progress)(void*), void* userData)
+{
+    if (!device) return nullptr;
+    auto prepared = new (std::nothrow) WgPreparedPipelines(static_cast<WGPUDevice>(device));
+    if (prepared && !prepared->prepare(progress, userData)) {
+        delete prepared;
+        return nullptr;
+    }
+    return prepared;
+}
+
+extern "C" void tvg_wg_destroy_pipelines(void* prepared)
+{
+    delete static_cast<WgPreparedPipelines*>(prepared);
+}
+
+namespace tvg {
+struct WgPreparedTargetAccess
+{
+    static Result set(WgCanvas* canvas, const WgCanvas::Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type, void* prepared)
+    {
+        return canvas->targetPrepared(context, target, w, h, cs, type, prepared);
+    }
+};
+}
+
+extern "C" uint32_t tvg_wg_set_prepared_target(void* canvas, void* device, void* instance, void* target,
+                                                uint32_t w, uint32_t h, uint32_t cs, int type, void* prepared)
+{
+    if (!canvas || !prepared) return static_cast<uint32_t>(Result::InvalidArguments);
+    return static_cast<uint32_t>(tvg::WgPreparedTargetAccess::set(static_cast<WgCanvas*>(canvas),
+        {instance, nullptr, device}, target, w, h, static_cast<ColorSpace>(cs), type, prepared));
+}
+#endif
 
 WgCanvas* WgCanvas::gen(EngineOption op) noexcept
 {

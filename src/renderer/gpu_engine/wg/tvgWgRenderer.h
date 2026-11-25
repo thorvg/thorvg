@@ -42,6 +42,22 @@ struct WgPaintPool
     WgImage* image();
 };
 
+#if defined(__APPLE__)
+struct WgPreparedPipelines
+{
+    explicit WgPreparedPipelines(WGPUDevice device);
+    ~WgPreparedPipelines();
+    WgPreparedPipelines(const WgPreparedPipelines&) = delete;
+    WgPreparedPipelines& operator=(const WgPreparedPipelines&) = delete;
+    bool prepare(void (*progress)(void*), void* userData);
+    WgContext context{};
+    WgPipelines pipelines{};
+    bool adopted = false;
+};
+#endif
+
+struct WgPreparedPipelines;
+
 struct WgRenderer : RenderMethod
 {
     //main features
@@ -63,7 +79,7 @@ struct WgRenderer : RenderMethod
     bool sync() override;
     bool intersectsImage(RenderData data, const RenderRegion& region) override;
     bool intersectsShape(RenderData data, const RenderRegion& region) override;
-    Result target(const WgCanvas::Context& ctx, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0);
+    Result target(const WgCanvas::Context& ctx, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type = 0, WgPreparedPipelines* prepared = nullptr);
 
     //composition
     RenderCompositor* target(const RenderRegion& region, ColorSpace cs, CompositionFlag flags) override;

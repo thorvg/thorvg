@@ -56,7 +56,7 @@ if wg_engine
     if test_wgpu_dep.found()
         test_dep += test_wgpu_dep
         test_compiler_flags += ['-DTHORVG_WG_TEST_SUPPORT']
-        test_file += ['src/testWgCanvas.cpp', 'src/testWgEngine.cpp']
+        test_file += ['src/testWgCanvas.cpp', 'src/testWgEngine.cpp', 'src/testWgPreparedScopes.cpp']
     endif
 endif
 

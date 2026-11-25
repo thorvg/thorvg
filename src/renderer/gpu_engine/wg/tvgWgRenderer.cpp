@@ -21,8 +21,13 @@
  */
 
 #include <cassert>
+#include <new>
+#include <utility>
 #include "tvgTaskScheduler.h"
 #include "tvgWgRenderer.h"
+#if defined(__APPLE__)
+#include "tvgWgPreparedScopes.h"
+#endif
 
 /************************************************************************/
 /* WgPaintPool                                                          */
@@ -498,12 +503,67 @@ bool WgRenderer::sync()
     return true;
 }
 
-Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
+#if defined(__APPLE__)
+WgPreparedPipelines::WgPreparedPipelines(WGPUDevice device)
+{
+    context.device = device;
+    wgpuDeviceAddRef(device);
+}
+
+WgPreparedPipelines::~WgPreparedPipelines()
+{
+    pipelines.release(context);
+    context.layouts.release();
+    wgpuDeviceRelease(context.device);
+}
+
+namespace {
+void popPreparedScope(WGPUDevice device, WgPreparedScopeResult* state)
+{
+    WGPUPopErrorScopeCallbackInfo info{};
+    info.mode = WGPUCallbackMode_AllowSpontaneous;
+    info.userdata1 = state;
+    info.callback = [](WGPUPopErrorScopeStatus status, WGPUErrorType error, WGPUStringView, void* output, void*) {
+        auto state = static_cast<WgPreparedScopeResult*>(output);
+        state->callback(status == WGPUPopErrorScopeStatus_Success && error == WGPUErrorType_NoError);
+    };
+    wgpuDevicePopErrorScope(device, info);
+}
+
+}
+
+bool WgPreparedPipelines::prepare(void (*progress)(void*), void* userData)
+{
+    auto scopes = new (std::nothrow) WgPreparedScopeResult;
+    if (!scopes) return false;
+
+    wgpuDevicePushErrorScope(context.device, WGPUErrorFilter_OutOfMemory);
+    wgpuDevicePushErrorScope(context.device, WGPUErrorFilter_Validation);
+    context.layouts.initialize(context.device);
+    pipelines.initialize(context);
+    // Start both callbacks before waiting for either result. The caller can run this
+    // wait on its preparation worker while target setup remains independent.
+    popPreparedScope(context.device, scopes);
+    popPreparedScope(context.device, scopes);
+    // The integration can pump backend events on this preparation worker. The
+    // spontaneous completion callbacks only update atomics and release their refs.
+    // A timeout releases the worker reference; outstanding callbacks keep their state.
+    return waitForPreparedScopes(scopes, progress, userData, std::chrono::seconds(5));
+}
+
+#endif
+
+Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type, WgPreparedPipelines* prepared)
 {
     auto opaque = (cs == ColorSpace::XBGR8888);
     if (cs != ColorSpace::ABGR8888 && cs != ColorSpace::ABGR8888S && !opaque) return Result::NonSupport;
     if (opaque && type != 0) return Result::InvalidArguments;
 
+#if defined(__APPLE__)
+    if (prepared && (prepared->adopted || !ctx.instance || !target ||
+                     prepared->context.device != ctx.device ||
+                     prepared->context.format != mContext.format || mContext.queue)) return Result::InvalidArguments;
+#endif
     if (!ctx.instance || !ctx.device || !target) {
         release();
         return Result::Success;
@@ -514,12 +574,24 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
     if (opaque) cs = ColorSpace::ABGR8888;  // Opaque surface composition uses the internal ABGR format.
 
     // context has been changed, need to recreate all instances
-    if ((mContext.device != ctx.device) || (mContext.instance != ctx.instance) || mContext.adapter != ctx.adapter) {
+    if (!mContext.queue || (mContext.device != ctx.device) || (mContext.instance != ctx.instance) || mContext.adapter != ctx.adapter) {
         release();
+#if defined(__APPLE__)
+        mContext.initialize(ctx, !prepared);
+        if (prepared) {
+            std::swap(mContext.layouts, prepared->context.layouts);
+            prepared->adopted = true;
+        }
+#else
         mContext.initialize(ctx);
+#endif
         mRenderTargetPool.initialize(w, h);
         mRenderTargetRoot.initialize(mContext, w, h);
+#if defined(__APPLE__)
+        mCompositor.initialize(mContext, w, h, prepared ? &prepared->pipelines : nullptr);
+#else
         mCompositor.initialize(mContext, w, h);
+#endif
     // update render targets dimensions
     } else if ((mSurface.w != w) || (mSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
         mRenderTargetPool.release(mContext);

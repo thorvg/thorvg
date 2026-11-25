@@ -2671,6 +2671,9 @@ struct TVG_API WgCanvas final : Canvas
      */
     static WgCanvas* gen(EngineOption op = EngineOption::Default) noexcept;
 
+private:
+    friend struct WgPreparedTargetAccess;
+    Result targetPrepared(const Context& context, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type, void* prepared) noexcept;
     _TVG_PROTECTED_CTOR(WgCanvas);
 };
 
