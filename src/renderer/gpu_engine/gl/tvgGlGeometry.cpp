@@ -248,21 +248,23 @@ void GlGeometry::tesselateImage(const RenderSurface* image)
     fillBBox = gpuTransformBounds(RenderRegion{0, 0, int32_t(image->w), int32_t(image->h)}, matrix);
 }
 
-void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag) const
+GlStageOffsets GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdateFlag flag, GlStageOffsets cached) const
 {
     auto buffer = ((flag & RenderUpdateFlag::Stroke) || (flag & RenderUpdateFlag::GradientStroke)) ? &stroke : &fill;
-    auto vertexOffset = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
-    auto indexOffset = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
-    auto vertexBuffer = gpuBuffer->getBufferId();
-
-    if (flag & RenderUpdateFlag::Image) {
-        // image has two attribute: [pos, uv]
-        task->addVertexLayout(GlVertexLayout{0, 2, 4 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
-        task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), vertexOffset + 2 * sizeof(float), GL_FLOAT, GL_FALSE, vertexBuffer});
-    } else {
-        task->addVertexLayout(GlVertexLayout{0, 2, 2 * sizeof(float), vertexOffset, GL_FLOAT, GL_FALSE, vertexBuffer});
+    if (cached.index == UINT32_MAX) {
+        cached.vertex = gpuBuffer->push(buffer->vertex.data, buffer->vertex.count * sizeof(float));
+        cached.index = gpuBuffer->pushIndex(buffer->index.data, buffer->index.count * sizeof(uint32_t));
     }
-    task->setDrawRange(indexOffset, buffer->index.count);
+    auto vertexBuffer = gpuBuffer->getBufferId();
+    auto image = flag & RenderUpdateFlag::Image;
+    auto stride = image ? 4u * sizeof(float) : 2u * sizeof(float);
+
+    task->addVertexLayout(GlVertexLayout{0, 2, static_cast<uint32_t>(stride), cached.vertex, GL_FLOAT, GL_FALSE, vertexBuffer});
+    if (image) {
+        task->addVertexLayout(GlVertexLayout{1, 2, 4 * sizeof(float), cached.vertex + 2 * sizeof(float), GL_FLOAT, GL_FALSE, vertexBuffer});
+    }
+    task->setDrawRange(cached.index, buffer->index.count);
+    return cached;
 }
 
 GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag) const

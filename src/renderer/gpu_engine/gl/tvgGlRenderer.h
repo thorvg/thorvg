@@ -157,6 +157,11 @@ struct GlRenderer : RenderMethod
     GLint mTargetFboId = 0;
     GlStateCache mStateCache;
     GlStageBuffer mGpuBuffer;
+    struct ClipEntry {
+        const GlShape* shape;
+        GlStageOffsets offsets;
+    };
+    Array<ClipEntry> mClipCache;
     GlRenderTarget mRootTarget;
     GlEffect mEffect;
     Array<GlProgram*> mPrograms;
