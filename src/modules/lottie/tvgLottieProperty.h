@@ -25,7 +25,6 @@
 
 #include "tvgMath.h"
 #include "tvgLottieCommon.h"
-#include "tvgLottieInterpolator.h"
 #include "tvgLottieExpressions.h"
 #include "tvgLottieModifier.h"
 #include "tvgLottieTween.h"
@@ -42,7 +41,7 @@ struct LottieScalarFrame
 {
     T value;                    //keyframe value
     float no;                   //frame number
-    LottieInterpolator* interpolator;
+    Interpolator* interpolator;
     bool hold = false;           //do not interpolate.
 
     T interpolate(LottieScalarFrame<T>* next, float frameNo)
@@ -66,7 +65,7 @@ struct LottieVectorFrame
 {
     T value;                    //keyframe value
     float no;                   //frame number
-    LottieInterpolator* interpolator;
+    Interpolator* interpolator;
     T outTangent, inTangent;
     float length;
     bool hasTangent = false;

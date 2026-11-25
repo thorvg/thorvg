@@ -24,10 +24,25 @@
 #define _TVG_LOTTIE_COMMON_
 
 #include "tvgRender.h"
+#include "tvgMath.h"
 #include "tvgStr.h"
 
 namespace tvg
 {
+
+struct Interpolator
+{
+    tvg::Bezier::Easing easing;
+    char* key;
+
+    void set(const char* key, const Point& inTangent, const Point& outTangent)
+    {
+        this->key = duplicate(key);
+        easing.prepare(outTangent, inTangent);
+    }
+
+    float progress(float t) { return easing.map(t); }
+};
 
 struct PathSet
 {
@@ -59,11 +74,6 @@ struct PathSet
             memcpy(cmds, rhs.cmds, sizeof(PathCommand) * cmdsCnt);
         } else cmds = nullptr;
     }
-};
-
-struct RGB32
-{
-    int32_t r, g, b;
 };
 
 struct ColorStop

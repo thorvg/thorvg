@@ -377,8 +377,7 @@ bool LottieParser::parseTangent(const char *key, LottieScalarFrame<T>& value)
     return false;
 }
 
-
-LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Point& out)
+Interpolator* LottieParser::getInterpolator(const char* key, Point& in, Point& out)
 {
     char buf[20];
 
@@ -387,7 +386,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
         key = buf;
     }
 
-    LottieInterpolator* interpolator = nullptr;
+    Interpolator* interpolator = nullptr;
 
     //get a cached interpolator if it has any.
     for (auto& p : comp->interpolators) {
@@ -396,7 +395,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
 
     //new interpolator
     if (!interpolator) {
-        interpolator = tvg::malloc<LottieInterpolator>(sizeof(LottieInterpolator));
+        interpolator = tvg::malloc<Interpolator>(sizeof(Interpolator));
         interpolator->set(key, in, out);
         comp->interpolators.push(interpolator);
     }

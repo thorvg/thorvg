@@ -481,11 +481,79 @@ struct BBox
 
 struct Bezier
 {
+    struct Easing
+    {
+        static constexpr auto SAMPLE_CNT = 11;
+        static constexpr auto SAMPLE_STEP = 1.0f / (SAMPLE_CNT - 1);
+        float samples[SAMPLE_CNT];
+        Point a, b, c;
+        bool linear;
+
+        // prepare a curve in [0, 1]
+        void prepare(const Point& p1, const Point& p2)
+        {
+            linear = p1.x == p1.y && p2.x == p2.y;
+            if (linear) return;
+
+            a = Point{1.0f, 1.0f} - p2 * 3.0f + p1 * 3.0f;
+            b = p2 * 3.0f - p1 * 6.0f;
+            c = p1 * 3.0f;
+
+            for (auto i = 0; i < SAMPLE_CNT; ++i) {
+                auto t = i * SAMPLE_STEP;
+                samples[i] = cubic(t, a.x, b.x, c.x);
+            }
+        }
+
+        // evaluate x in [0, 1] on the increasing-x curve.
+        float map(float x) const
+        {
+            if (linear) return x;
+            auto t = solve(x);
+            return cubic(t, a.y, b.y, c.y);
+        }
+
+        static float cubic(float t, float a, float b, float c)
+        {
+            return ((a * t + b) * t + c) * t;
+        }
+
+        float solve(float x) const
+        {
+            auto lo = 0.0f;
+            auto sample = samples + 1;
+            for (; sample != samples + SAMPLE_CNT - 1 && *sample <= x; ++sample) {
+                lo += SAMPLE_STEP;
+            }
+            auto t = lo + (x - sample[-1]) / (sample[0] - sample[-1]) * SAMPLE_STEP;
+            auto slope = 3.0f * a.x * t * t + 2.0f * b.x * t + c.x;
+            if (slope == 0.0f) return t;
+            if (slope >= 0.02f) {
+                for (auto i = 0; i < 4; ++i) {
+                    if (slope == 0.0f) break;
+                    auto error = cubic(t, a.x, b.x, c.x) - x;
+                    t -= error / slope;
+                    slope = 3.0f * a.x * t * t + 2.0f * b.x * t + c.x;
+                }
+                return t;
+            }
+
+            auto hi = lo + SAMPLE_STEP;
+            for (auto i = 0; i < 10; ++i) {
+                t = lo + (hi - lo) * 0.5f;
+                auto error = cubic(t, a.x, b.x, c.x) - x;
+                if (!(fabsf(error) > 1e-7f)) break;
+                if (error > 0.0f) hi = t;
+                else lo = t;
+            }
+            return t;
+        }
+    };
+
     Point start, ctrl1, ctrl2, end;
 
-    Bezier() {}
-    Bezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3):
-        start(p0), ctrl1(p1), ctrl2(p2), end(p3) {}
+    Bezier() = default;
+    Bezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3) : start(p0), ctrl1(p1), ctrl2(p2), end(p3) {}
 
     // Constructor that approximates a quarter-circle segment of arc between 'start' and 'end' points
     // using a cubic Bezier curve with a given 'radius'.
@@ -524,31 +592,18 @@ struct Bezier
         auto a = -mt * mt;
         auto b = 1.0f - 4.0f * t + 3.0f * d;
         auto c = 2.0f * t - 3.0f * d;
-        auto pt = Point{a * start.x + b * ctrl1.x + c * ctrl2.x + d * end.x, a * start.y + b * ctrl1.y + c * ctrl2.y + d * end.y};
-
-        return pt * 3.0f;
+        return (a * start + b * ctrl1 + c * ctrl2 + d * end) * 3.0f;
     }
 
     Point at(float t) const
     {
-        Point cur;
         auto it = 1.0f - t;
-
-        auto ax = start.x * it + ctrl1.x * t;
-        auto bx = ctrl1.x * it + ctrl2.x * t;
-        auto cx = ctrl2.x * it + end.x * t;
-        ax = ax * it + bx * t;
-        bx = bx * it + cx * t;
-        cur.x = ax * it + bx * t;
-
-        float ay = start.y * it + ctrl1.y * t;
-        float by = ctrl1.y * it + ctrl2.y * t;
-        float cy = ctrl2.y * it + end.y * t;
-        ay = ay * it + by * t;
-        by = by * it + cy * t;
-        cur.y = ay * it + by * t;
-
-        return cur;
+        auto a = start * it + ctrl1 * t;
+        auto b = ctrl1 * it + ctrl2 * t;
+        auto c = ctrl2 * it + end * t;
+        a = a * it + b * t;
+        b = b * it + c * t;
+        return a * it + b * t;
     }
 
     void split(float t, Bezier& left);
