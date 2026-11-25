@@ -89,6 +89,8 @@ struct LottieExpressions
         return true;
     }
 
+    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED AudioLevel&, TVG_UNUSED LottieExpression*) { return false; }
+
     template<typename Property>
     bool result(float frameNo, Point3& out, LottieExpression* exp)
     {
@@ -200,6 +202,7 @@ struct LottieExpressions
     template<typename Property, typename NumType> bool result(TVG_UNUSED float, TVG_UNUSED NumType&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Point&, LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RGB32&, TVG_UNUSED LottieExpression*) { return false; }
+    template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED AudioLevel&, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED Fill*, TVG_UNUSED LottieExpression*) { return false; }
     template<typename Property> bool result(TVG_UNUSED float, TVG_UNUSED RenderPath&, TVG_UNUSED Matrix*, TVG_UNUSED LottieModifier*, TVG_UNUSED LottieExpression*) { return false; }
     bool result(TVG_UNUSED float, TVG_UNUSED TextDocument& doc, TVG_UNUSED LottieExpression*) { return false; }

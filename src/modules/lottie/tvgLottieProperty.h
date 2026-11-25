@@ -512,5 +512,6 @@ using LottieVector = LottieGenericProperty<LottieVectorFrame<Point>, Point, Lott
 using LottieScalar3 = LottieGenericProperty<LottieScalarFrame<Point3>, Point3, LottieProperty::Type::Scalar3>;
 using LottieColor = LottieGenericProperty<LottieScalarFrame<RGB32>, RGB32, LottieProperty::Type::Color>;
 using LottieOpacity = LottieGenericProperty<LottieScalarFrame<uint8_t>, uint8_t, LottieProperty::Type::Opacity>;
+using LottieAudioLevel = LottieGenericProperty<LottieScalarFrame<AudioLevel>, AudioLevel>;
 
 #endif //_TVG_LOTTIE_PROPERTY_H_

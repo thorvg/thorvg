@@ -356,7 +356,8 @@ TEST_CASE("Lottie Audio Layer", "[tvgLottie]")
         REQUIRE(callCount == 1);
         REQUIRE(received.active == true);
         REQUIRE(received.offset >= 0.0f);
-        REQUIRE(received.volume == Approx(100.0f).margin(0.1f));
+        REQUIRE(received.volume[0] == Approx(100.0f).margin(0.1f));
+        REQUIRE(received.volume[1] == Approx(100.0f).margin(0.1f));
         REQUIRE(received.embedded == false);
         REQUIRE(received.src != nullptr);
         REQUIRE(received.size == 0);
@@ -399,7 +400,7 @@ TEST_CASE("Lottie Master Volume", "[tvgLottie]")
         float received = -1.0f;
 
         auto resolver = [&](const LottieAudioResolver& info, void*) {
-            if (info.active) received = info.volume;
+            if (info.active) received = info.volume[0];
         };
 
         //Negative: before loaded
