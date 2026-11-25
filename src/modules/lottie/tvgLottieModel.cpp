@@ -285,9 +285,8 @@ float LottieTextRange::factor(float frameNo, float totalLen, float idx)
         if (minEase > 0.0f) out.x = minEase * 0.01f;
         else out.y = -minEase * 0.01f;
 
-        LottieInterpolator interpolator;
-        interpolator.set(nullptr, in, out);
-        f = interpolator.progress(f);
+        tvg::Bezier::Easing easing(out, in);
+        f = easing.map(f);
     }
     f = tvg::clamp(f, 0.0f, 1.0f);
 
@@ -706,7 +705,7 @@ LottieComposition::~LottieComposition()
 
     for (auto& p : interpolators) {
         tvg::free(p->key);
-        tvg::free(p);
+        delete (p);
     }
 
     for (auto& p : assets) delete (p);

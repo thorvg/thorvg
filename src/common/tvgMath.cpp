@@ -22,76 +22,17 @@
 
 #include "tvgMath.h"
 
-#define BEZIER_EPSILON 1e-2f
-
-
-/************************************************************************/
-/* Internal Class Implementation                                        */
-/************************************************************************/
-
-static float _lengthApprox(const Point& pt1, const Point& pt2)
+namespace tvg
 {
-    return tvg::length(pt1, pt2);
-}
+
+/************************************************************************/
+/* General                                                              */
+/************************************************************************/
 
 static float _length(const Point& pt1, const Point& pt2)
 {
-    Point diff = {pt2.x - pt1.x, pt2.y - pt1.y};
-    return sqrtf(diff.x * diff.x + diff.y * diff.y);
+    return tvg::length(pt2 - pt1);
 }
-
-
-template<typename LengthFunc>
-float _bezLength(const Bezier& cur, LengthFunc lineLengthFunc)
-{
-    Bezier left, right;
-    auto len = lineLengthFunc(cur.start, cur.ctrl1) + lineLengthFunc(cur.ctrl1, cur.ctrl2) + lineLengthFunc(cur.ctrl2, cur.end);
-    auto chord = lineLengthFunc(cur.start, cur.end);
-
-    if (fabsf(len - chord) > BEZIER_EPSILON) {
-        cur.split(left, right);
-        return _bezLength(left, lineLengthFunc) + _bezLength(right, lineLengthFunc);
-    }
-    return len;
-}
-
-
-template<typename LengthFunc>
-float _bezAt(const Bezier& bz, float at, float length, LengthFunc lineLengthFunc)
-{
-    auto biggest = 1.0f;
-    auto smallest = 0.0f;
-    auto t = 0.5f;
-
-    //just in case to prevent an infinite loop
-    if (at <= 0) return 0.0f;
-    if (at >= length) return 1.0f;
-
-    while (true) {
-        auto right = bz;
-        Bezier left;
-        right.split(t, left);
-        length = _bezLength(left, lineLengthFunc);
-        if (fabsf(length - at) < BEZIER_EPSILON || fabsf(smallest - biggest) < 1e-3f) {
-            break;
-        }
-        if (length < at) {
-            smallest = t;
-            t = (t + biggest) * 0.5f;
-        } else {
-            biggest = t;
-            t = (smallest + t) * 0.5f;
-        }
-    }
-    return t;
-}
-
-
-/************************************************************************/
-/* External Class Implementation                                        */
-/************************************************************************/
-
-namespace tvg {
 
 float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32_t ptsCnt, bool accuracy)
 {
@@ -128,7 +69,6 @@ float length(const PathCommand* cmds, uint32_t cmdsCnt, const Point* pts, uint32
     return length;
 }
 
-
 //https://en.wikipedia.org/wiki/Remez_algorithm
 float atan2(float y, float x)
 {
@@ -141,7 +81,6 @@ float atan2(float y, float x)
     if (y < 0) return -r;
     return r;
 }
-
 
 bool inverse(const Matrix* m, Matrix* out)
 {
@@ -165,7 +104,6 @@ bool inverse(const Matrix* m, Matrix* out)
     return true;
 }
 
-
 bool identity(const Matrix* m)
 {
     if (m->e11 != 1.0f || m->e12 != 0.0f || m->e13 != 0.0f ||
@@ -175,7 +113,6 @@ bool identity(const Matrix* m)
     }
     return true;
 }
-
 
 void rotate(Matrix* m, float degree)
 {
@@ -190,7 +127,6 @@ void rotate(Matrix* m, float degree)
     m->e21 = m->e22 * sinVal;
     m->e22 *= cosVal;
 }
-
 
 Matrix operator*(const Matrix& lhs, const Matrix& rhs)
 {
@@ -211,7 +147,6 @@ Matrix operator*(const Matrix& lhs, const Matrix& rhs)
     return m;
 }
 
-
 bool operator==(const Matrix& lhs, const Matrix& rhs)
 {
     if (!tvg::equal(lhs.e11, rhs.e11) || !tvg::equal(lhs.e12, rhs.e12) || !tvg::equal(lhs.e13, rhs.e13) ||
@@ -222,15 +157,10 @@ bool operator==(const Matrix& lhs, const Matrix& rhs)
     return true;
 }
 
-
 void operator*=(Point& pt, const Matrix& m)
 {
-    auto tx = pt.x * m.e11 + pt.y * m.e12 + m.e13;
-    auto ty = pt.x * m.e21 + pt.y * m.e22 + m.e23;
-    pt.x = tx;
-    pt.y = ty;
+    pt = pt * m;
 }
-
 
 Point operator*(const Point& pt, const Matrix& m)
 {
@@ -238,7 +168,6 @@ Point operator*(const Point& pt, const Matrix& m)
     auto ty = pt.x * m.e21 + pt.y * m.e22 + m.e23;
     return {tx, ty};
 }
-
 
 Point normal(const Point& p1, const Point& p2)
 {
@@ -250,15 +179,15 @@ Point normal(const Point& p1, const Point& p2)
     return {-unitDir.y, unitDir.x};
 }
 
-
 void normalize(Point& pt)
 {
     if (zero(pt)) return;       //prevent zero division
-    auto ilength = 1.0f / sqrtf((pt.x * pt.x) + (pt.y * pt.y));
-    pt.x *= ilength;
-    pt.y *= ilength;
+    pt *= 1.0f / length(pt);
 }
 
+/************************************************************************/
+/* Line                                                                 */
+/************************************************************************/
 
 float Line::length() const
 {
@@ -267,35 +196,79 @@ float Line::length() const
 
 void Line::split(float at, Line& left, Line& right) const
 {
-    auto len = length();
-    auto dx = ((pt2.x - pt1.x) / len) * at;
-    auto dy = ((pt2.y - pt1.y) / len) * at;
+    auto delta = pt2 - pt1;
+    auto offset = (delta / tvg::length(delta)) * at;
     left.pt1 = pt1;
-    left.pt2.x = left.pt1.x + dx;
-    left.pt2.y = left.pt1.y + dy;
+    left.pt2 = left.pt1 + offset;
     right.pt1 = left.pt2;
     right.pt2 = pt2;
 }
 
+/************************************************************************/
+/* Bezier                                                               */
+/************************************************************************/
+
+#define BEZIER_EPSILON 1e-2f
+
+static float _lengthApprox(const Point& pt1, const Point& pt2)
+{
+    return tvg::length(pt1, pt2);
+}
+
+using LengthFunc = float (*)(const Point&, const Point&);
+
+static float _bezLength(const Bezier& cur, LengthFunc lineLengthFunc)
+{
+    Bezier left, right;
+    auto len = lineLengthFunc(cur.start, cur.ctrl1) + lineLengthFunc(cur.ctrl1, cur.ctrl2) + lineLengthFunc(cur.ctrl2, cur.end);
+    auto chord = lineLengthFunc(cur.start, cur.end);
+
+    if (fabsf(len - chord) > BEZIER_EPSILON) {
+        cur.split(left, right);
+        return _bezLength(left, lineLengthFunc) + _bezLength(right, lineLengthFunc);
+    }
+    return len;
+}
+
+static float _bezAt(const Bezier& bz, float at, float length, LengthFunc lineLengthFunc)
+{
+    auto biggest = 1.0f;
+    auto smallest = 0.0f;
+    auto t = 0.5f;
+
+    // just in case to prevent an infinite loop
+    if (at <= 0) return 0.0f;
+    if (at >= length) return 1.0f;
+
+    while (true) {
+        auto right = bz;
+        Bezier left;
+        right.split(t, left);
+        length = _bezLength(left, lineLengthFunc);
+        if (fabsf(length - at) < BEZIER_EPSILON || fabsf(smallest - biggest) < 1e-3f) {
+            break;
+        }
+        if (length < at) {
+            smallest = t;
+            t = (t + biggest) * 0.5f;
+        } else {
+            biggest = t;
+            t = (smallest + t) * 0.5f;
+        }
+    }
+    return t;
+}
+
 void Bezier::split(Bezier& left, Bezier& right) const
 {
-    auto c = (ctrl1.x + ctrl2.x) * 0.5f;
-    left.ctrl1.x = (start.x + ctrl1.x) * 0.5f;
-    right.ctrl2.x = (ctrl2.x + end.x) * 0.5f;
-    left.start.x = start.x;
-    right.end.x = end.x;
-    left.ctrl2.x = (left.ctrl1.x + c) * 0.5f;
-    right.ctrl1.x = (right.ctrl2.x + c) * 0.5f;
-    left.end.x = right.start.x = (left.ctrl2.x + right.ctrl1.x) * 0.5f;
-
-    c = (ctrl1.y + ctrl2.y) * 0.5f;
-    left.ctrl1.y = (start.y + ctrl1.y) * 0.5f;
-    right.ctrl2.y = (ctrl2.y + end.y) * 0.5f;
-    left.start.y = start.y;
-    right.end.y = end.y;
-    left.ctrl2.y = (left.ctrl1.y + c) * 0.5f;
-    right.ctrl1.y = (right.ctrl2.y + c) * 0.5f;
-    left.end.y = right.start.y = (left.ctrl2.y + right.ctrl1.y) * 0.5f;
+    auto c = (ctrl1 + ctrl2) * 0.5f;
+    left.ctrl1 = (start + ctrl1) * 0.5f;
+    right.ctrl2 = (ctrl2 + end) * 0.5f;
+    left.start = start;
+    right.end = end;
+    left.ctrl2 = (left.ctrl1 + c) * 0.5f;
+    right.ctrl1 = (right.ctrl2 + c) * 0.5f;
+    left.end = right.start = (left.ctrl2 + right.ctrl1) * 0.5f;
 }
 
 void Bezier::split(float at, Bezier& left, Bezier& right) const

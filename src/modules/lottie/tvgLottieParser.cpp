@@ -377,7 +377,6 @@ bool LottieParser::parseTangent(const char *key, LottieScalarFrame<T>& value)
     return false;
 }
 
-
 LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Point& out)
 {
     char buf[20];
@@ -396,8 +395,7 @@ LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Po
 
     //new interpolator
     if (!interpolator) {
-        interpolator = tvg::malloc<LottieInterpolator>(sizeof(LottieInterpolator));
-        interpolator->set(key, in, out);
+        interpolator = new LottieInterpolator(key, in, out);
         comp->interpolators.push(interpolator);
     }
 
