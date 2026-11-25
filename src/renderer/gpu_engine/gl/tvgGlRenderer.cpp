@@ -1126,7 +1126,7 @@ bool GlRenderer::intersectsImage(RenderData data, TVG_UNUSED const RenderRegion&
     if (image->opacity == 0) return false;
     const auto& bbox = image->geometry.bounds();
     if (region.intersected(bbox)) {
-        if (region.contained(bbox)) return true;
+        if (image->clips.empty() && region.contained(bbox)) return true;
         GlIntersector intersector;
         if (intersector.intersect(image, RenderRegion::intersect(region, bbox))) return true;
     }

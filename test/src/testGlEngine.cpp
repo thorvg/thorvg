@@ -546,6 +546,28 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
         REQUIRE(nonZero->intersects(52, 50, 1, 1) == true);
         REQUIRE(evenOdd->intersects(52, 50, 1, 1) == false);
 
+        uint32_t pixel = 0xffffffff;
+        auto clipped = Picture::gen();
+        REQUIRE(clipped->load(&pixel, 1, 1, 1, ColorSpace::ARGB8888, true) == Result::Success);
+        REQUIRE(clipped->transform({20, -20, 32, 20, 20, 12, 0, 0, 1}) == Result::Success);
+        auto clip = Shape::gen();
+        REQUIRE(clip->appendCircle(42, 26, 10, 10) == Result::Success);
+        REQUIRE(clipped->clip(clip) == Result::Success);
+        REQUIRE(canvas->add(clipped) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(clipped->intersects(42, 25, 1, 1, true));
+        REQUIRE_FALSE(clipped->intersects(49, 22, 1, 1, true));
+        REQUIRE_FALSE(clipped->intersects(22, 32, 1, 1, true));
+
+        auto outside = clipped->duplicate();
+        REQUIRE(outside);
+        auto disjoint = Shape::gen();
+        REQUIRE(disjoint->appendCircle(15, 15, 2, 2) == Result::Success);
+        REQUIRE(outside->clip(disjoint) == Result::Success);
+        REQUIRE(canvas->add(outside) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE_FALSE(outside->intersects(0, 0, 64, 64, true));
+
         ifstream file(TEST_DIR "/rawimage_250x375.raw");
         if (!file.is_open()) return;
         auto data = (uint32_t*)malloc(sizeof(uint32_t) * (250 * 375));
