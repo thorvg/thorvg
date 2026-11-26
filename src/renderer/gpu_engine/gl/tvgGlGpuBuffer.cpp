@@ -29,21 +29,16 @@
 static GLint _getGpuBufferAlign() 
 {
     static GLint offset = 0;
-
-    if (!offset)
-    {
+    if (!offset) {
         GL_CHECK(glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &offset));
     }
-
     return offset;
 }
-
 
 void GlGpuBuffer::updateBufferData(Target target, uint32_t size, const void* data)
 {
     GL_CHECK(glBufferData(static_cast<uint32_t>(target), size, data, GL_STATIC_DRAW));
 }
-
 
 GlGpuBuffer::GlGpuBuffer()
 {
@@ -51,49 +46,47 @@ GlGpuBuffer::GlGpuBuffer()
     assert(mGlBufferId != 0);
 }
 
-
 GlGpuBuffer::~GlGpuBuffer()
 {
-    if (mGlBufferId)
-    {
-        GL_CHECK(glDeleteBuffers(1, &mGlBufferId));
-    }
+    GL_CHECK(glDeleteBuffers(1, &mGlBufferId));
 }
 
 /************************************************************************/
 /* GlStageBuffer Implementation                                         */
 /************************************************************************/
 
-GlStageBuffer::GlStageBuffer() : mVao(0), mGpuBuffer(), mGpuAuxBuffer(), mGpuIndexBuffer()
+GlStageBuffer::GlStageBuffer()
 {
     memset(mImageOpacityOffsets, 0xff, sizeof(mImageOpacityOffsets));
     GL_CHECK(glGenVertexArrays(1, &mVao));
 }
 
-
 GlStageBuffer::~GlStageBuffer()
 {
-    if (mVao) {
-        glDeleteVertexArrays(1, &mVao);
-        mVao = 0;
-    }
+    glDeleteVertexArrays(1, &mVao);
 }
 
+uint32_t GlStageBuffer::reserve(Array<uint8_t>& buffer, uint32_t size, void** dst)
+{
+    auto offset = buffer.count;
+    if (buffer.reserved - offset < size) buffer.grow(max(size, buffer.reserved));
+    *dst = buffer.data + offset;
+    buffer.count += size;
+    return offset;
+}
 
-uint32_t GlStageBuffer::pushAux(void* data, uint32_t size)
+uint32_t GlStageBuffer::push(Array<uint8_t>& buffer, const void* data, uint32_t size)
 {
     void* dst = nullptr;
-    auto offset = reserveAux(size, &dst);
+    auto offset = reserve(buffer, size, &dst);
     if (size > 0) memcpy(dst, data, size);
     return offset;
 }
 
-uint32_t GlStageBuffer::pushIndex(void* data, uint32_t size)
+uint32_t GlStageBuffer::push(void* data, uint32_t size, bool alignGpuOffset)
 {
-    void* dst = nullptr;
-    auto offset = reserveIndex(size, &dst);
-    if (size > 0) memcpy(dst, data, size);
-    return offset;
+    if (alignGpuOffset) alignOffset(size);
+    return push(mStageBuffer, data, size);
 }
 
 uint32_t GlStageBuffer::getImageOpacityOffset(uint8_t opacity)
@@ -155,29 +148,14 @@ void GlStageBuffer::unbind(GlStateCache& state)
     state.bindVertexArray(0);
 }
 
-
-GLuint GlStageBuffer::getBufferId()
-{
-    return mGpuBuffer.getBufferId();
-}
-
-GLuint GlStageBuffer::getAuxBufferId()
-{
-    return mGpuAuxBuffer.getBufferId();
-}
-
 void GlStageBuffer::alignOffset(uint32_t size)
 {
     uint32_t alignment = _getGpuBufferAlign();
-
     if (mStageBuffer.count % alignment == 0) return;
 
-
     uint32_t offset = alignment - mStageBuffer.count % alignment;
-
     if (mStageBuffer.count + offset + size > mStageBuffer.reserved) {
         mStageBuffer.grow(max(offset + size, mStageBuffer.reserved));
     }
-
     mStageBuffer.count += offset;
 }
