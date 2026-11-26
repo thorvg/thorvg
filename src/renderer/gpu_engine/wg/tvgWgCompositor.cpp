@@ -63,17 +63,13 @@ void WgCompositor::updateViewMat(WgContext& context, uint32_t width, uint32_t he
 }
 
 
-void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t height)
+void WgCompositor::initialize(WgContext& context)
 {
     // pipelines (external handle, do not release)
     pipelines.initialize(context);
     stageBufferGeometry.initialize(context);
     // initialize opacity pool
     initPools(context);
-    // allocate global view matrix handles
-    updateViewMat(context, width, height);
-    // create render targets handles
-    resize(context, width, height);
     // composition and blend geometries
     meshDataBlit.blitBox();
     // force stage buffers initialization

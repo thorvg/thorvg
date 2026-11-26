@@ -233,6 +233,16 @@ WgCanvas::~WgCanvas()
 #endif
 }
 
+Result WgCanvas::prepare(const Context& context) noexcept
+{
+#ifdef THORVG_WG_ENGINE_SUPPORT
+    if (pImpl->status == Status::Updating || pImpl->status == Status::Drawing) return Result::InsufficientCondition;
+    return static_cast<WgRenderer*>(pImpl->renderer)->prepare(context);
+#else
+    return Result::NonSupport;
+#endif
+}
+
 Result WgCanvas::target(void* device, void* instance, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type) noexcept
 {
     return WgCanvas::target({instance, nullptr, device}, target, w, h, cs, type);

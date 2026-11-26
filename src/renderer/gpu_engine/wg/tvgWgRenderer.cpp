@@ -465,7 +465,7 @@ bool WgRenderer::clear()
 
 bool WgRenderer::sync()
 {
-    if (mContext.invalid()) return false;
+    if (!surface && !targetTexture) return false;
 
     disposeObjects();
 
@@ -498,6 +498,18 @@ bool WgRenderer::sync()
     return true;
 }
 
+Result WgRenderer::prepare(const WgCanvas::Context& ctx, bool allowRetarget)
+{
+    if (!ctx.device || !ctx.instance) return Result::InvalidArguments;
+    if (mContext.queue && mContext.device == ctx.device && mContext.instance == ctx.instance && mContext.adapter == ctx.adapter) return Result::Success;
+    if (!allowRetarget && (surface || targetTexture)) return Result::InsufficientCondition;
+
+    release();
+    mContext.initialize(ctx);
+    mCompositor.initialize(mContext);
+    return Result::Success;
+}
+
 Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w, uint32_t h, ColorSpace cs, int type)
 {
     auto opaque = (cs == ColorSpace::XBGR8888);
@@ -513,15 +525,10 @@ Result WgRenderer::target(const WgCanvas::Context& ctx, void* target, uint32_t w
 
     if (opaque) cs = ColorSpace::ABGR8888;  // Opaque surface composition uses the internal ABGR format.
 
-    // context has been changed, need to recreate all instances
-    if ((mContext.device != ctx.device) || (mContext.instance != ctx.instance) || mContext.adapter != ctx.adapter) {
-        release();
-        mContext.initialize(ctx);
-        mRenderTargetPool.initialize(w, h);
-        mRenderTargetRoot.initialize(mContext, w, h);
-        mCompositor.initialize(mContext, w, h);
-    // update render targets dimensions
-    } else if ((mSurface.w != w) || (mSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
+    auto ret = prepare(ctx, true);
+    if (ret != Result::Success) return ret;
+
+    if ((mSurface.w != w) || (mSurface.h != h) || (type == 0 ? (surface != (WGPUSurface)target) : (targetTexture != (WGPUTexture)target))) {
         mRenderTargetPool.release(mContext);
         mRenderTargetRoot.release(mContext);
         clearTargets();
@@ -710,9 +717,7 @@ void WgRenderer::dispose(RenderEffect* effect)
 
 bool WgRenderer::preUpdate()
 {
-    if (mContext.invalid()) return false;
-
-    return true;
+    return surface || targetTexture;
 }
 
 

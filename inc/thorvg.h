@@ -2607,6 +2607,8 @@ struct TVG_API WgCanvas final : Canvas
         void* device;    // WGPUDevice, a desired handle for the wgpu device.
     };
 
+    Result prepare(const Context& context) noexcept;
+
     /**
      * @brief Sets the drawing target for the rasterization.
      *
