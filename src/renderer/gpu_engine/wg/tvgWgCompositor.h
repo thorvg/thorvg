@@ -72,9 +72,8 @@ private:
     uint32_t renderPassCount = 0;
     const WgRenderTargetState* currentTargetState{};
     // intermediate render targets
-    WgRenderTarget targetTemp0;
-    WgRenderTarget targetTemp1;
-    WGPUBindGroup bindGroupStorageTemp{};
+    WgRenderTarget targetTemp0, targetTemp1;
+    Array<WgResolveTarget> backdropTargets;
     // composition and blend geometries
     WgMesh meshDataBlit;
     // render target dimensions
@@ -88,7 +87,8 @@ private:
     WGPUTextureView getDepthStencilView(WgContext& context, uint32_t width, uint32_t height, uint32_t sampleCount);
     void requestQuad(WgMesh& mesh, const WgRenderTargetState& src, const WgRenderTargetState& dst, const WgRenderTargetState* mask = nullptr);
     void copyEffectTexture(WgContext& context, WgRenderTarget* dst, const WgRenderTargetState& src, bool clear = false);
-    bool copyBackdrop(WgContext& context, BlendMethod method);
+    WgResolveTarget& getBackdropTarget(WgContext& context, uint32_t width, uint32_t height);
+    WGPUBindGroup prepareBackdrop(WgContext& context, BlendMethod method);
 
     // base meshes draw
     void drawMesh(WgContext& context, WgMesh* meshData);

@@ -32,20 +32,18 @@ static uint32_t _renderTargetSize(uint32_t value, uint32_t limit)
     return size < limit ? size : limit;
 }
 
-void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t height, bool multisample)
+void WgResolveTarget::initialize(WgContext& context, uint32_t width, uint32_t height)
 {
     this->width = width;
     this->height = height;
     texture = context.createTexStorage(width, height, WGPUTextureFormat_RGBA8Unorm);
-    if (multisample) textureMS = context.createTexAttachement(width, height, WGPUTextureFormat_RGBA8Unorm, 4);
     texView = context.createTextureView(texture);
-    if (multisample) texViewMS = context.createTextureView(textureMS);
     bgRead = context.layouts.createBindGroupStrorage1RO(texView);
     bgWrite = context.layouts.createBindGroupStrorage1WO(texView);
     bgTexture = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
 }
 
-WGPUBindGroup WgRenderTarget::getBindGroupTextureLinear(WgContext& context)
+WGPUBindGroup WgResolveTarget::getBindGroupTextureLinear(WgContext& context)
 {
     if (!bgTextureLinear) {
         bgTextureLinear = context.layouts.createBindGroupTexSampled(context.samplerLinearClamp, texView);
@@ -53,18 +51,32 @@ WGPUBindGroup WgRenderTarget::getBindGroupTextureLinear(WgContext& context)
     return bgTextureLinear;
 }
 
-void WgRenderTarget::release(WgContext& context)
+void WgResolveTarget::release(WgContext& context)
 {
     context.layouts.releaseBindGroup(bgTextureLinear);
     context.layouts.releaseBindGroup(bgTexture);
     context.layouts.releaseBindGroup(bgWrite);
     context.layouts.releaseBindGroup(bgRead);
-    context.releaseTextureView(texViewMS);
-    context.releaseTexture(textureMS);
     context.releaseTextureView(texView);
     context.releaseTexture(texture);
     height = 0;
     width = 0;
+}
+
+void WgRenderTarget::initialize(WgContext& context, uint32_t width, uint32_t height, bool multisample)
+{
+    WgResolveTarget::initialize(context, width, height);
+    if (multisample) {
+        textureMS = context.createTexAttachement(width, height, WGPUTextureFormat_RGBA8Unorm, 4);
+        texViewMS = context.createTextureView(textureMS);
+    }
+}
+
+void WgRenderTarget::release(WgContext& context)
+{
+    context.releaseTextureView(texViewMS);
+    context.releaseTexture(textureMS);
+    WgResolveTarget::release(context);
 }
 
 //*****************************************************************************
