@@ -23,7 +23,11 @@
 #include "tvgGlCommon.h"
 #include "tvgGlGpuBuffer.h"
 #include "tvgGlRenderTask.h"
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+#include "tvgSwCommon.h"
+#else
 #include "tvgGlTessellator.h"
+#endif
 
 /************************************************************************/
 /* GlIntersector                                                        */
@@ -45,6 +49,7 @@ bool GlIntersector::intersect(const tvg::Array<tvg::RenderData>& clips, const Po
     return true;
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
 {
     const auto& geometry = shape->geometry;
@@ -75,10 +80,32 @@ bool GlIntersector::intersect(const GlShape* shape, const RenderRegion& region)
     }
     return false;
 }
+#endif
 
 bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 {
     if (image->geometry.fill.index.count < 6) return false;
+
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    if (!image->clips.empty()) {
+        const auto& clip = image->clipCoverage;
+        if (clip.status != CoverageStatus::Ready || !clip.map.rle) return false;
+        auto bounds = RenderRegion::intersect(region, clip.map.bounds);
+        Matrix inv;
+        if (bounds.invalid() || !inverse(&image->geometry.matrix, &inv)) return false;
+        const SwSpan* end;
+        for (auto span = clip.map.rle->fetch(bounds, &end); span < end; ++span) {
+            int32_t x, len;
+            if (!span->fetch(bounds, x, len)) continue;
+            auto center = Point{float(x) + 0.5f * len, float(span->y) + 0.5f} * inv;
+            auto halfWidth = 0.5f * (fabsf(inv.e11) * len + fabsf(inv.e12));
+            auto halfHeight = 0.5f * (fabsf(inv.e21) * len + fabsf(inv.e22));
+            if (center.x + halfWidth > 0 && center.x - halfWidth < image->surface->w &&
+                center.y + halfHeight > 0 && center.y - halfHeight < image->surface->h) return true;
+        }
+        return false;
+    }
+#endif
 
     const auto& geometry = image->geometry;
     const auto& mesh = geometry.fill;
@@ -105,6 +132,7 @@ bool GlIntersector::intersect(const GlImage* image, const RenderRegion& region)
 /* GlGeometry                                                           */
 /************************************************************************/
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 void GlGeometry::prepare(const RenderShape& rshape)
 {
     optPathThin = false;
@@ -212,11 +240,15 @@ bool GlGeometry::tesselateStroke(const RenderShape& rshape)
 }
 
 
+#endif
+
 void GlGeometry::tesselateImage(const RenderSurface* image)
 {
     fill.clear();
     fillWorld = true;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
     strokeRenderWidth = 0.0f;
+#endif
     fill.vertex.reserve(5 * 4);
     fill.index.reserve(6);
 
@@ -265,6 +297,7 @@ void GlGeometry::draw(GlRenderTask* task, GlStageBuffer* gpuBuffer, RenderUpdate
     task->setDrawRange(indexOffset, buffer->index.count);
 }
 
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
 GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag) const
 {
     if (flag & (RenderUpdateFlag::Stroke | RenderUpdateFlag::GradientStroke)) return strokeDirect ? GlStencilMode::None : GlStencilMode::Stroke;
@@ -276,9 +309,18 @@ GlStencilMode GlGeometry::stencilMode(RenderUpdateFlag flag) const
 
     return GlStencilMode::None;
 }
+#endif
 
 RenderRegion GlGeometry::bounds() const
 {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+    auto bbox = fillBBox;
+    if (strokeBBox.valid()) {
+        if (bbox.valid()) bbox.add(strokeBBox);
+        else bbox = strokeBBox;
+    }
+    return bbox;
+#else
     auto bbox = RenderRegion{};
     auto valid = false;
 
@@ -299,4 +341,5 @@ RenderRegion GlGeometry::bounds() const
     }
 
     return bbox;
+#endif
 }

@@ -546,6 +546,28 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
         REQUIRE(nonZero->intersects(52, 50, 1, 1) == true);
         REQUIRE(evenOdd->intersects(52, 50, 1, 1) == false);
 
+        uint32_t pixel = 0xffffffff;
+        auto clipped = Picture::gen();
+        REQUIRE(clipped->load(&pixel, 1, 1, 1, ColorSpace::ARGB8888, true) == Result::Success);
+        REQUIRE(clipped->transform({20, -20, 32, 20, 20, 12, 0, 0, 1}) == Result::Success);
+        auto clip = Shape::gen();
+        REQUIRE(clip->appendCircle(42, 26, 10, 10) == Result::Success);
+        REQUIRE(clipped->clip(clip) == Result::Success);
+        REQUIRE(canvas->add(clipped) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(clipped->intersects(42, 25, 1, 1, true));
+        REQUIRE_FALSE(clipped->intersects(49, 22, 1, 1, true));
+        REQUIRE_FALSE(clipped->intersects(22, 32, 1, 1, true));
+
+        auto outside = clipped->duplicate();
+        REQUIRE(outside);
+        auto disjoint = Shape::gen();
+        REQUIRE(disjoint->appendCircle(15, 15, 2, 2) == Result::Success);
+        REQUIRE(outside->clip(disjoint) == Result::Success);
+        REQUIRE(canvas->add(outside) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE_FALSE(outside->intersects(0, 0, 64, 64, true));
+
         ifstream file(TEST_DIR "/rawimage_250x375.raw");
         if (!file.is_open()) return;
         auto data = (uint32_t*)malloc(sizeof(uint32_t) * (250 * 375));
@@ -595,6 +617,38 @@ TEST_CASE("GL Intersection", "[tvgGlEngine]")
 
         free(data);
 
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+TEST_CASE("GL Coverage Intersection Regions", "[tvgGlEngine]")
+{
+    TestGLEngine engine;
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto canvas = std::unique_ptr<GlCanvas>(GlCanvas::gen());
+        REQUIRE(canvas);
+        engine.target(canvas.get());
+
+        auto shape = Shape::gen();
+        REQUIRE(shape->moveTo(70.75f, 10) == Result::Success);
+        REQUIRE(shape->lineTo(70.75f, 70.75f) == Result::Success);
+        REQUIRE(shape->lineTo(10, 70.75f) == Result::Success);
+        REQUIRE(shape->close() == Result::Success);
+        REQUIRE(shape->appendRect(42, 42, 18, 18) == Result::Success);
+        REQUIRE(shape->fillRule(FillRule::EvenOdd) == Result::Success);
+        REQUIRE(shape->fill(255, 255, 255) == Result::Success);
+        REQUIRE(canvas->add(shape) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        REQUIRE(shape->intersects(41, 38));
+#endif
+        REQUIRE_FALSE(shape->intersects(40, 38));
+        REQUIRE_FALSE(shape->intersects(44, 46, 15, 5));
+        REQUIRE(shape->intersects(44, 46, 18, 3));
+
+        REQUIRE(canvas->sync() == Result::Success);
     }
     REQUIRE(Initializer::term() == Result::Success);
 }

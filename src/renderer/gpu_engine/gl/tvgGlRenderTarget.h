@@ -31,18 +31,28 @@ struct GlRenderTarget
     GlRenderTarget();
     ~GlRenderTarget();
 
-    void init(GlStateCache& state, uint32_t width, uint32_t height, GLint resolveId);
+    void init(GlStateCache& state, uint32_t width, uint32_t height, GLuint targetFbo);
     void reset();
     bool invalid() const { return fbo == 0; }
+    GLuint getTextureFbo() const
+    {
+#ifdef THORVG_ANALYTIC_AA_SUPPORT
+        return fbo;
+#else
+        return resolvedFbo;
+#endif
+    }
 
     RenderRegion viewport{};
     uint32_t width = 0, height = 0;
-    GLuint resolvedFbo = 0, fbo = 0, colorTex = 0;
+    GLuint fbo = 0, colorTex = 0;
 
 private:
     GlStateCache* state = nullptr;
-    GLuint colorBuffer = 0;
     GLuint depthStencilBuffer = 0;
+#ifndef THORVG_ANALYTIC_AA_SUPPORT
+    GLuint colorBuffer = 0, resolvedFbo = 0;
+#endif
 };
 
 
@@ -51,7 +61,7 @@ struct GlRenderTargetPool
     GlRenderTargetPool(uint32_t maxWidth, uint32_t maxHeight, GlStateCache& state);
     ~GlRenderTargetPool();
 
-    GlRenderTarget* getRenderTarget(const RenderRegion& vp, GLuint resolveId = 0);
+    GlRenderTarget* getRenderTarget(const RenderRegion& vp);
 
 private:
     GlStateCache& state;
