@@ -59,6 +59,7 @@ gif_loader = all_loaders or get_option('loaders').contains('gif')
 
 # experimental in the development
 media_loader = get_option('loaders').contains('media')
+tvg_loader = get_option('loaders').contains('tvg')
 
 # Savers
 all_savers = get_option('savers').contains('all')
@@ -68,6 +69,10 @@ gif_saver = all_savers or get_option('savers').contains('gif')
 logging = get_option('log')
 
 # Loaders/savers config
+if tvg_loader
+    config_h.set10('THORVG_TVG_LOADER_SUPPORT', true)
+endif
+
 if svg_loader
     config_h.set10('THORVG_SVG_LOADER_SUPPORT', true)
 endif
@@ -202,6 +207,7 @@ summary(
 
 summary(
   {
+    'TVG': svg_loader,
     'SVG': svg_loader,
     'TTF': ttf_loader,
     'OTF': otf_loader,

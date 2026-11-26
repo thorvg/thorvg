@@ -28,6 +28,7 @@
 #include <float.h>
 #include <cmath>
 #include "tvgCommon.h"
+#include "tvgColor.h"
 
 namespace tvg
 {
@@ -632,6 +633,11 @@ static inline T lerp(const T &start, const T &end, float t)
 static inline uint8_t lerp(const uint8_t& start, const uint8_t& end, float t)
 {
     return static_cast<uint8_t>(clamp(static_cast<int>(start + (end - start) * t), 0, 255));
+}
+
+static inline RGBA lerp(const RGBA& from, const RGBA& to, float t)
+{
+    return {lerp(from.r, to.r, t), lerp(from.g, to.g, t), lerp(from.b, to.b, t), lerp(from.a, to.a, t)};
 }
 
 static inline Fill::ColorStop lerp(const Fill::ColorStop& from, const Fill::ColorStop& to, float t)

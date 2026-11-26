@@ -70,7 +70,8 @@ namespace tvg
 {
     enum class FileType
     {
-        Svg = 0,
+        Tvg = 0,
+        Svg,
         Lot,
         Sfnt,
         Png,
