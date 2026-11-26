@@ -34,9 +34,9 @@ static inline void _growFillBuffer(Array<T>& buffer, uint32_t extra)
     buffer.grow(std::max(extra, slack));
 }
 
-GpuFillResult gpuTessellateFill(const RenderPath& path, Array<Point>& vertices, Array<uint32_t>& indices)
+GpuFill gpuTessellateFill(const RenderPath& path, Array<Point>& vertices, Array<uint32_t>& indices)
 {
-    GpuFillResult result;
+    GpuFill result;
     if (path.pts.count <= 2) return result;
 
     vertices.reserve(path.pts.count);

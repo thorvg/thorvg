@@ -28,7 +28,7 @@
 namespace tvg
 {
 
-struct GpuFillResult
+struct GpuFill
 {
     BBox bbox = {};
     bool convex = true;
@@ -39,7 +39,7 @@ struct GpuFillResult
     }
 };
 
-GpuFillResult gpuTessellateFill(const RenderPath& path, Array<Point>& vertices, Array<uint32_t>& indices);
+GpuFill gpuTessellateFill(const RenderPath& path, Array<Point>& vertices, Array<uint32_t>& indices);
 
 }  // namespace tvg
 
