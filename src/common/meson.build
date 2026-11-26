@@ -4,6 +4,7 @@ source_file = [
    'tvgColor.h',
    'tvgCompressor.h',
    'tvgInlist.h',
+   'tvgInterpolator.h',
    'tvgLock.h',
    'tvgMap.h',
    'tvgMath.h',
