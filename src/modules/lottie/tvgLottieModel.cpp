@@ -25,6 +25,7 @@
 #include "tvgLottieModel.h"
 #include "tvgCompressor.h"
 
+HoldInterpolator LottieInterpolator::holdInterpolator;
 
 /************************************************************************/
 /* LottieTextFollowPath                                                 */
@@ -703,11 +704,7 @@ LottieComposition::~LottieComposition()
     delete (root);
     tvg::free(name);
 
-    for (auto& p : interpolators) {
-        tvg::free(p->key);
-        delete (p);
-    }
-
+    for (auto& p : interpolators) delete (p);
     for (auto& p : assets) delete (p);
     for (auto& p : fonts) delete (p);
     for (auto& p : slots) delete (p);

@@ -41,18 +41,12 @@ struct LottieScalarFrame
 {
     T value;                    //keyframe value
     float no;                   //frame number
-    LottieInterpolator* interpolator;
-    bool hold = false;           //do not interpolate.
+    Interpolator* interpolator;
 
     T interpolate(LottieScalarFrame<T>* next, float frameNo)
     {
         auto t = (frameNo - no) / (next->no - no);
-        if (interpolator) t = interpolator->progress(t);
-
-        if (hold) {
-            if (t < 1.0f) return value;
-            else return next->value;
-        }
+        if (interpolator) t = interpolator->map(t);
         return tvg::lerp(value, next->value, t);
     }
 
@@ -65,22 +59,15 @@ struct LottieVectorFrame
 {
     T value;                    //keyframe value
     float no;                   //frame number
-    LottieInterpolator* interpolator;
+    Interpolator* interpolator;
     T outTangent, inTangent;
     float length;
     bool hasTangent = false;
-    bool hold = false;
 
     T interpolate(LottieVectorFrame* next, float frameNo)
     {
         auto t = (frameNo - no) / (next->no - no);
-        if (interpolator) t = interpolator->progress(t);
-
-        if (hold) {
-            if (t < 1.0f) return value;
-            else return next->value;
-        }
-
+        if (interpolator) t = interpolator->map(t);
         if (hasTangent) {
             Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
             return bz.at(bz.atApprox(t * length, length));
@@ -97,7 +84,7 @@ struct LottieVectorFrame
         }
 
         auto t = (frameNo - no) / (next->no - no);
-        if (interpolator) t = interpolator->progress(t);
+        if (interpolator) t = interpolator->map(t);
         Bezier bz = {value, value + outTangent, next->value + inTangent, next->value};
         t = bz.atApprox(t * length, length);
         return bz.angle(t >= 1.0f ? 0.99f : (t <= 0.0f ? 0.01f : t));

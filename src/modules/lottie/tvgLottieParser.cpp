@@ -33,7 +33,6 @@
 
 #define KEY_AS(name) !strcmp(key, name)
 
-
 static unsigned long _int2str(int num)
 {
     char str[20];
@@ -377,28 +376,16 @@ bool LottieParser::parseTangent(const char *key, LottieScalarFrame<T>& value)
     return false;
 }
 
-LottieInterpolator* LottieParser::getInterpolator(const char* key, Point& in, Point& out)
+LottieInterpolator* LottieParser::getInterpolator(const Point& out, const Point& in)
 {
-    char buf[20];
-
-    if (!key) {
-        snprintf(buf, sizeof(buf), "%.2f_%.2f_%.2f_%.2f", (double)in.x, (double)in.y, (double)out.x, (double)out.y);
-        key = buf;
-    }
-
-    LottieInterpolator* interpolator = nullptr;
-
-    //get a cached interpolator if it has any.
+    // get a cached interpolator if it has any.
     for (auto& p : comp->interpolators) {
-        if (!strncmp(p->key, key, sizeof(buf))) interpolator = p;
+        if (p->out == out && p->in == in) return p;
     }
 
-    //new interpolator
-    if (!interpolator) {
-        interpolator = new LottieInterpolator(key, in, out);
-        comp->interpolators.push(interpolator);
-    }
-
+    // new interpolator
+    auto interpolator = new LottieInterpolator(out, in);
+    comp->interpolators.push(interpolator);
     return interpolator;
 }
 
@@ -407,8 +394,8 @@ template<typename T>
 void LottieParser::parseKeyFrame(T& prop)
 {
     Point inTangent, outTangent;
-    const char* interpolatorKey = nullptr;
     auto& frame = prop.newFrame();
+    auto hold = false;
     auto interpolator = false;
 
     enterObject();
@@ -419,16 +406,6 @@ void LottieParser::parseKeyFrame(T& prop)
             getInterpolatorPoint(inTangent);
         } else if (KEY_AS("o")) {
             getInterpolatorPoint(outTangent);
-        } else if (KEY_AS("n")) {
-            if (peekType() == kStringType) {
-                interpolatorKey = getString();
-            } else {
-                enterArray();
-                while (nextArrayValue()) {
-                    if (!interpolatorKey) interpolatorKey = getString();
-                    else skip();
-                }
-            }
         } else if (KEY_AS("t")) {
             frame.no = getFloat();
         } else if (KEY_AS("s")) {
@@ -441,13 +418,11 @@ void LottieParser::parseKeyFrame(T& prop)
         } else if (parseTangent(key, frame)) {
             continue;
         } else if (KEY_AS("h")) {
-            frame.hold = getInt();
+            hold = getInt();
         } else skip();
     }
-
-    if (interpolator) {
-        frame.interpolator = getInterpolator(interpolatorKey, inTangent, outTangent);
-    }
+    if (hold) frame.interpolator = &LottieInterpolator::holdInterpolator;
+    else if (interpolator) frame.interpolator = getInterpolator(outTangent, inTangent);
 }
 
 template<typename T>

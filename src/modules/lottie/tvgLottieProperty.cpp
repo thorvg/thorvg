@@ -165,12 +165,7 @@ Result LottieColorStop::operator()(float frameNo, Fill* fill, LottieExpressions*
 
     //interpolate
     auto t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
-    if (frame->interpolator) t = frame->interpolator->progress(t);
-
-    if (frame->hold) {
-        if (t < 1.0f) return fill->colorStops(frame->value.data, count);
-        return fill->colorStops((frame + 1)->value.data, count);
-    }
+    if (frame->interpolator) t = frame->interpolator->map(t);
 
     auto s = frame->value.data;
     auto e = (frame + 1)->value.data;
@@ -309,9 +304,8 @@ bool LottiePathSet::dispatch(float frameNo, PathSet*& path, LottieScalarFrame<Pa
             path = &frame->value;
         } else {
             t = (frameNo - frame->no) / ((frame + 1)->no - frame->no);
-            if (frame->interpolator) t = frame->interpolator->progress(t);
-            if (frame->hold) path = &(frame + ((t < 1.0f) ? 0 : 1))->value;
-            else return false;
+            if (frame->interpolator) t = frame->interpolator->map(t);
+            return false;
         }
     }
     return true;

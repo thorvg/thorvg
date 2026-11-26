@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 the ThorVG project. All rights reserved.
+ * Copyright (c) 2024 - 2026 the ThorVG project. All rights reserved.
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,19 +24,17 @@
 #define _TVG_LOTTIE_COMMON_
 
 #include "tvgRender.h"
-#include "tvgMath.h"
+#include "tvgInterpolator.h"
 #include "tvgStr.h"
 
 namespace tvg
 {
 
-struct LottieInterpolator
+struct LottieInterpolator : BezierInterpolator
 {
-    char* key;
-    tvg::Bezier::Easing easing;
-
-    LottieInterpolator(const char* key, const Point& in, const Point& out) : key(duplicate(key)), easing(out, in) {}
-    float progress(float t) { return easing.map(t); }
+    static HoldInterpolator holdInterpolator;
+    Point out, in;
+    LottieInterpolator(const Point& out, const Point& in) : BezierInterpolator(out, in), out(out), in(in) {}
 };
 
 struct PathSet
