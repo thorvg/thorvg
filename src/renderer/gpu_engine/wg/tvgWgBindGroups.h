@@ -32,8 +32,6 @@ struct WgBindGroupLayouts
     WGPUBindGroupLayout layoutTexSampledBuff1Un{};
     WGPUBindGroupLayout layoutTexSampledBuff2Un{};
     WGPUBindGroupLayout layoutTexStrorage1WO{};
-    WGPUBindGroupLayout layoutTexStrorage1RO{};
-    WGPUBindGroupLayout layoutTexStrorage2RO{};
     WGPUBindGroupLayout layoutTexStrorage3RO{};
     WGPUBindGroupLayout layoutBuffer1Un{};
     WGPUBindGroupLayout layoutBuffer2Un{};
@@ -44,8 +42,6 @@ struct WgBindGroupLayouts
     WGPUBindGroup createBindGroupTexSampledBuff2Un(WGPUSampler sampler, WGPUTextureView texView, WGPUBuffer buff0, WGPUBuffer buff1);
     WGPUBindGroup createBindGroupStrorage1WO(WGPUTextureView texView);
     // for read-only access in compute shaders, use texture_2d<f32> instead of texture_storage_2d<rgba8unorm, read>
-    WGPUBindGroup createBindGroupStrorage1RO(WGPUTextureView texView);
-    WGPUBindGroup createBindGroupStrorage2RO(WGPUTextureView texView0, WGPUTextureView texView1);
     WGPUBindGroup createBindGroupStrorage3RO(WGPUTextureView texView0, WGPUTextureView texView1, WGPUTextureView texView2);
     WGPUBindGroup createBindGroupBuffer1Un(WGPUBuffer buff);
     WGPUBindGroup createBindGroupBuffer1Un(WGPUBuffer buff, uint64_t offset, uint64_t size);

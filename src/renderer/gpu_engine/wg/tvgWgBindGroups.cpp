@@ -68,27 +68,6 @@ WGPUBindGroup WgBindGroupLayouts::createBindGroupStrorage1WO(WGPUTextureView tex
 }
 
 
-WGPUBindGroup WgBindGroupLayouts::createBindGroupStrorage1RO(WGPUTextureView texView)
-{
-    const WGPUBindGroupEntry bindGroupEntrys[] = {
-        { .binding = 0, .textureView = texView }
-    };
-    const WGPUBindGroupDescriptor bindGroupDesc { .layout = layoutTexStrorage1RO, .entryCount = 1, .entries = bindGroupEntrys };
-    return wgpuDeviceCreateBindGroup(device, &bindGroupDesc);
-}
-
-
-WGPUBindGroup WgBindGroupLayouts::createBindGroupStrorage2RO(WGPUTextureView texView0, WGPUTextureView texView1)
-{
-    const WGPUBindGroupEntry bindGroupEntrys[] = {
-        { .binding = 0, .textureView = texView0 },
-        { .binding = 1, .textureView = texView1 }
-    };
-    const WGPUBindGroupDescriptor bindGroupDesc { .layout = layoutTexStrorage2RO, .entryCount = 2, .entries = bindGroupEntrys };
-    return wgpuDeviceCreateBindGroup(device, &bindGroupDesc);
-}
-
-
 WGPUBindGroup WgBindGroupLayouts::createBindGroupStrorage3RO(WGPUTextureView texView0, WGPUTextureView texView1, WGPUTextureView texView2)
 {
     const WGPUBindGroupEntry bindGroupEntrys[] = {
@@ -196,11 +175,7 @@ void WgBindGroupLayouts::initialize(WGPUDevice device)
         { .binding = 1, .visibility = visibility_frag, .texture = texture },
         { .binding = 2, .visibility = visibility_frag, .texture = texture }
     };
-    const WGPUBindGroupLayoutDescriptor layoutDescTexStorages1RO { .entryCount = 1, .entries = entriesTexStoragesRO };
-    const WGPUBindGroupLayoutDescriptor layoutDescTexStorages2RO { .entryCount = 2, .entries = entriesTexStoragesRO };
     const WGPUBindGroupLayoutDescriptor layoutDescTexStorages3RO { .entryCount = 3, .entries = entriesTexStoragesRO };
-    layoutTexStrorage1RO = wgpuDeviceCreateBindGroupLayout(device, &layoutDescTexStorages1RO);
-    layoutTexStrorage2RO = wgpuDeviceCreateBindGroupLayout(device, &layoutDescTexStorages2RO);
     layoutTexStrorage3RO = wgpuDeviceCreateBindGroupLayout(device, &layoutDescTexStorages3RO);
 
     // bind group layout buffer uniforms
@@ -224,8 +199,6 @@ void WgBindGroupLayouts::release()
     releaseBindGroupLayout(layoutBuffer2Un);
     releaseBindGroupLayout(layoutBuffer1Un);
     releaseBindGroupLayout(layoutTexStrorage3RO);
-    releaseBindGroupLayout(layoutTexStrorage2RO);
-    releaseBindGroupLayout(layoutTexStrorage1RO);
     releaseBindGroupLayout(layoutTexStrorage1WO);
     releaseBindGroupLayout(layoutTexSampledBuff1Un);
     releaseBindGroupLayout(layoutTexSampledBuff2Un);
