@@ -158,8 +158,8 @@ bool GlRenderer::currentContext()
     return true;
 }
 
-
-GlRenderer::GlRenderer() : mEffect(GlEffect(&mGpuBuffer))
+GlRenderer::GlRenderer(uint32_t threads) :
+    mEffect(&mGpuBuffer), mShapeTasks(threads)
 {
 }
 
@@ -1322,35 +1322,25 @@ RenderData GlRenderer::prepare(RenderSurface* surface, RenderData data, const Ma
 RenderData GlRenderer::prepare(const RenderShape& rshape, RenderData data, const Matrix& transform, const Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags, bool clipper)
 {
     auto shape = static_cast<GlShape*>(data);
-    if (!shape) {
+    if (shape) {
+        shape->done();
+    } else {
         shape = new GlShape;
         shape->rshape = &rshape;
         flags = RenderUpdateFlag::All;
     }
 
-    if (shape->prepare(flags, {float(surface.w), float(surface.h)}, opacity, clipper)) return shape;
+    if (shape->GlDrawable::prepare(flags, {float(surface.w), float(surface.h)}, opacity, clipper)) return shape;
 
     if (flags & RenderUpdateFlag::Path) shape->geometry = GlGeometry();
 
     shape->geometry.transform(transform);
     shape->geometry.viewport = vport;
+    shape->opacity = opacity;
+    if (flags & RenderUpdateFlag::Clip) shape->clips = clips;
 
     // TODO: rebuild thin fills and their opacity multiplier when stroke width changes from nonzero to zero?
-
-    auto update = (flags & (RenderUpdateFlag::Path | RenderUpdateFlag::Transform)) ||
-        // prepare the stroke path when a stroke becomes visible without a path or transform change.
-        ((flags & RenderUpdateFlag::Stroke) && rshape.stroke && std::isfinite(rshape.strokeWidth()) && !tvg::zero(rshape.strokeWidth()) && shape->geometry.optStrokePath.empty());
-
-    if (update) {
-        shape->valid.fill = shape->geometry.tesselateShape(rshape, shape->multiplier);
-    }
-    if (update || (flags & RenderUpdateFlag::Stroke)) {
-        shape->valid.stroke = shape->geometry.tesselateStroke(rshape);
-    }
-
-    shape->opacity = float(opacity) * shape->multiplier;
-
-    if (flags & RenderUpdateFlag::Clip) shape->clips = clips;
+    if (!mShapeTasks.request(shape, rshape, flags)) shape->opacity *= shape->multiplier;
 
     return shape;
 }
@@ -1367,6 +1357,7 @@ bool GlRenderer::preUpdate()
 
 bool GlRenderer::postUpdate()
 {
+    mShapeTasks.done();
     return true;
 }
 
@@ -1441,8 +1432,7 @@ bool GlRenderer::term()
     return true;
 }
 
-
-GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption op)
+GlRenderer* GlRenderer::gen(uint32_t threads, TVG_UNUSED EngineOption op)
 {
     //initialize engine
     _rendererMtx.lock();
@@ -1457,5 +1447,5 @@ GlRenderer* GlRenderer::gen(TVG_UNUSED uint32_t threads, TVG_UNUSED EngineOption
     ++_rendererCnt;
     _rendererMtx.unlock();
 
-    return new GlRenderer;
+    return new GlRenderer(threads);
 }
