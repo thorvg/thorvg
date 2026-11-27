@@ -30,7 +30,6 @@ struct WgResolveTarget
 {
     WGPUTexture texture{};
     WGPUTextureView texView{};
-    WGPUBindGroup bgRead{}, bgWrite{};
     WGPUBindGroup bgTexture{};        // Nearest + repeat for general compositing and pixel-aligned effects.
     WGPUBindGroup bgTextureLinear{};  // Linear + clamp for subpixel sampling, such as motion blur.
     uint32_t width{}, height{};

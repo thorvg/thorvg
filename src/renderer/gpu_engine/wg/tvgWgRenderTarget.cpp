@@ -38,8 +38,6 @@ void WgResolveTarget::initialize(WgContext& context, uint32_t width, uint32_t he
     this->height = height;
     texture = context.createTexStorage(width, height, WGPUTextureFormat_RGBA8Unorm);
     texView = context.createTextureView(texture);
-    bgRead = context.layouts.createBindGroupStrorage1RO(texView);
-    bgWrite = context.layouts.createBindGroupStrorage1WO(texView);
     bgTexture = context.layouts.createBindGroupTexSampled(context.samplerNearestRepeat, texView);
 }
 
@@ -55,8 +53,6 @@ void WgResolveTarget::release(WgContext& context)
 {
     context.layouts.releaseBindGroup(bgTextureLinear);
     context.layouts.releaseBindGroup(bgTexture);
-    context.layouts.releaseBindGroup(bgWrite);
-    context.layouts.releaseBindGroup(bgRead);
     context.releaseTextureView(texView);
     context.releaseTexture(texture);
     height = 0;
