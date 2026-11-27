@@ -4,13 +4,10 @@
 * @hermet
 /src/renderer/cpu_engine @Nor-s
 /src/renderer/gpu_engine @wenjieshen
-/src/modules/lottie @tinyjin @Nor-s
 /src/modules/svg @JSUYA
 /src/modules/png @Nor-s
 /src/modules/webp @Nor-s
-/src/modules/media/android @Nor-s
-/src/modules/media/apple @Nor-s
-/src/modules/media/web @tinyjin
+/src/modules/media @Nor-s
 /src/modules/gif/load @BenjaminHalko
 /test @Nor-s
 /.github/workflows @Nor-s
