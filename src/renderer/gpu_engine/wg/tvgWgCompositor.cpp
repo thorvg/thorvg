@@ -22,6 +22,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <utility>
 #include "tvgWgCompositor.h"
 
 static WGPURenderPipeline _gradientPipeline(const WgPipelines& pipelines, WgRenderSettingsType type, bool convex)
@@ -63,10 +64,11 @@ void WgCompositor::updateViewMat(WgContext& context, uint32_t width, uint32_t he
 }
 
 
-void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t height)
+void WgCompositor::initialize(WgContext& context, uint32_t width, uint32_t height, WgPipelines* prepared)
 {
     // pipelines (external handle, do not release)
-    pipelines.initialize(context);
+    if (prepared) std::swap(pipelines, *prepared);
+    else pipelines.initialize(context);
     stageBufferGeometry.initialize(context);
     // initialize opacity pool
     initPools(context);

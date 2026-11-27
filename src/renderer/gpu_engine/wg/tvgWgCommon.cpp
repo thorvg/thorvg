@@ -24,7 +24,7 @@
 #include "tvgWgCommon.h"
 #include "tvgArray.h"
 
-void WgContext::initialize(const WgCanvas::Context& ctx)
+void WgContext::initialize(const WgCanvas::Context& ctx, bool initializeLayouts)
 {
     this->instance = (WGPUInstance)ctx.instance;
     this->adapter = (WGPUAdapter)ctx.adapter;
@@ -38,7 +38,7 @@ void WgContext::initialize(const WgCanvas::Context& ctx)
     samplerLinearMirror = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_MirrorRepeat, 4);
     samplerLinearClamp = createSampler(WGPUFilterMode_Linear, WGPUMipmapFilterMode_Linear, WGPUAddressMode_ClampToEdge, 4);
 
-    layouts.initialize(device);
+    if (initializeLayouts) layouts.initialize(device);
 }
 
 
