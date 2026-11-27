@@ -31,7 +31,8 @@ using namespace std;
 
 struct SfntMetrics : FontMetrics
 {
-    SfntGlyphMetrics* baseGlyph;  // Use as the reference glyph width for italic transform
+    Array<SfntGlyph*> glyphs;               // references to cached glyphs in text layout order
+    SfntGlyphMetrics* baseGlyph = nullptr;  // use as the reference glyph width for italic transform
 };
 
 struct SfntLoader : public FontLoader
@@ -57,7 +58,12 @@ struct SfntLoader : public FontLoader
     void copy(const FontMetrics& in, FontMetrics& out) override;
     void release(FontMetrics& fm) override;
     void metrics(const FontMetrics& fm, TextMetrics& out) override;
-    bool metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out, const char** next) override;
+    bool metrics(const FontMetrics& fm, uint32_t idx, GlyphMetrics& out) override;
+
+    uint32_t length(const FontMetrics& fm) override
+    {
+        return metrics(fm)->glyphs.count;
+    }
 
     static Result gen(uint8_t* data, uint32_t size, SfntReader*& out);
 
@@ -74,6 +80,11 @@ private:
     void wrapEllipsis(FontMetrics& fm, const Point& box, const char* utf8, const char* end, RenderPath& out);
     SfntGlyphMetrics* request(uint32_t code);
     void clear();
+
+    SfntMetrics* metrics(const FontMetrics& fm)
+    {
+        return static_cast<SfntMetrics*>(fm.engine);
+    }
 };
 
 #endif  //_TVG_SFNT_LOADER_H_
