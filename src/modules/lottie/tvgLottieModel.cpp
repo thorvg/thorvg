@@ -639,6 +639,16 @@ LottieLayer::LottieLayer() : LottieRootLayer(LottieObject::Layer)
     matteSrc = false;
 }
 
+LottieGlyph::~LottieGlyph()
+{
+    for (auto& p : children) delete(p);
+    delete(layer);
+    tvg::free(code);
+    tvg::free(family);
+    tvg::free(style);
+}
+
+
 LottieLayer::~LottieLayer()
 {
     //No need to free assets children because the Composition owns them.
