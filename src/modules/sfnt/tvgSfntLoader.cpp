@@ -617,12 +617,24 @@ void SfntLoader::metrics(const FontMetrics& fm, TextMetrics& out)
 
 bool SfntLoader::metrics(const FontMetrics& fm, const char* ch, GlyphMetrics& out, const char** next)
 {
-    auto code = _codepoints(&ch, ch + strlen(ch));
+    auto end = ch + strlen(ch);
+    auto code = _codepoints(&ch, end);
     auto glyph = request(code);
     if (!glyph) return false;
 
+    // kerning against the next glyph in the same line
+    Point offset{};
+    auto nextCh = ch;
+    auto nextCode = _codepoints(&nextCh, end);
+    if (code != LINE_FEED_GLYPH_IDX && nextCode != LINE_FEED_GLYPH_IDX) {
+        auto nextGlyph = request(nextCode);
+        if (nextGlyph) {
+            reader->positioning(glyph->idx, nextGlyph->idx, offset);
+        }
+    }
+
     auto scale = (fm.fontSize * FontLoader::DPI) / reader->metrics.unitsPerEm;
-    out.advance = glyph->advance * scale;
+    out.advance = (glyph->advance + offset.x) * scale;
     out.bearing = glyph->lsb * scale;
 
     // if no info, calculate it manually
