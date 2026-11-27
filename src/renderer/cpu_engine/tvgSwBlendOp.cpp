@@ -28,6 +28,7 @@
 
 static uint32_t _premultiply(uint32_t c1, uint32_t c2, uint8_t a)
 {
+    c2 |= 0xff000000;  //the caller applies the source alpha
     if (a == 255) return c1;
     else if (a == 0) return c2;
     return ALPHA_BLEND(c1, a) + ALPHA_BLEND(c2, 255 - a);
@@ -42,6 +43,14 @@ static RenderColor _unpremultiply(uint32_t c)
         o.b = std::min(o.b * 255u / o.a, 255u);
     }
     return o;
+}
+
+static int _lum(const SwSurface* surface, uint8_t c1, uint8_t c2, uint8_t c3)
+{
+    //W3C luminosity: 0.3 red, 0.59 green, 0.11 blue
+    //https://www.w3.org/TR/compositing-1/#blendingnonseparable
+    if (surface->cs == ColorSpace::ARGB8888 || surface->cs == ColorSpace::ARGB8888S) return (c1 * 30 + c2 * 59 + c3 * 11 + 50) / 100;
+    return (c1 * 11 + c2 * 59 + c3 * 30 + 50) / 100;
 }
 
 static void _saturate(uint8_t& c1, uint8_t& c2, uint8_t& c3, const uint8_t& s1, const uint8_t& s2, const uint8_t& s3)
@@ -105,11 +114,13 @@ static void _luminance(uint8_t& c1, uint8_t& c2, uint8_t& c3, int cl, int l)
 
 uint32_t blendDifference(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
+    auto o = _unpremultiply(d);
+
     auto f = [](uint8_t s, uint8_t d) {
         return (s > d) ? (s - d) : (d - s);
     };
 
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
 uint32_t blendExclusion(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
@@ -174,11 +185,13 @@ uint32_t blendDarken(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d
 
 uint32_t blendLighten(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
 {
+    auto o = _unpremultiply(d);
+
     auto f = [](uint8_t s, uint8_t d) {
         return std::max(s, d);
     };
 
-    return JOIN(255, f(C1(s), C1(d)), f(C2(s), C2(d)), f(C3(s), C3(d)));
+    return _premultiply(JOIN(255, f(C1(s), o.r), f(C2(s), o.g), f(C3(s), o.b)), s, o.a);
 }
 
 uint32_t blendColorDodge(TVG_UNUSED const SwSurface* surface, uint32_t s, uint32_t d)
@@ -254,7 +267,7 @@ uint32_t blendHue(const SwSurface* surface, uint32_t s, uint32_t d)
     auto c2 = C2(s);
     auto c3 = C3(s);
     _saturate(c1, c2, c3, o.r, o.g, o.b);
-    _luminance(c1, c2, c3, surface->luma((c1 << 16 | c2 << 8 | c3)), surface->luma((o.r << 16 | o.g << 8 | o.b)));
+    _luminance(c1, c2, c3, _lum(surface, c1, c2, c3), _lum(surface, o.r, o.g, o.b));
 
     return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
 }
@@ -267,7 +280,7 @@ uint32_t blendSaturation(const SwSurface* surface, uint32_t s, uint32_t d)
     auto c2 = o.g;
     auto c3 = o.b;
     _saturate(c1, c2, c3, C1(s), C2(s), C3(s));
-    _luminance(c1, c2, c3, surface->luma((c1 << 16 | c2 << 8 | c3)), surface->luma((o.r << 16 | o.g << 8 | o.b)));
+    _luminance(c1, c2, c3, _lum(surface, c1, c2, c3), _lum(surface, o.r, o.g, o.b));
 
     return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
 }
@@ -279,7 +292,7 @@ uint32_t blendColor(const SwSurface* surface, uint32_t s, uint32_t d)
     auto c1 = C1(s);
     auto c2 = C2(s);
     auto c3 = C3(s);
-    _luminance(c1, c2, c3, surface->luma(s), surface->luma((o.r << 16 | o.g << 8 | o.b)));
+    _luminance(c1, c2, c3, _lum(surface, c1, c2, c3), _lum(surface, o.r, o.g, o.b));
 
     return _premultiply(JOIN(255, c1, c2, c3), s, o.a);
 }
@@ -288,7 +301,7 @@ uint32_t blendLuminosity(const SwSurface* surface, uint32_t s, uint32_t d)
 {
     auto o = _unpremultiply(d);
 
-    _luminance(o.r, o.g, o.b, surface->luma((o.r << 16 | o.g << 8 | o.b)), surface->luma(s));
+    _luminance(o.r, o.g, o.b, _lum(surface, o.r, o.g, o.b), _lum(surface, C1(s), C2(s), C3(s)));
 
     return _premultiply(JOIN(255, o.r, o.g, o.b), s, o.a);
 }
