@@ -25,6 +25,7 @@
 
 #include "tvgCommon.h"
 #include "tvgMath.h"
+#include "tvgRender.h"
 
 #define LINEAR(A) static_cast<LinearGradientImpl*>(A)
 #define CONST_LINEAR(A) static_cast<const LinearGradientImpl*>(A)
@@ -39,6 +40,7 @@ struct Fill::Impl
 {
     ColorStop* colorStops = nullptr;
     Matrix transform = tvg::identity();
+    RenderUpdateFlag renderFlag = RenderUpdateFlag::Gradient | RenderUpdateFlag::GradientStops;
     uint16_t cnt = 0;
     FillSpread spread = FillSpread::Pad;
 
@@ -59,6 +61,10 @@ struct Fill::Impl
     Result update(const ColorStop* colorStops, uint32_t cnt)
     {
         if ((!colorStops && cnt > 0) || (colorStops && cnt == 0)) return Result::InvalidArguments;
+
+        if (cnt == this->cnt && (!cnt || !memcmp(this->colorStops, colorStops, cnt * sizeof(ColorStop)))) return Result::Success;
+
+        renderFlag |= RenderUpdateFlag::Gradient | RenderUpdateFlag::GradientStops;
 
         if (cnt == 0) {
             if (this->colorStops) {

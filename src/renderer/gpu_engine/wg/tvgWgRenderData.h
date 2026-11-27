@@ -35,7 +35,7 @@ struct WgGradientTexture
     WGPUTextureView textureView{};
     WGPUBindGroup bindGroup{};
 
-    bool update(WgContext& context, const Fill* fill, FillSpread& currentSpread);
+    void update(WgContext& context, const Fill* fill, FillSpread& currentSpread, bool& opaque, bool updateColorRamp);
     void release(WgContext& context);
 };
 
