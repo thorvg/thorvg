@@ -59,3 +59,83 @@ TEST_CASE("Save a lottie into gif", "[tvgSavers]") {
     REQUIRE(Initializer::term() == Result::Success);
 }
 #endif
+
+#ifdef THORVG_PNG_SAVER_SUPPORT
+
+TEST_CASE("Save a shape into png", "[tvgSavers]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto shape = Shape::gen();
+        REQUIRE(shape->appendRect(10, 20, 100, 50) == Result::Success);
+        REQUIRE(shape->fill(255, 0, 0) == Result::Success);
+
+        auto saver = unique_ptr<Saver>(Saver::gen());
+        REQUIRE(saver);
+        REQUIRE(saver->save(shape, TEST_DIR"/test_saved.png") == Result::Success);
+        REQUIRE(saver->sync() == Result::Success);
+
+#ifdef THORVG_PNG_LOADER_SUPPORT
+        //The saved image is cropped to the paint bounds.
+        auto picture = unique_ptr<Picture>(Picture::gen());
+        REQUIRE(picture->load(TEST_DIR"/test_saved.png") == Result::Success);
+        float w, h;
+        REQUIRE(picture->size(&w, &h) == Result::Success);
+        REQUIRE(w == 100.0f);
+        REQUIRE(h == 50.0f);
+#endif
+        REQUIRE(remove(TEST_DIR"/test_saved.png") == 0);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+
+TEST_CASE("Save a translucent shape with a background into png", "[tvgSavers]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto shape = Shape::gen();
+        REQUIRE(shape->appendCircle(50, 50, 40, 30) == Result::Success);
+        REQUIRE(shape->fill(0, 128, 255, 128) == Result::Success);
+        REQUIRE(shape->strokeWidth(4.0f) == Result::Success);
+        REQUIRE(shape->strokeFill(0, 0, 0) == Result::Success);
+
+        auto bg = Shape::gen();
+        REQUIRE(bg->appendRect(0, 0, 100, 100) == Result::Success);
+        REQUIRE(bg->fill(255, 255, 255) == Result::Success);
+
+        auto saver = unique_ptr<Saver>(Saver::gen());
+        REQUIRE(saver);
+        REQUIRE(saver->background(bg) == Result::Success);
+
+        //with the compression
+        REQUIRE(saver->save(shape, TEST_DIR"/test_saved.png") == Result::Success);
+        REQUIRE(saver->sync() == Result::Success);
+        REQUIRE(remove(TEST_DIR"/test_saved.png") == 0);
+
+        //without the compression
+        shape = Shape::gen();
+        REQUIRE(shape->appendCircle(50, 50, 40, 30) == Result::Success);
+        REQUIRE(shape->fill(0, 128, 255, 128) == Result::Success);
+        REQUIRE(saver->save(shape, TEST_DIR"/test_saved.png", 0) == Result::Success);
+        REQUIRE(saver->sync() == Result::Success);
+        REQUIRE(remove(TEST_DIR"/test_saved.png") == 0);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+
+
+TEST_CASE("Save invalid inputs into png", "[tvgSavers]")
+{
+    REQUIRE(Initializer::init() == Result::Success);
+    {
+        auto saver = unique_ptr<Saver>(Saver::gen());
+        REQUIRE(saver);
+
+        //An empty paint has no bounds to be saved.
+        auto empty = Shape::gen();
+        REQUIRE(saver->save(empty, TEST_DIR"/test_saved.png") == Result::Unknown);
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
+#endif

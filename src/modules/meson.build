@@ -14,7 +14,7 @@ if lottie_loader
     subdir('lottie')
 endif
 
-if png_loader
+if png_loader or png_saver
     subdir('png')
 endif
 

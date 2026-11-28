@@ -2901,6 +2901,8 @@ struct TVG_API Saver
      * @retval Result::Unknown In case an empty paint is to be saved.
      *
      * @note Saving can be asynchronous if the assigned thread number is greater than zero. To guarantee the saving is done, call sync() afterwards.
+     * @note When saving to a PNG file (the CPU engine is required), the paint is rasterized in its bounding box, which is also the size of the image.
+     *       The alpha channel is dropped if every pixel of the image is opaque. A @p quality of @c 0 skips the compression.
      * @see Saver::sync()
      *
      * @since 0.5
